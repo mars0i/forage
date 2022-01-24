@@ -1,2 +1,2 @@
 # forage
-Random foraging models
+Random foraging models in Clojure with MASON
