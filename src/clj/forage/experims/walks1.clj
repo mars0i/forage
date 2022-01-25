@@ -1,9 +1,8 @@
 (ns forage.experims.walks1
-    (:import [sim.field.continuous Continuous2D])
     (:require 
       [aerial.hanami.common :as hc]
       [aerial.hanami.templates :as ht]
-      [foond.hanami-space :as hs]
+      [forage.hanami :as h]
       [forage.walks :as w]
       [forage.food :as f]
       [utils.math :as m]
@@ -29,7 +28,6 @@
 
 (def maxpathlen 1000)
 (def perceptual-radius 5) 
-(def trunc-len maxpathlen)
 (def food-distance 50)
 
 (def powerlaw-scale 1)
