@@ -1,9 +1,9 @@
 ;; Functions for plotting things in 2D spatial coordinates using Hanami
 ;; and Vega-Lite.
-(ns foond.hanami
+(ns forage.viz.hanami
     (:require [aerial.hanami.common :as hc]
               [aerial.hanami.templates :as ht]
-              [foond.food :as f]
+              [forage.food :as f]
               [utils.math :as m]))
 
 ;; Note field names have to be strings, not keywords, in order

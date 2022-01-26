@@ -2,9 +2,9 @@
     (:require 
       [aerial.hanami.common :as hc]
       [aerial.hanami.templates :as ht]
-      [forage.hanami :as h]
+      [forage.viz.hanami :as h]
       [forage.walks :as w]
-      [forage.food :as f]
+      ;[forage.food :as f]
       [utils.math :as m]
       [utils.random :as r]))
 
@@ -14,8 +14,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANAMI SPACE PARAMETERS:
 
-;(def quadrant-size 600)
-;(def figure-size 700)
+(def quadrant-size 1000)
+(def figure-size 700)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DATA PARAMETERS:
@@ -26,9 +26,10 @@
 (def mus [1.000001 2 2.2 3])  ; mu near 1: decimal digits have big effect on speed
 ; (def mus [2])
 
-(def maxpathlen 1000)
+(def maxpathlen 2000)
+(def trunclen 2000)
 (def perceptual-radius 5) 
-(def food-distance 50)
+(def food-distance 300)
 
 (def powerlaw-scale 1)
 
@@ -54,7 +55,7 @@
 (def inf-step-seqs (map
                      (fn [dist]
                          (repeatedly
-                           (w/step-vector-fn rng dist 1 trunc-len))) dists))
+                           (w/step-vector-fn rng dist 1 trunclen))) dists))
 
 (def step-seqs (map (partial w/vecs-upto-len maxpathlen) inf-step-seqs))
 
@@ -64,7 +65,7 @@
 
 ;; Infinite sequences of stopes labeled for Hanami/Vega-Lite:
 (def vl-stop-seqs (map (fn [mu stop-seq]
-                           (hs/add-walk-labels (str "mu=" mu) stop-seq))
+                           (h/add-walk-labels (str "mu=" mu) stop-seq))
                        mus stop-seqs))
 
 ;; Number of steps in each path:
@@ -77,15 +78,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANAMI/VEGA-LITE
 
-(def walk-plot (hs/vega-walk-plot quadrant-size figure-size walks))
+(def walk-plot (h/vega-walk-plot quadrant-size figure-size walks))
 
 (def foodgrid
   (hc/xform ht/point-chart 
-            :DATA (hs/make-foodgrid food-distance quadrant-size quadrant-size) 
+            :DATA (h/make-foodgrid food-distance quadrant-size quadrant-size) 
             :X "x"
             :Y "y"
             :COLOR "type"
-            :MSIZE (hs/food-spot-mark-size perceptual-radius)
+            :MSIZE (h/food-spot-mark-size perceptual-radius)
             :OPACITY 0.5  ; default is 0.7
             :WIDTH  figure-size
             :HEIGHT figure-size))
@@ -99,4 +100,6 @@
                             "steps per path: " (vec n-steps))))
 
 ;; Now view gridwalk as vega-lite, e.g. with
-;; (oz/view! gridwalk)
+;(require '[oz.core :as oz])
+;(oz/start-server!)
+;(oz/view! gridwalk)

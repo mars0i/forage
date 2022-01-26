@@ -7,6 +7,8 @@
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [org.apache.commons/commons-math3 "3.6.1"]
                  [mars0i/masonclj "0.2.0"]
+                 [aerial.hanami "0.17.0"]
+		 [metasoarous/oz "2.0.0-alpha5"]
                  ;[criterium "0.4.6"]
                  [mason "20"] ; 
                  ;; Libs that MASON wants and can be gotten from maven.org, so they don't need to be in my lib dir:
