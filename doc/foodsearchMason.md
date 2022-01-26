@@ -1,4 +1,4 @@
-footnotes.md
+foodsearchMason.md
 ===
 
 I want to use MASON's `Continuous2D` (or possibly the grid version of
@@ -7,16 +7,41 @@ it) to place and look up food.
 Afaik, I don't need to set up a whole MASON Sim and GUI class
 superstructure to use this.  
 
-See notes in `Continuous2D` javadoc on bucket sizes.  Maybe bucket
-sizes should be equal to the perceptual radius?  Hmm but with randomly
-placed foodspots, is that ideal?  Um have two overlapping different
-`Continuous2D`s?
+See notes in the v20 manual and the `Continuous2D` javadoc on
+bucket/discretizatio sizes.  It might be set as a function of
+perceptual radius, but not equal to that quantity, I think.
+
+Note that in the manual in the section on neighborhood lookup in a
+continuous field, Luke says it's slow.  So (a) I might be able to do
+things to speed it up (not searching when the bucket is empty?); (b)
+it's probably still pretty fast relative to what I need; (c) I could
+go back to working on the algorithms I was developing for a pure
+Clojure food finding method.
+
+(But if it's fast enough, it's better than specialized, possibly more
+efficient grid-oriented algorithms, because using Continuous2D
+generalizes trivially to random foodspots.)
 
 ---
 
-I suppose that what I will do is run through the points on a line,
-checking for nearby foodspots.  This is like a walk in time, but without
-the constraint to timestep it.
+With Continuous2D, I suppose that what I will do is run through the
+points on a line, checking for nearby foodspots.  This is like a walk in
+time, but without the constraint to timestep it.  (This is what I called
+a "sausage algorithm" in some earlier notes.)
+
+Note that when you find a foodspot, and then step, and find another
+one, you have to check its identity to make sure you're not just
+counting the same one twice.
+
+	For rectangular grid located foodspots, this can be sped up
+	like this:
+
+		let msep be the separation between foodspots scaled by
+		the slope m of the line.
+
+		When food is found, skip to curr point + msep (or a
+		little less), and then start searching again.  Because 
+		there will be no new foodspots in between.
 
 But then it's not really continuous: I'd have to step through points on
 the line in increments.  That would be mostly OK, though, I think.  The
