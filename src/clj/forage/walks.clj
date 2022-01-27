@@ -9,7 +9,7 @@
 (declare x-zero? y-zero? either-zero? both-zero?)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; RANDOM WALKS
+;; GENERATING RANDOM WALKS
 
 (defn step-vector-fn
   "Returns a function of no arguments that returns a random mathematical 
@@ -102,3 +102,21 @@
   (lazy-seq 
     (let [nextpt (next-walk-stop (first step-vectors) prevpt)]
       (cons prevpt (walk-stops nextpt (rest step-vectors))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; FINDING FOOD
+
+;; $y = mx+b = (y2-y1)/(x2-x1) x + b$
+;; $\epsilon^2 = x^2 + y^2$
+;; $x^2 = \epsilon^2 - y^2 = \epsilon^2 - (mx + b)^2$
+;; $= \epsilon^2 - (m^2 x^2 + 2mbx + b^2)$.
+;; So $(m^2 + 1)x^2 + 2mbx = \epsilon^2 - b^2$.
+;; $= x[(m^2+1)x + 2mb]$
+
+(defn find-next-food
+  [look-fn eps-step [x1 y1] [x2 y2]]
+  (let [m (/ (- x2 x1) (- y2 y1)) ; slope
+        ))
+
+
