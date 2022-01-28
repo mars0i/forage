@@ -21,3 +21,4 @@ pom.xml.asc
 pom.xml.asc
 profiles.clj
 .*.swp
+.clerk
