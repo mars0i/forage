@@ -10,12 +10,13 @@
                  [aerial.hanami "0.17.0"]
 		 [metasoarous/oz "2.0.0-alpha5"]
 
+		 ;[io.github.nextjournal/clerk "0.5.346"]
+		 ;[io.github.nextjournal/clerk "0.4.316"]
+                 ;[com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
+
                  ;[scicloj/notespace "4-alpha-21"] ; SEE REPL-OPTIONS BELOW
                  ;[org.scicloj/tempfiles "1-alpha2"]
                  ;[org.scicloj/kindly "1-alpha3"] ; NOTESPACE?
-
-		 ;[io.github.nextjournal/clerk "0.4.316"]
-                 ;[com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
 
                  ;[criterium "0.4.6"]
 
