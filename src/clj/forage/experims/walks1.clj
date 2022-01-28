@@ -26,7 +26,7 @@
 (def mus [1.000001 2 2.2 3])  ; mu near 1: decimal digits have big effect on speed
 ; (def mus [2])
 
-(def maxpathlen 2000)
+(def maxpathlen 3000)
 (def trunclen 2000)
 (def perceptual-radius 5) 
 (def food-distance 300)

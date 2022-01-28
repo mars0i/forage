@@ -45,4 +45,4 @@
                   (w/step-vector-fn rng dist 1 trunclen))))
 
 ;; Corresponding path of coordinates:
-(def stop-seqs (w/walk-stops [0 0] step-seq))
+(def stop-seq (w/walk-stops [0 0] step-seq))
