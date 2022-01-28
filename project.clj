@@ -6,12 +6,16 @@
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [org.apache.commons/commons-math3 "3.6.1"]
-                 [mars0i/masonclj "0.2.0"]
+                 ;[mars0i/masonclj "0.2.0"]
                  [aerial.hanami "0.17.0"]
 		 [metasoarous/oz "2.0.0-alpha5"]
 
-		 [io.github.nextjournal/clerk "0.4.316"]
-                 [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
+                 ;[scicloj/notespace "4-alpha-21"] ; SEE REPL-OPTIONS BELOW
+                 ;[org.scicloj/tempfiles "1-alpha2"]
+                 ;[org.scicloj/kindly "1-alpha3"] ; NOTESPACE?
+
+		 ;[io.github.nextjournal/clerk "0.4.316"]
+                 ;[com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
 
                  ;[criterium "0.4.6"]
 
@@ -21,12 +25,17 @@
                  [com.lowagie/itext "1.2.3"] ; version that comes with MASON. Not in maven.org: [com.lowagie/itext "1.2"] 
                  [org.jfree/jcommon "1.0.21"]
                  [org.jfree/jfreechart "1.0.17"]
-                 [javax.media/jmf "2.1.1e"]]
+                 [javax.media/jmf "2.1.1e"]
+                 ]
 
-  :repl-options {:init-ns forage.core}
+  ;; NOTESPACE:
+  ;:repl-options {:nrepl-middleware [scicloj.notespace.v4.nrepl/middleware]}
+
+  ;:repl-options {:init-ns forage.core}
   
   ;:global-vars {*warn-on-reflection* true}
   ;:jvm-opts ["-Xms2g"]
+
   :source-paths ["src/clj"]
 
   ;:aot [forage.Sim forage.GUI]

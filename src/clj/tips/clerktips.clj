@@ -1,6 +1,24 @@
 (ns tips.clerk
     (:require 
-      [nextjournal.clerk :as clerk]))
+      [nextjournal.clerk :as clerk]
+      [taoensso.nippy :as nippy]))
+
+;; If clerk is turning functions into maps, exit repl, clear .cache, 
+;; and try putting this at top of your file:
+(comment
+  (alter-var-root #'nippy/*freeze-serializable-allowlist* (fn [_] "allow-and-record")) 
+  (alter-var-root  #'nippy/*thaw-serializable-allowlist* (fn [_] "allow-and-record")) 
+  (nippy/get-recorded-serializable-classes)
+)
+
+;; Or this:
+(comment
+ (alter-var-root (var taoensso.nippy/*thaw-serializable-allowlist*)
+                 clojure.set/union
+                 #{"org.apache.commons.math3.random.*"
+                   "org.apache.commons.math3.distribution.*"})
+)
+
 
 ;; HOW TO START CLERK:
 (comment
