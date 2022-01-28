@@ -3,14 +3,7 @@
 (ns forage.walks
     (:require [utils.math :as m]
               [utils.random :as r]
-              [clojure.math.numeric-tower :as nt]
-              [nextjournal.clerk :as clerk]
-              [taoensso.nippy :as nippy]
-            ))
-
-(alter-var-root #'nippy/*freeze-serializable-allowlist* (fn [_] "allow-and-record")) 
-(alter-var-root #'nippy/*thaw-serializable-allowlist* (fn [_] "allow-and-record")) 
-(nippy/get-recorded-serializable-classes)
+              [clojure.math.numeric-tower :as nt]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
