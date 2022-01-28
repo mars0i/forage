@@ -10,9 +10,9 @@
                  [aerial.hanami "0.17.0"]
 		 [metasoarous/oz "2.0.0-alpha5"]
 
-		 ;[io.github.nextjournal/clerk "0.5.346"]
 		 ;[io.github.nextjournal/clerk "0.4.316"]
-                 ;[com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
+		 [io.github.nextjournal/clerk "0.5.346"]
+                 [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
 
                  ;[scicloj/notespace "4-alpha-21"] ; SEE REPL-OPTIONS BELOW
                  ;[org.scicloj/tempfiles "1-alpha2"]
@@ -22,6 +22,7 @@
 
                  [mason "20"] ; 
                  ;; Libs that MASON wants and can be gotten from maven.org, so they don't need to be in my lib dir:
+                 ;; See comment about local Maven install below.
                  [org.beanshell/bsh "2.0b4"]
                  [com.lowagie/itext "1.2.3"] ; version that comes with MASON. Not in maven.org: [com.lowagie/itext "1.2"] 
                  [org.jfree/jcommon "1.0.21"]
@@ -29,18 +30,15 @@
                  [javax.media/jmf "2.1.1e"]
                  ]
 
-  ;; NOTESPACE:
+  :source-paths ["src/clj"]
+
+  ;; NEEDED FOR NOTESPACE:
   ;:repl-options {:nrepl-middleware [scicloj.notespace.v4.nrepl/middleware]}
 
   ;:repl-options {:init-ns forage.core}
-  
   ;:global-vars {*warn-on-reflection* true}
   ;:jvm-opts ["-Xms2g"]
-
-  :source-paths ["src/clj"]
-
   ;:aot [forage.Sim forage.GUI]
-  
   ; SEE pasta/project.clj for other lines here I might want to include
 
 
