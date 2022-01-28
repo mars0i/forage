@@ -119,7 +119,16 @@
 ;; be translated into x and y shifts:
 ;;
 ;; We can derive the amount to shift along the x and y axes like this:
-;; $\epislon^2 = x^2 + y^2$
+;; $\epsilon^2 = x^2 + y^2$
+;; and
+;; $y = mx + b$
+;; so
+;; $\epsilon^2  =  x^2 + (mx + b)^2  =  x^2 + m^2x^2 +2mbx + b^2$
+;; or:
+;; $0 = (1+m^2)x^2 + 2mbx + (b^2 - \epsilon^2)$
+;; So by the quadratic equation,
+;; $x = (2mb +- \sqrt{4m^2b^2 - 4(b^2-\epsilon^2)})/2$
+;; $  = (mb +- \sqrt{m^2b^2 - b^2 + \epsilon^2}$
 
 
 (defn find-next-food
