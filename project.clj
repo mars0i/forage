@@ -8,11 +8,13 @@
                  [org.apache.commons/commons-math3 "3.6.1"]
                  ;[mars0i/masonclj "0.2.0"]
                  [aerial.hanami "0.17.0"]
-		 [metasoarous/oz "2.0.0-alpha5"]
 
 		 ;[io.github.nextjournal/clerk "0.4.316"]
 		 [io.github.nextjournal/clerk "0.5.346"]
                  [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
+
+		;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
+		 [metasoarous/oz "2.0.0-alpha5"]
 
                  ;[scicloj/notespace "4-alpha-21"] ; SEE REPL-OPTIONS BELOW
                  ;[org.scicloj/tempfiles "1-alpha2"]
