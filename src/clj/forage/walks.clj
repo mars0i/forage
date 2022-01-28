@@ -4,13 +4,13 @@
     (:require [utils.math :as m]
               [utils.random :as r]
               [clojure.math.numeric-tower :as nt]
-              [nextjournal.clerk :as clerk]
-              [taoensso.nippy :as nippy]
+              ;[nextjournal.clerk :as clerk]
+              ;[taoensso.nippy :as nippy]
             ))
 
-(alter-var-root #'nippy/*freeze-serializable-allowlist* (fn [_] "allow-and-record")) 
-(alter-var-root  #'nippy/*thaw-serializable-allowlist* (fn [_] "allow-and-record")) 
-(nippy/get-recorded-serializable-classes)
+;(alter-var-root #'nippy/*freeze-serializable-allowlist* (fn [_] "allow-and-record")) 
+;(alter-var-root #'nippy/*thaw-serializable-allowlist* (fn [_] "allow-and-record")) 
+;(nippy/get-recorded-serializable-classes)
 
 
 (declare x-zero? y-zero? either-zero? both-zero?)
@@ -134,6 +134,7 @@
 (defn find-next-food
   [look-fn eps-step [x1 y1] [x2 y2]]
   (let [m (/ (- x2 x1) (- y2 y1)) ; slope
+        ]
         ))
 
 
