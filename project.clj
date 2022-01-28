@@ -43,11 +43,11 @@
   
   ; SEE pasta/project.clj for other lines here I might want to include
 
-)
-
 
   ;; TO INSTALL A NON-MAVENIZED JAR LOCALLY, uncomment lein-localrepo
   ;; below, run 
   ;;    lein localrepo install <jarfilename> <libname> <version num>'
-  ; :plugins [[lein-localrepo "0.5.3"]
-  ;           [lein-expand-resource-paths "0.0.1"]] ; allows wildcards in resource-paths (https://github.com/dchelimsky/lein-expand-resource-paths)
+  ;:plugins [[lein-localrepo "0.5.3"]
+  ;          [lein-expand-resource-paths "0.0.1"]] ; allows wildcards in resource-paths (https://github.com/dchelimsky/lein-expand-resource-paths)
+
+)
