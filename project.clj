@@ -9,7 +9,12 @@
                  [mars0i/masonclj "0.2.0"]
                  [aerial.hanami "0.17.0"]
 		 [metasoarous/oz "2.0.0-alpha5"]
+
+		 [io.github.nextjournal/clerk "0.4.316"]
+                 [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
+
                  ;[criterium "0.4.6"]
+
                  [mason "20"] ; 
                  ;; Libs that MASON wants and can be gotten from maven.org, so they don't need to be in my lib dir:
                  [org.beanshell/bsh "2.0b4"]
