@@ -87,6 +87,8 @@
         nexty (+ prevy vecy)]
     [nextx nexty]))
 
+;; FIXME: when step-vectors is finite, tries to go past end and
+;; generates an error.  I think it's the use of 'first'.
 (defn walk-stops
   "Generates a (possibly infinite) sequence of next points from an 
   initial-point and a (possibly infinite) sequence of [direction, length]
