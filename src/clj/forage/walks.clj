@@ -4,16 +4,13 @@
     (:require [utils.math :as m]
               [utils.random :as r]
               [clojure.math.numeric-tower :as nt]
-              ;[nextjournal.clerk :as clerk]
-              ;[taoensso.nippy :as nippy]
+              [nextjournal.clerk :as clerk]
+              [taoensso.nippy :as nippy]
             ))
 
-;(alter-var-root #'nippy/*freeze-serializable-allowlist* (fn [_] "allow-and-record")) 
-;(alter-var-root #'nippy/*thaw-serializable-allowlist* (fn [_] "allow-and-record")) 
-;(nippy/get-recorded-serializable-classes)
-
-
-(declare x-zero? y-zero? either-zero? both-zero?)
+(alter-var-root #'nippy/*freeze-serializable-allowlist* (fn [_] "allow-and-record")) 
+(alter-var-root #'nippy/*thaw-serializable-allowlist* (fn [_] "allow-and-record")) 
+(nippy/get-recorded-serializable-classes)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
@@ -114,27 +111,78 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FINDING FOOD
 
-;; eps-step, call it $\epsilon$ is the amount to shift along a path to 
-;; check whether there is food visible from the next spot.  This has to
-;; be translated into x and y shifts:
+(defn slope-from-coords
+  "Given a pair of points on a line, return its slope."
+  [[x1 y1] [x2 y2]]
+  (/ (- x2 x1) (- y2 y1)))
+
+(defn intercept-from-slope
+  "Given a slope an a point on a line, return its x intercept."
+  [slope [x y]]
+  (- y (* slope x)))
+
+;; `xy-shifts`:
 ;;
-;; We can derive the amount to shift along the x and y axes like this:
+;; Let $\epsilon$ be the amount to shift along a path to 
+;; check whether there is food visible from the next spot.  This has to
+;; be translated into $x$ and $y$ shifts:
+;;
+;; We can derive the amount to shift along the x and y axes from these:
+;;
 ;; $\epsilon^2 = x^2 + y^2$
-;; and
-;; $y = mx + b$
-;; so
-;; $\epsilon^2  =  x^2 + (mx + b)^2  =  x^2 + m^2x^2 +2mbx + b^2$
-;; or:
-;; $0 = (1+m^2)x^2 + 2mbx + (b^2 - \epsilon^2)$
-;; So by the quadratic equation,
-;; $x = (2mb +- \sqrt{4m^2b^2 - 4(b^2-\epsilon^2)})/2$
-;; $  = (mb +- \sqrt{m^2b^2 - b^2 + \epsilon^2}$
+;; &nbsp;&nbsp; and &nbsp;&nbsp; 
+;; $y = mx + b$ .
+;;
+;; Therefore
+;;
+;; $\epsilon^2 \;\;=\;\;  x^2 + (mx + b)^2 \;\;=\;\; x^2 + m^2x^2 +2mbx + b^2$,
+;; &nbsp; so:
+;;
+;; $0 = (1+m^2)x^2 + 2mbx + (b^2 - \epsilon^2)$ .
+;;
+;; Then by the quadratic equation,
+;;
+;; $x = \frac{-2mb \pm \sqrt{4m^2b^2 - 4(b^2-\epsilon^2)}}{2}$ 
+;; $= -mb \pm \sqrt{m^2b^2 - b^2 + \epsilon^2}$ .
+;; 
+;; In the function definition below, $\epsilon$ is called "shift", and 
+;; $m$ and $b$ are called "slope" and "intercept", respectively.
+(defn xy-shifts
+  "Given an incremental shift (vector) in the direction of a line specified 
+  by its slope and intercept, return a pair [x-shift y-shift] that give
+  the shifts in the x and y directions that would produce the desired shift
+  (i.e. the vectors along x and y that would sum to the desired shift)."
+  [shift slope intercept]
+  (let [-mb (- (* slope intercept))
+        -b2 (- (* intercept intercept))
+        eps2 (* shift shift)
+        part2 (nt/sqrt (+ (* -mb -mb) -b2 eps2))
+        x-shift (+ -mb part2) ; TODO Why plus and not minus?
+        y-shift (+ (* slope x-shift) intercept)]
+    [x-shift y-shift]))
 
-
+;; Possibly store slope and/or intercept earlier; they were available
+;; when the line pair was created:
 (defn find-next-food
-  [look-fn eps-step [x1 y1] [x2 y2]]
-  (let [m (/ (- x2 x1) (- y2 y1)) ; slope
-        ]
-        ))
+  "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
+  and a small shift length, starts at [x1 y1] and incrementally checks
+  points along the line segment at every shift points, checking to see
+  whether look-fn returns one or more foodspot locations from that point.
+  look-fn must return a falsey value if no foodspots are found.
+  If foodspots are found, stops searching and returns them.  If no foodspots
+  are found by the time [x2 y2] is checked, returns nil."
+  [look-fn shift [x1 y1] [x2 y2]]
+  (let [slope (slope-from-coords [x1 y1] [x2 y2])
+        intercept (intercept-from-slope slope [x1 y1])
+        [x-shift y-shift] (xy-shifts shift slope intercept)]
+    (loop [x x1, y y1]
+      (let [food (look-fn x y)]
+        (cond food food
+              (and (= x x2) (= y y2))  nil ; last point in segment
+              :else (let [xsh (+ x x-shift)
+                          ysh (+ y y-shift)]
+                      ;; [x2 y2] should be checked even if shift would jump it:
+                      (recur (if (> xsh x2) x2 xsh)
+                             (if (> ysh y2) y2 ysh))))))))
 
 
