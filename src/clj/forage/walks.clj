@@ -3,7 +3,14 @@
 (ns forage.walks
     (:require [utils.math :as m]
               [utils.random :as r]
-              [clojure.math.numeric-tower :as nt]))
+              [clojure.math.numeric-tower :as nt]
+              [nextjournal.clerk :as clerk]
+              [taoensso.nippy :as nippy]
+            ))
+
+(alter-var-root #'nippy/*freeze-serializable-allowlist* (fn [_] "allow-and-record")) 
+(alter-var-root  #'nippy/*thaw-serializable-allowlist* (fn [_] "allow-and-record")) 
+(nippy/get-recorded-serializable-classes)
 
 
 (declare x-zero? y-zero? either-zero? both-zero?)
@@ -107,12 +114,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FINDING FOOD
 
-;; $y = mx+b = (y2-y1)/(x2-x1) x + b$
-;; $\epsilon^2 = x^2 + y^2$
-;; $x^2 = \epsilon^2 - y^2 = \epsilon^2 - (mx + b)^2$
-;; $= \epsilon^2 - (m^2 x^2 + 2mbx + b^2)$.
-;; So $(m^2 + 1)x^2 + 2mbx = \epsilon^2 - b^2$.
-;; $= x[(m^2+1)x + 2mb]$
+;; eps-step, call it $\epsilon$ is the amount to shift along a path to 
+;; check whether there is food visible from the next spot.  This has to
+;; be translated into x and y shifts:
+;;
+;; We can derive the amount to shift along the x and y axes like this:
+;; $\epislon^2 = x^2 + y^2$
+
 
 (defn find-next-food
   [look-fn eps-step [x1 y1] [x2 y2]]
