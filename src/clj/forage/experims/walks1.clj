@@ -15,7 +15,7 @@
 ;; HANAMI SPACE PARAMETERS:
 
 (def quadrant-size 1000)
-(def figure-size 700)
+(def plot-dim 700)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DATA PARAMETERS:
@@ -78,28 +78,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANAMI/VEGA-LITE
 
-(def walk-plot (h/vega-walk-plot quadrant-size figure-size walks))
+(def gridwalk-plot (h/vega-gridwalk-plot
+                     (h/vega-foodgrid-plot quadrant-size plot-dim
+                                           food-distance perceptual-radius)
+                     (h/vega-walk-plot quadrant-size plot-dim walks)
+                     perceptual-radius maxpathlen powerlaw-scale n-steps))
 
-(def foodgrid
-  (hc/xform ht/point-chart 
-            :DATA (h/make-foodgrid food-distance quadrant-size quadrant-size) 
-            :X "x"
-            :Y "y"
-            :COLOR "type"
-            :MSIZE (h/food-spot-mark-size perceptual-radius)
-            :OPACITY 0.5  ; default is 0.7
-            :WIDTH  figure-size
-            :HEIGHT figure-size))
-
-(def gridwalk (hc/xform
-                ht/layer-chart
-                :LAYER [foodgrid walk-plot]
-                :TITLE (str "perceptual radius = " perceptual-radius ";  "
-                            "max path len = " maxpathlen ";  "
-                            "scale = " powerlaw-scale ";  "
-                            "steps per path: " (vec n-steps))))
 
 ;; Now view gridwalk as vega-lite, e.g. with
 ;(require '[oz.core :as oz])
 ;(oz/start-server!)
-;(oz/view! gridwalk)
+;(oz/view! gridwalk-plot)
