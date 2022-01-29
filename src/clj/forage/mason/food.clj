@@ -3,13 +3,11 @@
              [sim.util Double2D]) ; Bag
     (:require [forage.food :as f]))
 
-;; In the MASON 20 manual, Sean Luke recommends storing an object's
-;; coordinates within it so that you don't have to look up the coordinates
-;; in a Continuous2D if you have the object in hand.  I don't think there
-;; will be such a need with Foodspots, but it's no big deal to store
-;; their coordinates.  Also, I don't initially vary nutritiousness of
-;; foodpots, but I can imagine this might be worth varying later.
-(deftype Foodspot [x y nutritiousness])
+(deftype Foodspot [x y])
+
+(defn foodspot-coordinates
+  [foodspot]
+  [(.x foodspot) (.y foodspot)])
 
 (defn add-foodspots
   "Given an env which is a MASON Continuous2D, adds Foodspots to it at 
@@ -17,7 +15,7 @@
   will be set to 1."
   [env locs]
   (doseq [[x y] locs]
-     (.setObjectLocation env (->Food x y 1) (Double2D. x y))))
+     (.setObjectLocation env (->Foodspot x y) (Double2D. x y))))
 
 (defn make-env
   "Returns a MASON Continuous2D to function as a square environment in 
@@ -35,9 +33,9 @@
      env)))
 
 (defn perceptible-foodspots
-  "Returns a sequence of foodspots within perc-radius of (x,y), or nil 
-  if there are none."
+  "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
+  or nil if there are none."
   [env perc-radius [x y]]
-  (seq (.getNeighborsExactlyWithinDistance env
-                                           (Double2D. x y)
-                                           perc-radius)))
+  (seq (map foodspot-coordinates   ; seq turns () into nil
+            (.getNeighborsExactlyWithinDistance env (Double2D. x y)
+                                                perc-radius))))
