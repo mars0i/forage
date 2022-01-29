@@ -3,11 +3,18 @@
              [sim.util Double2D]) ; Bag
     (:require [forage.food :as f]))
 
-(deftype Food [x y nutrients])
+;; In the MASON 20 manual, Sean Luke recommends storing an object's
+;; coordinates within it so that you don't have to look up the coordinates
+;; in a Continuous2D if you have the object in hand.  I don't think there
+;; will be such a need with Foodspots, but it's no big deal to store
+;; their coordinates.  Also, I don't initially vary nutritiousness of
+;; foodpots, but I can imagine this might be worth varying later.
+(deftype Foodspot [x y nutritiousness])
 
 (defn add-foodspots
-  "Add foodspots at coordinates listed in locs to env, which should
-  be a MASON Continuous2D.  nutrients will be set to 1."
+  "Given an env which is a MASON Continuous2D, adds Foodspots to it at 
+  coordinates listed in locs.  The nutritiousness field of each Foodspot
+  will be set to 1."
   [env locs]
   (doseq [[x y] locs]
      (.setObjectLocation env (->Food x y 1) (Double2D. x y))))
