@@ -127,7 +127,7 @@
        (f/centerless-rectangular-grid sep quadrant-width quadrant-height))))
 
 (defn vega-foodgrid-plot
-  [food-distance quadrant-size plot-dim perc-radius]
+  [quadrant-size plot-dim food-distance perc-radius]
   (hc/xform ht/point-chart 
             :DATA (make-foodgrid food-distance quadrant-size quadrant-size) 
             :X "x"
