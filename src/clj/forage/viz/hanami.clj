@@ -90,17 +90,17 @@
   [[x y]]
   {"x" x, "y" y, "type" "food"})
 
-(defn food-spot-mark-size
+(defn foodspot-mark-size
   "Given a perceptual radius, generates the corresponding dimension for
   use as a Hanami/Vega-Lite mark size for a circle."
   [perc-radius]
   (* m/pi perc-radius perc-radius))
 
 ;; DEPRECATED--I should define food spots in absolute dimensions instead.
-;; See space/food-spot-size.
+;; See space/foodspot-size.
 ;; 
 ;; If I specify perc radius in units that specify quadrants (ticks),
-;; and 2*quadrant is mapped to figure-size (width, height):
+;; and 2*quadrant is mapped to plot-dim (width, height):
 ;; 
 ;; perc-rad/(2*quadrant-size) is the percentage of the whole width or
 ;; length that's the radius.
@@ -110,7 +110,7 @@
 ;; 
 ;; i.e. mark size 
 ;; $= \pi r^2 = \pi$ (figures-size * (perc-rad / (2 quad-size))^2
-(defn old-food-spot-mark-size
+(defn old-foodspot-mark-size
   [quadrant-sz figure-sz perc-radius]
   (let [perceptual-ratio (/ perc-radius quadrant-sz 2)
         pixel-ratio (* perceptual-ratio figure-sz)]
@@ -125,3 +125,25 @@
   ([sep quadrant-width quadrant-height]
   (map make-foodspot 
        (f/centerless-rectangular-grid sep quadrant-width quadrant-height))))
+
+(defn vega-foodgrid-plot
+  [food-distance quadrant-size plot-dim perc-radius]
+  (hc/xform ht/point-chart 
+            :DATA (make-foodgrid food-distance quadrant-size quadrant-size) 
+            :X "x"
+            :Y "y"
+            :COLOR "type"
+            :MSIZE (foodspot-mark-size perc-radius)
+            :OPACITY 0.5  ; default is 0.7
+            :WIDTH  plot-dim
+            :HEIGHT plot-dim))
+
+(defn vega-gridwalk-plot
+  [foodgrid-plot walk-plot perc-radius maxpathlen powerlaw-scale n-steps]
+  (hc/xform
+    ht/layer-chart
+    :LAYER [foodgrid-plot walk-plot]
+    :TITLE (str "perceptual radius = " perc-radius ";  "
+                "max path len = " maxpathlen ";  "
+                "scale = " powerlaw-scale ";  "
+                "steps per path: " (vec n-steps))))
