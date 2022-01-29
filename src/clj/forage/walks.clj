@@ -175,18 +175,21 @@
 (defn find-next-food
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
-  points along the line segment at every shift points, checking to see
-  whether look-fn returns one or more foodspot locations from that point.
-  look-fn must return a falsey value if no foodspots are found.
-  If foodspots are found, stops searching and returns them.  If no foodspots
-  are found by the time [x2 y2] is checked, returns nil."
+  points along the line segment at every shift length locations, checking 
+  to see whether look-fn returns one or more foodspot locations from the 
+  perspective of that location.  look-fn must return a falsey value if no
+  foodspots are found and a collection of foodspot coordinates if they are.
+  If foodspots are found, stops searching and returns pair in which the 
+  first element is the foodspot collection, and the second element is the
+  coordinate pair for the location from which they foodspots were seen.
+  If no foodspots are found by the time [x2 y2] is checked, returns nil."
   [look-fn shift [x1 y1] [x2 y2]]
   (let [slope (slope-from-coords [x1 y1] [x2 y2])
         intercept (intercept-from-slope slope [x1 y1])
         [x-shift y-shift] (xy-shifts shift slope intercept)]
     (loop [x x1, y y1]
       (let [food (look-fn x y)]
-        (cond food food
+        (cond food [food [x y]]
               (and (= x x2) (= y y2))  nil ; last point in segment
               :else (let [xsh (+ x x-shift)
                           ysh (+ y y-shift)]
