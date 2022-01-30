@@ -1,4 +1,3 @@
 forage/experims/
 ===
-Directory for experiments using forage functions.  May call
-visualization functions.
+Directory for experiments using forage functions.
