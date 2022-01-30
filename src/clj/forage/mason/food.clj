@@ -5,7 +5,7 @@
 
 (deftype Foodspot [x y])
 
-(defn foodspot-coordinates
+(defn foodspot-coords
   [foodspot]
   [(.x foodspot) (.y foodspot)])
 
@@ -32,10 +32,15 @@
      (add-foodspots env locs)
      env)))
 
-(defn perceptible-foodspots
+(defn perceptible-foodspot-coords
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
   or nil if there are none."
   [env perc-radius [x y]]
-  (seq (map foodspot-coordinates   ; seq turns () into nil
+  (seq (map foodspot-coords   ; seq turns () into nil
             (.getNeighborsExactlyWithinDistance env (Double2D. x y)
                                                 perc-radius))))
+
+(defn all-foodspot-coords
+  "Returns coordinate pairs of all foodspots in environment env."
+  [env]
+  (seq (map foodspot-coords (.getAllOjects env))))
