@@ -11,8 +11,8 @@
 
 ;; TODO let user add to the xform expression instead of Vega-Lite directly
 (defn vega-walk-plot
-  "Constructs a  Vega-Lite random walk plot from data over the range 
-  (2*quadrant-size x 2*quandrant-size), with physical size 
+  "Constructs a Vega-Lite random walk plot from (vega-lite-ified) data
+  over the range (2*quadrant-size x 2*quandrant-size), with physical size 
   plot-dim x plot-dim.  If there are additional Vega-Lite specs
   to add, they can be entered in a map as an additional argument."
   [quadant-size plot-dim data & addl-kvs-map]
