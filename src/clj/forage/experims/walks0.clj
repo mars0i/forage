@@ -2,7 +2,8 @@
     (:require 
       ;[aerial.hanami.common :as hc]
       ;[aerial.hanami.templates :as ht]
-      ;[forage.viz.hanami :as h]
+      [clojure.math.numeric-tower :as nt]
+      [forage.viz.hanami :as h]
       [forage.walks :as w]
       [forage.food :as f]
       [forage.mason.food :as mf]
@@ -10,13 +11,16 @@
       [utils.random :as r]))
 
 
-(def perceptual-radius 5) 
+(def perc-radius 5) 
 (def food-distance 50)
-(def dist-scale 1)
-(def maxpathlen 1000)
+(def env-size 1000)
+(def quadrant-size (nt/round (/ env-size 2)))
+(def powerlaw-scale 1)
+(def maxpathlen 2000)
 (def trunclen 500)
 
-(def env-size 1000)
+;; For Hanami/vega-lite plots:
+(def plot-dim 700)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FOOD
@@ -35,7 +39,7 @@
 (def seed (inc (r/make-int-seed)))
 (def rng (r/make-well19937 seed))
 
-(def dist (r/make-powerlaw rng dist-scale 2))
+(def dist (r/make-powerlaw rng powerlaw-scale 2))
 
 ;; Path of (direction,length) pairs
 (def step-seq (w/vecs-upto-len ; generate a path with total length maxpathlen
@@ -45,3 +49,17 @@
 
 ;; Corresponding path of coordinates:
 (def stop-seq (w/walk-stops [0 0] step-seq))
+
+(def gridwalk-plot (h/vega-gridwalk-plot
+                     (h/vega-foodgrid-plot quadrant-size plot-dim
+                                           food-distance perc-radius)
+                     (h/vega-walk-plot quadrant-size plot-dim 
+                                       (h/add-walk-labels "walk" stop-seq))
+                     perc-radius maxpathlen powerlaw-scale [(count stop-seq)]))
+
+;; Now view gridwalk-plot e.g. with
+(comment
+(require '[oz.core :as oz])
+(oz/start-server!)
+(oz/view! gridwalk-plot)
+)
