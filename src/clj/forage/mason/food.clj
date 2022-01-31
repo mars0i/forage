@@ -46,13 +46,13 @@
   "Returns a sequence of all foodspots in environment env, or nil
   if there are none."
   [env]
-  (seq (.getAllOjects env)))
+  (seq (.getAllObjects env)))
 
 (defn all-foodspot-coords
   "Returns coordinate pairs of all foodspots in environment env, or nil
   if there are none."
   [env]
-  (seq (map foodspot-coords (.getAllOjects env))))
+  (seq (map foodspot-coords (.getAllObjects env))))
 
 (defn perceptible-foodspots
   "Returns a sequence of foodspots within perc-radius of (x,y),
