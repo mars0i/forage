@@ -183,14 +183,15 @@
                              (if (> ysh y2) y2 ysh))))))))
 
 (defn find-food-in-walk
-  "Given a sequence of stops representing a random walk, returns a pair 
-  containing the location from which food is first found and the food object.
-  look-fn is the function used to look for food; shift is the incremental
-  distance used to step along each flight in the sequence."
+  "Given a sequence of stops (coordinate pair) representing a random walk, 
+  returns a pair containing (a) the location from which food is first found 
+  (i.e. a coordinate pair) and (b) the food object.  look-fn is the function
+  used to look for food; shift is the incremental distance used to step along
+  each flight in the sequence."
   [look-fn shift stops]
-  (let [segments (map vector stops (rest stops))]
-    (loop [[start end] (first segments)]
-          ;; FIXME what happens when get to end of the random walk
-          ;; (which should be finite).
-      (or (find-food-in-segment look-fn shift start end)
-          (recur (rest segments))))))
+  (loop [segments (map vector stops (rest stops))]
+    (if segments
+      (let [[start end] (first segments)]
+        (or (find-food-in-segment look-fn shift start end)
+            (recur (rest segments))))
+      nil)))
