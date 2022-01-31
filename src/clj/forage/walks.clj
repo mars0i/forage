@@ -157,7 +157,7 @@
 
 ;; Possibly store slope and/or intercept earlier; they were available
 ;; when the line pair was created:
-(defn find-next-food
+(defn find-food-in-segment
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
   points along the line segment at every shift length locations, checking 
@@ -165,8 +165,8 @@
   perspective of that location.  look-fn must return a falsey value if no
   foodspots are found and a collection of foodspot coordinates if they are.
   If foodspots are found, stops searching and returns pair in which the 
-  first element is the foodspot collection, and the second element is the
-  coordinate pair for the location from which they foodspots were seen.
+  first element is coordinate pair for the location from which they foodspots
+  were seen, and the second element is the the foodspot collection.
   If no foodspots are found by the time [x2 y2] is checked, returns nil."
   [look-fn shift [x1 y1] [x2 y2]]
   (let [slope (slope-from-coords [x1 y1] [x2 y2])
@@ -174,7 +174,7 @@
         [x-shift y-shift] (xy-shifts shift slope intercept)]
     (loop [x x1, y y1]
       (let [food (look-fn x y)]
-        (cond food [food [x y]]
+        (cond food [[x y] food]
               (and (= x x2) (= y y2))  nil ; last point in segment
               :else (let [xsh (+ x x-shift)
                           ysh (+ y y-shift)]
@@ -182,4 +182,15 @@
                       (recur (if (> xsh x2) x2 xsh)
                              (if (> ysh y2) y2 ysh))))))))
 
-
+(defn find-food-in-walk
+  "Given a sequence of stops representing a random walk, returns a pair 
+  containing the location from which food is first found and the food object.
+  look-fn is the function used to look for food; shift is the incremental
+  distance used to step along each flight in the sequence."
+  [look-fn shift stops]
+  (let [segments (map vector stops (rest stops))]
+    (loop [[start end] (first segments)]
+          ;; FIXME what happens when get to end of the random walk
+          ;; (which should be finite).
+      (or (find-food-in-segment look-fn shift start end)
+          (recur (rest segments))))))
