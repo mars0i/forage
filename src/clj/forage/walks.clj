@@ -161,13 +161,17 @@
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
   points along the line segment at every shift length locations, checking 
-  to see whether look-fn returns one or more foodspot locations from the 
-  perspective of that location.  look-fn must return a falsey value if no
-  foodspots are found and a collection of foodspot coordinates if they are.
-  If foodspots are found, stops searching and returns pair in which the 
-  first element is coordinate pair for the location from which they foodspots
-  were seen, and the second element is the the foodspot collection.
-  If no foodspots are found by the time [x2 y2] is checked, returns nil."
+  to see whether look-fn returns a truthy value representing one or more 
+  foodspots from the perspective of that location, or a falsey value if
+  no foodspots are found.  If foodspots are found, this function stops
+  searching and returns a pair in which the first element is the coordinate
+  pair for the location from which the foodspots were perceived, and the
+  second element is the representation of the foodspots found, which may
+  be a collection of foodspot objects, a collection of coordinates of
+  foodspot objects, or some other truthy value.  (The kind of value to be
+  returned depends on the way that this function will be used.)  If no
+  foodspots are found by the time [x2 y2] is checked, this function 
+  returns nil."
   [look-fn shift [x1 y1] [x2 y2]]
   (let [slope (slope-from-coords [x1 y1] [x2 y2])
         intercept (intercept-from-slope slope [x1 y1])
@@ -183,11 +187,20 @@
                              (if (> ysh y2) y2 ysh))))))))
 
 (defn find-food-in-walk
-  "Given a sequence of stops (coordinate pair) representing a random walk, 
-  returns a pair containing (a) the location from which food is first found 
-  (i.e. a coordinate pair) and (b) the food object.  look-fn is the function
-  used to look for food; shift is the incremental distance used to step along
-  each flight in the sequence."
+  "Given a sequence of stops (coordinate pairs) representing a random walk, 
+  and a small shift length, starts at [x1 y1] and uses find-food-in-segment
+  to incrementally check each line segment (defined by pairs of stops)
+  checking to see whether look-fn returns a truthy value representing one
+  or more foodspots from the perspective of that location, or a falsey value 
+  if no foodspots are found.  If foodspots are found, this function stops
+  searching and returns a triple in which the first element is the coordinate
+  pair for the beginning of the segment on which the food was found, the
+  second element is the location from which the foodspots were perceived, 
+  and the third element is the representation of the foodspots found.  (See
+  find-food-in-segment for more on the third element.)  If the input sequence
+  ends without any food being found, the return value will be the coordinates
+  of the last segment, followed by the return value of look-fn, which should
+  be falsey."
   [look-fn shift stops]
   (loop [segments (map vector stops (rest stops))]
     (if segments
