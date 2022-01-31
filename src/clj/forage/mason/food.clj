@@ -3,7 +3,11 @@
              [sim.util Double2D]) ; Bag
     (:require [forage.food :as f]))
 
-(deftype Foodspot [x y])
+(deftype Foodspot [x y nutrition])
+
+(defn make-foodspot
+  ([x y] (->Foodspot x y 1))
+  ([x y nutrition] (->Foodspot x y nutrition)))
 
 (defn foodspot-coords
   [foodspot]
@@ -11,11 +15,14 @@
 
 (defn add-foodspots
   "Given an env which is a MASON Continuous2D, adds Foodspots to it at 
-  coordinates listed in locs.  The nutritiousness field of each Foodspot
-  will be set to 1."
-  [env locs]
-  (doseq [[x y] locs]
-     (.setObjectLocation env (->Foodspot x y) (Double2D. x y))))
+  coordinate pairs listed in locs.  If a sequence of nutrition-values is
+  not provided, the nutrition field of all new foodspots will be set to 1."
+  ([env locs] (add-foodspots env locs (repeat (count locs) 1)))
+  ([env locs nutrition-values]
+   (doseq [[[x y] nutrition] (map vector locs nutrition-values)]
+          (.setObjectLocation env
+                              (->Foodspot x y nutrition)
+                              (Double2D. x y)))))
 
 (defn make-env
   "Returns a MASON Continuous2D to function as a square environment in 
@@ -32,15 +39,31 @@
      (add-foodspots env locs)
      env)))
 
+;; NOTE: I call seq on results below to turn the result into nil
+;; if the result is empty.
+
+(defn all-foodspots
+  "Returns a sequence of all foodspots in environment env, or nil
+  if there are none."
+  [env]
+  (seq (.getAllOjects env)))
+
+(defn all-foodspot-coords
+  "Returns coordinate pairs of all foodspots in environment env, or nil
+  if there are none."
+  [env]
+  (seq (map foodspot-coords (.getAllOjects env))))
+
+(defn perceptible-foodspots
+  "Returns a sequence of foodspots within perc-radius of (x,y),
+  or nil if there are none."
+  [env perc-radius [x y]]
+  (seq (.getNeighborsExactlyWithinDistance env (Double2D. x y)
+                                                perc-radius)))
+
 (defn perceptible-foodspot-coords
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
   or nil if there are none."
   [env perc-radius [x y]]
-  (seq (map foodspot-coords   ; seq turns () into nil
-            (.getNeighborsExactlyWithinDistance env (Double2D. x y)
-                                                perc-radius))))
-
-(defn all-foodspot-coords
-  "Returns coordinate pairs of all foodspots in environment env."
-  [env]
-  (seq (map foodspot-coords (.getAllOjects env))))
+  (seq (map foodspot-coords
+            (perceptible-foodspots env perc-radius [x y]))))
