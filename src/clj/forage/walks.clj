@@ -175,10 +175,10 @@
     (loop [x x1, y y1]
       (let [food (look-fn x y)]
         (cond food [[x y] food]
-              (and (= x x2) (= y y2))  nil ; last point in segment
+              (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
               :else (let [xsh (+ x x-shift)
                           ysh (+ y y-shift)]
-                      ;; [x2 y2] should be checked even if shift would jump it:
+                      ;; [x2 y2] should be checked even if shift would jump it.
                       (recur (if (> xsh x2) x2 xsh)
                              (if (> ysh y2) y2 ysh))))))))
 
