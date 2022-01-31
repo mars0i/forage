@@ -157,7 +157,7 @@
 
 ;; Possibly store slope and/or intercept earlier; they were available
 ;; when the line pair was created:
-(defn find-food-in-segment
+(defn find-food-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
   points along the line segment at every shift length locations, checking 
@@ -169,9 +169,9 @@
   second element is the representation of the foodspots found, which may
   be a collection of foodspot objects, a collection of coordinates of
   foodspot objects, or some other truthy value.  (The kind of value to be
-  returned depends on the way that this function will be used.)  If no
-  foodspots are found by the time [x2 y2] is checked, this function 
-  returns nil."
+  returned depends on look-fun, which should reflect the way that this 
+  function will be used.)  If no foodspots are found by the time [x2 y2]
+  is checked, this function returns nil."
   [look-fn shift [x1 y1] [x2 y2]]
   (let [slope (slope-from-coords [x1 y1] [x2 y2])
         intercept (intercept-from-slope slope [x1 y1])
@@ -186,25 +186,35 @@
                       (recur (if (> xsh x2) x2 xsh)
                              (if (> ysh y2) y2 ysh))))))))
 
+;; In the following function, the reason for returning the start of the
+;; sequence along with the location from which food was found (followed
+;; by info about what was found) is that these are the coordinate pairs 
+;; that specify the final segment in the walk toward food found.  Having
+;; that segment's coordinates allows one to for display it, calculate
+;; its length, etc.  That's also why if food is not found, the function
+;; returns the original coordinates of the last segment.
 (defn find-food-in-walk
   "Given a sequence of stops (coordinate pairs) representing a random walk, 
   and a small shift length, starts at [x1 y1] and uses find-food-in-segment
   to incrementally check each line segment (defined by pairs of stops)
   checking to see whether look-fn returns a truthy value representing one
   or more foodspots from the perspective of that location, or a falsey value 
-  if no foodspots are found.  If foodspots are found, this function stops
-  searching and returns a triple in which the first element is the coordinate
-  pair for the beginning of the segment on which the food was found, the
-  second element is the location from which the foodspots were perceived, 
-  and the third element is the representation of the foodspots found.  (See
+  if no foodspots are found.  The sequence stops must contain at least two
+  coordinate pairs.  If foodspots are found, this function finishes searching 
+  and returns a triple in which the first element is the coordinate pair for 
+  the beginning of the segment on which the food was found, the second 
+  element is the location from which the foodspots were perceived, and the
+  third element is the representation of the foodspots found.  (See
   find-food-in-segment for more on the third element.)  If the input sequence
   ends without any food being found, the return value will be the coordinates
-  of the last segment, followed by the return value of look-fn, which should
+  of the last segment followed by the return value of look-fn, which should
   be falsey."
   [look-fn shift stops]
-  (loop [segments (map vector stops (rest stops))]
-    (if segments
-      (let [[start end] (first segments)]
-        (or (find-food-in-segment look-fn shift start end)
-            (recur (rest segments))))
-      nil)))
+  (loop [segments (partition 2 1 stops)]
+    (let [[start end] (first segments)
+          from-and-foodspots (find-food-in-seg look-fn shift start end)]
+      (if from-and-foodspots
+        (cons start from-and-foodspots) ; found some food
+        (if-let [more (next segments)]
+          (recur more)         ; keep searching
+          [start end nil]))))) ; no food in all segments, so return last seg
