@@ -207,8 +207,7 @@
   third element is the representation of the foodspots found.  (See
   find-food-in-segment for more on the third element.)  If the input sequence
   ends without any food being found, the return value will be the coordinates
-  of the last segment followed by the return value of look-fn, which should
-  be falsey."
+  of the last segment followed by nil."
   [look-fn shift stops]
   (loop [segments (partition 2 1 stops)]
     (let [[start end] (first segments)
