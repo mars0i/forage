@@ -186,6 +186,7 @@
                       (recur (if (> xsh x2) x2 xsh)
                              (if (> ysh y2) y2 ysh))))))))
 
+;; UNNEEDED?  path-until-found seems more useful.
 ;; In the following function, the reason for returning the start of the
 ;; sequence along with the location from which food was found (followed
 ;; by info about what was found) is that these are the coordinate pairs 
@@ -218,14 +219,17 @@
           (recur more)         ; keep searching
           [start end nil]))))) ; no food in all segments, so return last seg
 
-(defn walk-until-food
+(defn path-until-food
   [look-fn shift stops]
-  (let [segments (partition 2 1 stops)]
-    (loop [seg (first segments)
-           segs (next segments)
-           newsegs []]
-      (let [result (find-food-in-seg look-fn shift seg)]
-      (if result
-        (conj newsegs ...; onto old sequence including the previous start
-              )
-        (recur ...))))))
+  (let [stopv (vec stops)
+        numstops (count stops)]
+    (loop [i 0, j 1]
+          (let [start (stopv i)
+                end (stopv j)
+                from-and-foodspots (find-food-in-seg look-fn shift start end)]
+            (if from-and-foodspots
+              (conj (vec (take j stopv))
+                    (first from-and-foodspots))
+              (if (< j numstops)
+                (recur (inc i) (inc j))
+                stops)))))) ; no food in any segment; return entire input
