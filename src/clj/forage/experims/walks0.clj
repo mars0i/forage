@@ -14,7 +14,7 @@
 (def perc-radius 5) 
 (def food-distance 10)
 (def env-size 100)
-(def quadrant-size (nt/round (/ env-size 2)))
+(def quadrant-size (/ env-size 2))
 (def powerlaw-scale 1)
 (def maxpathlen 200)
 (def trunclen 100)
@@ -34,6 +34,7 @@
 ;; WALKS
 
 (def seed (inc (r/make-int-seed)))
+(println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 
 ;; mu=3: Brownian; mu=2: Levy optimal; mu near 1: "ballistic":
@@ -52,7 +53,7 @@
 
 (def walk-with-food (w/path-with-food 
                       (partial mf/perceptible-foodspots env perc-radius)
-                      1
+                      0.1
                       stop-walk))
 
 (def food-walk (first walk-with-food))
@@ -60,13 +61,11 @@
 (println "Made food-walk")
 
 (def gridwalk-plot (h/vega-gridwalk-plot
-                     (h/vega-foodgrid-plot quadrant-size plot-dim
+                     (h/vega-foodgrid-plot env-size plot-dim
                                            food-distance perc-radius)
-                     (h/vega-walk-plot quadrant-size plot-dim 
-                                       (h/add-walk-labels "walk" 
-                                                          ;[[0 0][20 20]]
-                                                          food-walk
-                                                          ))
+                     (h/vega-walk-plot env-size plot-dim 
+                                       (h/add-walk-labels
+                                         "walk" food-walk))
                      perc-radius maxpathlen powerlaw-scale [(count food-walk)]))
 
 ;; Now view gridwalk-plot e.g. with
