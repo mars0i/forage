@@ -1,7 +1,8 @@
 ;; Functions for plotting things in 2D spatial coordinates using Hanami
 ;; and Vega-Lite.
 (ns forage.viz.hanami
-    (:require [aerial.hanami.common :as hc]
+    (:require [clojure.math.numeric-tower :as nt]
+              [aerial.hanami.common :as hc]
               [aerial.hanami.templates :as ht]
               [forage.food :as f]
               [utils.math :as m]))
@@ -90,30 +91,31 @@
   [[x y]]
   {"x" x, "y" y, "type" "food"})
 
-(defn foodspot-mark-size
+(defn new-foodspot-mark-size
   "Given a perceptual radius, generates the corresponding dimension for
   use as a Hanami/Vega-Lite mark size for a circle."
-  [perc-radius]
-  (* m/pi perc-radius perc-radius))
+  [scale perc-radius]
+  (println "foodspot-mark-size:" perc-radius (* m/pi perc-radius perc-radius))
+  (* scale m/pi perc-radius perc-radius))
 
-;; DEPRECATED--I should define food spots in absolute dimensions instead.
-;; See space/foodspot-size.
-;; 
 ;; If I specify perc radius in units that specify quadrants (ticks),
-;; and 2*quadrant is mapped to plot-dim (width, height):
+;; and 2*quadrant is mapped to plot-dim (= width, height):
 ;; 
 ;; perc-rad/(2*quadrant-size) is the percentage of the whole width or
 ;; length that's the radius.
 ;; So multiply this by figure size to get the radius in pixels.
-;; Then $\pi r^2$ is the dot area, so that's what should be the
+;; Then $\pi r^2$ is the dot area, which is what's supposed to be the
 ;; arg to :MSIZE.
 ;; 
 ;; i.e. mark size 
-;; $= \pi r^2 = \pi$ (figures-size * (perc-rad / (2 quad-size))^2
-(defn old-foodspot-mark-size
+;; $= \pi r^2 = \pi$ (figure-size * (perc-rad / (2 quad-size))^2
+;;
+(defn foodspot-mark-size
   [quadrant-sz figure-sz perc-radius]
-  (let [perceptual-ratio (/ perc-radius quadrant-sz 2)
-        pixel-ratio (* perceptual-ratio figure-sz)]
+  (let [env-sz (* 2 quadrant-sz)
+        perceptual-ratio (/ perc-radius env-sz)
+        pixel-ratio (nt/round (* perceptual-ratio figure-sz))]
+    (println "foodspot-mark-size:" perc-radius quadrant-sz figure-sz perceptual-ratio pixel-ratio (* m/pi pixel-ratio pixel-ratio)) ; DEBUG
     (* m/pi pixel-ratio pixel-ratio)))
 
 (defn make-foodgrid
@@ -133,9 +135,10 @@
             :X "x"
             :Y "y"
             :COLOR "type"
-            :MSIZE (foodspot-mark-size perc-radius)
+            :MSIZE (foodspot-mark-size quadrant-size plot-dim perc-radius)
+            ;:MSIZE (foodspot-mark-size 60 perc-radius) ; FIXME number is not permanent
             :OPACITY 0.5  ; default is 0.7
-            :WIDTH  plot-dim
+            :WIDTH  plot-dim   ; dim for plot only; label area isn't included.
             :HEIGHT plot-dim))
 
 (defn vega-gridwalk-plot
