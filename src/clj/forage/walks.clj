@@ -136,11 +136,13 @@
 ;;
 ;; Then by the quadratic equation,
 ;;
-;; $x = \frac{-2mb \pm \sqrt{4m^2b^2 - 4(b^2-\epsilon^2)}}{2}$ 
-;; $= -mb \pm \sqrt{m^2b^2 - b^2 + \epsilon^2}$ .
+;; $x = \frac{-2mb \pm \sqrt{4m^2b^2 - 4(b^2-\epsilon^2)}}{2(1-m^2)}$ 
+;; $= \frac{-mb \pm \sqrt{m^2b^2 - b^2 + \epsilon^2}}{1-m^2}$ .
 ;; 
 ;; In the function definition below, $\epsilon$ is called "shift", and 
 ;; $m$ and $b$ are called "slope" and "intercept", respectively.
+;;
+;; FIXME: now have added division by 1-m^2 from above: is it right?
 (defn xy-shifts
   "Given an incremental shift (vector) in the direction of a line specified 
   by its slope and intercept, return a pair [x-shift y-shift] that give
@@ -151,7 +153,9 @@
         -b2 (- (* intercept intercept))
         eps2 (* shift shift)
         part2 (nt/sqrt (+ (* -mb -mb) -b2 eps2))
-        x-shift (+ -mb part2) ; TODO Why plus and not minus? FIXME
+        numator (+ -mb part2) ; TODO Why plus and not minus? FIXME
+        denomator (- 1 (* slope slope))
+        x-shift (/ numator denomator)
         y-shift (+ (* slope x-shift) intercept)]
     [x-shift y-shift]))
 
