@@ -217,3 +217,15 @@
         (if-let [more (next segments)]
           (recur more)         ; keep searching
           [start end nil]))))) ; no food in all segments, so return last seg
+
+(defn walk-until-food
+  [look-fn shift stops]
+  (let [segments (partition 2 1 stops)]
+    (loop [seg (first segments)
+           segs (next segments)
+           newsegs []]
+      (let [result (find-food-in-seg look-fn shift seg)]
+      (if result
+        (conj newsegs ...; onto old sequence including the previous start
+              )
+        (recur ...))))))
