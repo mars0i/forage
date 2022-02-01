@@ -12,12 +12,12 @@
 
 
 (def perc-radius 5) 
-(def food-distance 50)
-(def env-size 1000)
+(def food-distance 10)
+(def env-size 100)
 (def quadrant-size (nt/round (/ env-size 2)))
 (def powerlaw-scale 1)
-(def maxpathlen 2000)
-(def trunclen 500)
+(def maxpathlen 200)
+(def trunclen 100)
 
 ;; For Hanami/vega-lite plots:
 (def plot-dim 700)
@@ -33,33 +33,45 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
 
-;; \mu = 3: Brownian; \mu = 2: Levy optimal; \mu near 1: "balistic":
-;(def mus [1.000001 2 2.2 3])
-
 (def seed (inc (r/make-int-seed)))
 (def rng (r/make-well19937 seed))
 
+;; mu=3: Brownian; mu=2: Levy optimal; mu near 1: "ballistic":
 (def dist (r/make-powerlaw rng powerlaw-scale 2))
 
-;; Path of (direction,length) pairs
-(def step-seq (w/vecs-upto-len ; generate a path with total length maxpathlen
-                maxpathlen 
-                (repeatedly ; generate walks with steps <= trunclen
-                  (w/step-vector-fn rng dist 1 trunclen))))
+;; Path consisting of (direction,length) pairs
+(def step-walk (w/vecs-upto-len ; generate a path
+                 maxpathlen    ;  with total length maxpathlen
+                 (repeatedly ; generate steps with lengths <= trunclen
+                    (w/step-vector-fn rng dist 1 trunclen))))
 
-;; Corresponding path of coordinates:
-(def stop-seq (w/walk-stops [0 0] step-seq))
+;; Corresponding path of coordinate pairs:
+(def stop-walk (w/walk-stops [0 0] step-walk))
+
+(println "Made stop-walk; starting food-walk construction")
+
+(def walk-with-food (w/path-with-food 
+                      (partial mf/perceptible-foodspots env perc-radius)
+                      1
+                      stop-walk))
+
+(def food-walk (first walk-with-food))
+
+(println "Made food-walk")
 
 (def gridwalk-plot (h/vega-gridwalk-plot
                      (h/vega-foodgrid-plot quadrant-size plot-dim
                                            food-distance perc-radius)
                      (h/vega-walk-plot quadrant-size plot-dim 
-                                       (h/add-walk-labels "walk" stop-seq))
-                     perc-radius maxpathlen powerlaw-scale [(count stop-seq)]))
+                                       (h/add-walk-labels "walk" 
+                                                          ;[[0 0][20 20]]
+                                                          food-walk
+                                                          ))
+                     perc-radius maxpathlen powerlaw-scale [(count food-walk)]))
 
 ;; Now view gridwalk-plot e.g. with
 (comment
-(require '[oz.core :as oz])
-(oz/start-server!)
-(oz/view! gridwalk-plot)
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+  (oz/view! gridwalk-plot)
 )
