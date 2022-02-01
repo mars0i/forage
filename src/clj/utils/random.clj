@@ -7,7 +7,8 @@
            [org.apache.commons.math3.random ; https://commons.apache.org/proper/commons-math
             MersenneTwister Well1024a Well19937c Well44497b]
            [org.apache.commons.math3.distribution 
-            LevyDistribution NormalDistribution ParetoDistribution]))
+            LevyDistribution NormalDistribution ParetoDistribution])
+  (:require [clojure.math.numeric-tower :as nt]))
 
 ;; For the Apache commons PRNGs, most of the functions are documented in
 ;; AbstractRandomGenerator or RandomGenerator.  Most of the same functions
@@ -28,11 +29,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PRNG-CREATION FUNCTIONS
 
+(defonce seed-increment (atom 0))
+
 ;; TODO Is this what I want??
 (defn make-int-seed
   [] 
-  (- (System/currentTimeMillis)
-     (rand-int Integer/MAX_VALUE)))
+  (let [t (System/currentTimeMillis)
+        r (rand-int Integer/MAX_VALUE)
+        i (swap! seed-increment inc)]
+    (int (+ i ; protect against millisecond redundancy
+            (nt/round (* i (/ t r)))))))
 
 
 ;; NOTE: I've decided to flush some initial state from WELL generators,
