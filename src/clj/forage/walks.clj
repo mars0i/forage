@@ -157,7 +157,7 @@
 
 ;; Possibly store slope and/or intercept earlier; they were available
 ;; when the line pair was created:
-(defn find-food-in-seg
+(defn find-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
   points along the line segment at every shift length locations, checking 
@@ -187,6 +187,7 @@
                              (if (> ysh y2) y2 ysh))))))))
 
 ;; UNNEEDED?  path-until-found seems more useful.
+;; otoh, path-until-found throws away the foodspots.
 ;; In the following function, the reason for returning the start of the
 ;; sequence along with the location from which food was found (followed
 ;; by info about what was found) is that these are the coordinate pairs 
@@ -196,9 +197,9 @@
 ;; returns the original coordinates of the last segment.
 (defn find-food-in-walk
   "Given a sequence of stops (coordinate pairs) representing a random walk, 
-  and a small shift length, starts at [x1 y1] and uses find-food-in-segment
-  to incrementally check each line segment (defined by pairs of stops)
-  checking to see whether look-fn returns a truthy value representing one
+  and a small shift length, starts at [x1 y1] and uses find-in-segment
+  to incrementally check each line segment defined by pairs of stops
+  to see whether look-fn returns a truthy value representing one
   or more foodspots from the perspective of that location, or a falsey value 
   if no foodspots are found.  The sequence stops must contain at least two
   coordinate pairs.  If foodspots are found, this function finishes searching 
@@ -206,30 +207,45 @@
   the beginning of the segment on which the food was found, the second 
   element is the location from which the foodspots were perceived, and the
   third element is the representation of the foodspots found.  (See
-  find-food-in-segment for more on the third element.)  If the input sequence
+  find-in-segment for more on the third element.)  If the input sequence
   ends without any food being found, the return value will be the coordinates
   of the last segment followed by nil."
   [look-fn shift stops]
   (loop [segments (partition 2 1 stops)]
     (let [[start end] (first segments)
-          from-and-foodspots (find-food-in-seg look-fn shift start end)]
+          from-and-foodspots (find-in-seg look-fn shift start end)]
       (if from-and-foodspots
         (cons start from-and-foodspots) ; found some food
         (if-let [more (next segments)]
           (recur more)         ; keep searching
           [start end nil]))))) ; no food in all segments, so return last seg
 
+;; At first, I don't expect to use the foodspot info returned,
+;; but I might want to know when no food is found.  So the function has
+;; to have a way to distinguish between running through the entire sequence
+;; and finding nothing, and finding something from the very last point
+;; in the sequence.  So the function also returns the foodspot info or nil
+;; in order to--at least--communicate that difference.
 (defn path-until-food
+  "Given a sequence of stops (coordinate pairs) representing a random walk, 
+  and a small shift length, starts at [x1 y1] and uses find-in-segment
+  to incrementally check each line segment defined by pairs of stops
+  to see whether look-fn returns a truthy value, meaning that foodspots
+  were found.  The sequence stops must contain at least two coordinate pairs.
+  If foodspots are found, returns a pair containing: first, a truncated 
+  sequence of stops in which the last element is the point from which the
+  food was seen, and remaining points have been removed; and second, the
+  foodspot information returned by look-fn.  If no food found in the entire
+  sequence, a pair contining the unchanged sequence and nil is returned."
   [look-fn shift stops]
-  (let [stopv (vec stops)
+  (let [stopsv (vec stops)
         numstops (count stops)]
     (loop [i 0, j 1]
-          (let [start (stopv i)
-                end (stopv j)
-                from-and-foodspots (find-food-in-seg look-fn shift start end)]
-            (if from-and-foodspots
-              (conj (vec (take j stopv))
-                    (first from-and-foodspots))
-              (if (< j numstops)
-                (recur (inc i) (inc j))
-                stops)))))) ; no food in any segment; return entire input
+      (let [from+foodspots (find-in-seg look-fn shift (stopsv i) (stopsv j))]
+        (if from+foodspots               ; all done--found food
+          [(conj (vec (take j stopsv))    ; replace end of stops with point
+                 (first from+foodspots))  ; on path from which food found
+           (second from+foodspots)]
+          (if (< j numstops)
+            (recur (inc i) (inc j))
+            [stops nil])))))) ; no food in any segment; return entire input
