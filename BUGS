@@ -1,0 +1,4 @@
+hanami foodspot size is wrong
+sometimes getting NaN in food searches, never returns
+at least with debug printlns, long horiz or vertical flights are slow since
+foodspots not found--will it be slow in general when foodspots are sparser?
