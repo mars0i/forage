@@ -177,7 +177,7 @@
         intercept (intercept-from-slope slope [x1 y1])
         [x-shift y-shift] (xy-shifts shift slope intercept)]
     (loop [x x1, y y1]
-      (let [food (look-fn x y)]
+      (let [food (look-fn [x y])]
         (cond food [[x y] food]
               (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
               :else (let [xsh (+ x x-shift)
@@ -226,7 +226,7 @@
 ;; and finding nothing, and finding something from the very last point
 ;; in the sequence.  So the function also returns the foodspot info or nil
 ;; in order to--at least--communicate that difference.
-(defn path-until-food
+(defn path-with-food
   "Given a sequence of stops (coordinate pairs) representing a random walk, 
   and a small shift length, starts at [x1 y1] and uses find-in-segment
   to incrementally check each line segment defined by pairs of stops
@@ -234,13 +234,14 @@
   were found.  The sequence stops must contain at least two coordinate pairs.
   If foodspots are found, returns a pair containing: first, a truncated 
   sequence of stops in which the last element is the point from which the
-  food was seen, and remaining points have been removed; and second, the
+  food was seen, and remaining points have been removed, and second, the
   foodspot information returned by look-fn.  If no food found in the entire
   sequence, a pair contining the unchanged sequence and nil is returned."
   [look-fn shift stops]
   (let [stopsv (vec stops)
         numstops (count stops)]
     (loop [i 0, j 1]
+      (println i j) ; DEBUG
       (let [from+foodspots (find-in-seg look-fn shift (stopsv i) (stopsv j))]
         (if from+foodspots               ; all done--found food
           [(conj (vec (take j stopsv))    ; replace end of stops with point
@@ -249,3 +250,9 @@
           (if (< j numstops)
             (recur (inc i) (inc j))
             [stops nil])))))) ; no food in any segment; return entire input
+
+(defn path-until-food
+  [look-fn shift stops]
+  (println "Entering path-until-food")
+  (first (path-with-food look-fn shift stops)))
+
