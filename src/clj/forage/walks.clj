@@ -177,6 +177,7 @@
         intercept (intercept-from-slope slope [x1 y1])
         [x-shift y-shift] (xy-shifts shift slope intercept)]
     (loop [x x1, y y1]
+      (println "find-in-seg:" x y) ; DEBUG
       (let [food (look-fn [x y])]
         (cond food [[x y] food]
               (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
@@ -241,7 +242,7 @@
   (let [stopsv (vec stops)
         numstops (count stops)]
     (loop [i 0, j 1]
-      (println i j) ; DEBUG
+      (println "path-with-food:" i j (stopsv i) (stopsv j)) ; DEBUG
       (let [from+foodspots (find-in-seg look-fn shift (stopsv i) (stopsv j))]
         (if from+foodspots               ; all done--found food
           [(conj (vec (take j stopsv))    ; replace end of stops with point
