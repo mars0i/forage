@@ -151,7 +151,7 @@
         -b2 (- (* intercept intercept))
         eps2 (* shift shift)
         part2 (nt/sqrt (+ (* -mb -mb) -b2 eps2))
-        x-shift (+ -mb part2) ; TODO Why plus and not minus?
+        x-shift (+ -mb part2) ; TODO Why plus and not minus? FIXME
         y-shift (+ (* slope x-shift) intercept)]
     [x-shift y-shift]))
 
@@ -176,16 +176,58 @@
   (let [slope (slope-from-coords [x1 y1] [x2 y2])
         intercept (intercept-from-slope slope [x1 y1])
         [x-shift y-shift] (xy-shifts shift slope intercept)]
+    (println "find-in-seg: slope, x-shift, y-shift:" slope x-shift y-shift) ; DEBUG
     (loop [x x1, y y1]
-      (println "find-in-seg:" x y) ; DEBUG
-      (let [food (look-fn [x y])]
-        (cond food [[x y] food]
-              (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
-              :else (let [xsh (+ x x-shift)
-                          ysh (+ y y-shift)]
-                      ;; [x2 y2] should be checked even if shift would jump it.
-                      (recur (if (> xsh x2) x2 xsh)
-                             (if (> ysh y2) y2 ysh))))))))
+      (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
+        (println "Oh no! find-in-seg is looking for a NaN:" x y) ; DEBUG
+        (do ; DEBUG
+          (println "find-in-seg:" x y) ; DEBUG
+          (let [food (look-fn [x y])]
+            (cond food [[x y] food]
+                  (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
+                  :else (let [xsh (+ x x-shift)
+                              ysh (+ y y-shift)]
+                          (println "find-in-seg xsh, ysh:" xsh ysh)
+                          ;; [x2 y2] should be checked even if shift would jump it.
+                          (recur (if (> xsh x2) x2 xsh)
+                                 (if (> ysh y2) y2 ysh))))))))))
+
+;; I might not care about the foodspot info returned,
+;; but I might want to know when no food is found.  So the function has
+;; to have a way to distinguish between running through the entire sequence
+;; and finding nothing, and finding something from the very last point
+;; in the sequence.  So the function also returns the foodspot info or nil
+;; in order to--at least--communicate that difference.
+(defn path-with-food
+  "Given a sequence of stops (coordinate pairs) representing a random walk, 
+  and a small shift length, starts at [x1 y1] and uses find-in-segment
+  to incrementally check each line segment defined by pairs of stops
+  to see whether look-fn returns a truthy value, meaning that foodspots
+  were found.  The sequence stops must contain at least two coordinate pairs.
+  If foodspots are found, returns a pair containing: first, a truncated 
+  sequence of stops in which the last element is the point from which the
+  food was seen, and remaining points have been removed, and second, the
+  foodspot information returned by look-fn.  If no food found in the entire
+  sequence, a pair contining the unchanged sequence and nil is returned."
+  [look-fn shift stops]
+  (let [stopsv (vec stops)
+        numstops (count stops)]
+    (flush) ; DEBUG
+    (loop [i 0, j 1]
+      (println "path-with-food:" i j (stopsv i) (stopsv j)) ; DEBUG
+      (let [from+foodspots (find-in-seg look-fn shift (stopsv i) (stopsv j))]
+        (if from+foodspots               ; all done--found food
+          [(conj (vec (take j stopsv))    ; replace end of stops with point
+                 (first from+foodspots))  ; on path from which food found
+           (second from+foodspots)]
+          (if (< j numstops)
+            (recur (inc i) (inc j))
+            [stops nil])))))) ; no food in any segment; return entire input
+
+(defn path-until-food
+  [look-fn shift stops]
+  (println "Entering path-until-food")
+  (first (path-with-food look-fn shift stops)))
 
 ;; UNNEEDED?  path-until-found seems more useful.
 ;; otoh, path-until-found throws away the foodspots.
@@ -220,40 +262,3 @@
         (if-let [more (next segments)]
           (recur more)         ; keep searching
           [start end nil]))))) ; no food in all segments, so return last seg
-
-;; At first, I don't expect to use the foodspot info returned,
-;; but I might want to know when no food is found.  So the function has
-;; to have a way to distinguish between running through the entire sequence
-;; and finding nothing, and finding something from the very last point
-;; in the sequence.  So the function also returns the foodspot info or nil
-;; in order to--at least--communicate that difference.
-(defn path-with-food
-  "Given a sequence of stops (coordinate pairs) representing a random walk, 
-  and a small shift length, starts at [x1 y1] and uses find-in-segment
-  to incrementally check each line segment defined by pairs of stops
-  to see whether look-fn returns a truthy value, meaning that foodspots
-  were found.  The sequence stops must contain at least two coordinate pairs.
-  If foodspots are found, returns a pair containing: first, a truncated 
-  sequence of stops in which the last element is the point from which the
-  food was seen, and remaining points have been removed, and second, the
-  foodspot information returned by look-fn.  If no food found in the entire
-  sequence, a pair contining the unchanged sequence and nil is returned."
-  [look-fn shift stops]
-  (let [stopsv (vec stops)
-        numstops (count stops)]
-    (loop [i 0, j 1]
-      (println "path-with-food:" i j (stopsv i) (stopsv j)) ; DEBUG
-      (let [from+foodspots (find-in-seg look-fn shift (stopsv i) (stopsv j))]
-        (if from+foodspots               ; all done--found food
-          [(conj (vec (take j stopsv))    ; replace end of stops with point
-                 (first from+foodspots))  ; on path from which food found
-           (second from+foodspots)]
-          (if (< j numstops)
-            (recur (inc i) (inc j))
-            [stops nil])))))) ; no food in any segment; return entire input
-
-(defn path-until-food
-  [look-fn shift stops]
-  (println "Entering path-until-food")
-  (first (path-with-food look-fn shift stops)))
-
