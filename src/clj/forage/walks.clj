@@ -108,7 +108,7 @@
 (defn slope-from-coords
   "Given a pair of points on a line, return its slope."
   [[x1 y1] [x2 y2]]
-  (/ (- x2 x1) (- y2 y1)))
+  (/ (- y2 y1) (- x2 x1)))
 
 (defn intercept-from-slope
   "Given a slope and a point on a line, return the line's x intercept."
