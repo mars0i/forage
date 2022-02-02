@@ -138,7 +138,7 @@
             :DATA (make-foodgrid food-distance quadrant-sz quadrant-sz) 
             :X "x"
             :Y "y"
-            :COLOR "type"
+            :COLOR "label"
             :MSIZE (foodspot-mark-size quadrant-sz plot-dim perc-radius)
             ;:MSIZE (foodspot-mark-size 60 perc-radius) ; FIXME number is not permanent
             :OPACITY 0.5  ; default is 0.7
@@ -146,10 +146,10 @@
             :HEIGHT plot-dim))
 
 (defn vega-gridwalk-plot
-  [foodgrid-plot walk-plot perc-radius maxpathlen powerlaw-scale n-steps]
+  [perc-radius maxpathlen powerlaw-scale n-steps foodgrid-plot & walk-plots]
   (hc/xform
     ht/layer-chart
-    :LAYER [foodgrid-plot walk-plot]
+    :LAYER (cons foodgrid-plot walk-plots)
     :TITLE (str "perceptual radius = " perc-radius ";  "
                 "max path len = " maxpathlen ";  "
                 "scale = " powerlaw-scale ";  "
