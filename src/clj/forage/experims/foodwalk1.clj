@@ -1,4 +1,4 @@
-(ns forage.experims.walks0
+(ns forage.experims.foodwalk1
     (:require 
       ;[aerial.hanami.common :as hc]
       ;[aerial.hanami.templates :as ht]
