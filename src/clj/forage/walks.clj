@@ -111,7 +111,7 @@
   (/ (- x2 x1) (- y2 y1)))
 
 (defn intercept-from-slope
-  "Given a slope an a point on a line, return its x intercept."
+  "Given a slope and a point on a line, return the line's x intercept."
   [slope [x y]]
   (- y (* slope x)))
 
