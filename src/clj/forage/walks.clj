@@ -125,7 +125,10 @@
 ;;
 ;; $\epsilon^2 = x^2 + y^2$
 ;; &nbsp;&nbsp; and &nbsp;&nbsp; 
-;; $y = mx + b$ .
+;; $y = mx + b$ ,
+;;
+;; where $\epsilon$ is `shift`, $m$ is `slope`, and $b$ is `intercept`
+;; in the function below.
 ;;
 ;; Therefore
 ;;
@@ -142,8 +145,22 @@
 ;; In the function definition below, $\epsilon$ is called "shift", and 
 ;; $m$ and $b$ are called "slope" and "intercept", respectively.
 ;;
-;; FIXME: now have added division by 1-m^2 from above: is it right?
+;; FIXME **QUESTION:** *Does it matter whether I use plus or minus here 
+;; in the quadratic formula?*
 (defn xy-shifts
+  "Given an incremental shift (vector) in the direction of a line specified 
+  by its slope and intercept, return a pair [x-shift y-shift] that give
+  the shifts in the x and y directions that would produce the desired shift
+  (i.e. the vectors along x and y that would sum to the desired shift)."
+  [shift slope intercept]
+  (let [a (+ 1 (* slope slope))
+        b (* 2 slope intercept)
+        c (- (* intercept intercept) (* shift shift))
+        x-shift (m/quadratic-formula + a b c)
+        y-shift (+ (* slope x-shift) intercept)]
+    [x-shift y-shift]))
+
+(defn OLD-xy-shifts
   "Given an incremental shift (vector) in the direction of a line specified 
   by its slope and intercept, return a pair [x-shift y-shift] that give
   the shifts in the x and y directions that would produce the desired shift
