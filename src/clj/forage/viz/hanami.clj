@@ -91,7 +91,7 @@
   [[x y]]
   {"x" x, "y" y, "type" "food"})
 
-(defn new-foodspot-mark-size
+(defn foodspot-mark-size2
   "Given a perceptual radius, generates the corresponding dimension for
   use as a Hanami/Vega-Lite mark size for a circle."
   [scale perc-radius]
@@ -110,13 +110,32 @@
 ;; i.e. mark size 
 ;; $= \pi r^2 = \pi$ (figure-size * (perc-rad / (2 quad-size))^2
 ;;
-(defn foodspot-mark-size
+(defn foodspot-mark-size1
   [quadrant-sz figure-sz perc-radius]
   (let [env-sz (* 2 quadrant-sz)
         perceptual-ratio (/ perc-radius env-sz)
         pixel-ratio (nt/round (* perceptual-ratio figure-sz))]
     (println "foodspot-mark-size:" perc-radius quadrant-sz figure-sz perceptual-ratio pixel-ratio (* m/pi pixel-ratio pixel-ratio)) ; DEBUG
     (* m/pi pixel-ratio pixel-ratio)))
+
+(defn foodspot-mark-size
+  [quadrant-sz figure-sz perc-radius]
+  (let [env-sz (* 2 quadrant-sz)
+        perceptual-ratio (/ perc-radius env-sz)  ; part of env width subtended by radius
+        pixel-ratio (* perceptual-ratio figure-sz)] ; part of figure width subtended by radius
+    (println "foodspot-mark-size:" perc-radius quadrant-sz figure-sz
+             perceptual-ratio pixel-ratio (* pixel-ratio pixel-ratio)) ; DEBUG
+    (long (* 4 pixel-ratio pixel-ratio)))) ; Vega-Lite confused by BigInt
+
+(defn foodspot-mark-size3
+  [quadrant-sz plot-sz perc-radius]
+  (let [env-sz (* 2 quadrant-sz)
+        bbsz-model-units (* 4 perc-radius perc-radius)
+        bbsz-fract-of-env-sz (/ bbsz-model-units env-sz)
+        bbsz-fract-plot-sz (* bbsz-fract-of-env-sz plot-sz)]
+    (println "foodspot-mark-size:" perc-radius quadrant-sz plot-sz
+             bbsz-model-units bbsz-fract-of-env-sz bbsz-fract-plot-sz)
+    (double bbsz-fract-plot-sz))) ; Vega-Lite confused by BigInts
 
 (defn make-foodgrid
   "Make a sequence of vega-lite food records on coordinates spaced out every 
