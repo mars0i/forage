@@ -187,7 +187,6 @@
       (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
         (println "Oh no! find-in-seg is looking for a NaN:" x y) ; DEBUG
         (do ; DEBUG
-          ;(println "find-in-seg:" x y) ; DEBUG
           (let [food (look-fn [x y])]
             (cond food [[x y] food]
                   (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
