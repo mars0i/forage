@@ -16,7 +16,7 @@
 (def env-size 200)
 (def quadrant-size (/ env-size 2))
 (def powerlaw-scale 1)
-(def maxpathlen 200)
+(def maxpathlen 500)
 (def trunclen 100)
 
 ;; For Hanami/vega-lite plots:
@@ -60,13 +60,18 @@
 
 (println "Made food-walk")
 
+;; ghost walk is the full walk that would have taken place if food wasn't found
 (def gridwalk-plot (h/vega-gridwalk-plot
+                     perc-radius maxpathlen powerlaw-scale [(count stop-walk)
+                                                            (count food-walk)]
                      (h/vega-foodgrid-plot env-size plot-dim
                                            food-distance perc-radius)
                      (h/vega-walk-plot env-size plot-dim 
                                        (h/add-walk-labels
-                                         "walk" food-walk))
-                     perc-radius maxpathlen powerlaw-scale [(count food-walk)]))
+                                         "ghost walk" stop-walk))
+                     (h/vega-walk-plot env-size plot-dim 
+                                       (h/add-walk-labels
+                                         "food walk" food-walk))))
 
 ;; Now view gridwalk-plot e.g. with
 (comment
