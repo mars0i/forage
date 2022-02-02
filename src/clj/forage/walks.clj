@@ -160,22 +160,6 @@
         y-shift (+ (* slope x-shift) intercept)]
     [x-shift y-shift]))
 
-(defn OLD-xy-shifts
-  "Given an incremental shift (vector) in the direction of a line specified 
-  by its slope and intercept, return a pair [x-shift y-shift] that give
-  the shifts in the x and y directions that would produce the desired shift
-  (i.e. the vectors along x and y that would sum to the desired shift)."
-  [shift slope intercept]
-  (let [-mb (- (* slope intercept))
-        -b2 (- (* intercept intercept))
-        eps2 (* shift shift)
-        part2 (nt/sqrt (+ (* -mb -mb) -b2 eps2))
-        numator (+ -mb part2) ; TODO Why plus and not minus? FIXME
-        denomator (- 1 (* slope slope))
-        x-shift (/ numator denomator)
-        y-shift (+ (* slope x-shift) intercept)]
-    [x-shift y-shift]))
-
 ;; Possibly store slope and/or intercept earlier; they were available
 ;; when the line pair was created:
 (defn find-in-seg
