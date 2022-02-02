@@ -12,8 +12,8 @@
 
 
 (def perc-radius 5) 
-(def food-distance 10)
-(def env-size 100)
+(def food-distance 50)
+(def env-size 200)
 (def quadrant-size (/ env-size 2))
 (def powerlaw-scale 1)
 (def maxpathlen 200)
