@@ -88,54 +88,38 @@
        (f/linegrid sep quadrant-width quadrant-height)))
 
 (defn make-foodspot
+  "Given a pair of coordinates, returns a Vega-Lite map with an added
+  label value \"food\"."
   [[x y]]
-  {"x" x, "y" y, "type" "food"})
+  {"x" x, "y" y, "label" "food"})
 
-(defn foodspot-mark-size2
-  "Given a perceptual radius, generates the corresponding dimension for
-  use as a Hanami/Vega-Lite mark size for a circle."
-  [scale perc-radius]
-  (println "foodspot-mark-size:" perc-radius (* m/pi perc-radius perc-radius))
-  (* scale m/pi perc-radius perc-radius))
-
-;; If I specify perc radius in units that specify quadrants (ticks),
-;; and 2*quadrant is mapped to plot-dim (= width, height):
+;; For the Hanami :MSIZE value:
+;; Vega-Lite "mark" sizes--i.e. a circle at a point--are specified
+;; by the *area of the bounding box around the circle*.  The BB's
+;; edges touch the top, bottom, and sides of the circle.  So to
+;; produce a circle with pixel radius p, the area of the BB is
+;; diameter * diameter, since diameter is the length of a side of this
+;; square.  In other words, the mark size is (* 4 radius radius).
 ;; 
-;; perc-rad/(2*quadrant-size) is the percentage of the whole width or
-;; length that's the radius.
-;; So multiply this by figure size to get the radius in pixels.
-;; Then $\pi r^2$ is the dot area, which is what's supposed to be the
-;; arg to :MSIZE.
-;; 
-;; i.e. mark size 
-;; $= \pi r^2 = \pi$ (figure-size * (perc-rad / (2 quad-size))^2
-;;
-(defn foodspot-mark-size1
-  [quadrant-sz figure-sz perc-radius]
-  (let [env-sz (* 2 quadrant-sz)
-        perceptual-ratio (/ perc-radius env-sz)
-        pixel-ratio (nt/round (* perceptual-ratio figure-sz))]
-    (println "foodspot-mark-size:" perc-radius quadrant-sz figure-sz perceptual-ratio pixel-ratio (* m/pi pixel-ratio pixel-ratio)) ; DEBUG
-    (* m/pi pixel-ratio pixel-ratio)))
-
+;; We specify perceptual radius in units defined by the model.  To
+;; translate those into the plot's units, calculate the proportion
+;; of the width (or height) of the model world that the radius of
+;; a perceptual circle takes up, and then multiply that ratio by
+;; width of the plot to get the fraction of the plot width needed for
+;; a mark radius.  Then use that number in (* 4 r r).
 (defn foodspot-mark-size
-  [quadrant-sz figure-sz perc-radius]
-  (let [env-sz (* 2 quadrant-sz)
-        perceptual-ratio (/ perc-radius env-sz)  ; part of env width subtended by radius
-        pixel-ratio (* perceptual-ratio figure-sz)] ; part of figure width subtended by radius
-    (println "foodspot-mark-size:" perc-radius quadrant-sz figure-sz
-             perceptual-ratio pixel-ratio (* pixel-ratio pixel-ratio)) ; DEBUG
-    (long (* 4 pixel-ratio pixel-ratio)))) ; Vega-Lite confused by BigInt
-
-(defn foodspot-mark-size3
+  "Given the width or height of a square model field, the width or height 
+  of a square Vega-Lite plot, and a perceptual radius in model units,
+  returns the Vega-Lite mark size that will produce a perceptual radius
+  circle that is visually correct in a Vega-Lite plot of that width.
+  This value can be used as the value of the Hanami key :MSIZE."
   [quadrant-sz plot-sz perc-radius]
   (let [env-sz (* 2 quadrant-sz)
-        bbsz-model-units (* 4 perc-radius perc-radius)
-        bbsz-fract-of-env-sz (/ bbsz-model-units env-sz)
-        bbsz-fract-plot-sz (* bbsz-fract-of-env-sz plot-sz)]
+        perceptual-ratio (/ perc-radius env-sz)  ; part of env width subtended by radius
+        pixel-ratio (* perceptual-ratio plot-sz)] ; part of figure width subtended by radius
     (println "foodspot-mark-size:" perc-radius quadrant-sz plot-sz
-             bbsz-model-units bbsz-fract-of-env-sz bbsz-fract-plot-sz)
-    (double bbsz-fract-plot-sz))) ; Vega-Lite confused by BigInts
+             perceptual-ratio pixel-ratio (* pixel-ratio pixel-ratio)) ; DEBUG
+    (long (* 4 pixel-ratio pixel-ratio)))) ; Vega-Lite confused by BigInt
 
 (defn make-foodgrid
   "Make a sequence of vega-lite food records on coordinates spaced out every 
