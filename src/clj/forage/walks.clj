@@ -178,23 +178,27 @@
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
   [look-fn shift [x1 y1] [x2 y2]]
+  (println "f-i-s:\nshift,[x1 y1],[x2 y2]:" shift [x1 y1] [x2 y2]) ; DEBUG
   (let [slope (slope-from-coords [x1 y1] [x2 y2])
         intercept (intercept-from-slope slope [x1 y1])
         [x-shift y-shift] (xy-shifts shift slope intercept)]
-    ;(println "find-in-seg: slope, x-shift, y-shift:" slope x-shift y-shift) ; DEBUG
+    (println "slope,x-shift,y-shift:" slope x-shift y-shift) ; DEBUG
     (loop [x x1, y y1]
       ;(print ".") : DEBUG
       (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
         (println "Oh no! find-in-seg is looking for a NaN:" x y) ; DEBUG
         (let [food (look-fn [x y])]
-          (cond food [[x y] food]
-                (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
-                :else (let [xsh (+ x x-shift)
-                            ysh (+ y y-shift)]
-                        ;(println "find-in-seg xsh, ysh:" xsh ysh) ; DEBUG
-                        ;; [x2 y2] should be checked even if shift would jump it.
-                        (recur (if (> xsh x2) x2 xsh)
-                               (if (> ysh y2) y2 ysh)))))))))
+          (cond food            (do (println "found" [x y]) ; DEBUG
+                                  '[[x y] food])
+                (and (= x x2)
+                     (= y y2))  (do (println "didn't find") ; DEBUG
+                                  nil) ; last point. check both: horizontal or vertical lines
+                :else           (let [xsh (+ x x-shift)
+                                      ysh (+ y y-shift)]
+                                  (println "x2,y2,xsh,ysh:" x2 y2 xsh ysh) ; DEBUG
+                                  ;; [x2 y2] should be checked even if shift would jump it.
+                                  (recur (if (> xsh x2) x2 xsh)
+                                         (if (> ysh y2) y2 ysh)))))))))
 
 ;; I might not care about the foodspot info returned,
 ;; but I might want to know when no food is found.  So the function has
@@ -218,7 +222,7 @@
         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
     (flush) ; DEBUG
     (loop [i 0, j 1]
-      (println "path-with-food:" i j (stopsv i) (stopsv j)) ; DEBUG
+      ;(println "path-with-food:" i j (stopsv i) (stopsv j)) ; DEBUG
       (let [from+foodspots (find-in-seg look-fn shift (stopsv i) (stopsv j))]
         (if from+foodspots               ; all done--found food
           [(conj (vec (take j stopsv))    ; replace end of stops with point
