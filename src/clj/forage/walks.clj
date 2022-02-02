@@ -186,16 +186,15 @@
       ;(print ".") : DEBUG
       (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
         (println "Oh no! find-in-seg is looking for a NaN:" x y) ; DEBUG
-        (do ; DEBUG
-          (let [food (look-fn [x y])]
-            (cond food [[x y] food]
-                  (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
-                  :else (let [xsh (+ x x-shift)
-                              ysh (+ y y-shift)]
-                          ;(println "find-in-seg xsh, ysh:" xsh ysh) ; DEBUG
-                          ;; [x2 y2] should be checked even if shift would jump it.
-                          (recur (if (> xsh x2) x2 xsh)
-                                 (if (> ysh y2) y2 ysh))))))))))
+        (let [food (look-fn [x y])]
+          (cond food [[x y] food]
+                (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
+                :else (let [xsh (+ x x-shift)
+                            ysh (+ y y-shift)]
+                        ;(println "find-in-seg xsh, ysh:" xsh ysh) ; DEBUG
+                        ;; [x2 y2] should be checked even if shift would jump it.
+                        (recur (if (> xsh x2) x2 xsh)
+                               (if (> ysh y2) y2 ysh)))))))))
 
 ;; I might not care about the foodspot info returned,
 ;; but I might want to know when no food is found.  So the function has
