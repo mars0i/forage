@@ -13,15 +13,15 @@
 ;; TODO let user add to the xform expression instead of Vega-Lite directly
 (defn vega-walk-plot
   "Constructs a Vega-Lite random walk plot from (vega-lite-ified) data
-  over the range (2*quadrant-size x 2*quandrant-size), with physical size 
+  over the range (2*quadrant-sz x 2*quandrant-sz), with physical size 
   plot-dim x plot-dim.  If there are additional Vega-Lite specs
   to add, they can be entered in a map as an additional argument."
-  [quadant-size plot-dim data & addl-kvs-map]
+  [quadrant-sz plot-dim data & addl-kvs-map]
   (merge
      (-> (hc/xform ht/line-chart
                 :DATA data
-                :XSCALE {"domain" [(m/neg quadant-size) quadant-size]}
-                :YSCALE {"domain" [(m/neg quadant-size) quadant-size]}
+                :XSCALE {"domain" [(- quadrant-sz) quadrant-sz]}
+                :YSCALE {"domain" [(- quadrant-sz) quadrant-sz]}
                 :COLOR "label"
                 :WIDTH  plot-dim
                 :HEIGHT plot-dim)
@@ -133,13 +133,13 @@
        (f/centerless-rectangular-grid sep quadrant-width quadrant-height))))
 
 (defn vega-foodgrid-plot
-  [quadrant-size plot-dim food-distance perc-radius]
+  [quadrant-sz plot-dim food-distance perc-radius]
   (hc/xform ht/point-chart 
-            :DATA (make-foodgrid food-distance quadrant-size quadrant-size) 
+            :DATA (make-foodgrid food-distance quadrant-sz quadrant-sz) 
             :X "x"
             :Y "y"
             :COLOR "type"
-            :MSIZE (foodspot-mark-size quadrant-size plot-dim perc-radius)
+            :MSIZE (foodspot-mark-size quadrant-sz plot-dim perc-radius)
             ;:MSIZE (foodspot-mark-size 60 perc-radius) ; FIXME number is not permanent
             :OPACITY 0.5  ; default is 0.7
             :WIDTH  plot-dim   ; dim for plot only; label area isn't included.

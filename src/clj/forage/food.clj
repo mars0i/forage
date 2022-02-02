@@ -19,9 +19,9 @@
   [sep quadrant-width quadrant-height]
   (let [xmax (inc quadrant-width)
         ymax (inc quadrant-height)
-        neg-xmax (m/neg xmax)
-        neg-ymax (m/neg ymax)
-        neg-sep (m/neg sep)
+        neg-xmax (- xmax)
+        neg-ymax (- ymax)
+        neg-sep (- sep)
         horiz-lines (for [y (range neg-ymax ymax sep)] [[neg-xmax y] [xmax y]])
         vert-lines  (for [x (range neg-xmax xmax sep)] [[x neg-ymax] [x ymax]])]
     (concat horiz-lines vert-lines)))
@@ -35,9 +35,9 @@
   ([sep quadrant-width quadrant-height]
    (let [xmax (inc quadrant-width)
          ymax (inc quadrant-height)
-         neg-xmax (m/neg xmax)
-         neg-ymax (m/neg ymax)
-         neg-sep (m/neg sep)
+         neg-xmax (- xmax)
+         neg-ymax (- ymax)
+         neg-sep (- sep)
          ne-pairs (for [x (range 0 xmax sep)  ; rest excludes 0,0 but
                               y (range 0 ymax sep)] ;  includes 0,1 and 1,0
                              [x y])
