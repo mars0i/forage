@@ -217,7 +217,7 @@
   sequence, a pair contining the unchanged sequence and nil is returned."
   [look-fn shift stops]
   (let [stopsv (vec stops)
-        numstops (count stops)]
+        numstops- (dec (count stops))]
     (flush) ; DEBUG
     (loop [i 0, j 1]
       (println "path-with-food:" i j (stopsv i) (stopsv j)) ; DEBUG
@@ -226,7 +226,7 @@
           [(conj (vec (take j stopsv))    ; replace end of stops with point
                  (first from+foodspots))  ; on path from which food found
            (second from+foodspots)]
-          (if (< j numstops)
+          (if (< j numstops-)
             (recur (inc i) (inc j))
             [stops nil])))))) ; no food in any segment; return entire input
 
