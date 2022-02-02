@@ -180,18 +180,19 @@
   (let [slope (slope-from-coords [x1 y1] [x2 y2])
         intercept (intercept-from-slope slope [x1 y1])
         [x-shift y-shift] (xy-shifts shift slope intercept)]
-    (println "find-in-seg: slope, x-shift, y-shift:" slope x-shift y-shift) ; DEBUG
+    ;(println "find-in-seg: slope, x-shift, y-shift:" slope x-shift y-shift) ; DEBUG
     (loop [x x1, y y1]
+      ;(print ".") : DEBUG
       (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
         (println "Oh no! find-in-seg is looking for a NaN:" x y) ; DEBUG
         (do ; DEBUG
-          (println "find-in-seg:" x y) ; DEBUG
+          ;(println "find-in-seg:" x y) ; DEBUG
           (let [food (look-fn [x y])]
             (cond food [[x y] food]
                   (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
                   :else (let [xsh (+ x x-shift)
                               ysh (+ y y-shift)]
-                          (println "find-in-seg xsh, ysh:" xsh ysh)
+                          ;(println "find-in-seg xsh, ysh:" xsh ysh) ; DEBUG
                           ;; [x2 y2] should be checked even if shift would jump it.
                           (recur (if (> xsh x2) x2 xsh)
                                  (if (> ysh y2) y2 ysh))))))))))
@@ -230,7 +231,6 @@
 
 (defn path-until-food
   [look-fn shift stops]
-  (println "Entering path-until-food")
   (first (path-with-food look-fn shift stops)))
 
 ;; UNNEEDED?  path-until-found seems more useful.
