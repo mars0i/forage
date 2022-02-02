@@ -117,9 +117,10 @@
   (let [env-sz (* 2 quadrant-sz)
         perceptual-ratio (/ perc-radius env-sz)  ; part of env width subtended by radius
         pixel-ratio (* perceptual-ratio plot-sz)] ; part of figure width subtended by radius
-    (println "foodspot-mark-size:" perc-radius quadrant-sz plot-sz
-             perceptual-ratio pixel-ratio (* pixel-ratio pixel-ratio)) ; DEBUG
     (long (* 4 pixel-ratio pixel-ratio)))) ; Vega-Lite confused by BigInt
+
+;    (println "foodspot-mark-size:" perc-radius quadrant-sz plot-sz
+;             perceptual-ratio pixel-ratio (* pixel-ratio pixel-ratio)) ; DEBUG
 
 (defn make-foodgrid
   "Make a sequence of vega-lite food records on coordinates spaced out every 
