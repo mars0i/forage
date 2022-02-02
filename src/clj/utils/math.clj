@@ -34,13 +34,8 @@
   (if (< x r)
     0
     (let [mu- (dec mu)]
-      (* (nt/expt x (neg mu)) (nt/expt r mu-) mu-))))
+      (* (nt/expt x (- mu)) (nt/expt r mu-) mu-))))
 
-
-(defn neg
-  "Returns -1 times x."
-  [x]
-  (* -1 x))
 
 (def pi Math/PI)
 
@@ -62,3 +57,15 @@
   (let [xdiff (- x0 x1)
         ydiff (- y0 y1)]
   (nt/sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
+
+;; Implements $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\;$  given $\;ax^2 + bx + c = 0$.
+;; (If both results are routinely needed inside a tight loop, consider making 
+;; a version of this function that returns both of them.)
+(defn quadratic-formula
+  "Returns the result of the quadratic formula applied to the coefficients in
+  ax^2 + bx + c = 0.  plus-or-minus should be one of the two functions: + - ."
+  [plus-or-minus a b c]
+  (let [root-part (nt/sqrt (- (* b b) (* 4 a c)))
+        negb (- b)
+        a2 (* 2 a)]
+    (/ (plus-or-minus negb root-part) a2)))
