@@ -11,15 +11,15 @@
       [utils.random :as r]))
 
 
-(def perc-radius 5) 
+(def perc-radius 5)  ; distance that an animal can "see" in searching for food
 (def food-distance 50)
 (def env-size 200)
 (def quadrant-size (/ env-size 2))
-(def powerlaw-scale 1)
-(def maxpathlen 500)
-(def trunclen 100)
+(def powerlaw-scale 1) ; scale parameter of distribution
+(def maxpathlen 100) ; max length of a path (sequence of line segments)
+(def trunclen 100)   ; max length of any line segment
 
-;; For Hanami/vega-lite plots:
+;; For Hanami/vega-lite plots, size of plot display:
 (def plot-dim 700)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -33,7 +33,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
 
-(def seed (inc (r/make-int-seed)))
+;(def seed (inc (r/make-int-seed)))
+(def seed 4043)
 (println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 
