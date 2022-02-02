@@ -217,7 +217,7 @@
   sequence, a pair contining the unchanged sequence and nil is returned."
   [look-fn shift stops]
   (let [stopsv (vec stops)
-        numstops- (dec (count stops))]
+        numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
     (flush) ; DEBUG
     (loop [i 0, j 1]
       (println "path-with-food:" i j (stopsv i) (stopsv j)) ; DEBUG
