@@ -191,6 +191,7 @@
     (println "slope,x-eps,y-eps:" slope x-shift y-shift) ; DEBUG
     (loop [x x1, y y1]
       (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
+        "\ndone: NaN"
         (let [food (look-fn [x y])]
           (cond food  (do (println "found" [x y]) ; DEBUG
                         '[[x y] food])
