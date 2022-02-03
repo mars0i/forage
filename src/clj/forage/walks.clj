@@ -156,9 +156,41 @@
   (let [a (+ 1 (* slope slope))
         b (* 2 slope intercept)
         c (- (* intercept intercept) (* shift shift))
-        x-shift (m/quadratic-formula + a b c)
+        x-shift (abs (m/quadratic-formula + a b c))
+        y-shift (abs (+ (* slope x-shift) intercept))]
+    [x-shift y-shift]))
+
+;; MORE NOTES ON xy-shifts:
+;; It works when there's not a NaN, *but* the x-shifpt, y-shift correspond 
+;; to a value for shift, even when shift is negative.  That's because
+;; I'm using sqrt bare, and it always returns the positive root.  But that's
+;; OK: the x-shift, y-shift will push in the correct direction. BUT: yo-shifts,
+;; i.e. xy-shifts passing minus to quadratic-formula, pushes in a different
+;; direction.
+;; AND xy-shifts with plus passed to q-f, is sometimes *wrong* about direction.
+;; even though the shift size along the line would be right.
+;; but sometimes yo-shifts is the one that's wrong.
+;; but sometimes they both seem right.
+;;
+;; Suppose I try this: Take abs val of everything and add back neg signs
+;; as needed later.
+;; Assume shift is always positive.
+;; But note that I know slope in xy-shifts, but I don't know direction
+;; of the vector.  So that happens outside it.
+;; 
+(defn yo-shifts
+  "Given an incremental shift (vector) in the direction of a line specified 
+  by its slope and intercept, return a pair [x-shift y-shift] that give
+  the shifts in the x and y directions that would produce the desired shift
+  (i.e. the vectors along x and y that would sum to the desired shift)."
+  [shift slope intercept]
+  (let [a (+ 1 (* slope slope))
+        b (* 2 slope intercept)
+        c (- (* intercept intercept) (* shift shift))
+        x-shift (m/quadratic-formula - a b c)
         y-shift (+ (* slope x-shift) intercept)]
     [x-shift y-shift]))
+
 
 ;; Possibly store slope and/or intercept earlier; they were available
 ;; when the line pair was created:
