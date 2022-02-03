@@ -1,0 +1,19 @@
+
+
+;; MORE NOTES ON xy-shifts:
+;; It works when there's not a NaN, *but* the x-eps, y-eps correspond 
+;; to a value for eps, even when eps is negative.  That's because
+;; I'm using sqrt bare, and it always returns the positive root.  But that's
+;; OK: the x-eps, y-eps will push in the correct direction. BUT: yo-shifts,
+;; i.e. xy-shifts passing minus to quadratic-formula, pushes in a different
+;; direction.
+;; AND xy-shifts with plus passed to q-f, is sometimes *wrong* about direction.
+;; even though the eps size along the line would be right.
+;; but sometimes yo-shifts is the one that's wrong.
+;; but sometimes they both seem right.
+;;
+;; Suppose I try this: Take abs val of everything and add back neg signs
+;; as needed later.
+;; Assume eps is always positive.
+;; But note that I know slope in xy-shifts, but I don't know direction
+;; of the vector.  So that happens outside it.
