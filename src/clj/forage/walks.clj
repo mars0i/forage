@@ -115,7 +115,7 @@
   [slope [x y]]
   (- y (* slope x)))
 
-;; `xy-shifts`:
+;; `xy-shifts`--what the function is doing:
 ;;
 ;; Let $\epsilon$ be the amount to shift along a path to check whether 
 ;; there is food visible from the next spot.  This has to be translated 
@@ -148,11 +148,14 @@
 ;; (Note using either $+$ or $-$ from $\pm$ will work.  Both
 ;; results will be such that $\epsilon^2 = x^2 + y^2\,$.)
 ;;
-;; For the record, the resulting full calculation is:
+;; It will be informative to see the resulting full calculation:
 ;;
-;; $x = \frac{-2si \pm \sqrt{4s^2i^2 - 4(i^2-\epsilon^2)}}{2(1+s^2)}$ 
-;; $= \frac{-si \pm \sqrt{s^2i^2 - i^2 + \epsilon^2}}{1+s^2}$
-;; $= \frac{-si \pm \sqrt{i^2(s-1) + \epsilon^2}}{1+s^2}$
+;; $x = \frac{-2si \pm \sqrt{4s^2i^2 - 4(1+s^2)(i^2-\epsilon^2)}}{2(1+s^2)}$ 
+;; $= \frac{-si \pm \sqrt{s^2i^2 - (1+s^2)(i^2-\epsilon^2)}}{1+s^2}$
+;; $= \frac{-si \pm \sqrt{s^2i^2 - (i^2 + s^2i^2 - \epsilon^2 - s^2\epsilon^2)}}{1+s^2}$
+;;
+;; $= \frac{-si \pm \sqrt{- i^2 +\epsilon^2 + s^2\epsilon^2)}}{1+s^2}$
+;; $= \frac{-si \pm \sqrt{(1+s^2)\epsilon^2 - i^2}}{1+s^2}$
 ;;
 ;; (The `xy-shifts` code calls out to a quadratic formula function rather
 ;; than performing the entire calculatin in `xy-shifts`.  That makes the
@@ -161,8 +164,14 @@
 ;;
 ;; **Actually, there's no reason to use $i$ in call to the quadratic formula,
 ;; since the slope decomposition is the same whatever the y intercept is.
-;; So I'm setting `intercept` to 0 in `find-in-seg`.  (I was getting `NaN`'s
-;; before doing that. Why?)**
+;; So I'm now setting `intercept` to 0 in `find-in-seg`.**  (I was getting `NaN`'s
+;; before doing that. You can see the reason why in the last formula in the
+;; full calculation above: The intercept $i$ can be arbitrarily large and
+;; often has absolute value greater than 1, in which case $-i^2$ easily makes
+;; the argument of the square root negative--especially since $\epsilon^2$
+;; will always be small.  Taking the square root of a negative number is
+;; one of the cases in which Java generates a `NaN`.)
+;; 
 ;; 
 ;; **If this is correct, then I could simplify both functions.**
 ;; Then we'd have
@@ -174,6 +183,12 @@
 ;; $x \;=\; \frac{\pm\sqrt{-ac}}{a} \;=\; \pm\sqrt{-ca/a^2} \;=\;$
 ;; $\pm\sqrt{-c/a} \;=\; \pm\sqrt{\epsilon^2/(1+s^2)}$
 ;; $\;=\; \pm\frac{\epsilon}{\sqrt{1+s^2}}$ .
+;;
+;; Checking by doing it a different way from the above full calculation:
+;;
+;; $x = \frac{0\pm \sqrt{(1+s^2)\epsilon^2 - 0^2}}{1+s^2}$
+;; $= \frac{\pm \sqrt{(1+s^2)}\sqrt{\epsilon^2}}{\sqrt{1+s^2}\sqrt{1+s^2}}$
+;; $= \frac{\pm\,\epsilon}{\sqrt{1+s^2}}$ .
 ;;
 ;; So maybe I should just do that in `xy-shifts`, and not call `quadratic-formula`.
 ;; 
