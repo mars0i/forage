@@ -160,25 +160,6 @@
         y-eps (nt/abs (+ (* slope x-eps) intercept))]
     [x-eps y-eps]))
 
-;; MORE NOTES ON xy-shifts:
-;; It works when there's not a NaN, *but* the x-shifpt, y-eps correspond 
-;; to a value for eps, even when eps is negative.  That's because
-;; I'm using sqrt bare, and it always returns the positive root.  But that's
-;; OK: the x-eps, y-eps will push in the correct direction. BUT: yo-shifts,
-;; i.e. xy-shifts passing minus to quadratic-formula, pushes in a different
-;; direction.
-;; AND xy-shifts with plus passed to q-f, is sometimes *wrong* about direction.
-;; even though the eps size along the line would be right.
-;; but sometimes yo-shifts is the one that's wrong.
-;; but sometimes they both seem right.
-;;
-;; Suppose I try this: Take abs val of everything and add back neg signs
-;; as needed later.
-;; Assume eps is always positive.
-;; But note that I know slope in xy-shifts, but I don't know direction
-;; of the vector.  So that happens outside it.
-
-
 ;; Possibly store slope and/or intercept earlier; they were available
 ;; when the line pair was created:
 (defn find-in-seg
@@ -209,21 +190,18 @@
         y-comp (if y-pos-dir? > <)]
     (println "slope,x-eps,y-eps:" slope x-shift y-shift) ; DEBUG
     (loop [x x1, y y1]
-      ;(print ".") : DEBUG
       (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
-        (println "Oh no! find-in-seg is looking for a NaN:" x y) ; DEBUG
         (let [food (look-fn [x y])]
-          (cond food            (do (println "found" [x y]) ; DEBUG
-                                  '[[x y] food])
+          (cond food  (do (println "found" [x y]) ; DEBUG
+                        '[[x y] food])
                 (and (= x x2)
                      (= y y2))  (do (println "didn't find") ; DEBUG
                                   nil) ; last point. check both: horizontal or vertical lines
-                :else           (let [xsh (+ x x-shift)
-                                      ysh (+ y y-shift)]
-                                  (println "x2,y2,xsh,ysh:" x2 y2 xsh ysh) ; DEBUG
-                                  ;; [x2 y2] should be checked even if eps would jump it.
-                                  (recur (if (x-comp xsh x2) x2 xsh)
-                                         (if (y-comp ysh y2) y2 ysh)))))))))
+                :else  (let [xsh (+ x x-shift)
+                             ysh (+ y y-shift)]
+                         (println "x2,y2,xsh,ysh:" x2 y2 xsh ysh) ; DEBUG
+                         (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
+                                (if (y-comp ysh y2) y2 ysh)))))))))
 
 ;; I might not care about the foodspot info returned,
 ;; but I might want to know when no food is found.  So the function has
