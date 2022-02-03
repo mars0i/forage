@@ -142,54 +142,41 @@
 ;; $x = \frac{-2mb \pm \sqrt{4m^2b^2 - 4(b^2-\epsilon^2)}}{2(1-m^2)}$ 
 ;; $= \frac{-mb \pm \sqrt{m^2b^2 - b^2 + \epsilon^2}}{1-m^2}$ .
 ;; 
-;; In the function definition below, $\epsilon$ is called "shift", and 
+;; In the function definition below, $\epsilon$ is called "eps", and 
 ;; $m$ and $b$ are called "slope" and "intercept", respectively.
 ;;
 ;; FIXME **QUESTION:** *Does it matter whether I use plus or minus here 
 ;; in the quadratic formula?*
 (defn xy-shifts
   "Given an incremental shift (vector) in the direction of a line specified 
-  by its slope and intercept, return a pair [x-shift y-shift] that give
+  by its slope and intercept, return a pair [x-eps y-eps] that give
   the shifts in the x and y directions that would produce the desired shift
   (i.e. the vectors along x and y that would sum to the desired shift)."
-  [shift slope intercept]
+  [eps slope intercept]
   (let [a (+ 1 (* slope slope))
         b (* 2 slope intercept)
-        c (- (* intercept intercept) (* shift shift))
-        x-shift (abs (m/quadratic-formula + a b c))
-        y-shift (abs (+ (* slope x-shift) intercept))]
-    [x-shift y-shift]))
+        c (- (* intercept intercept) (* eps eps))
+        x-eps (nt/abs (m/quadratic-formula + a b c))
+        y-eps (nt/abs (+ (* slope x-eps) intercept))]
+    [x-eps y-eps]))
 
 ;; MORE NOTES ON xy-shifts:
-;; It works when there's not a NaN, *but* the x-shifpt, y-shift correspond 
-;; to a value for shift, even when shift is negative.  That's because
+;; It works when there's not a NaN, *but* the x-shifpt, y-eps correspond 
+;; to a value for eps, even when eps is negative.  That's because
 ;; I'm using sqrt bare, and it always returns the positive root.  But that's
-;; OK: the x-shift, y-shift will push in the correct direction. BUT: yo-shifts,
+;; OK: the x-eps, y-eps will push in the correct direction. BUT: yo-shifts,
 ;; i.e. xy-shifts passing minus to quadratic-formula, pushes in a different
 ;; direction.
 ;; AND xy-shifts with plus passed to q-f, is sometimes *wrong* about direction.
-;; even though the shift size along the line would be right.
+;; even though the eps size along the line would be right.
 ;; but sometimes yo-shifts is the one that's wrong.
 ;; but sometimes they both seem right.
 ;;
 ;; Suppose I try this: Take abs val of everything and add back neg signs
 ;; as needed later.
-;; Assume shift is always positive.
+;; Assume eps is always positive.
 ;; But note that I know slope in xy-shifts, but I don't know direction
 ;; of the vector.  So that happens outside it.
-;; 
-(defn yo-shifts
-  "Given an incremental shift (vector) in the direction of a line specified 
-  by its slope and intercept, return a pair [x-shift y-shift] that give
-  the shifts in the x and y directions that would produce the desired shift
-  (i.e. the vectors along x and y that would sum to the desired shift)."
-  [shift slope intercept]
-  (let [a (+ 1 (* slope slope))
-        b (* 2 slope intercept)
-        c (- (* intercept intercept) (* shift shift))
-        x-shift (m/quadratic-formula - a b c)
-        y-shift (+ (* slope x-shift) intercept)]
-    [x-shift y-shift]))
 
 
 ;; Possibly store slope and/or intercept earlier; they were available
@@ -209,12 +196,18 @@
   returned depends on look-fun, which should reflect the way that this 
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
-  [look-fn shift [x1 y1] [x2 y2]]
-  (println "f-i-s:\nshift,[x1 y1],[x2 y2]:" shift [x1 y1] [x2 y2]) ; DEBUG
-  (let [slope (slope-from-coords [x1 y1] [x2 y2])
+  [look-fn eps [x1 y1] [x2 y2]]
+  (println "f-i-s:\nshift,[x1 y1],[x2 y2]:" eps [x1 y1] [x2 y2]) ; DEBUG
+  (let [x-pos-dir? (<= x1 x2)
+        y-pos-dir? (<= y1 y2)
+        slope (slope-from-coords [x1 y1] [x2 y2])
         intercept (intercept-from-slope slope [x1 y1])
-        [x-shift y-shift] (xy-shifts shift slope intercept)]
-    (println "slope,x-shift,y-shift:" slope x-shift y-shift) ; DEBUG
+        [x-eps y-eps] (xy-shifts eps slope intercept) ; x-eps, y-eps always >= 0
+        x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
+        y-shift (if y-pos-dir? y-eps (- y-eps))
+        x-comp (if x-pos-dir? > <)   ; and choose test for going too far
+        y-comp (if y-pos-dir? > <)]
+    (println "slope,x-eps,y-eps:" slope x-shift y-shift) ; DEBUG
     (loop [x x1, y y1]
       ;(print ".") : DEBUG
       (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
@@ -228,9 +221,9 @@
                 :else           (let [xsh (+ x x-shift)
                                       ysh (+ y y-shift)]
                                   (println "x2,y2,xsh,ysh:" x2 y2 xsh ysh) ; DEBUG
-                                  ;; [x2 y2] should be checked even if shift would jump it.
-                                  (recur (if (> xsh x2) x2 xsh)
-                                         (if (> ysh y2) y2 ysh)))))))))
+                                  ;; [x2 y2] should be checked even if eps would jump it.
+                                  (recur (if (x-comp xsh x2) x2 xsh)
+                                         (if (y-comp ysh y2) y2 ysh)))))))))
 
 ;; I might not care about the foodspot info returned,
 ;; but I might want to know when no food is found.  So the function has
@@ -240,7 +233,7 @@
 ;; in order to--at least--communicate that difference.
 (defn path-with-food
   "Given a sequence of stops (coordinate pairs) representing a random walk, 
-  and a small shift length, starts at [x1 y1] and uses find-in-segment
+  and a small eps length, starts at [x1 y1] and uses find-in-segment
   to incrementally check each line segment defined by pairs of stops
   to see whether look-fn returns a truthy value, meaning that foodspots
   were found.  The sequence stops must contain at least two coordinate pairs.
@@ -249,13 +242,13 @@
   food was seen, and remaining points have been removed, and second, the
   foodspot information returned by look-fn.  If no food found in the entire
   sequence, a pair contining the unchanged sequence and nil is returned."
-  [look-fn shift stops]
+  [look-fn eps stops]
   (let [stopsv (vec stops)
         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
     (flush) ; DEBUG
     (loop [i 0, j 1]
       ;(println "path-with-food:" i j (stopsv i) (stopsv j)) ; DEBUG
-      (let [from+foodspots (find-in-seg look-fn shift (stopsv i) (stopsv j))]
+      (let [from+foodspots (find-in-seg look-fn eps (stopsv i) (stopsv j))]
         (if from+foodspots               ; all done--found food
           [(conj (vec (take j stopsv))    ; replace end of stops with point
                  (first from+foodspots))  ; on path from which food found
@@ -265,8 +258,8 @@
             [stops nil])))))) ; no food in any segment; return entire input
 
 (defn path-until-food
-  [look-fn shift stops]
-  (first (path-with-food look-fn shift stops)))
+  [look-fn eps stops]
+  (first (path-with-food look-fn eps stops)))
 
 ;; UNNEEDED?  path-until-found seems more useful.
 ;; otoh, path-until-found throws away the foodspots.
@@ -292,10 +285,10 @@
   find-in-segment for more on the third element.)  If the input sequence
   ends without any food being found, the return value will be the coordinates
   of the last segment followed by nil."
-  [look-fn shift stops]
+  [look-fn eps stops]
   (loop [segments (partition 2 1 stops)]
     (let [[start end] (first segments)
-          from-and-foodspots (find-in-seg look-fn shift start end)]
+          from-and-foodspots (find-in-seg look-fn eps start end)]
       (if from-and-foodspots
         (cons start from-and-foodspots) ; found some food
         (if-let [more (next segments)]

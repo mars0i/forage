@@ -16,7 +16,7 @@
 (def env-size 200)
 (def quadrant-size (/ env-size 2))
 (def powerlaw-scale 1) ; scale parameter of distribution
-(def maxpathlen 100) ; max length of a path (sequence of line segments)
+(def maxpathlen 1000) ; max length of a path (sequence of line segments)
 (def trunclen 100)   ; max length of any line segment
 
 ;; For Hanami/vega-lite plots, size of plot display:
@@ -33,8 +33,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
 
-;(def seed (inc (r/make-int-seed)))
-(def seed 4043)
+(def seed (inc (r/make-int-seed)))
 (println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 
@@ -63,8 +62,8 @@
 
 ;; ghost walk is the full walk that would have taken place if food wasn't found
 (def gridwalk-plot (h/vega-gridwalk-plot
-                     perc-radius maxpathlen powerlaw-scale [(count stop-walk)
-                                                            (count food-walk)]
+                     perc-radius maxpathlen powerlaw-scale [(count food-walk)
+                                                            (count stop-walk)]
                      (h/vega-foodgrid-plot env-size plot-dim
                                            food-distance perc-radius)
                      (h/vega-walk-plot env-size plot-dim 
