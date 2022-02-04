@@ -15,9 +15,10 @@
 (def food-distance 100)
 (def env-size 400)
 (def powerlaw-scale 1) ; scale parameter of distribution
-(def maxpathlen 2500) ; max length of a path (sequence of line segments)
-(def trunclen 100)   ; max length of any line segment
-(def intra-seg-epsilon 0.01) ; increment within line segments for food check
+(def powerlaw-exponent 2) ; must be < 1; 2 supposed to be optimal sparse targets
+(def maxpathlen 2000) ; max length of a path (sequence of line segments)
+(def trunclen 1000)   ; max length of any line segment
+(def intra-seg-epsilon 0.1) ; increment within line segments for food check
 
 ;; For Hanami/vega-lite plots, size of plot display:
 (def plot-dim 700)
@@ -33,13 +34,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
 
-;(def seed (inc (r/make-int-seed)))
-(def seed 41221)
+(def seed (inc (r/make-int-seed)))
+;(def seed 41221)
 (println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 
 ;; mu=3: Brownian; mu=2: Levy optimal; mu near 1: "ballistic":
-(def dist (r/make-powerlaw rng powerlaw-scale 2))
+(def dist (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
 
 ;; Path consisting of (direction,length) pairs
 (def step-walk (w/vecs-upto-len ; generate a path
@@ -50,7 +51,7 @@
 ;; Corresponding path of coordinate pairs:
 (def stop-walk (w/walk-stops [0 0] step-walk))
 
-(println "Made stop-walk; starting food-walk construction")
+;(println "Made stop-walk; starting food-walk construction")
 
 (def walk-with-food (w/path-with-food 
                       (partial mf/perceptible-foodspots env perc-radius)
@@ -59,7 +60,7 @@
 
 (def food-walk (first walk-with-food))
 
-(println "Made food-walk")
+;(println "Made food-walk")
 
 ;; ghost walk is the full walk that would have taken place if food wasn't found
 (def gridwalk-plot (h/vega-gridwalk-plot
@@ -67,9 +68,9 @@
                                                             (count stop-walk)]
                      (h/vega-foodgrid-plot env-size plot-dim
                                            food-distance perc-radius)
-                     (h/vega-walk-plot env-size plot-dim 
-                                       (h/add-walk-labels
-                                         "a ghost walk" stop-walk))
+                     ;(h/vega-walk-plot env-size plot-dim 
+                     ;                  (h/add-walk-labels
+                     ;                    "a ghost walk" stop-walk))
                      (h/vega-walk-plot env-size plot-dim 
                                        (h/add-walk-labels
                                          "food walk" food-walk))))
