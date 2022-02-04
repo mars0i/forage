@@ -26,7 +26,7 @@
                 :WIDTH  plot-dim
                 :HEIGHT plot-dim)
          (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
-         (assoc-in [:mark :strokeWidth] 0.75)
+         (assoc-in [:mark :strokeWidth] 1)
       ) 
     (first addl-kvs-map)))
 
