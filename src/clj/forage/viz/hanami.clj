@@ -26,7 +26,7 @@
                 :WIDTH  plot-dim
                 :HEIGHT plot-dim)
          (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
-         (assoc-in [:mark :strokeWidth] 2)
+         (assoc-in [:mark :strokeWidth] 1)
       ) 
     (first addl-kvs-map)))
 
@@ -129,6 +129,7 @@
   ([quadrant-width quadrant-height]
    (make-foodgrid 1 quadrant-width quadrant-height))
   ([sep quadrant-width quadrant-height]
+   (println sep quadrant-width quadrant-height)
   (map make-foodspot 
        (f/centerless-rectangular-grid sep quadrant-width quadrant-height))))
 
