@@ -121,6 +121,18 @@
   by its slope and intercept, return a pair [x-eps y-eps] that give
   the shifts in the x and y directions that would produce the desired shift
   (i.e. the vectors along x and y that would sum to the desired shift)."
+  [eps slope]
+  (let [a (+ 1 (* slope slope))
+        x-eps (/ eps a)
+        y-eps (nt/abs (* slope x-eps))]
+    [x-eps y-eps]))
+
+;; OBSOLETE DELETE WHEN DON'T NEED FOR COMPARISON
+(defn old-xy-shifts
+  "Given an incremental shift (vector) in the direction of a line specified 
+  by its slope and intercept, return a pair [x-eps y-eps] that give
+  the shifts in the x and y directions that would produce the desired shift
+  (i.e. the vectors along x and y that would sum to the desired shift)."
   [eps slope intercept]
   (let [a (+ 1 (* slope slope))
         b (* 2 slope intercept)
@@ -152,12 +164,11 @@
   (let [x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
         slope (slope-from-coords [x1 y1] [x2 y2])
-        intercept 0 ; FIXME kludge or solution? (intercept-from-slope slope [x1 y1])
-        [x-eps y-eps] (xy-shifts eps slope intercept) ; x-eps, y-eps always >= 0
+        [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
         y-shift (if y-pos-dir? y-eps (- y-eps))
-        x-comp (if x-pos-dir? > <)   ; and choose test for going too far
-        y-comp (if y-pos-dir? > <)]
+        x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
+        y-comp (if y-pos-dir? > <)]  ;  gone too far
     ;(println "slope,x-eps,y-eps:" slope x-shift y-shift) ; DEBUG
     (loop [x x1, y y1]
       (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
