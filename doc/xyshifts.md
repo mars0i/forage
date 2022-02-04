@@ -1,43 +1,99 @@
-`xy-shifts`:
+xy-shifts.md
+===
 
-Let $\epsilon$ be the amount to shift along a path to 
-check whether there is food visible from the next spot.  This has to
-be translated into $x$ and $y$ shifts:
+Notes on the logic, history, etc. of `forage.walks/xy-shifts`
+and its interaction with `forage.walks/find-in-seg`.
+
+----------------
+
+`find-in-seg` is given a line segment--part of an animal's search
+path--and it moves along it in small distances, $\epsilon$, and every
+$\epsilon$ it stops and calls `look-fn` to see whether there is a
+foodspot that's visible.  If so, the search is over along that segment
+is over (although it could be restarted by a calling function).
+
+**Note:** `xy-shifts` performs only a *length* decomposition, not a
+vector decomposition.  The Pythagoren theorem and the quadratic formula
+don't know anything about direction of travel.  I enforce direction below
+by taking the absolute value of the decomposed values `x-eps` and `y-eps`
+in `xy-shifts`, and then the calling function `find-in-seg` has to transform
+these into negative values if necessary to preserve direction of shifts.
+
+----------------
+
+Let $\epsilon$ be the amount to shift along a path to check whether 
+there is food visible from the next spot.  This has to be translated 
+into shifts along the x and y axes.
 
 We can derive the amount to shift along the x and y axes from these:
 
 $\epsilon^2 = x^2 + y^2$
 &nbsp;&nbsp; and &nbsp;&nbsp; 
-$y = mx + b$ .
+$y = sx + i$ ,
+
+where $\epsilon$ (`eps` in the code) is the shift amount along the line
+segment, $s$ is `slope`, and $i$ is the y `intercept` in the function below.
 
 Therefore
 
-$\epsilon^2 \;\;=\;\;  x^2 + (mx + b)^2 \;\;=\;\; x^2 + m^2x^2 +2mbx + b^2$,
+$\epsilon^2 \;\;=\;\;  x^2 + (sx + i)^2 \;\;=\;\; x^2 + s^2x^2 +2six + i^2$,
 &nbsp; so:
 
-$0 = (1+m^2)x^2 + 2mbx + (b^2 - \epsilon^2)$ .
+$0 = (1+s^2)x^2 + 2six + (i^2 - \epsilon^2)$ .
 
-Then by the quadratic equation,
+Then we can use the quadratic formula:
 
-$x = \frac{-2mb \pm \sqrt{4m^2b^2 - 4(b^2-\epsilon^2)}}{2(1-m^2)}$ 
-$= \frac{-mb \pm \sqrt{m^2b^2 - b^2 + \epsilon^2}}{1-m^2}$ .
+$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a},\;$ with
+$a=1+s^2,\;\;\; b=2si,\;\;\; c=i^2-\epsilon^2$ .
 
-In the function definition below, $\epsilon$ is called "shift", and 
-$m$ and $b$ are called "slope" and "intercept", respectively.
+This $x$ is the length of the shift along needed the $x$ axis needed
+as a component of the original length $\epsilon$.  We can then calculate
+the corresponding shift along the $y$ axis using $\;y=sx+i\;$.
+(Note using either $+$ or $-$ from $\pm$ will work.  Both
+results will be such that $\epsilon^2 = x^2 + y^2\,$.)
 
-FIXME:
-```
-(defn xy-shifts
-  "Given an incremental shift (vector) in the direction of a line specified 
-  by its slope and intercept, return a pair [x-shift y-shift] that give
-  the shifts in the x and y directions that would produce the desired shift
-  (i.e. the vectors along x and y that would sum to the desired shift)."
-  [shift slope intercept]
-  (let [-mb (- (* slope intercept))
-        -b2 (- (* intercept intercept))
-        eps2 (* shift shift)
-        part2 (nt/sqrt (+ (* -mb -mb) -b2 eps2))
-        x-shift (+ -mb part2) ; TODO Why plus and not minus? FIXME
-        y-shift (+ (* slope x-shift) intercept)]
-    [x-shift y-shift]))
-```
+It will be informative to see the resulting full calculation:
+
+$x = \frac{-2si \pm \sqrt{4s^2i^2 - 4(1+s^2)(i^2-\epsilon^2)}}{2(1+s^2)}$ 
+$= \frac{-si \pm \sqrt{s^2i^2 - (1+s^2)(i^2-\epsilon^2)}}{1+s^2}$
+
+$= \frac{-si \pm \sqrt{s^2i^2 - (i^2 + s^2i^2 - \epsilon^2 - s^2\epsilon^2)}}{1+s^2}$
+
+$= \frac{-si \pm \sqrt{- i^2 +\epsilon^2 + s^2\epsilon^2)}}{1+s^2}$
+$= \frac{-si \pm \sqrt{(1+s^2)\epsilon^2 - i^2}}{1+s^2}$
+
+(The `xy-shifts` code calls out to a quadratic formula function rather
+than performing the entire calculatin in `xy-shifts`.  That makes the
+code clearer.  The trivial efficiency gained by avoiding 
+redundant calculations such as $s\times i$ is surely insignificant.)
+
+**Actually, there's no reason to use $i$ in call to the quadratic formula,
+since the slope decomposition is the same whatever the y intercept is.
+So I'm now setting `intercept` to 0 in `find-in-seg`.**  (I was getting `NaN`'s
+before doing that. You can see the reason why in the last formula in the
+full calculation above: The intercept $i$ can be arbitrarily large and
+often has absolute value greater than 1, in which case $-i^2$ easily makes
+the argument of the square root negative--especially since $\epsilon^2$
+will always be small.  Taking the square root of a negative number is
+one of the cases in which Java generates a `NaN`.)
+
+
+**If this is correct, then I can simplify both functions.**
+Then we'd have
+
+$a=1+s^2,\;\;\; b=0,\;\;\; c=-\epsilon^2$
+
+and the quadratic formula would reduce to
+
+$x \;=\; \frac{\pm\sqrt{-ac}}{a} \;=\; \pm\sqrt{-ca/a^2} \;=\;$
+$\pm\sqrt{-c/a} \;=\; \pm\sqrt{\epsilon^2/(1+s^2)}$
+$\;=\; \pm\frac{\epsilon}{\sqrt{1+s^2}}$ .
+
+Checking by doing it a different way from the above full calculation:
+
+$x = \frac{0\pm \sqrt{(1+s^2)\epsilon^2 - 0^2}}{1+s^2}$
+$= \frac{\pm \sqrt{(1+s^2)}\sqrt{\epsilon^2}}{\sqrt{1+s^2}\sqrt{1+s^2}}$
+$= \frac{\pm\,\epsilon}{\sqrt{1+s^2}}$ .
+
+So I'll do that in `xy-shifts`, and not call `quadratic-formula`.
+I'll change find-in-seg, too, since it needn't pass the intercept.
