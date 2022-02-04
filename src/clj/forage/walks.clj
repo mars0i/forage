@@ -165,6 +165,7 @@
         y-pos-dir? (<= y1 y2)
         slope (slope-from-coords [x1 y1] [x2 y2])
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
+        ;[x-eps y-eps] (old-xy-shifts eps slope 0) ; OLD VERSION
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
         y-shift (if y-pos-dir? y-eps (- y-eps))
         x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
