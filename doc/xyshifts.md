@@ -97,3 +97,8 @@ $= \frac{\pm\,\epsilon}{\sqrt{1+s^2}}$ .
 
 So I'll do that in `xy-shifts`, and not call `quadratic-formula`.
 I'll change find-in-seg, too, since it needn't pass the intercept.
+
+Note that in that case there's no need to call absolute value on $x$,
+since $\epsilon$, i.e.  `eps` should always be positive, $1+s^2$, i.e.
+`(+ 1 (* slope slope))` must be positive, and I'll can choose the postive
+square root.
