@@ -18,6 +18,7 @@
 (def powerlaw-scale 1) ; scale parameter of distribution
 (def maxpathlen 1000) ; max length of a path (sequence of line segments)
 (def trunclen 100)   ; max length of any line segment
+(def intra-seg-epsilon 0.01) ; increment within line segments for food check
 
 ;; For Hanami/vega-lite plots, size of plot display:
 (def plot-dim 700)
@@ -34,6 +35,7 @@
 ;; WALKS
 
 (def seed (inc (r/make-int-seed)))
+;(def seed 16143)
 (println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 
@@ -53,7 +55,7 @@
 
 (def walk-with-food (w/path-with-food 
                       (partial mf/perceptible-foodspots env perc-radius)
-                      0.1
+                      intra-seg-epsilon
                       stop-walk))
 
 (def food-walk (first walk-with-food))
