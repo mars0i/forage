@@ -13,7 +13,7 @@
 
 (def perc-radius 5)  ; distance that an animal can "see" in searching for food
 (def food-distance 40)
-(def env-size 200)
+(def env-size 400)
 (def quadrant-size (/ env-size 2))
 (def powerlaw-scale 1) ; scale parameter of distribution
 (def maxpathlen 1000) ; max length of a path (sequence of line segments)
@@ -28,14 +28,14 @@
   
 (def env (mf/make-env food-distance env-size
                       (f/centerless-rectangular-grid food-distance
-                                                     (/ env-size 2)
-                                                     (/ env-size 2))))
+                                                     quadrant-size
+                                                     quadrant-size)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
 
-(def seed (inc (r/make-int-seed)))
-;(def seed 16143)
+;(def seed (inc (r/make-int-seed)))
+(def seed 41221)
 (println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 
@@ -66,7 +66,7 @@
 (def gridwalk-plot (h/vega-gridwalk-plot
                      perc-radius maxpathlen powerlaw-scale [(count food-walk)
                                                             (count stop-walk)]
-                     (h/vega-foodgrid-plot env-size plot-dim
+                     (h/vega-foodgrid-plot quadrant-size plot-dim
                                            food-distance perc-radius)
                      (h/vega-walk-plot env-size plot-dim 
                                        (h/add-walk-labels
