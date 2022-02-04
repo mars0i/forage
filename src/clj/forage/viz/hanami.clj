@@ -26,7 +26,7 @@
                 :WIDTH  plot-dim
                 :HEIGHT plot-dim)
          (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
-         (assoc-in [:mark :strokeWidth] 1)
+         (assoc-in [:mark :strokeWidth] 0.75)
       ) 
     (first addl-kvs-map)))
 
@@ -91,7 +91,7 @@
   "Given a pair of coordinates, returns a Vega-Lite map with an added
   label value \"food\"."
   [[x y]]
-  {"x" x, "y" y, "label" "food"})
+  {"x" x, "y" y, "label" "food radius"})
 
 ;; For the Hanami :MSIZE value:
 ;; Vega-Lite "mark" sizes--i.e. a circle at a point--are specified
@@ -101,12 +101,16 @@
 ;; diameter * diameter, since diameter is the length of a side of this
 ;; square.  In other words, the mark size is (* 4 radius radius).
 ;; 
-;; We specify perceptual radius in units defined by the model.  To
-;; translate those into the plot's units, calculate the proportion
+;; We have specified perceptual radius in units defined by the model. 
+;; To translate those into the plot's units, calculate the proportion
 ;; of the width (or height) of the model world that the radius of
-;; a perceptual circle takes up, and then multiply that ratio by
-;; width of the plot to get the fraction of the plot width needed for
-;; a mark radius.  Then use that number in (* 4 r r).
+;; a perceptual circle takes up.  Or rather calculate the proportion
+;; of the distance from zero to the edge of the figure; otherwise 
+;; it's a proportion of double the units in terms of which the radius
+;; is defined.  Thus `perceptual-ratio` = `(/ perc-radius (/ env-sz 2))`.
+;; Once perceptual ratio is calculated, that should then be multiplied
+;; by width of the plot, to get the fraction of the plot width needed for
+;; a mark radius.  Use that number in (* 4 r r).
 (defn foodspot-mark-size
   "Given the width or height of a square model field, the width or height 
   of a square Vega-Lite plot, and a perceptual radius in model units,
@@ -114,9 +118,9 @@
   circle that is visually correct in a Vega-Lite plot of that width.
   This value can be used as the value of the Hanami key :MSIZE."
   [env-sz plot-sz perc-radius]
-  (let [perceptual-ratio (/ perc-radius env-sz)  ; part of env width subtended by radius
+  (let [perceptual-ratio (/ perc-radius env-sz 2) ; part of env width subtended by radius
         pixel-ratio (* perceptual-ratio plot-sz)] ; part of figure width subtended by radius
-    (long (* 4 pixel-ratio pixel-ratio)))) ; Vega-Lite confused by BigInt
+    (long (* 4 pixel-ratio pixel-ratio)))) ; Vega-Lite confused by BigInts
 
 (defn make-foodgrid
   "Make a sequence of vega-lite food records on coordinates spaced out every 
