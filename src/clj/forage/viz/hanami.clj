@@ -129,7 +129,6 @@
   ([env-width env-height]
    (make-foodgrid 1 env-width env-height))
   ([sep env-width env-height]
-   (println "make-foodgrid: sep, env-width, env-height:" sep env-width env-height) ; DEBUG
   (map make-foodspot 
        (f/centerless-rectangular-grid sep env-width env-height))))
 
