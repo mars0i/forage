@@ -16,9 +16,9 @@
   "Make a sequence of pairs of coordinate pairs representing horizontal and
   vertical lines from neg to positive quandrant-width and quadrant-height,
   spaced every sep units."
-  [sep quadrant-width quadrant-height]
-  (let [xmax (inc quadrant-width)
-        ymax (inc quadrant-height)
+  [sep env-width env-height]
+  (let [xmax (inc (/ env-width 2))
+        ymax (inc (/ env-height 2))
         neg-xmax (- xmax)
         neg-ymax (- ymax)
         neg-sep (- sep)
@@ -30,17 +30,17 @@
   "Make a sequence of coordinate pairs spaced out every sep integers,
   from -quandrant-width to quadrant-width, and from -quadrant-height
   to quadrant-height, including [0,0]."
-  ([quadrant-width quadrant-height]
-   (rectangular-grid 1 quadrant-width quadrant-height))
-  ([sep quadrant-width quadrant-height]
-   (let [xmax (inc quadrant-width)
-         ymax (inc quadrant-height)
+  ([env-width env-height]
+   (rectangular-grid 1 env-width env-height))
+  ([sep env-width env-height]
+   (let [xmax (inc env-width)  ; inc: range should all the way to env-width 
+         ymax (inc env-height) ;  below
          neg-xmax (- xmax)
          neg-ymax (- ymax)
          neg-sep (- sep)
          ne-pairs (for [x (range 0 xmax sep)  ; rest excludes 0,0 but
-                              y (range 0 ymax sep)] ;  includes 0,1 and 1,0
-                             [x y])
+                        y (range 0 ymax sep)] ;  includes 0,1 and 1,0
+                       [x y])
          se-pairs (remove y-zero?  ; remove top row of quadrant
                           (for [x (range 0 xmax sep)  ; 1, -1: axes in ne-pairs, sw-pairs
                                 y (range 0 neg-ymax neg-sep)]
@@ -59,11 +59,11 @@
   "Make a sequence of coordinate pairs spaced out every sep integers,
   from -quandrant-width to quadrant-width, and from -quadrant-height
   to quadrant-height, excluding [0,0]."
-  ([quadrant-width quadrant-height]
-   (centerless-rectangular-grid 1 quadrant-width quadrant-height))
-  ([sep quadrant-width quadrant-height]
+  ([env-width env-height]
+   (centerless-rectangular-grid 1 env-width env-height))
+  ([sep env-width env-height]
    (remove both-zero? 
-           (rectangular-grid sep quadrant-width quadrant-height))))
+           (rectangular-grid sep env-width env-height))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

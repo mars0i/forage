@@ -113,37 +113,32 @@
   returns the Vega-Lite mark size that will produce a perceptual radius
   circle that is visually correct in a Vega-Lite plot of that width.
   This value can be used as the value of the Hanami key :MSIZE."
-  [quadrant-sz plot-sz perc-radius]
-  (let [env-sz (* 2 quadrant-sz)
-        perceptual-ratio (/ perc-radius env-sz)  ; part of env width subtended by radius
+  [env-sz plot-sz perc-radius]
+  (let [perceptual-ratio (/ perc-radius env-sz)  ; part of env width subtended by radius
         pixel-ratio (* perceptual-ratio plot-sz)] ; part of figure width subtended by radius
     (long (* 4 pixel-ratio pixel-ratio)))) ; Vega-Lite confused by BigInt
-
-;    (println "foodspot-mark-size:" perc-radius quadrant-sz plot-sz
-;             perceptual-ratio pixel-ratio (* pixel-ratio pixel-ratio)) ; DEBUG
 
 (defn make-foodgrid
   "Make a sequence of vega-lite food records on coordinates spaced out every 
   sep integers, from -quandrant-width to quadrant-width, and from
   -quadrant-height to quadrant-height, excluding [0,0]."
-  ([quadrant-width quadrant-height]
-   (make-foodgrid 1 quadrant-width quadrant-height))
-  ([sep quadrant-width quadrant-height]
-   (println sep quadrant-width quadrant-height)
+  ([env-width env-height]
+   (make-foodgrid 1 env-width env-height))
+  ([sep env-width env-height]
+   (println "make-foodgrid: sep, env-width, env-height:" sep env-width env-height) ; DEBUG
   (map make-foodspot 
-       (f/centerless-rectangular-grid sep quadrant-width quadrant-height))))
+       (f/centerless-rectangular-grid sep env-width env-height))))
 
 (defn vega-foodgrid-plot
-  [quadrant-sz plot-dim food-distance perc-radius]
+  [env-sz plot-dim food-distance perc-radius]
   (hc/xform ht/point-chart 
-            :DATA (make-foodgrid food-distance quadrant-sz quadrant-sz) 
+            :DATA (make-foodgrid food-distance env-sz env-sz) 
             :X "x"
             :Y "y"
             :COLOR "label"
-            :MSIZE (foodspot-mark-size quadrant-sz plot-dim perc-radius)
-            ;:MSIZE (foodspot-mark-size 60 perc-radius) ; FIXME number is not permanent
+            :MSIZE (foodspot-mark-size env-sz plot-dim perc-radius)
             :OPACITY 0.5  ; default is 0.7
-            :WIDTH  plot-dim   ; dim for plot only; label area isn't included.
+            :WIDTH  plot-dim  ; sets dim for plot only, label area not included
             :HEIGHT plot-dim))
 
 (defn vega-gridwalk-plot
