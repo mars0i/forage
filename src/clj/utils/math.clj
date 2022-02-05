@@ -35,12 +35,22 @@
     (/ (plus-or-minus negb root-part) a2)))
 
 
-;; Pareto PDF: $\mathsf{P}(x) = \frac{\alpha x_m^{\alpha}}{x^{\alpha + 1}}$, again for $x \leq x_m$.
-;; (Note that memoizing this makes it slower.  Rearranging to use expt only
-;; once also makes it slower.)
+(defn mean
+  "Returns the mean value of all numbers in collection xs, or the
+  first n values if n is provided.  If n greater than the length of xs,
+  takes the mean of xs."
+  ([xs]
+   (let [n (count xs)]
+     (/ (reduce + xs) n)))
+  ([n xs] (mean (take n xs)))) ; don't divide by n explicitly: xs may be short
+
+
 (comment
   ;; USE APACHE COMMONS PARETO DISTRIBUTION INSTEAD:
 
+;; Pareto PDF: $\mathsf{P}(x) = \frac{\alpha x_m^{\alpha}}{x^{\alpha + 1}}$, again for $x \leq x_m$.
+;; (Note that memoizing this makes it slower.  Rearranging to use expt only
+;; once also makes it slower.)
   (defn pareto
     "Given a scale parameter x_m (min value, should be positive) and a shape parameter
     alpha (positive), returns the value of the Pareto density function at x
@@ -67,5 +77,4 @@
     0
     (let [mu- (dec mu)]
       (* (nt/expt x (- mu)) (nt/expt r mu-) mu-))))
-
 )
