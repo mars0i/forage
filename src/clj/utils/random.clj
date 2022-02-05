@@ -264,3 +264,21 @@
                                x
                                (recur (.nextDouble this))))))
     )
+
+(defn next-double-fn
+  "Rather than returning the result of '(next-double dist)' or 
+  '(next-double dist low high)', returns a function of no argujents,
+  which when called, returns the next double from dist, which may be a 
+  PRNG, in which case it's a uniform distribution.  (This function might
+  be useful e.g. for passing to 'repeatedly'.)"
+  ([dist] (fn [] (next-double dist)))
+  ([dist low high] (fn [] (next-double dist low high))))
+
+;; Don't name this 'doubles'; that's a Clojure built-in.
+;; Not including the (repeatedly n f) form, because that would make
+;; multiple arities confusing.  I can use 'take' instead.
+(defn next-doubles
+  "Returns a lazy infinite sequence of random doubles from distribution 
+  dist, which may be a PRNG, in which case it's a uniform distribution."
+  ([dist] (repeatedly (next-double-fn dist)))
+  ([dist low high] (repeatedly (next-double-fn dist low high))))
