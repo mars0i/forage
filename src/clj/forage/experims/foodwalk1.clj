@@ -34,7 +34,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
 
-(def seed (inc (r/make-int-seed)))
+(def seed (inc (r/make-seed)))
 ;(def seed 41221)
 (println "SEED:" seed)
 (def rng (r/make-well19937 seed))

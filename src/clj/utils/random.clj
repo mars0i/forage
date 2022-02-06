@@ -24,21 +24,22 @@
 ;; TODO For uniform numbers, use a RandomDataGenerator to normalize to
 ;; a range.
 
-(declare flush-rng make-int-seed)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PRNG-CREATION FUNCTIONS
 
-(defonce seed-increment (atom 0))
-
-;; TODO Is this what I want??
-(defn make-int-seed
+;; Similar to what Apache Commons PRNGs do if unseeded.
+;; Note that the Apache Commons PRNGs will use all of a long seed--
+;; it's split into two ints, and those are the first to entries in the
+;; array of ints that is the real internal seed.  Luke's MersenneTwisterFast,
+;; by contrast, will only use the first 32 bits of a long seed, as if
+;; it was an int.
+(defn make-seed
+  "Return a long constructed from semi-arbitrary things such as the
+  system time and the hash identity of a newly created Java object."
   [] 
-  (let [t (System/currentTimeMillis)
-        r (rand-int Integer/MAX_VALUE)
-        i (swap! seed-increment inc)]
-    (int (+ i ; protect against millisecond redundancy
-            (nt/round (* i (/ t r)))))))
+  (let [t (System/currentTimeMillis)           ; long
+        h (System/identityHashCode (Object.))] ; int
+    (+ t h)))
 
 
 ;; NOTE: I've decided to flush some initial state from WELL generators,
