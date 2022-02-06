@@ -8,6 +8,7 @@
                  [org.apache.commons/commons-math3 "3.6.1"]
                  ;[mars0i/masonclj "0.2.0"]
                  [aerial.hanami "0.17.0"]
+                 [criterium "0.4.6"]
 
 		 ;[io.github.nextjournal/clerk "0.4.316"]
 		 [io.github.nextjournal/clerk "0.5.346"]
@@ -20,7 +21,6 @@
                  ;[org.scicloj/tempfiles "1-alpha2"]
                  ;[org.scicloj/kindly "1-alpha3"] ; NOTESPACE?
 
-                 ;[criterium "0.4.6"]
 
                  [mason "20"] ; 
                  ;; Libs that MASON wants and can be gotten from maven.org, so they don't need to be in my lib dir:
