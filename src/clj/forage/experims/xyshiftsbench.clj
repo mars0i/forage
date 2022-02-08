@@ -15,7 +15,7 @@
 (def maxpathlen 2000) ; max length of a path (sequence of line segments)
 (def trunclen 1000)   ; max length of any line segment
 
-(def perc-radius 5)
+(def perc-radius 1)
 (def food-distance 100)
 ;(def discretization food-distance)
 (def discretization 20)
@@ -79,9 +79,11 @@
                             stop-walk)]
                  (when @firstrun$           ; including in timing, but 
                    (swap! firstrun$ not)    ;  cost should be negligible
-                   (print "first run") ; DEBUG
-                   (swap! wwfs$ conj wwfs))))))))
+                   (swap! wwfs$ conj wwfs))))))
+    (println "Are the same foodspots found?" (apply = @wwfs$))
+    @wwfs$))
 
+;; TODO: Revise to use internal same internal logic as preceding bench-epsilons-and-discretizations
 (defn bench-epsilons
   "Runs Criterium 'bench' on food searches with all intra-seg epsilons
   passed, using a random walk and the environment defined with parameters 
