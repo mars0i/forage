@@ -175,8 +175,7 @@
       (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
         "\ndone: NaN"
         (let [food (look-fn [x y])]
-          (cond food  (do (println "found" [x y]) ; DEBUG
-                        [[x y] food])
+          (cond food [[x y] food]
                 (and (= x x2)
                      (= y y2))  nil ; last point. check both: horizontal or vertical lines
                 :else  (let [xsh (+ x x-shift)
