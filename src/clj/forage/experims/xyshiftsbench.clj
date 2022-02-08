@@ -47,7 +47,42 @@
 ;; Corresponding path of coordinate pairs:
 (def stop-walk (w/walk-stops [0 0] step-walk))
 
-(defn run-bench
+(defn bench-epsilons-and-discretizations
+  "Runs Criterium 'bench' on food searches with all intra-seg epsilons
+  passed, using a random walk and the environment defined with parameters 
+  defined in this version of this file.  Reports parameters and benchmark 
+  results to stdout, followed by a report of whether the same foodspots 
+  were found with each epsilon.  Then returns the resulting collections of 
+  walk-with-food pairs so that they can be examined.  Note that since
+  Criterium runs the process many times, what you get back will be 
+  collections of the same results many times.  Try something like this
+  on the return value: (map (comp foodspot-coords first second) wwfs)."
+  [epsilons discretizations]
+  (println 
+    "seed:" seed ", perc-radius:" perc-radius,
+    ", powerlaw-exponent:" powerlaw-exponent, ", powerlaw-scale:" powerlaw-scale,
+    "\nfood-distance:" food-distance, ", env-size:" env-size,
+    ", maxpathlen:" maxpathlen, ", trunclen:" trunclen)
+  (let [wwfs$ (atom [])] ; bench doesn't return result of computation, so we need to add results to an atom inside it
+    (doseq [epsilon epsilons
+            discretization discretizations]
+           (println "\n---------------------------"
+                    "\nintra-seg-epsilon =" epsilon,
+                    "discretization:" discretization)
+           (flush)
+           (let [firstrun$ true]
+             (criterium/bench
+               (let [wwfs (w/path-with-food 
+                            (partial mf/perceptible-foodspots 
+                                     env perc-radius)
+                            epsilon
+                            stop-walk)]
+                 (when @firstrun$           ; including in timing, but 
+                   (print "first run") ; DEBUG
+                   (swap! firstrun$ not)    ;  cost should be negligible
+                   (swap! wwfs$ conj wwfs))))))))
+
+(defn bench-epsilons
   "Runs Criterium 'bench' on food searches with all intra-seg epsilons
   passed, using a random walk and the environment defined with parameters 
   defined in this version of this file.  Reports parameters and benchmark 
@@ -66,17 +101,22 @@
     "discretization:" discretization)
   (let [wwfs$ (atom [])] ; bench doesn't return result of computation
     (run!                ; so we need to add results to an atom inside it
-      (fn [eps]
-          (println "\n---------------------------"
-                   "\nintra-seg-epsilon =" eps)
-          (flush)
-          (criterium/bench
-            (swap! wwfs$ conj
-                   (w/path-with-food 
-                     (partial mf/perceptible-foodspots env perc-radius)
-                     eps
-                     stop-walk)))) 
-      epsilons)
+          (fn [eps]
+              (println "\n---------------------------"
+                       "\nintra-seg-epsilon =" eps)
+              (flush)
+              (let [firstrun$ true]
+                (criterium/bench
+                  (let [wwfs (w/path-with-food 
+                               (partial mf/perceptible-foodspots 
+                                        env perc-radius)
+                               eps
+                               stop-walk)]
+                    (when @firstrun$
+                      (swap! firstrun$ not)
+                      (swap! wwfs$ conj wwfs))))))
+
+          epsilons)
     (println "\nDid they all find the same foodspots?" (apply = @wwfs$))
     @wwfs$))
 
