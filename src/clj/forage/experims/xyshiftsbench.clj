@@ -52,8 +52,11 @@
   passed, using a random walk and the environment defined with parameters 
   defined in this version of this file.  Reports parameters and benchmark 
   results to stdout, followed by a report of whether the same foodspots 
-  were found with each epsilon.  Then returns the resulting walk-with-food
-  pairs so that they can be examined."
+  were found with each epsilon.  Then returns the resulting collections of 
+  walk-with-food pairs so that they can be examined.  Note that since
+  Criterium runs the process many times, what you get back will be 
+  collections of the same results many times.  Try something like this
+  on the return value: (map (comp foodspot-coords first second) wwfs)."
   [epsilons]
   (println 
     "seed:" seed ", perc-radius:" perc-radius,
@@ -61,22 +64,21 @@
     "\nfood-distance:" food-distance, ", env-size:" env-size,
     ", maxpathlen:" maxpathlen, ", trunclen:" trunclen, ",\n"
     "discretization:" discretization)
-  (let [wwfs (map 
-              (fn [eps]
-                  (println "\n---------------------------"
-                           "\nintra-seg-epsilon =" eps)
-                  (flush)
-                  (criterium/bench
-                    (w/path-with-food 
-                      (partial mf/perceptible-foodspots env perc-radius)
-                      eps
-                      stop-walk))) 
-              epsilons)]
-    (println "\nDid they all find the same foodspots?" (apply = wwfs))
-    (println "foodspots found at:"
-             (map (fn [fs] (map mf/foodspot-coords))
-                  (map second wwfs)))
-    wwfs))
+  (let [wwfs$ (atom [])] ; bench doesn't return result of computation
+    (run!                ; so we need to add results to an atom inside it
+      (fn [eps]
+          (println "\n---------------------------"
+                   "\nintra-seg-epsilon =" eps)
+          (flush)
+          (criterium/bench
+            (swap! wwfs$ conj
+                   (w/path-with-food 
+                     (partial mf/perceptible-foodspots env perc-radius)
+                     eps
+                     stop-walk)))) 
+      epsilons)
+    (println "\nDid they all find the same foodspots?" (apply = @wwfs$))
+    @wwfs$))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
