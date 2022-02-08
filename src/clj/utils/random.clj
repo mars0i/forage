@@ -84,7 +84,7 @@
 (defn make-well1024
   "Make an Apache Commons WELL 1024a generator, flushing any possible 
   initial lack of entropy."
-  ([] (make-well1024 (make-int-seed)))
+  ([] (make-well1024 (make-seed)))
   ([long-seed] 
    (let [rng (Well1024a. long-seed)]
      (flush1024 rng)
@@ -94,7 +94,7 @@
   "Make an Apache Commons WELL 19937c generator, flushing any possible 
   initial lack of entropy.  (Note that this is the default generator in
   Apache Commons used by distribution functions if no generator is passed.)"
-  ([] (make-well19937 (make-int-seed)))
+  ([] (make-well19937 (make-seed)))
   ([long-seed] 
    (let [rng (Well19937c. long-seed)]
      (flush19937 rng)
@@ -103,7 +103,7 @@
 (defn make-well44497
   "Make an Apache Commons WELL 44497b generator, flushing any possible 
   initial lack of entropy."
-  ([] (make-well44497 (make-int-seed)))
+  ([] (make-well44497 (make-seed)))
   ([long-seed] 
    (let [rng (Well44497b. long-seed)]
      (flush44497 rng)
@@ -112,7 +112,7 @@
 (defn make-twister
   "Make an instance of Apache Commons MersenneTwister generator, flushing
   any possible initial lack of entropy."
-  ([] (make-twister (make-int-seed)))
+  ([] (make-twister (make-seed)))
   ([long-seed] 
    (let [rng (org.apache.commons.math3.random.MersenneTwister. long-seed)]
      (flush19937 rng)
@@ -122,7 +122,7 @@
 (defn make-luke-twister
   "Make an instance of Sean Luke's MersenneTwisterFast, flushing any possible 
   initial lack of entropy."
-  ([] (make-luke-twister (make-int-seed)))
+  ([] (make-luke-twister (make-seed)))
   ([long-seed] 
    (let [rng (ec.util.MersenneTwisterFast. long-seed)]
      (flush19937 rng)
