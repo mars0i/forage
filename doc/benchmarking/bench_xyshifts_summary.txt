@@ -1,0 +1,15 @@
+Summary of results from time benchmarking variations in intra-seg-epsilons
+and discretization of Continuous2D with foodspots on a rectangular
+grid (with perceived radius 5 and 1):
+
+Differences in discretizations, from 2xradius to distances between
+foodspots, make no sigificant difference in speed.
+
+The speed of search is inversely proportional to the value of the
+intra-seg-epsilons.
+
+(Question: Should I try the linear search that the MASON manual
+suggests?)
+
+Initial tests show discretizations from 1/5 of a radius on down find the
+same foodspots, but need to test that further.
