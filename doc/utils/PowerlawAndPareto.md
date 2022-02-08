@@ -1,4 +1,4 @@
-steplengths.md
+PowerlawAndPareto.md
 ===
 cf. Viswanathan et al., *Nature* 1999 (which uses $l$ instead of $x$,
 and $r_v$ instead of $k$).
@@ -26,7 +26,7 @@ x^{-\mu}\frac{\mu-1}{k^{1-\mu}}$$
 
 Compare this to the Pareto distribution:
 
-CDF: $F_X(x) = 1 - \left(\frac{x_m}{x}\right)^{\alpha}$ for $x \leq x_m$.
+CDF: $F_X(x) = 1 - \left(\frac{x_m}{x}\right)^{\alpha}$ for $x \geq x_m$.
 
 i.e. $x_m$ is the minium value for $x$.
 
