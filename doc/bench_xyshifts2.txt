@@ -1,0 +1,226 @@
+Benchmarks varying intra-seg-epsilon and Continuous2D discretization
+
+
+user=> (use 'forage.experims.xyshiftsbench :reload-all)
+SEED: 1645681372124
+nil
+user=> (def wwfs-radius5 (time (bench-epsilons-and-discretizations [1 0.1 0.01] [100 40 25 15 10])))
+user=> (def wwfs-radius5 (time (bench-epsilons-and-discretizations [1 0.1 0.01] [100 40 25 15 10])))
+seed: 1645681372124 , perc-radius: 5 , powerlaw-exponent: 2 , powerlaw-scale: 1
+food-distance: 100 , env-size: 400 , maxpathlen: 2000 , trunclen: 1000
+
+---------------------------
+intra-seg-epsilon = 1 discretization: 100
+Execution error (ClassCastException) at forage.experims.xyshiftsbench/bench-epsilons-and-discretizations$fn (xyshiftsbench.clj:80).
+java.lang.Boolean cannot be cast to java.util.concurrent.Future
+
+user=> Bye for now!
+l~/docs/src/clojure/forage(main)*$ leinr
+nREPL server started on port 51604 on host 127.0.0.1 - nrepl://127.0.0.1:51604
+REPL-y 0.5.1, nREPL 0.8.3
+Clojure 1.10.3
+Java HotSpot(TM) 64-Bit Server VM 1.8.0_121-b13
+    Docs: (doc function-name-here)
+          (find-doc "part-of-name-here")
+  Source: (source function-name-here)
+ Javadoc: (javadoc java-object-or-class-here)
+    Exit: Control+D or (exit) or (quit)
+ Results: Stored in vars *1, *2, *3, an exception in *e
+
+user=> (use 'forage.experims.xyshiftsbench :reload-all)
+SEED: 1645681372124
+nil
+user=> (def wwfs-radius5 (time (bench-epsilons-and-discretizations [1 0.1 0.01] [100 40 25 15 10])))
+user=> (def wwfs-radius5 (time (bench-epsilons-and-discretizations [1 0.1 0.01] [100 40 25 15 10])))
+seed: 1645681372124 , perc-radius: 5 , powerlaw-exponent: 2 , powerlaw-scale: 1
+food-distance: 100 , env-size: 400 , maxpathlen: 2000 , trunclen: 1000
+
+---------------------------
+intra-seg-epsilon = 1 discretization: 100
+first runEvaluation count : 9420 in 60 samples of 157 calls.
+             Execution time mean : 6.532353 ms
+    Execution time std-deviation : 521.644329 µs
+   Execution time lower quantile : 6.289878 ms ( 2.5%)
+   Execution time upper quantile : 7.242811 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 6 outliers in 60 samples (10.0000 %)
+	low-severe	 4 (6.6667 %)
+	low-mild	 2 (3.3333 %)
+ Variance from outliers : 58.5299 % Variance is severely inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 1 discretization: 40
+first runEvaluation count : 9360 in 60 samples of 156 calls.
+             Execution time mean : 6.406784 ms
+    Execution time std-deviation : 129.356935 µs
+   Execution time lower quantile : 6.275111 ms ( 2.5%)
+   Execution time upper quantile : 6.675157 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 9.3612 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 1 discretization: 25
+first runEvaluation count : 9600 in 60 samples of 160 calls.
+             Execution time mean : 6.436842 ms
+    Execution time std-deviation : 114.576442 µs
+   Execution time lower quantile : 6.293428 ms ( 2.5%)
+   Execution time upper quantile : 6.679074 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 7.7626 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 1 discretization: 15
+first runEvaluation count : 9540 in 60 samples of 159 calls.
+             Execution time mean : 6.414628 ms
+    Execution time std-deviation : 107.782246 µs
+   Execution time lower quantile : 6.281170 ms ( 2.5%)
+   Execution time upper quantile : 6.677728 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 2 outliers in 60 samples (3.3333 %)
+	low-severe	 2 (3.3333 %)
+ Variance from outliers : 6.2567 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 1 discretization: 10
+first runEvaluation count : 9480 in 60 samples of 158 calls.
+             Execution time mean : 6.398121 ms
+    Execution time std-deviation : 110.810908 µs
+   Execution time lower quantile : 6.277263 ms ( 2.5%)
+   Execution time upper quantile : 6.638145 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 6.2808 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.1 discretization: 100
+first runEvaluation count : 1020 in 60 samples of 17 calls.
+             Execution time mean : 60.534859 ms
+    Execution time std-deviation : 1.035290 ms
+   Execution time lower quantile : 59.438027 ms ( 2.5%)
+   Execution time upper quantile : 62.631974 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 6.2710 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.1 discretization: 40
+first runEvaluation count : 1020 in 60 samples of 17 calls.
+             Execution time mean : 60.527207 ms
+    Execution time std-deviation : 915.743378 µs
+   Execution time lower quantile : 59.352660 ms ( 2.5%)
+   Execution time upper quantile : 62.451839 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+---------------------------
+intra-seg-epsilon = 0.1 discretization: 25
+first runEvaluation count : 1020 in 60 samples of 17 calls.
+             Execution time mean : 60.482144 ms
+    Execution time std-deviation : 966.979136 µs
+   Execution time lower quantile : 59.461524 ms ( 2.5%)
+   Execution time upper quantile : 62.664178 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 2 outliers in 60 samples (3.3333 %)
+	low-severe	 2 (3.3333 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.1 discretization: 15
+first runEvaluation count : 1020 in 60 samples of 17 calls.
+             Execution time mean : 60.460579 ms
+    Execution time std-deviation : 884.077869 µs
+   Execution time lower quantile : 59.423726 ms ( 2.5%)
+   Execution time upper quantile : 62.779531 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 3 outliers in 60 samples (5.0000 %)
+	low-severe	 3 (5.0000 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.1 discretization: 10
+first runEvaluation count : 1020 in 60 samples of 17 calls.
+             Execution time mean : 60.523542 ms
+    Execution time std-deviation : 939.540558 µs
+   Execution time lower quantile : 59.476591 ms ( 2.5%)
+   Execution time upper quantile : 62.716492 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+---------------------------
+intra-seg-epsilon = 0.01 discretization: 100
+first runEvaluation count : 120 in 60 samples of 2 calls.
+             Execution time mean : 599.449718 ms
+    Execution time std-deviation : 8.782172 ms
+   Execution time lower quantile : 589.900781 ms ( 2.5%)
+   Execution time upper quantile : 618.003487 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.01 discretization: 40
+first runEvaluation count : 120 in 60 samples of 2 calls.
+             Execution time mean : 600.097886 ms
+    Execution time std-deviation : 7.747796 ms
+   Execution time lower quantile : 589.092074 ms ( 2.5%)
+   Execution time upper quantile : 617.124623 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.01 discretization: 25
+first runEvaluation count : 120 in 60 samples of 2 calls.
+             Execution time mean : 603.133199 ms
+    Execution time std-deviation : 11.052783 ms
+   Execution time lower quantile : 589.307914 ms ( 2.5%)
+   Execution time upper quantile : 629.076257 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 7.7948 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.01 discretization: 15
+first runEvaluation count : 120 in 60 samples of 2 calls.
+             Execution time mean : 600.577784 ms
+    Execution time std-deviation : 8.827976 ms
+   Execution time lower quantile : 590.319571 ms ( 2.5%)
+   Execution time upper quantile : 621.163851 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 2 outliers in 60 samples (3.3333 %)
+	low-severe	 2 (3.3333 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.01 discretization: 10
+first runEvaluation count : 120 in 60 samples of 2 calls.
+             Execution time mean : 599.322164 ms
+    Execution time std-deviation : 8.561063 ms
+   Execution time lower quantile : 588.897381 ms ( 2.5%)
+   Execution time upper quantile : 621.806931 ms (97.5%)
+                   Overhead used : 6.584092 ns
+
+Found 4 outliers in 60 samples (6.6667 %)
+	low-severe	 4 (6.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+"Elapsed time: 1208557.854792 msecs"
+#'user/wwfs-radius5
