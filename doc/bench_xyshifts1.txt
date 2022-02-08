@@ -1,0 +1,50 @@
+user=> (use 'forage.experims.xyshiftsbench :reload)
+
+user=> (def food-founds (time (run-bench [1 0.1 0.01 0.001])))
+seed: 1645681372124 perc-radius: 5 powerlaw-exponent: 2 powerlaw-scale: 1
+food-distance: 100 env-size: 400 maxpathlen: 2000 trunclen: 1000
+
+---------------------------
+intra-seg-epsilon = 1
+Evaluation count : 8640 in 60 samples of 144 calls.
+             Execution time mean : 7.105180 ms
+    Execution time std-deviation : 191.814358 µs
+   Execution time lower quantile : 6.743498 ms ( 2.5%)
+   Execution time upper quantile : 7.361583 ms (97.5%)
+                   Overhead used : 7.107411 ns
+
+---------------------------
+intra-seg-epsilon = 0.1
+Evaluation count : 960 in 60 samples of 16 calls.
+             Execution time mean : 67.841123 ms
+    Execution time std-deviation : 1.457669 ms
+   Execution time lower quantile : 64.861926 ms ( 2.5%)
+   Execution time upper quantile : 70.581329 ms (97.5%)
+                   Overhead used : 7.107411 ns
+
+---------------------------
+intra-seg-epsilon = 0.01
+Evaluation count : 120 in 60 samples of 2 calls.
+             Execution time mean : 679.040071 ms
+    Execution time std-deviation : 33.100846 ms
+   Execution time lower quantile : 643.088957 ms ( 2.5%)
+   Execution time upper quantile : 741.358917 ms (97.5%)
+                   Overhead used : 7.107411 ns
+
+Found 7 outliers in 60 samples (11.6667 %)
+	low-severe	 5 (8.3333 %)
+	low-mild	 2 (3.3333 %)
+ Variance from outliers : 35.1933 % Variance is moderately inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.001
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 6.710339 sec
+    Execution time std-deviation : 149.091950 ms
+   Execution time lower quantile : 6.482862 sec ( 2.5%)
+   Execution time upper quantile : 6.996231 sec (97.5%)
+                   Overhead used : 7.107411 ns
+
+Did they all find the same foodspots? true
+"Elapsed time: 709759.087853 msecs"
+#'user/food-founds
