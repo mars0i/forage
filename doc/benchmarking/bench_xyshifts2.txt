@@ -1,21 +1,13 @@
 Benchmarks varying intra-seg-epsilon and Continuous2D discretization
 
+Note that discretizations and epsilons may be different for
+experiments with different perceived radii.
 
-user=> (use 'forage.experims.xyshiftsbench :reload-all)
-SEED: 1645681372124
-nil
-user=> (def wwfs-radius5 (time (bench-epsilons-and-discretizations [1 0.1 0.01] [100 40 25 15 10])))
-user=> (def wwfs-radius5 (time (bench-epsilons-and-discretizations [1 0.1 0.01] [100 40 25 15 10])))
-seed: 1645681372124 , perc-radius: 5 , powerlaw-exponent: 2 , powerlaw-scale: 1
-food-distance: 100 , env-size: 400 , maxpathlen: 2000 , trunclen: 1000
 
----------------------------
-intra-seg-epsilon = 1 discretization: 100
-Execution error (ClassCastException) at forage.experims.xyshiftsbench/bench-epsilons-and-discretizations$fn (xyshiftsbench.clj:80).
-java.lang.Boolean cannot be cast to java.util.concurrent.Future
+=================
+perc-radius = 5
 
-user=> Bye for now!
-l~/docs/src/clojure/forage(main)*$ leinr
+~/docs/src/clojure/forage(main)*$ leinr
 nREPL server started on port 51604 on host 127.0.0.1 - nrepl://127.0.0.1:51604
 REPL-y 0.5.1, nREPL 0.8.3
 Clojure 1.10.3
@@ -224,3 +216,321 @@ Found 4 outliers in 60 samples (6.6667 %)
  Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
 "Elapsed time: 1208557.854792 msecs"
 #'user/wwfs-radius5
+
+
+=================
+perc-radius = 1
+
+~/docs/src/clojure/forage(main)*$ leinr
+nREPL server started on port 51725 on host 127.0.0.1 - nrepl://127.0.0.1:51725
+REPL-y 0.5.1, nREPL 0.8.3
+Clojure 1.10.3
+Java HotSpot(TM) 64-Bit Server VM 1.8.0_121-b13
+    Docs: (doc function-name-here)
+          (find-doc "part-of-name-here")
+  Source: (source function-name-here)
+ Javadoc: (javadoc java-object-or-class-here)
+    Exit: Control+D or (exit) or (quit)
+ Results: Stored in vars *1, *2, *3, an exception in *e
+
+user=> (use 'forage.experims.xyshiftsbench :reload-all)
+SEED: 1646052535499
+nil
+user=> (def wwfs-radius1 (time (bench-epsilons-and-discretizations [0.2 0.02 0.01 0.002] [100 25 10 5 2])))
+seed: 1646052535499 , perc-radius: 1 , powerlaw-exponent: 2 , powerlaw-scale: 1
+food-distance: 100 , env-size: 4000 , maxpathlen: 4000 , trunclen: 1000
+
+---------------------------
+intra-seg-epsilon = 0.2 discretization: 100
+Evaluation count : 540 in 60 samples of 9 calls.
+             Execution time mean : 122.123038 ms
+    Execution time std-deviation : 2.239375 ms
+   Execution time lower quantile : 119.337305 ms ( 2.5%)
+   Execution time upper quantile : 126.584749 ms (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 2 outliers in 60 samples (3.3333 %)
+	low-severe	 1 (1.6667 %)
+	low-mild	 1 (1.6667 %)
+ Variance from outliers : 7.7955 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.2 discretization: 25
+Evaluation count : 540 in 60 samples of 9 calls.
+             Execution time mean : 120.713544 ms
+    Execution time std-deviation : 2.477507 ms
+   Execution time lower quantile : 117.893528 ms ( 2.5%)
+   Execution time upper quantile : 127.155568 ms (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 3 outliers in 60 samples (5.0000 %)
+	low-severe	 3 (5.0000 %)
+ Variance from outliers : 9.3818 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.2 discretization: 10
+Evaluation count : 540 in 60 samples of 9 calls.
+             Execution time mean : 121.397151 ms
+    Execution time std-deviation : 2.404794 ms
+   Execution time lower quantile : 118.859751 ms ( 2.5%)
+   Execution time upper quantile : 126.400538 ms (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 7.8725 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.2 discretization: 5
+Evaluation count : 540 in 60 samples of 9 calls.
+             Execution time mean : 121.014100 ms
+    Execution time std-deviation : 1.675660 ms
+   Execution time lower quantile : 118.764790 ms ( 2.5%)
+   Execution time upper quantile : 124.703832 ms (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 2 outliers in 60 samples (3.3333 %)
+	low-severe	 2 (3.3333 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.2 discretization: 2
+Evaluation count : 480 in 60 samples of 8 calls.
+             Execution time mean : 120.966772 ms
+    Execution time std-deviation : 2.305834 ms
+   Execution time lower quantile : 118.885656 ms ( 2.5%)
+   Execution time upper quantile : 126.833174 ms (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 5 outliers in 60 samples (8.3333 %)
+	low-severe	 4 (6.6667 %)
+	low-mild	 1 (1.6667 %)
+ Variance from outliers : 7.8356 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.02 discretization: 100
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 1.181128 sec
+    Execution time std-deviation : 14.962301 ms
+   Execution time lower quantile : 1.164424 sec ( 2.5%)
+   Execution time upper quantile : 1.215640 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 2 outliers in 60 samples (3.3333 %)
+	low-severe	 2 (3.3333 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.02 discretization: 25
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 1.184718 sec
+    Execution time std-deviation : 18.752911 ms
+   Execution time lower quantile : 1.161532 sec ( 2.5%)
+   Execution time upper quantile : 1.224977 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.02 discretization: 10
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 1.192761 sec
+    Execution time std-deviation : 27.787388 ms
+   Execution time lower quantile : 1.161188 sec ( 2.5%)
+   Execution time upper quantile : 1.262537 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 3 outliers in 60 samples (5.0000 %)
+	low-severe	 2 (3.3333 %)
+	low-mild	 1 (1.6667 %)
+ Variance from outliers : 11.0136 % Variance is moderately inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.02 discretization: 5
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 1.178864 sec
+    Execution time std-deviation : 17.640375 ms
+   Execution time lower quantile : 1.159711 sec ( 2.5%)
+   Execution time upper quantile : 1.210329 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 3 outliers in 60 samples (5.0000 %)
+	low-severe	 2 (3.3333 %)
+	low-mild	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.02 discretization: 2
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 1.183063 sec
+    Execution time std-deviation : 16.766358 ms
+   Execution time lower quantile : 1.162592 sec ( 2.5%)
+   Execution time upper quantile : 1.219333 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+---------------------------
+intra-seg-epsilon = 0.01 discretization: 100
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 2.363095 sec
+    Execution time std-deviation : 32.792401 ms
+   Execution time lower quantile : 2.320891 sec ( 2.5%)
+   Execution time upper quantile : 2.425953 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.01 discretization: 25
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 2.362433 sec
+    Execution time std-deviation : 26.646010 ms
+   Execution time lower quantile : 2.320369 sec ( 2.5%)
+   Execution time upper quantile : 2.417049 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+---------------------------
+intra-seg-epsilon = 0.01 discretization: 10
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 2.355349 sec
+    Execution time std-deviation : 22.599460 ms
+   Execution time lower quantile : 2.328554 sec ( 2.5%)
+   Execution time upper quantile : 2.414251 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 3 outliers in 60 samples (5.0000 %)
+	low-severe	 3 (5.0000 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.01 discretization: 5
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 2.359986 sec
+    Execution time std-deviation : 22.262387 ms
+   Execution time lower quantile : 2.329578 sec ( 2.5%)
+   Execution time upper quantile : 2.406437 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+---------------------------
+intra-seg-epsilon = 0.01 discretization: 2
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 2.353677 sec
+    Execution time std-deviation : 24.242569 ms
+   Execution time lower quantile : 2.324547 sec ( 2.5%)
+   Execution time upper quantile : 2.413457 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 3 outliers in 60 samples (5.0000 %)
+	low-severe	 3 (5.0000 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.002 discretization: 100
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 11.902671 sec
+    Execution time std-deviation : 92.975497 ms
+   Execution time lower quantile : 11.707113 sec ( 2.5%)
+   Execution time upper quantile : 12.046253 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.002 discretization: 25
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 11.895372 sec
+    Execution time std-deviation : 83.965666 ms
+   Execution time lower quantile : 11.708758 sec ( 2.5%)
+   Execution time upper quantile : 12.018326 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 2 outliers in 60 samples (3.3333 %)
+	low-severe	 2 (3.3333 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.002 discretization: 10
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 11.906410 sec
+    Execution time std-deviation : 131.114836 ms
+   Execution time lower quantile : 11.727530 sec ( 2.5%)
+   Execution time upper quantile : 12.028517 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 1 outliers in 60 samples (1.6667 %)
+	low-severe	 1 (1.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.002 discretization: 5
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 11.906204 sec
+    Execution time std-deviation : 82.275191 ms
+   Execution time lower quantile : 11.697723 sec ( 2.5%)
+   Execution time upper quantile : 12.015784 sec (97.5%)
+                   Overhead used : 6.559503 ns
+
+Found 4 outliers in 60 samples (6.6667 %)
+	low-severe	 4 (6.6667 %)
+ Variance from outliers : 1.6389 % Variance is slightly inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.002 discretization: 2
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 11.897471 sec
+    Execution time std-deviation : 88.904400 ms
+   Execution time lower quantile : 11.719065 sec ( 2.5%)
+   Execution time upper quantile : 12.015565 sec (97.5%)
+                   Overhead used : 6.559503 ns
+Are the same foodspots found? false
+"Elapsed time: 5569071.441552 msecs"
+#'user/wwfs-radius1
+
+
+NOTE: The searches with different intra-seg-epsilons found the same
+foodspots:
+
+user=> (apply = (map second wwfs-radius1))
+true
+user=> (map (comp foodspot-coords first second) wwfs-radius1)
+([0 -100] [0 -100] [0 -100] [0 -100] [0 -100] [0 -100] [0 -100] [0
+-100] [0 -100] [0 -100] [0 -100] [0 -100] [0 -100] [0 -100] [0 -100]
+[0 -100] [0 -100] [0 -100] [0 -100] [0 -100])
+
+BUT the final points from which the foodspots were found were not
+all the same:
+
+user=> (apply = (map first wwfs-radius1))
+false
+user=> (map (comp count first) wwfs-radius1)
+(535 535 535 535 535 535 535 535 535 535 535 535 535 535 535 535
+535 535 535 535)
+user=> (map (comp last first) wwfs-radius1)
+([-0.4807968655073156 -100.81599254465354] [-0.4807968655073156
+-100.81599254465354] [-0.4807968655073156 -100.81599254465354]
+[-0.4807968655073156 -100.81599254465354] [-0.4807968655073156
+-100.81599254465354] [-0.5087876983041585 -100.84592518982699]
+[-0.5087876983041585 -100.84592518982699] [-0.5087876983041585
+-100.84592518982699] [-0.5087876983041585 -100.84592518982699]
+[-0.5087876983041585 -100.84592518982699] [-0.5134528371036493
+-100.8509139640257] [-0.5134528371036493 -100.8509139640257]
+[-0.5134528371036493 -100.8509139640257] [-0.5134528371036493
+-100.8509139640257] [-0.5134528371036493 -100.8509139640257]
+[-0.5171849481433006 -100.85490498339402] [-0.5171849481433006
+-100.85490498339402] [-0.5171849481433006 -100.85490498339402]
+[-0.5171849481433006 -100.85490498339402] [-0.5171849481433006
+-100.85490498339402])
+
+Sanity check: All of the points in the search paths up to the last
+point should nevertheless be the same:
+
+user=> (apply = (map (comp butlast first) wwfs-radius1))
+true
+
+(These are not the intra-seg stops, but rather the points that begin and
+end the line segments.)
