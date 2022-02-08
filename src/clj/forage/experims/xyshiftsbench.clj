@@ -9,19 +9,22 @@
       [forage.viz.hanami :as h] ; if I want to display the paths
       [criterium.core :as criterium]))
 
-(def perc-radius 1)
 (def powerlaw-exponent 2) ; must be < 1; 2 supposed to be optimal sparse targets
 (def powerlaw-scale 1) ; scale parameter of distribution
-(def food-distance 100)
 (def env-size 400)
 (def maxpathlen 2000) ; max length of a path (sequence of line segments)
 (def trunclen 1000)   ; max length of any line segment
+
+(def perc-radius 5)
+(def food-distance 100)
+;(def discretization food-distance)
+(def discretization 20)
 
 ;; For Hanami/vega-lite plots, size of plot display:
 (def plot-dim 700)
 
 
-(def env (mf/make-env food-distance env-size
+(def env (mf/make-env discretization env-size
                       (f/centerless-rectangular-grid food-distance
                                                      env-size
                                                      env-size)))
@@ -29,7 +32,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
 
-(def seed (inc (r/make-seed)))
+;(def seed (inc (r/make-seed)))
+(def seed 1645681372124)
 (println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 (def dist (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
@@ -55,7 +59,8 @@
     "seed:" seed ", perc-radius:" perc-radius,
     ", powerlaw-exponent:" powerlaw-exponent, ", powerlaw-scale:" powerlaw-scale,
     "\nfood-distance:" food-distance, ", env-size:" env-size,
-    ", maxpathlen:" maxpathlen, ", trunclen:" trunclen)
+    ", maxpathlen:" maxpathlen, ", trunclen:" trunclen, ",\n"
+    "discretization:" discretization)
   (let [wwfs (map 
               (fn [eps]
                   (println "\n---------------------------"
@@ -68,6 +73,9 @@
                       stop-walk))) 
               epsilons)]
     (println "\nDid they all find the same foodspots?" (apply = wwfs))
+    (println "foodspots found at:"
+             (map (fn [fs] (map mf/foodspot-coords))
+                  (map second wwfs)))
     wwfs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
