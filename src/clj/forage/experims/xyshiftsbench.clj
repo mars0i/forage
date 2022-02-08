@@ -70,7 +70,7 @@
                     "\nintra-seg-epsilon =" epsilon,
                     "discretization:" discretization)
            (flush)
-           (let [firstrun$ true]
+           (let [firstrun$ (atom true)]
              (criterium/bench
                (let [wwfs (w/path-with-food 
                             (partial mf/perceptible-foodspots 
@@ -78,8 +78,8 @@
                             epsilon
                             stop-walk)]
                  (when @firstrun$           ; including in timing, but 
-                   (print "first run") ; DEBUG
                    (swap! firstrun$ not)    ;  cost should be negligible
+                   (print "first run") ; DEBUG
                    (swap! wwfs$ conj wwfs))))))))
 
 (defn bench-epsilons
