@@ -11,8 +11,8 @@
 
 (def powerlaw-exponent 2) ; must be < 1; 2 supposed to be optimal sparse targets
 (def powerlaw-scale 1) ; scale parameter of distribution
-(def env-size 400)
-(def maxpathlen 2000) ; max length of a path (sequence of line segments)
+(def env-size 4000)
+(def maxpathlen 4000) ; max length of a path (sequence of line segments)
 (def trunclen 1000)   ; max length of any line segment
 
 (def perc-radius 1)
@@ -32,8 +32,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
 
-;(def seed (inc (r/make-seed)))
-(def seed 1645681372124)
+(def seed (inc (r/make-seed)))
+;(def seed 1645681372124)
 (println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 (def dist (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
