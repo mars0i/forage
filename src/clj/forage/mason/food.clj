@@ -94,4 +94,4 @@
   or nil if there are none."
   [env perc-radius [x y]]
   (seq (map foodspot-coords
-            (perc-foodspots-plus env perc-radius [x y]))))
+            (dont-use-perc-foodspots-plus env perc-radius [x y]))))
