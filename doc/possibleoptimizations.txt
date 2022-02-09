@@ -1,2 +1,5 @@
 Prevent reflection?
+	Yes! That produced a huge improvemnt.
+
+Don't use 'partial' in inner loop?
 
