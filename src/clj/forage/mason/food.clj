@@ -67,24 +67,9 @@
   (seq (map foodspot-coords
             (perc-foodspots-exactly env perc-radius [x y]))))
 
-;; DON'T USE: MIGHT RETURN FOODSPOT--IN CELL--THAT'S TOO FAR
-(defn perc-foodspots-plus
-  "Returns a sequence of foodspots within perc-radius of (x,y), possibly 
-  with additional ones in the same Continous2D cell, or nil if there are none."
-  [env perc-radius [x y]]
-  (seq (.getNeighborsWithinDistance env (Double2D. x y) perc-radius)))
-
-;; DON'T USE: MIGHT RETURN FOODSPOT--IN CELL--THAT'S TOO FAR
-(defn perc-foodspot-coords-plus
-  "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
-  with possible additional ones from foodspots in the same Continuous2D cell, 
-  or nil if there are none."
-  [env perc-radius [x y]]
-  (seq (map foodspot-coords
-            (perc-foodspots-plus env perc-radius [x y]))))
-
 ;; Once we have all possible foodspot coordinates, we don't need to
-;; use MASON lookup for a linear search.
+;; use MASON lookup for a linear search.   This is probably slower
+;; than using MASON's cell-based search.
 (defn perc-foodspot-coords-linear
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
   with possible additional ones, or nil if there are none.  Performs a linear 
@@ -92,3 +77,21 @@
   [env perc-radius coords]
   (f/perc-foodspot-coords-in-coll (all-foodspot-coords env)
                                   perc-radius coords))
+
+
+
+;; DON'T USE: CAN RETURN FOODSPOT--IN CELL--THAT'S TOO FAR
+(defn dont-use-perc-foodspots-plus
+  "Returns a sequence of foodspots within perc-radius of (x,y), possibly 
+  with additional ones in the same Continous2D cell, or nil if there are none."
+  [env perc-radius [x y]]
+  (seq (.getNeighborsWithinDistance env (Double2D. x y) perc-radius)))
+
+;; DON'T USE: CAN FOODSPOT--IN CELL--THAT'S TOO FAR
+(defn dont-use-perc-foodspot-coords-plus
+  "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
+  with possible additional ones from foodspots in the same Continuous2D cell, 
+  or nil if there are none."
+  [env perc-radius [x y]]
+  (seq (map foodspot-coords
+            (perc-foodspots-plus env perc-radius [x y]))))
