@@ -2,14 +2,28 @@ Summary of results from time benchmarking variations in intra-seg-epsilons
 and discretization of Continuous2D with foodspots on a rectangular
 grid (with perceived radius 5 and 1):
 
-Differences in discretizations, from 2xradius to distances between
+Tests using getNeighborsExactlyWithinDistance():
+
+. Differences in discretizations, from 2Xradius to distances between
 foodspots, make no sigificant difference in speed.
 
-The speed of search is inversely proportional to the value of the
+. The speed of search is inversely proportional to the value of the
 intra-seg-epsilons.
 
-(Question: Should I try the linear search that the MASON manual
-suggests?)
-
-Initial tests show discretizations from 1/5 of a radius on down find the
+. Initial tests show discretizations from 1/5 of a radius on down find the
 same foodspots, but need to test that further.
+
+-----------------------
+
+. A preliminary test shows that getNeighborsWithinDistance() takes roughly
+1/3 as long as the Exactly function.
+
+(This function would be unsuitable for randomly placed foodspots,
+because it can returns foodspots outside of perc-radius.  However, for
+foodspots on a rectangular grid, and a Continuous2D discretization size
+such that there will never be more than one foodspot in a cell, this
+function is just as good as the Exactly version.)
+
+. Doing a linear search through all foodspots, extracting them from
+the env, is *very* slow with env-size=1000, food-distance=100,
+perc-radius=1.

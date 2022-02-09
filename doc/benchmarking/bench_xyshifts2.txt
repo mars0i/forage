@@ -1,3 +1,5 @@
+ON MBP
+
 Benchmarks varying intra-seg-epsilon and Continuous2D discretization
 
 Note that discretizations and epsilons may be different for

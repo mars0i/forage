@@ -1,3 +1,5 @@
+ON MBP
+
 These first two runs use discretization = food-distance
 
 ==================================

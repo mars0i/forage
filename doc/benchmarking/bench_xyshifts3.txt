@@ -1,0 +1,43 @@
+COMPARISONS OF DIFFERENT LOOK-FNS
+
+On home MBA:
+
+user=> (bench-foodwalks [0.1] [10] [(partial mf/perc-foodspots-exactly
+env perc-radius) (partial mf/perc-foodspots-plus env perc-radius)
+(partial mf/perc-foodspot-coords-linear env perc-radius) (partial
+f/perc-foodspot-coords-in-coll grid-coords perc-radius)])
+seed: 1646163979659 , perc-radius: 1 , powerlaw-exponent: 2 , powerlaw-scale: 1
+food-distance: 100 , env-size: 1000 , maxpathlen: 2000 , trunclen: 1000
+
+---------------------------
+intra-seg-epsilon = 0.1 discretization: 10
+ #object[clojure.core$partial$fn__5859 0x6db36b97 clojure.core$partial$fn__5859@6db36b97]
+Evaluation count : 120 in 60 samples of 2 calls.
+             Execution time mean : 639.525905 ms
+    Execution time std-deviation : 53.884013 ms
+   Execution time lower quantile : 578.890802 ms ( 2.5%)
+   Execution time upper quantile : 779.079541 ms (97.5%)
+                   Overhead used : 15.713891 ns
+
+Found 8 outliers in 60 samples (13.3333 %)
+	low-severe	 1 (1.6667 %)
+	low-mild	 7 (11.6667 %)
+ Variance from outliers : 61.8619 % Variance is severely inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.1 discretization: 10
+ #object[clojure.core$partial$fn__5859 0x2d8933d9 clojure.core$partial$fn__5859@2d8933d9]
+Evaluation count : 240 in 60 samples of 4 calls.
+             Execution time mean : 279.279697 ms
+    Execution time std-deviation : 4.661674 ms
+   Execution time lower quantile : 271.402832 ms ( 2.5%)
+   Execution time upper quantile : 289.190368 ms (97.5%)
+                   Overhead used : 15.713891 ns
+
+---------------------------
+intra-seg-epsilon = 0.1 discretization: 10
+ #object[clojure.core$partial$fn__5859 0x56b1cb31 clojure.core$partial$fn__5859@56b1cb31]
+
+Aborted this after an hour or two.
+So DON'T USE mf/perc-foodspot-coords-linear, even with a rectangular
+grid, at least when it's got 100 foodspots.
