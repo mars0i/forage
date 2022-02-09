@@ -88,5 +88,5 @@
   with possible additional ones, or nil if there are none.  Performs a linear 
   search through all foodspots in env."
   [env perc-radius coords]
-  (f/perc-foodspot-coords-in-coll (all-foodspots env)
+  (f/perc-foodspot-coords-in-coll (all-foodspot-coords env)
                                   perc-radius coords))
