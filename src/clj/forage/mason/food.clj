@@ -67,12 +67,14 @@
   (seq (map foodspot-coords
             (perc-foodspots-exactly env perc-radius [x y]))))
 
+;; DON'T USE: MIGHT RETURN FOODSPOT--IN CELL--THAT'S TOO FAR
 (defn perc-foodspots-plus
   "Returns a sequence of foodspots within perc-radius of (x,y), possibly 
   with additional ones in the same Continous2D cell, or nil if there are none."
   [env perc-radius [x y]]
   (seq (.getNeighborsWithinDistance env (Double2D. x y) perc-radius)))
 
+;; DON'T USE: MIGHT RETURN FOODSPOT--IN CELL--THAT'S TOO FAR
 (defn perc-foodspot-coords-plus
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
   with possible additional ones from foodspots in the same Continuous2D cell, 

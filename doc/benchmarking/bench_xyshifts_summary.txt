@@ -17,6 +17,10 @@ same foodspots, but need to test that further.
 
 . A preliminary test shows that getNeighborsWithinDistance() takes roughly
 1/3 as long as the Exactly function.
+BUT PROBABLY DON'T USE THIS: IT MIGHT RETURN A FOODSPOT THAT'S TOO FAR?
+(Maybe see the Java source?  Or test to see if I get bad results?)
+(maybe it's faster because it finds a foodspot inappropriately and
+stops.)
 
 (This function would be unsuitable for randomly placed foodspots,
 because it can returns foodspots outside of perc-radius.  However, for
@@ -26,4 +30,4 @@ function is just as good as the Exactly version.)
 
 . Doing a linear search through all foodspots, extracting them from
 the env, is *very* slow with env-size=1000, food-distance=100,
-perc-radius=1.
+perc-radius=1.  I aborted this after an hour or two.

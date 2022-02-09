@@ -41,3 +41,65 @@ intra-seg-epsilon = 0.1 discretization: 10
 Aborted this after an hour or two.
 So DON'T USE mf/perc-foodspot-coords-linear, even with a rectangular
 grid, at least when it's got 100 foodspots.
+
+==========================================
+
+The following shows that the linear search through coordinates [first
+function] is doable, but still more than 20X slower than the Exactly
+MASON search.  Again, the non-exact search is signicantly faster than
+Exact, but I'm not sure I should use it.
+(maybe it's faster because it finds a foodspot inappropriately and
+stops.)
+
+
+
+user=> (bench-foodwalks [0.1] [10] [(partial f/perc-foodspot-coords-in-coll grid-coords perc-radius)
+(partial mf/perc-foodspots-exactly env perc-radius) (partial mf/perc-foodspots-plus env perc-radius)])
+seed: 1645344237512 , perc-radius: 1 , powerlaw-exponent: 2 , powerlaw-scale: 1
+food-distance: 100 , env-size: 1000 , maxpathlen: 2000 , trunclen: 1000
+
+---------------------------
+intra-seg-epsilon = 0.1 discretization: 10
+ #object[clojure.core$partial$fn__5859 0x6ab8757a clojure.core$partial$fn__5859@6ab8757a]
+Evaluation count : 60 in 60 samples of 1 calls.
+             Execution time mean : 10.272451 sec
+    Execution time std-deviation : 322.222761 ms
+   Execution time lower quantile : 9.839411 sec ( 2.5%)
+   Execution time upper quantile : 11.028014 sec (97.5%)
+                   Overhead used : 16.300895 ns
+
+Found 2 outliers in 60 samples (3.3333 %)
+	low-severe	 2 (3.3333 %)
+ Variance from outliers : 18.9413 % Variance is moderately inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.1 discretization: 10
+ #object[clojure.core$partial$fn__5859 0x66f0c932 clojure.core$partial$fn__5859@66f0c932]
+Evaluation count : 180 in 60 samples of 3 calls.
+             Execution time mean : 483.483770 ms
+    Execution time std-deviation : 11.619151 ms
+   Execution time lower quantile : 472.315754 ms ( 2.5%)
+   Execution time upper quantile : 512.103393 ms (97.5%)
+                   Overhead used : 16.300895 ns
+
+Found 6 outliers in 60 samples (10.0000 %)
+	low-severe	 2 (3.3333 %)
+	low-mild	 4 (6.6667 %)
+ Variance from outliers : 11.0529 % Variance is moderately inflated by outliers
+
+---------------------------
+intra-seg-epsilon = 0.1 discretization: 10
+ #object[clojure.core$partial$fn__5859 0x5ef74714 clojure.core$partial$fn__5859@5ef74714]
+Evaluation count : 300 in 60 samples of 5 calls.
+             Execution time mean : 221.170355 ms
+    Execution time std-deviation : 10.393349 ms
+   Execution time lower quantile : 213.333853 ms ( 2.5%)
+   Execution time upper quantile : 244.350361 ms (97.5%)
+                   Overhead used : 16.300895 ns
+
+Found 4 outliers in 60 samples (6.6667 %)
+	low-severe	 1 (1.6667 %)
+	low-mild	 3 (5.0000 %)
+ Variance from outliers : 33.5554 % Variance is moderately inflated by outliers
+Are the same foodspots found? false
+
