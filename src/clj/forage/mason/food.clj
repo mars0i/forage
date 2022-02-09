@@ -1,7 +1,14 @@
+;; Functions for working with foodspots using MASON's Continuous2D
+;; as an environment to allow using MASON's 2D floating point locating
+;; functions.
 (ns forage.mason.food
     (:import [sim.field.continuous Continuous2D]
              [sim.util Double2D]) ; Bag
     (:require [forage.food :as f]))
+
+;; The class annotations below (^Foodspot, ^Continuous2D) make the
+;; functions faster, with a speed improvement of about 20X when used
+;; as part of a food search run.
 
 (deftype Foodspot [x y nutrition])
 
