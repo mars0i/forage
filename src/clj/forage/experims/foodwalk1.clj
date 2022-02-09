@@ -54,7 +54,7 @@
 ;(println "Made stop-walk; starting food-walk construction")
 
 (def walk-with-food (w/path-with-food 
-                      (partial mf/perceptible-foodspots env perc-radius)
+                      (partial mf/perc-foodspots-exactly env perc-radius)
                       intra-seg-epsilon
                       stop-walk))
 
