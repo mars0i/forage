@@ -33,7 +33,6 @@
 ;; WALKS
 
 (def seed (inc (r/make-seed)))
-;(def seed 1645681372124)
 (println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 (def dist (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
