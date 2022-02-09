@@ -10,7 +10,7 @@
   ([x y nutrition] (->Foodspot x y nutrition)))
 
 (defn foodspot-coords
-  [foodspot]
+  [^Foodspot foodspot]
   [(.x foodspot) (.y foodspot)])
 
 (defn add-foodspots
@@ -18,7 +18,7 @@
   coordinate pairs listed in locs.  If a sequence of nutrition-values is
   not provided, the nutrition field of all new foodspots will be set to 1."
   ([env locs] (add-foodspots env locs (repeat (count locs) 1)))
-  ([env locs nutrition-values]
+  ([^Continuous2D env locs nutrition-values]
    (doseq [[[x y] nutrition] (map vector locs nutrition-values)]
           (.setObjectLocation env
                               (->Foodspot x y nutrition)
@@ -45,19 +45,19 @@
 (defn all-foodspots
   "Returns a sequence of all foodspots in environment env, or nil
   if there are none."
-  [env]
+  [^Continuous2D env]
   (seq (.getAllObjects env)))
 
 (defn all-foodspot-coords
   "Returns coordinate pairs of all foodspots in environment env, or nil
   if there are none."
-  [env]
+  [^Continuous2D env]
   (seq (map foodspot-coords (.getAllObjects env))))
 
 (defn perc-foodspots-exactly
   "Returns a sequence of foodspots within perc-radius of (x,y),
   or nil if there are none.  Uses Continuous2D's local cell lookup."
-  [env perc-radius [x y]]
+  [^Continuous2D env perc-radius [x y]]
   (seq (.getNeighborsExactlyWithinDistance env (Double2D. x y) perc-radius)))
 
 (defn perc-foodspot-coords-exactly
@@ -84,7 +84,7 @@
 (defn dont-use-perc-foodspots-plus
   "Returns a sequence of foodspots within perc-radius of (x,y), possibly 
   with additional ones in the same Continous2D cell, or nil if there are none."
-  [env perc-radius [x y]]
+  [^Continuous2D env perc-radius [x y]]
   (seq (.getNeighborsWithinDistance env (Double2D. x y) perc-radius)))
 
 ;; DON'T USE: CAN FOODSPOT--IN CELL--THAT'S TOO FAR
