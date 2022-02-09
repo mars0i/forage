@@ -1,7 +1,7 @@
 (ns forage.mason.food
     (:import [sim.field.continuous Continuous2D]
              [sim.util Double2D]) ; Bag
-    (:require [forage.food :as f]))
+    (:require [utils.math :as m]))
 
 (deftype Foodspot [x y nutrition])
 
@@ -54,16 +54,40 @@
   [env]
   (seq (map foodspot-coords (.getAllObjects env))))
 
-(defn perceptible-foodspots
+(defn perc-foodspots-exactly
   "Returns a sequence of foodspots within perc-radius of (x,y),
-  or nil if there are none."
+  or nil if there are none.  Uses Continuous2D's local cell lookup."
   [env perc-radius [x y]]
-  (seq (.getNeighborsExactlyWithinDistance env (Double2D. x y)
-                                                perc-radius)))
+  (seq (.getNeighborsExactlyWithinDistance env (Double2D. x y) perc-radius)))
 
-(defn perceptible-foodspot-coords
+(defn perc-foodspot-exactly-coords
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
+  or nil if there are none.  Uses Continuous2D's local cell lookup."
+  [env perc-radius [x y]]
+  (seq (map foodspot-coords
+            (perc-foodspots-exactly env perc-radius [x y]))))
+
+(defn perc-foodspots-plus
+  "Returns a sequence of foodspots within perc-radius of (x,y), possibly 
+  with additional ones in the same Continous2D cell, or nil if there are none."
+  [env perc-radius [x y]]
+  (seq (.getNeighborsWithinDistance env (Double2D. x y) perc-radius)))
+
+(defn perc-foodspot-plus-coords
+  "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
+  with possible additional ones from foodspots in the same Continuous2D cell, 
   or nil if there are none."
   [env perc-radius [x y]]
   (seq (map foodspot-coords
-            (perceptible-foodspots env perc-radius [x y]))))
+            (perc-foodspots-plus env perc-radius [x y]))))
+
+;; TODO Is this correct?
+(defn perc-foodspots-linear-coords
+  "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
+  with possible additional ones, or nil if there are none.  Performs a linear 
+  search through all foodspots in env."
+  [env perc-radius coords]
+  (some (fn [foodspot-coord]
+            (if (<= (m/distance2D coords foodspot-coord) perc-radius)
+              foodspot-coord))
+        (all-foodspot-coords env)))
