@@ -1,7 +1,7 @@
 (ns forage.mason.food
     (:import [sim.field.continuous Continuous2D]
              [sim.util Double2D]) ; Bag
-    (:require [utils.math :as m]))
+    (:require [forage.food :as f]))
 
 (deftype Foodspot [x y nutrition])
 
@@ -60,7 +60,7 @@
   [env perc-radius [x y]]
   (seq (.getNeighborsExactlyWithinDistance env (Double2D. x y) perc-radius)))
 
-(defn perc-foodspot-exactly-coords
+(defn perc-foodspot-coords-exactly
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
   or nil if there are none.  Uses Continuous2D's local cell lookup."
   [env perc-radius [x y]]
@@ -73,7 +73,7 @@
   [env perc-radius [x y]]
   (seq (.getNeighborsWithinDistance env (Double2D. x y) perc-radius)))
 
-(defn perc-foodspot-plus-coords
+(defn perc-foodspot-coords-plus
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
   with possible additional ones from foodspots in the same Continuous2D cell, 
   or nil if there are none."
@@ -81,13 +81,12 @@
   (seq (map foodspot-coords
             (perc-foodspots-plus env perc-radius [x y]))))
 
-;; TODO Is this correct?
-(defn perc-foodspots-linear-coords
+;; Once we have all possible foodspot coordinates, we don't need to
+;; use MASON lookup for a linear search.
+(defn perc-foodspot-coords-linear
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
   with possible additional ones, or nil if there are none.  Performs a linear 
   search through all foodspots in env."
   [env perc-radius coords]
-  (some (fn [foodspot-coord]
-            (if (<= (m/distance2D coords foodspot-coord) perc-radius)
-              foodspot-coord))
-        (all-foodspot-coords env)))
+  (f/perc-foodspot-coords-in-coll (all-foodspots env)
+                                  perc-radius coords))

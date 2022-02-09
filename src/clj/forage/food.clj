@@ -65,6 +65,15 @@
    (remove both-zero? 
            (rectangular-grid sep env-width env-height))))
 
+(defn perc-foodspot-coords-in-coll
+  "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
+  with possible additional ones, or nil if there are none.  Performs a linear 
+  search through all foodspots in collection coll."
+  [foodspot-coords perc-radius coords]
+  (some (fn [foodspot-coord]
+            (if (<= (m/distance2D coords foodspot-coord) perc-radius)
+              foodspot-coord))
+        foodspot-coords))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MISC UTILITY FUNCTIONS
