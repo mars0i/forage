@@ -11,8 +11,8 @@
 
 (def powerlaw-exponent 2) ; must be < 1; 2 supposed to be optimal sparse targets
 (def powerlaw-scale 1) ; scale parameter of distribution
-(def env-size 4000)
-(def maxpathlen 4000) ; max length of a path (sequence of line segments)
+(def env-size 1000)
+(def maxpathlen 2000) ; max length of a path (sequence of line segments)
 (def trunclen 1000)   ; max length of any line segment
 
 (def perc-radius 1)
@@ -23,11 +23,11 @@
 ;; For Hanami/vega-lite plots, size of plot display:
 (def plot-dim 700)
 
+(def grid-coords (f/centerless-rectangular-grid food-distance
+                                                env-size
+                                                env-size))
 
-(def env (mf/make-env discretization env-size
-                      (f/centerless-rectangular-grid food-distance
-                                                     env-size
-                                                     env-size)))
+(def env (mf/make-env discretization env-size grid-coords))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
@@ -47,17 +47,18 @@
 ;; Corresponding path of coordinate pairs:
 (def stop-walk (w/walk-stops [0 0] step-walk))
 
-(defn bench-epsilons-and-discretizations
-  "Runs Criterium 'bench' on food searches with all intra-seg epsilons
+(defn bench-foodwalks
+  "Runs Criterium 'bench' on food searches with all combinations of parameters
   passed, using a random walk and the environment defined with parameters 
-  defined in this version of this file.  Reports parameters and benchmark 
+  defined in this version of this file.  All arguments should be
+  sequendces.  Reports parameters and benchmark 
   results to stdout, followed by a report of whether the same foodspots 
   were found with each epsilon.  Then returns the resulting collections of 
   walk-with-food pairs so that they can be examined.  Note that since
   Criterium runs the process many times, what you get back will be 
   collections of the same results many times.  Try something like this
   on the return value: (map (comp foodspot-coords first second) wwfs)."
-  [epsilons discretizations]
+  [epsilons discretizations look-fns]
   (println 
     "seed:" seed ", perc-radius:" perc-radius,
     ", powerlaw-exponent:" powerlaw-exponent, ", powerlaw-scale:" powerlaw-scale,
@@ -65,16 +66,16 @@
     ", maxpathlen:" maxpathlen, ", trunclen:" trunclen)
   (let [wwfs$ (atom [])] ; bench doesn't return result of computation, so we need to add results to an atom inside it
     (doseq [epsilon epsilons
-            discretization discretizations]
+            discretization discretizations
+            look-fn look-fns]
            (println "\n---------------------------"
                     "\nintra-seg-epsilon =" epsilon,
-                    "discretization:" discretization)
+                    "discretization:" discretization, "\n" look-fn)
            (flush)
            (let [firstrun$ (atom true)]
              (criterium/bench
                (let [wwfs (w/path-with-food 
-                            (partial mf/perceptible-foodspots 
-                                     env perc-radius)
+                            look-fn
                             epsilon
                             stop-walk)]
                  (when @firstrun$           ; including in timing, but 
@@ -84,6 +85,7 @@
     @wwfs$))
 
 ;; TODO: Revise to use internal same internal logic as preceding bench-epsilons-and-discretizations
+;; OR REMOVE (DEPRECATED)
 (defn bench-epsilons
   "Runs Criterium 'bench' on food searches with all intra-seg epsilons
   passed, using a random walk and the environment defined with parameters 
@@ -110,7 +112,7 @@
               (let [firstrun$ true]
                 (criterium/bench
                   (let [wwfs (w/path-with-food 
-                               (partial mf/perceptible-foodspots 
+                               (partial mf/perc-foodspots-exactly
                                         env perc-radius)
                                eps
                                stop-walk)]
