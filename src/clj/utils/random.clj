@@ -5,9 +5,11 @@
 (ns utils.random
   (:import [ec.util MersenneTwisterFast]    ; https://cs.gmu.edu/~sean/research/mersenne/ec/util/MersenneTwisterFast.html
            [org.apache.commons.math3.random ; https://commons.apache.org/proper/commons-math
-            MersenneTwister Well1024a Well19937c Well44497b]
+            MersenneTwister Well1024a Well19937c Well44497b
+            RandomGenerator]
            [org.apache.commons.math3.distribution 
-            LevyDistribution NormalDistribution ParetoDistribution])
+            LevyDistribution NormalDistribution ParetoDistribution
+            RealDistribution])
   (:require [clojure.math.numeric-tower :as nt]))
 
 ;; For the Apache commons PRNGs, most of the functions are documented in
@@ -55,7 +57,7 @@
   "Discard the first n numbers from a PRNG in order to flush out internal 
   state that's might not be as random as what the PRNG is capable of.
   cf.  https://listserv.gmu.edu/cgi-bin/wa?A1=ind1609&L=MASON-INTEREST-L#1 ."
-  [n rng] (dotimes [_ n] (.nextInt rng)))
+  [n ^RandomGenerator rng] (dotimes [_ n] (.nextInt rng)))
 
 (def flush1024
   "Flush possible initial low-quality state from a PRNG with a 32-word
@@ -85,7 +87,7 @@
   "Make an Apache Commons WELL 1024a generator, flushing any possible 
   initial lack of entropy."
   ([] (make-well1024 (make-seed)))
-  ([long-seed] 
+  ([^long long-seed] 
    (let [rng (Well1024a. long-seed)]
      (flush1024 rng)
      rng))) 
@@ -95,7 +97,7 @@
   initial lack of entropy.  (Note that this is the default generator in
   Apache Commons used by distribution functions if no generator is passed.)"
   ([] (make-well19937 (make-seed)))
-  ([long-seed] 
+  ([^long long-seed] 
    (let [rng (Well19937c. long-seed)]
      (flush19937 rng)
      rng))) 
@@ -104,7 +106,7 @@
   "Make an Apache Commons WELL 44497b generator, flushing any possible 
   initial lack of entropy."
   ([] (make-well44497 (make-seed)))
-  ([long-seed] 
+  ([^long long-seed] 
    (let [rng (Well44497b. long-seed)]
      (flush44497 rng)
      rng))) 
@@ -113,7 +115,7 @@
   "Make an instance of Apache Commons MersenneTwister generator, flushing
   any possible initial lack of entropy."
   ([] (make-twister (make-seed)))
-  ([long-seed] 
+  ([^long long-seed] 
    (let [rng (org.apache.commons.math3.random.MersenneTwister. long-seed)]
      (flush19937 rng)
      rng))) 
@@ -123,7 +125,7 @@
   "Make an instance of Sean Luke's MersenneTwisterFast, flushing any possible 
   initial lack of entropy."
   ([] (make-luke-twister (make-seed)))
-  ([long-seed] 
+  ([^long long-seed] 
    (let [rng (ec.util.MersenneTwisterFast. long-seed)]
      (flush19937 rng)
      rng))) 
@@ -181,15 +183,9 @@
 ;; methods might have different names.
 
 (defn density
-  "Return the density at x according to distribution dist."
-  [dist x]
+  "Return the density at x according to (Apache Commons math) distribution dist."
+  [^RealDistribution dist x]
   (.density dist x))
-
-(defn next-radian
-  "Given a PRNG prng, return a uniformly distributed number between 0
-  and pi, i.e. in [0,pi)."
-  [rng]
-  (* 2 Math/PI (.nextDouble rng)))
 
 (defprotocol RandDist
   "Provides a common interface to some functionality shared by PRNG 
@@ -283,3 +279,9 @@
   dist, which may be a PRNG, in which case it's a uniform distribution."
   ([dist] (repeatedly (next-double-fn dist)))
   ([dist low high] (repeatedly (next-double-fn dist low high))))
+
+(defn next-radian
+  "Given a PRNG prng, return a uniformly distributed number between 0
+  and pi, i.e. in [0,pi)."
+  [rng]
+  (* 2 Math/PI (next-double rng)))
