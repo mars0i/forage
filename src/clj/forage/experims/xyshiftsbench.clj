@@ -9,6 +9,10 @@
       [forage.viz.hanami :as h] ; if I want to display the paths
       [criterium.core :as criterium]))
 
+;(def seed (inc (r/make-seed)))
+(def seed 1644828081237)
+(println "SEED:" seed)
+
 (def powerlaw-exponent 2) ; must be < 1; 2 supposed to be optimal sparse targets
 (def powerlaw-scale 1) ; scale parameter of distribution
 (def env-size 1000)
@@ -32,8 +36,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
 
-(def seed (inc (r/make-seed)))
-(println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 (def dist (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
 
