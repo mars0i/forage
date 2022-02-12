@@ -27,7 +27,13 @@
                                         [com.lowagie/itext "1.2.3"] ; version that comes with MASON. Not in maven.org: [com.lowagie/itext "1.2"] 
                                         [org.jfree/jcommon "1.0.21"]
                                         [org.jfree/jfreechart "1.0.17"]
-                                        [javax.media/jmf "2.1.1e"]]}
+                                        [javax.media/jmf "2.1.1e"]]
+                         :main ^:skip-aot forage.mason.core
+                         :aot [forage.mason.foodspot
+                               forage.mason.Sim
+                               forage.mason.GUI
+                               forage.mason.core]
+                        }
              :speedtest  {:dependencies [[criterium "0.4.6"]]
                           :jvm-opts ["-XX:TieredStopAtLevel=4" "-Xms2g"]}
 
