@@ -6,25 +6,12 @@
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [org.apache.commons/commons-math3 "3.6.1"]
-                 ;[mars0i/masonclj "0.2.0"]
                  [aerial.hanami "0.17.0"]
-
-		 ;[io.github.nextjournal/clerk "0.4.316"]
 		 [io.github.nextjournal/clerk "0.5.346"]
                  [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
-
 		;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
 		 [metasoarous/oz "2.0.0-alpha5"]
-
-                 [mason "20"] ; 
-                 ;; Libs that MASON wants and can be gotten from maven.org, so they don't need to be in my lib dir:
-                 ;; See comment about local Maven install below.
-                 ;; DO I NEED THESE IF ONLY USING Continuous2D?
-                 [org.beanshell/bsh "2.0b4"]
-                 [com.lowagie/itext "1.2.3"] ; version that comes with MASON. Not in maven.org: [com.lowagie/itext "1.2"] 
-                 [org.jfree/jcommon "1.0.21"]
-                 [org.jfree/jfreechart "1.0.17"]
-                 [javax.media/jmf "2.1.1e"]
+                 [mason "20"] ; just for Continuous2D
                 ]
 
   :source-paths ["src/clj"]
@@ -34,7 +21,13 @@
 
   ;; To use a profile with the repl, add "+" to the profile name, e.g:
   ;;   lein with-profile +speedtest repl  (see https://visibletrap.blogspot.com/2015/04/start-lein-repl-with-test-profile.html)
-  :profiles {:speedtest  {:dependencies [[criterium "0.4.6"]]
+  :profiles {:fullmason {:dependencies [[mars0i/masonclj "0.2.0"]
+                                        [org.beanshell/bsh "2.0b4"]
+                                        [com.lowagie/itext "1.2.3"] ; version that comes with MASON. Not in maven.org: [com.lowagie/itext "1.2"] 
+                                        [org.jfree/jcommon "1.0.21"]
+                                        [org.jfree/jfreechart "1.0.17"]
+                                        [javax.media/jmf "2.1.1e"]]}
+             :speedtest  {:dependencies [[criterium "0.4.6"]]
                           :jvm-opts ["-XX:TieredStopAtLevel=4" "-Xms2g"]}
 
              :production {:jvm-opts ["-Xms2g" ; small improvement--OK to drop down to run more processes
