@@ -6,7 +6,7 @@
       [forage.viz.hanami :as h]
       [forage.walks :as w]
       [forage.food :as f]
-      [forage.mason.food :as mf]
+      [forage.mason.foodspot :as mf]
       [utils.math :as m]
       [utils.random :as r]))
 

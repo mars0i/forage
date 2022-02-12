@@ -3,7 +3,7 @@
       ;[clojure.math.numeric-tower :as nt]
       [forage.walks :as w]
       [forage.food :as f]
-      [forage.mason.food :as mf]
+      [forage.mason.foodspot :as mf]
       [utils.math :as m]
       [utils.random :as r]
       [forage.viz.hanami :as h] ; if I want to display the paths
