@@ -63,21 +63,20 @@
 ;(println "Made food-walk")
 
 ;; ghost walk is the full walk that would have taken place if food wasn't found
-(def gridwalk-plot (h/vega-gridwalk-plot
+(def gridwalk-plot (h/vega-gridwalk-plot ; overall plot config
                      perc-radius maxpathlen powerlaw-scale [(count food-walk)
                                                             (count stop-walk)]
-                     (h/vega-foodgrid-plot env-size plot-dim
+                     (h/vega-foodgrid-plot env-size plot-dim   ; place food circles
                                            food-distance perc-radius)
-                     ;(h/vega-walk-plot env-size plot-dim 
+                     ;(h/vega-walk-plot env-size plot-dim   ; full path without food stop
                      ;                  (h/add-walk-labels
                      ;                    "a ghost walk" stop-walk))
-                     (h/vega-walk-plot env-size plot-dim 
+                     (h/vega-walk-plot env-size plot-dim  ; food search path
                                        (h/add-walk-labels
                                          "food walk" food-walk))))
 
-;; Now view gridwalk-plot e.g. with
+;; Now view gridwalk-plot e.g. with:
 (comment
-  (require '[oz.core :as oz])
-  (oz/start-server!)
+  (require '[oz.core :as oz]) ; (oz/start-server!) ; view! will call start-server! if needed
   (oz/view! gridwalk-plot)
 )
