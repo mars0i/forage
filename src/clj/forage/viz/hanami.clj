@@ -10,6 +10,19 @@
 ;; Note field names have to be strings, not keywords, in order
 ;; for vega-lite to make full use of them.
 
+(defn vega-gridwalk-plot
+  "Configure a Vega-Lite plot to be filled with search path(s) for foodspots 
+  represented by circles with size equal to the perceptual radius.  (Doesn't put 
+  any foodspots or paths in the plot; just defines the overall plot configuration.)"
+  [perc-radius maxpathlen powerlaw-scale n-steps foodgrid-plot & walk-plots]
+  (hc/xform
+    ht/layer-chart
+    :LAYER (cons foodgrid-plot walk-plots)
+    :TITLE (str "perceptual radius = " perc-radius ";  "
+                "max path len = " maxpathlen ";  "
+                "scale = " powerlaw-scale ";  "
+                "steps per path: " (vec n-steps))))
+
 ;; TODO let user add to the xform expression instead of Vega-Lite directly
 (defn vega-walk-plot
   "Constructs a Vega-Lite random walk plot from (vega-lite-ified) data
@@ -133,6 +146,7 @@
        (f/centerless-rectangular-grid sep env-width env-height))))
 
 (defn vega-foodgrid-plot
+  "Plot foodspot perceptual radius on a rectangular grid using make-foodgrid."
   [env-sz plot-dim food-distance perc-radius]
   (hc/xform ht/point-chart 
             :DATA (make-foodgrid food-distance env-sz env-sz) 
@@ -144,12 +158,4 @@
             :WIDTH  plot-dim  ; sets dim for plot only, label area not included
             :HEIGHT plot-dim))
 
-(defn vega-gridwalk-plot
-  [perc-radius maxpathlen powerlaw-scale n-steps foodgrid-plot & walk-plots]
-  (hc/xform
-    ht/layer-chart
-    :LAYER (cons foodgrid-plot walk-plots)
-    :TITLE (str "perceptual radius = " perc-radius ";  "
-                "max path len = " maxpathlen ";  "
-                "scale = " powerlaw-scale ";  "
-                "steps per path: " (vec n-steps))))
+
