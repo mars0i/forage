@@ -21,7 +21,8 @@
 
   ;; To use a profile with the repl, add "+" to the profile name, e.g:
   ;;   lein with-profile +speedtest repl  (see https://visibletrap.blogspot.com/2015/04/start-lein-repl-with-test-profile.html)
-  :profiles {:fullmason {:dependencies [[mars0i/masonclj "0.2.0"]
+  :profiles {:fullmason {:dependencies [[org.clojure/tools.cli "1.0.206"] ; command line processing
+                                        [mars0i/masonclj "0.2.0"]
                                         [org.beanshell/bsh "2.0b4"]
                                         [com.lowagie/itext "1.2.3"] ; version that comes with MASON. Not in maven.org: [com.lowagie/itext "1.2"] 
                                         [org.jfree/jcommon "1.0.21"]
