@@ -1,0 +1,12 @@
+HanamiVegaLiteNotes.txt
+
+If you add an "ord" key with numeric values to a sequence of maps
+representing endpionts of line segments, they'll be plotted in order
+of the values of the "ord" field.
+
+If you want to plot two such sequences of segments, it appears that you
+have to plot them separately.  You can't just e.g. restart the ordering.
+I think what happens then is that the 1's are with the 1's, 2's with
+2's, etc.--so you get lines going back and forth between the two sets of
+lines.  So you have to layer two plots, apparently, to get two separate
+line sequences.
