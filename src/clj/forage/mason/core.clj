@@ -4,9 +4,9 @@
 
 ;(set! *warn-on-reflection* true)
 
-(ns forage.core
-  (:require [forage.Sim :as sim]
-            [forage.GUI :as gui])
+(ns forage.mason.core
+  (:require [forage.mason.Sim :as sim]
+            [forage.mason.GUI :as gui])
   (:gen-class))
 
 (defn -main

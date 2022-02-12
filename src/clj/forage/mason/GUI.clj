@@ -5,17 +5,18 @@
 ;(set! *warn-on-reflection* true)
 
 (ns forage.mason.GUI
-  (:require [forat.mason.Sim :as sim]
+  (:require [forage.mason.Sim :as sim]
+            [forage.mason.foodspot :as mf]
             [masonclj.properties :as props]
             [clojure.math.numeric-tower :as math])
-  (:import ;[example snipe Sim]
-           [Foodspot]
+  (:import [forage.mason Sim]; foodspot]  ; FIXME why doesn't Clojure like foodspot??
            [sim.engine Steppable]
-           [sim.field.grid ObjectGrid2D]
-           [sim.portrayal DrawInfo2D]
+           ;[sim.field.grid ObjectGrid2D]
+           [sim.portrayal.continuous ContinuousPortrayal2D]
+           [sim.display Console Display2D]
+           ;[sim.portrayal DrawInfo2D]
            ;[sim.portrayal.grid HexaObjectGridPortrayal2D]
            [sim.portrayal.simple CircledPortrayal2D]
-           [sim.display Console Display2D]
            [java.awt.geom Rectangle2D$Double] ; note weird Clojure syntax for Java static nested class
            [java.awt Color])
   (:gen-class
@@ -47,33 +48,33 @@
   "`\"Overrides\" the no-arg static getName() method in GUIState, and
   returns the name to be displayed on the title bar of the main window."
   []
-  "masonclj example")
+  "forage")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CONFIGURATION AND UTILITY FUNCTIONS
 
 ;; display parameters:
 (def display-backdrop-color (Color. 200 200 200)) ; border color around hex cells and overall field
-(def snipe-size 0.70)
-(defn snipe-shade-fn [max-energy snipe] (int (+ 64 (* 190 (/ (:energy snipe) max-energy)))))
-(defn snipe-color-fn [max-energy snipe] (Color. 0 0 (snipe-shade-fn max-energy snipe)))
-(def org-offset 0.6) ; with simple hex portrayals to display grid, organisms off center; pass this to DrawInfo2D to correct.
+;(def snipe-size 0.70)
+;(defn snipe-shade-fn [max-energy snipe] (int (+ 64 (* 190 (/ (:energy snipe) max-energy)))))
+;(defn snipe-color-fn [max-energy snipe] (Color. 0 0 (snipe-shade-fn max-energy snipe)))
+;(def org-offset 0.6) ; with simple hex portrayals to display grid, organisms off center; pass this to DrawInfo2D to correct.
 
 ;; For hex grid, need to rescale display (based on HexaBugsWithUI.java around 
 ;; line 200 in Mason 19).  If you use a rectangular grid, you don't need this.
-(defn hex-scale-height
-  "Calculate visually pleasing height for a hex grid relative to normal
-  rectangular height."
-  [height]
-  (+ 0.5 height))
+;(defn hex-scale-height
+;  "Calculate visually pleasing height for a hex grid relative to normal
+;  rectangular height."
+;  [height]
+;  (+ 0.5 height))
 
-(defn hex-scale-width
-  "Calculate visually pleasing width for a hex grid relative to normal
-  rectangular width."
-  [width] 
-  (* (/ 2.0 (math/sqrt 3)) 
-     (+ 1 (* (- width 1)
-             (/ 3.0 4.0)))))
+;(defn hex-scale-width
+;  "Calculate visually pleasing width for a hex grid relative to normal
+;  rectangular width."
+;  [width] 
+;  (* (/ 2.0 (math/sqrt 3)) 
+;     (+ 1 (* (- width 1)
+;             (/ 3.0 4.0)))))
 
 (defn -getSimulationInspectedObject
   "Override methods in sim.display.GUIState so that GUI can make graphs, etc."
@@ -94,10 +95,9 @@
 ;; with the mars0i/pasta repo, which has both west and east environments.
 (defn -init-instance-state
   [& args]
-  [(vec args) {:west-display (atom nil)       ; will be replaced in init because we need to pass the GUI instance to it
-               :west-display-frame (atom nil) ; will be replaced in init because we need to pass the display to it
-               :west-snipe-field-portrayal (HexaObjectGridPortrayal2D.)      ; hex grid on which snipes move (required)
-               :hexagonal-bg-field-portrayal (HexaObjectGridPortrayal2D.)}]) ; hex grid for background pattern (not required)
+  [(vec args) {:env-display (atom nil)       ; will be replaced in init because we need to pass the GUI instance to it
+               :env-display-frame (atom nil) ; will be replaced in init because we need to pass the display to it
+               :env-field-portrayal (ContinuousPortrayal2D.)}]) ; surface on which things are displayed
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MAIN GUI SETUP ROUTINES
@@ -122,18 +122,19 @@
         gui-config (.getUIState this)
         sim-data @(.simData sim) ; just for env dimensions
         display-size (:env-display-size sim-data)
-        width  (hex-scale-width  (int (* display-size (:env-width sim-data))))
-        height (hex-scale-height (int (* display-size (:env-height sim-data))))
-        west-snipe-field-portrayal (:west-snipe-field-portrayal gui-config)
-        hexagonal-bg-field-portrayal (:hexagonal-bg-field-portrayal gui-config)
-        west-display (setup-display! this width height)
-        west-display-frame (setup-display-frame! west-display controller
-                                                "west subenv" true)] ; false supposed to hide it, but fails
-    (reset! (:west-display gui-config) west-display)
-    (reset! (:west-display-frame gui-config) west-display-frame)
+        width  (:env-width sim-data)
+        height (:env-height sim-data)
+        env-field-portrayal (:env-field-portrayal gui-config)
+        env-display (setup-display! this width height)
+        env-display-frame (setup-display-frame! env-display controller
+                                                "environment" true)] ; false supposed to hide it, but fails
+    (reset! (:env-display gui-config) env-display)
+    (reset! (:env-display-frame gui-config) env-display-frame)
     ;; Attach layers to display; later layers will be on top, and can hide earlier ones:
-    (attach-portrayals! west-display [[hexagonal-bg-field-portrayal "west bg"]    ; background pattern, not required
-                                      [west-snipe-field-portrayal "west snipes"]] ; snipes have to be on top
+    (attach-portrayals! env-display [[env-field-portrayal "Environment"]    ; background pattern, not required
+                                     ;; put foodspots here
+                                      ;[west-snipe-field-portrayal "west snipes"]
+                                      ]
                         0 0 width height)))
 
 (defn -start
@@ -151,7 +152,6 @@
     (.attach display portrayal label
              (Rectangle2D$Double. x y field-width field-height)))) ; note Clojure $ syntax for Java static nested classes
 
-;; IN the Example model, THERE IS NO east- anything.  It's all west-.
 (defn setup-portrayals
   "Set up MASON 'portrayals' of agents and background fields.  That is, associate 
   with a given entity one or more Java classes that will determine appearances in 
@@ -164,29 +164,28 @@
         sim-data @sim-data$
         rng (.random sim)         ; a MersenneTwisterFast PRNG provided by MASON
         popenv (:popenv sim-data) ; In the pasta model this is more complicated
-        west (:west popenv)
+        env (:env popenv)
         max-energy (:max-energy sim-data)
-        west-display @(:west-display gui-config)
-        hexagonal-bg-field-portrayal (:hexagonal-bg-field-portrayal gui-config)
+        env-display @(:env-display gui-config)
+        ;hexagonal-bg-field-portrayal (:hexagonal-bg-field-portrayal gui-config)
         ;; Set up the appearance of Snipes with a main portrayal inside one 
         ;; that can display a circle around it:
-        snipe-portrayal (props/make-fnl-circled-portrayal Color/blue
-                            (proxy [OvalPortrayal2D][snipe-size]
-                                   (draw [snipe graphics info]
-                                     (set! (.-paint this) (snipe-color-fn max-energy snipe)) ; paint var is in superclass
-                                     (proxy-super draw snipe graphics (DrawInfo2D. info (* 0.75 org-offset) (* 0.55 org-offset)))))) ; center in cell
-        west-snipe-field-portrayal (:west-snipe-field-portrayal gui-config)] ; appearance of the field on which snipes run around
-    (.setField hexagonal-bg-field-portrayal (ObjectGrid2D. (:env-width sim-data) (:env-height sim-data))) ; dimensions of background grid
-    (.setField west-snipe-field-portrayal (:snipe-field west))
-    (.setPortrayalForNull hexagonal-bg-field-portrayal (HexagonalPortrayal2D. (Color. 255 255 255) 0.90)) ; show patches at smaller size so borders show
-    (.setPortrayalForClass west-snipe-field-portrayal example.Snipe snipe-portrayal)
-    (.scheduleRepeatingImmediatelyAfter this-gui ; this stuff is going to happen on every timestep as a result:
-                                        (reify Steppable 
-                                          (step [this sim-state]
-                                            (let [{:keys [west]} (:popenv @sim-data$)]
-                                              (.setField west-snipe-field-portrayal (:snipe-field west))))))
+        ;snipe-portrayal (props/make-fnl-circled-portrayal Color/blue
+        ;                    (proxy [OvalPortrayal2D][snipe-size]
+        ;                           (draw [snipe graphics info]
+        ;                             (set! (.-paint this) (snipe-color-fn max-energy snipe)) ; paint var is in superclass
+        ;                             (proxy-super draw snipe graphics (DrawInfo2D. info (* 0.75 org-offset) (* 0.55 org-offset)))))) ; center in cell
+        env-foodspot-field-portrayal (:env-foodspot-field-portrayal gui-config)] ; appearance of the field on which foodspots run around
+    ;(.setField hexagonal-bg-field-portrayal (ObjectGrid2D. (:env-width sim-data) (:env-height sim-data))) ; dimensions of background grid
+    (.setField env-foodspot-field-portrayal (:foodspot-field env))
+    ;(.setPortrayalForClass env-snipe-field-portrayal example.Snipe snipe-portrayal)
+    ;(.scheduleRepeatingImmediatelyAfter this-gui ; this stuff is going to happen on every timestep as a result:
+    ;                                    (reify Steppable 
+    ;                                      (step [this sim-state]
+    ;                                        (let [{:keys [west]} (:popenv @sim-data$)]
+    ;                                          (.setField env-snipe-field-portrayal (:snipe-field west))))))
     ;; set up display:
-    (doto west-display
+    (doto env-display
           (.reset)
           (.setBackdrop display-backdrop-color) ; bottom level color--will show through around hexagaons
           (.repaint))))
@@ -214,13 +213,13 @@
   [this]
   (.superQuit this)
   (let [gui-config (.getUIState this)
-        west-display (:west-display gui-config)
-        west-display-frame (:west-display-frame gui-config)
+        env-display (:env-display gui-config)
+        env-display-frame (:env-display-frame gui-config)
         sim (.getState this)
         sim-data$ (.simData sim)]
-    (when west-display-frame (.dispose west-display-frame))
-    (reset! (:west-display gui-config) nil)
-    (reset! (:west-display-frame gui-config) nil)))
+    (when env-display-frame (.dispose env-display-frame))
+    (reset! (:env-display gui-config) nil)
+    (reset! (:env-display-frame gui-config) nil)))
 
 ;; Try this:
 ;; (let [snipes (.elements (:snipe-field (:popenv @sim-data$))) N (count snipes) energies (map :energy snipes)] [N (/ (apply + energies) N)])

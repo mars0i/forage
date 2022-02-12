@@ -4,14 +4,16 @@
 
 ;(set! *warn-on-reflection* true)
 
-(ns example.Sim
+(ns forage.mason.Sim
   (:require [clojure.tools.cli]
             [masonclj.params :as mp]
             [utils.random :as ran]
-            [forage.mason.food :as mf])
+            [forage.mason.foodspot :as mf])
   (:import [sim.engine Steppable Schedule Stoppable]
+           [sim.field.continuous Continuous2D]
            [sim.util Interval]
            [java.lang String]
+           [org.apache.commons.math3.random RandomGenerator]
            ;[example.popenv PopEnv]
            ))
 
@@ -38,6 +40,7 @@
                                                               :parse-fn #(Double. %)]]
                 [use-gui          false    boolean  false    ["-g" "If -g, use GUI; otherwise GUI if +g or no options."
                                                               :parse-fn #(Boolean. %)]]
+                [rng              nil RandomGenerator false] ; Will be filled with an Apache RNG
                 [seed             nil       long    false]  ; convenience field to store Sim's seed
                 [in-gui           false     boolean false]] ; convenience field to store Boolean re whether in GUI
   :exposes-methods {finish superFinish} ; name for function to call finish() in the superclass
@@ -71,7 +74,7 @@
 (defn -main
   [& args]
   (let [^"[Ljava.lang.String;" arg-array (into-array args)]
-    (sim.engine.SimState/doLoop example.Sim arg-array)
+    (sim.engine.SimState/doLoop forage.mason.Sim arg-array)
     (System/exit 0)))
 
 (defn mein
@@ -111,15 +114,16 @@
   call the simulation code for a single step.  Other things that you want
   scheduled can be done here as well."
   [^Sim sim-sim rng sim-data$ seed]
-  (let [^Schedule schedule (.schedule sim-sim)
-        ;; Do additional setup here, check commandline parameters, etc.
-        ;; This runs the simulation:
-        ^Stoppable stoppable (.scheduleRepeating schedule Schedule/EPOCH 0 ; epoch = starting at beginning, 0 means run this first during timestep
-                                      (reify Steppable 
-                                        (step [this sim-state]
-                                          (swap! sim-data$ assoc :curr-step (curr-step sim-sim)) ; make current tick available to popenv
-                                          (swap! sim-data$ update :popenv pe/next-popenv rng sim-data$))))]
-    (swap! sim-data$ assoc :stoppable stoppable))) ; store this to make available to finish()
+;  (let [^Schedule schedule (.schedule sim-sim)
+;        ;; Do additional setup here, check commandline parameters, etc.
+;        ;; This runs the simulation:
+;        ^Stoppable stoppable (.scheduleRepeating schedule Schedule/EPOCH 0 ; epoch = starting at beginning, 0 means run this first during timestep
+;                                      (reify Steppable 
+;                                        (step [this sim-state]
+;                                          (swap! sim-data$ assoc :curr-step (curr-step sim-sim)) ; make current tick available to popenv
+;                                          (swap! sim-data$ update :popenv pe/next-popenv rng sim-data$))))]
+;    (swap! sim-data$ assoc :stoppable stoppable))
+  ) ; store this to make available to finish()
 
 (defn -start
   "Function that's called to (re)start a new simulation run."
@@ -128,7 +132,7 @@
   ;; Construct core data structures of the simulation:
   (let [^SimData sim-data$ (.simData this)
        seed (ran/make-seed)
-       rng (r/make-well19937 seed)
+       rng (:rng @sim-data$)
        ;^MersenneTwisterFast rng (.-random this)
        ;seed (.seed this)
       ]
@@ -136,6 +140,7 @@
     (when (and @commandline$ (not (:in-gui @sim-data$))) ; see issue #56 in github for the logic here
       (set-sim-data-from-commandline! this commandline$))
     (swap! sim-data$ assoc :seed seed)
+    (.setSeed rng)
     ;(swap! sim-data$ assoc :popenv (pe/make-popenv rng sim-data$)) ; create new popenv
     ;; Run it:
     (run-sim this rng sim-data$ seed)))
