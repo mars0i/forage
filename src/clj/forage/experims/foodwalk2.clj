@@ -73,19 +73,21 @@
 ;(println "Made food-walk")
 
 ;; ghost walk is the full walk that would have taken place if food wasn't found
-(def gridwalk-plot (assoc 
+(def gridwalk-plot (->
                      (h/vega-gridwalk-plot ; overall plot config
-                     perc-radius maxpathlen powerlaw-scale [(count food-walk)
-                                                            (count stop-walk)]
-                     (h/vega-foodgrid-plot env-size plot-dim   ; place food circles
-                                           food-distance perc-radius)
-                     ;(h/vega-walk-plot env-size plot-dim   ; full path without food stop
-                     ;                  (h/add-walk-labels
-                     ;                    "a ghost walk" stop-walk))
-                     (h/vega-walk-plot env-size plot-dim  ; food search path
-                                       (h/add-walk-labels
-                                         "food walk" food-walk)))
-                          "autosize" "none") ; or "fit", "pad", "fit-x", "fit-y"
+                       perc-radius maxpathlen powerlaw-scale [(count food-walk)
+                                                              (count stop-walk)]
+                       (h/vega-foodgrid-plot env-size plot-dim   ; place food circles
+                                             food-distance perc-radius)
+                       ;(h/vega-walk-plot env-size plot-dim   ; full path without food stop
+                       ;                  (h/add-walk-labels
+                       ;                    "a ghost walk" stop-walk))
+                       (h/vega-walk-plot env-size plot-dim  ; food search path
+                                         (h/add-walk-labels
+                                           "food walk" food-walk)))
+                     ;; See https://vega.github.io/vega-lite/docs/size.html#autosize
+                     (assoc "autosize" {"type" "none",
+                                        "contains" "content"})
                           )
 
 ;; Now view gridwalk-plot e.g. with:
