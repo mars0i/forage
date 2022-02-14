@@ -34,38 +34,33 @@
   (map (fn [[x y]] [(rem x maxx) (rem y maxy)])
        stops))
 
-;; TODO? Rewrite the following to add the firsts/lasts in one sweep?
-
-(defn add-lasts-as-firsts
-  "Given a sequence of paths (each a sequence of coordinate pairs), adds
-  the last element of each path to the beginning of the next
-  path, and returns the resulting modified sequence of paths."
-  [paths]
-  (cons (first paths)
-        (map (fn [path1 path2] (cons (last (vec path1)) path2))
-             paths (rest paths))))
-
-(defn add-seconds-as-lasts
-  "Given a sequence of paths (each a sequence of coordinate pairs), adds
-  the second element of each path after the first to the end of the preceding
-  path, and returns the resulting modified sequence of paths.  We add
-  the second element because the first element is assumed to be the
-  result of a call to add-lasts-as-firsts."
-  [paths]
-  ;; For pairs of paths, add first of path2 as new last of path1
-  (conj (vec (map (fn [path1 path2] (conj (vec path1) (second path2)))
-                  paths (rest paths)))
-        (last paths))) ; the map loses the last path, so have to add it back
-
 (defn overlap-ends
   "Given a sequence of paths (each a sequence of coordinate pairs), adds
   the first element of each path to the end of the preceding path, and
   the last element of each path to the beginning of the next path
-  (except where this is impossible for the paths on the end of the sequence).
-  The result will be that the last two elements of each path will be
-  identical to the first to elements of the next path."
-  [paths]
-  (add-seconds-as-lasts (add-lasts-as-firsts paths)))
+  (except where this is impossible for the paths on the end of the
+  sequence).  The result will be that the last two elements of each path
+  will be identical to the first to elements of the next path." [paths]
+  (let [paths (vec paths)
+	;; For each path that's not first or last, add last and first
+	elements ;; of adjacent paths.  (First and last paths need
+	special handling.) middle-paths (map (fn [[before middle after]]
+				   (cons (last (vec before))
+					 (conj (vec middle) (first
+					 after))))
+			       (partition 3 1 paths))
+	;; These were left out of middle-paths: end-path (cons (last
+	; add last element of
+			 (last (butlast paths))) ; second to last seq
+		       (last paths))             ; to last seq
+	beg-path (conj (vec (first paths))       ; add to end of first
+	seq
+		       (first (second paths)))]  ; first element in
+		       second
+    (cons beg-path
+	  (conj (vec middle-paths)
+		end-path))))
+
 
 
 ;; FIXME? behaves oddly if env-width, env-height are not even?
@@ -88,4 +83,4 @@
         maxy (/ env-height 2)]
     ;; could be more efficient with comp or transducer, but this is just for prep'ing data for display
     (map (partial wrap-stops-toroidally maxx maxy)
-         (overlap-end-stops (toroidal-partition maxx maxy stops)))))
+         (overlap-ends (toroidal-partition maxx maxy stops)))))
