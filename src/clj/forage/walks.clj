@@ -252,37 +252,3 @@
           (recur more)         ; keep searching
           [start end nil]))))) ; no food in all segments, so return last seg
 
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; TOROIDAL WRAPPING OF COORDINATES
-
-;; These are really oriented toward plotting; they're not needed for data analysis.
-;; But they're not specific to a particular plotting system such as Vega-Lite.
-;; (Note: *Finding* foodspots should be handled in look-fn, preserving the original coords.)
-
-(defn wrap-stops-toroidally
-  "Map coordinates in a sequence of points to their values mod maxx and maxy."
-  [maxx maxy stops]
-  (map (fn [[x y]] [(rem x maxx) (rem y maxy)])
-       stops))
-
-(defn toroidal-split
-  "Maps a sequence of coordinates representing stops on a walk path into a sequence
-  of shorter sequences that map large coordinates back to the original dimensions
-  toroidally (aka: with periodic boundary conditions).  Specifically, splits a sequence 
-  of coordinates when they exceed boundaries of an environment of width env-width and
-  height env-height, or when they wrap around and exceed the boundaries a second time,
-  etc.  Then after splitting the original sequence of coordinates into a sequence of
-  sequences in this way, go through the inner sequences and replace coordinates by
-  coordinates mod env-width/2 and env-height/2 (since (0,0) is in the the center of the
-  environment)."
-  [env-width env-height stops]
-  (let [maxx (/ env-width  2)  ; rem will preserve neg signs using pos divisor
-        maxy (/ env-height 2)
-        x-split-paths (partition-by #(quot (first %) maxx) stops) ; when beyond border again, split
-        xy-split-paths (mapcat (fn [subpath] 
-                                   (partition-by #(quot (second %) maxy) subpath))
-                               x-split-paths)]
-    (map (partial wrap-stops-toroidally maxx maxy)
-         xy-split-paths)))
