@@ -10,6 +10,13 @@
 ;; the functions in forage.walks, thereby preserving the original coordinates.
 
 (defn toroidal-partition
+  "Maps a sequence of coordinates representing stops on a walk path into
+  a sequence of shorter sequences that map large coordinates back to the
+  original dimensions toroidally (aka: with periodic boundary
+  conditions).  Specifically, splits a sequence of coordinates when they
+  exceed boundaries of an environment of width env-width and height
+  env-height, or when they wrap around and exceed the boundaries a
+  second time, etc."
   [maxx maxy stops]
   (let [x-split-paths (partition-by #(quot (first %) maxx) stops) ; when beyond border again, split
         xy-split-paths (mapcat
@@ -39,15 +46,16 @@
 (defn toroidal-wrapped-partition
   "Maps a sequence of coordinates representing stops on a walk path into
   a sequence of shorter sequences that map large coordinates back to the
-  original dimensions toroidally (aka: with periodic boundary
-  conditions).  Specifically, splits a sequence of coordinates when they
-  exceed boundaries of an environment of width env-width and height
-  env-height, or when they wrap around and exceed the boundaries a
-  second time, etc.  Then after splitting the original sequence of
-  coordinates into a sequence of sequences in this way, go through the
-  inner sequences and replace coordinates by coordinates mod env-width/2
-  and env-height/2 (since (0,0) is in the the center of the
-  environment)."
+  original dimensions toroidally (aka: with periodic boundary conditions).
+  Specifically, splits a sequence of coordinates when they exceed boundaries
+  of an environment of width env-width and height env-height, or when they
+  wrap around and exceed the boundaries a second time, etc.  Then after
+  splitting the original sequence of coordinates into a sequence of sequences
+  in this way, adds the first element of each path after the first to the end
+  of the preceding path, and returns the resulting modified sequence of paths.
+  Finally, goes through the inner sequences and replaces coordinates by
+  coordinates mod env-width/2 and env-height/2 (since (0,0) is in the center
+  of the environment)."
   [env-width env-height stops]
   (let [maxx (/ env-width  2)  ; rem will preserve neg signs using pos divisor
         maxy (/ env-height 2)]
