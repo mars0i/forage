@@ -40,7 +40,7 @@
                 :HEIGHT plot-dim)
          (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
          (assoc-in [:mark :strokeWidth] 1)
-         ;(assoc-in [:autosize] "none") ; ignored
+         ;   (assoc-in [:autosize :type] "none") ; ignored
       ) 
     (first addl-kvs-map)))
 
@@ -105,7 +105,7 @@
   "Given a pair of coordinates, returns a Vega-Lite map with an added
   label value \"food\"."
   [[x y]]
-  {"x" x, "y" y, "label" "food radius"})
+  {"x" x, "y" y, "label" "perc radius"})
 
 ;; For the Hanami :MSIZE value:
 ;; Vega-Lite "mark" sizes--i.e. a circle at a point--are specified

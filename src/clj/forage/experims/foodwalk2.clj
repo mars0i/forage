@@ -73,7 +73,7 @@
 ;(println "Made food-walk")
 
 ;; ghost walk is the full walk that would have taken place if food wasn't found
-(def gridwalk-plot (->
+(def gridwalk-plot ;(->
                      (h/vega-gridwalk-plot ; overall plot config
                        perc-radius maxpathlen powerlaw-scale [(count food-walk)
                                                               (count stop-walk)]
@@ -84,10 +84,10 @@
                        ;                    "a ghost walk" stop-walk))
                        (h/vega-walk-plot env-size plot-dim  ; food search path
                                          (h/add-walk-labels
-                                           "food walk" food-walk)))
+                                           "μ=2 walk" food-walk)))
                      ;; See https://vega.github.io/vega-lite/docs/size.html#autosize
-                     (assoc "autosize" {"type" "none",
-                                        "contains" "content"})
+                     ;(assoc "autosize" {"type" "none",
+                     ;                   "contains" "content"})
                           )
 
 ;; Now view gridwalk-plot e.g. with:
