@@ -1,13 +1,16 @@
 ;; Toroidal ("periodic boundary conditions") wrapping of coordinates for viz
 (ns forage.viz.toroidal)
 
-;; These are really oriented toward plotting with Vega-Lite/Hanami; 
-;; they're not needed for data analysis.  Maybe they will be useful
-;  for some other visualization, too.
+;; These are oriented toward plotting with Vega-Lite/Hanami, and they
+;; shouldn't be needed for data analysis; maybe they will be useful
+;; for some other future visualization methods as well.
 
 ;; NOTE: *Finding* foodspots in a toroidal world should be handled in a 
 ;; look-fn (e.g. defined in forage.mason.foodspot) tha is passed to one of
 ;; the functions in forage.walks, thereby preserving the original coordinates.
+
+;; For example data to experiment with to understand these functions,
+;; see one of the files in the test/forage directory.
 
 (defn toroidal-partition
   "Maps a sequence of coordinates representing stops on a walk path into
@@ -31,17 +34,41 @@
   (map (fn [[x y]] [(rem x maxx) (rem y maxy)])
        stops))
 
-(defn overlap-end-stops
+;; TODO? Rewrite the following to add the firsts/lasts in one sweep?
+
+(defn add-lasts-as-firsts
   "Given a sequence of paths (each a sequence of coordinate pairs), adds
-  the first element of each path after the first to the end of the preceding
+  the last element of each path to the beginning of the next
   path, and returns the resulting modified sequence of paths."
   [paths]
-  (map 
-    (fn [path1 path2] (conj (vec path1) (first path2)))
-    paths
-    (rest paths)))
+  (cons (first paths)
+        (map (fn [path1 path2] (cons (last (vec path1)) path2))
+             paths (rest paths))))
 
-;; FIXME behaves oddly if env-width, env-height are not even
+(defn add-seconds-as-lasts
+  "Given a sequence of paths (each a sequence of coordinate pairs), adds
+  the second element of each path after the first to the end of the preceding
+  path, and returns the resulting modified sequence of paths.  We add
+  the second element because the first element is assumed to be the
+  result of a call to add-lasts-as-firsts."
+  [paths]
+  ;; For pairs of paths, add first of path2 as new last of path1
+  (conj (vec (map (fn [path1 path2] (conj (vec path1) (second path2)))
+                  paths (rest paths)))
+        (last paths))) ; the map loses the last path, so have to add it back
+
+(defn overlap-ends
+  "Given a sequence of paths (each a sequence of coordinate pairs), adds
+  the first element of each path to the end of the preceding path, and
+  the last element of each path to the beginning of the next path
+  (except where this is impossible for the paths on the end of the sequence).
+  The result will be that the last two elements of each path will be
+  identical to the first to elements of the next path."
+  [paths]
+  (add-seconds-as-lasts (add-lasts-as-firsts paths)))
+
+
+;; FIXME? behaves oddly if env-width, env-height are not even?
 ;; See forage/core_test.clj for a test of this function.
 (defn toroidal-wrapped-partition
   "Maps a sequence of coordinates representing stops on a walk path into
