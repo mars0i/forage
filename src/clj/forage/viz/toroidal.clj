@@ -1,4 +1,4 @@
-;; Toroidal wrapping of coordinates for visualizations
+;; Toroidal ("periodic boundary conditions") wrapping of coordinates for viz
 (ns forage.viz.toroidal)
 
 ;; These are really oriented toward plotting with Vega-Lite/Hanami; 
@@ -16,6 +16,17 @@
        stops))
 
 (defn toroidal-partition
+  [env-width env-height stops]
+  (let [maxx (/ env-width  2)  ; rem will preserve neg signs using pos divisor
+        maxy (/ env-height 2)
+        x-split-paths (partition-by #(quot (first %) maxx) stops) ; when beyond border again, split
+        xy-split-paths (mapcat
+                         (fn [subpath] 
+                             (partition-by #(quot (second %) maxy) subpath))
+                         x-split-paths)]
+    xy-split-paths))
+
+(defn toroidal-wrapped-partition
   "Maps a sequence of coordinates representing stops on a walk path into
   a sequence of shorter sequences that map large coordinates back to the
   original dimensions toroidally (aka: with periodic boundary
@@ -28,14 +39,7 @@
   and env-height/2 (since (0,0) is in the the center of the
   environment)."
   [env-width env-height stops]
-  (let [maxx (/ env-width  2)  ; rem will preserve neg signs using pos divisor
-        maxy (/ env-height 2)
-        x-split-paths (partition-by #(quot (first %) maxx) stops) ; when beyond border again, split
-        xy-split-paths (mapcat
-                         (fn [subpath] 
-                             (partition-by #(quot (second %) maxy) subpath))
-                         x-split-paths)]
-    (map (partial wrap-stops-toroidally maxx maxy)
-         xy-split-paths)))
+  (map (partial wrap-stops-toroidally maxx maxy)
+       (toroidal-partition env-width env-height stops)))
 
 
