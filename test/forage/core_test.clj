@@ -2,25 +2,32 @@
   (:require [clojure.test :refer :all]
             [forage.viz.toroidal :as tor]))
 
-(deftest test-toroidal-wrapped-partition
+(def coordinates-for-toroidal-tests
+  (apply concat 
+         [(map vector (range 5) (range 20 25))
+          (map vector (range 10 20) (range 100 110))
+          (map vector (range 7 14) (range 21 28))
+          (map vector (range 18 25) (range 9 16))
+          (map vector (range 7 16) (range 200
+                                          209))]))
+
+(def toroidal-wrapped-partition-expected-result
+  [[[0 0] [1 1] [2 2] [3 3] [4 4] [4 0]]
+   [[4 0] [5 1] [0 2]]
+   [[0 2] [1 3] [2 4] [3 5] [4 6] [5 7] [0 8]]
+   [[0 8] [1 9] [1 1]]
+   [[1 1] [2 2] [3 3] [4 4] [5 5] [0 6]]
+   [[0 6] [1 7] [0 9]]
+   [[0 9] [1 10] [2 11] [3 12] [4 13] [5 14] [0 15]]
+   [[0 15] [1 0]]
+   [[1 0] [2 1] [3 2] [4 3] [5 4] [0 5]]])
+
+(deftest toroidal-wrapped-partition
   (testing "toroidal-wrapped-partition"
-           (let [coords (apply concat 
-                               [(map vector (range 5) (range 20 25))
-                                (map vector (range 10 20) (range 100 110))
-                                (map vector (range 7 14) (range 21 28))
-                                (map vector (range 18 25) (range 9 16))
-                                (map vector (range 7 16) (range 200 209))])
-                 expected [[[0 0] [1 1] [2 2] [3 3] [4 4] [4 0]]
-                           [[4 0] [5 1] [0 2]]
-                           [[0 2] [1 3] [2 4] [3 5] [4 6] [5 7] [0 8]]
-                           [[0 8] [1 9] [1 1]]
-                           [[1 1] [2 2] [3 3] [4 4] [5 5] [0 6]]
-                           [[0 6] [1 7] [0 9]]
-                           [[0 9] [1 10] [2 11] [3 12] [4 13] [5 14] [0 15]]
-                           [[0 15] [1 0]]
-                           [[1 0] [2 1] [3 2] [4 3] [5 4] [0 5]]]
-                 result (tor/toroidal-wrapped-partition 12 40 coords)]
-             (is (= expected result) "toroidal-wrapped-partition"))))
+           (let [result (tor/toroidal-wrapped-partition
+                          12 40 coordinates-for-toroidal-test)]
+             (is (= result toroidal-wrapped-partition-expected-result)
+                 "toroidal-wrapped-partition"))))
 
 
 ;; Tests from earlier repo foond.  Might be useful to adapt here.  or not.
