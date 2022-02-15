@@ -12,6 +12,38 @@
 ;; For example data to experiment with to understand these functions,
 ;; see one of the files in the test/forage directory.
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+;; GENERAL IDEA OF THE NEXT FEW FUNCTIONS:
+;; What we want is to divide a sequence of points representing a walk
+;; into segments that will wrap the points toroidally in a displayed
+;; environment.  The following might not be the simplest algorithm, but
+;; it has the advantage that the distinct functions might at some point
+;; be separately useful.
+;;
+;; Step 1: Split the sequence into subsequences where points exceed boundaries
+;;  (toroidal-partition).
+;;
+;; Step 2: Mod them so that all points fall within the display boundaries
+;;  (wrap-stops-toroidally).
+;;
+;; At this point, the sub-walks will stop before they reach the boundaries.
+;; That is, there's a gap between the last point before the boundary-
+;; crossing, and the next point.  We need to do something about that.
+;;
+;; Step 3: Modify adjacent subsequences so that the earlier one includes
+;;  the first element of the later one, and vice versa (overlap-ends).
+;; 
+;; At this point if we plot the subwalks, some lines will go off the edge of 
+;; designated the plot region.  (In Vega-Lite these will actually be plotted
+;; out over the edge unless you set "autosize" "type" to "none"; that might
+;; possibly be useful in some context.)  However, normally, the lines should
+;; stop and start at the edge of the plot.
+;; 
+;; Step 4: Overwrite the endpoints of the subwalks so that they stop
+;; at the edge of the plot area.
+
+
+
 (defn toroidal-partition
   "Maps a sequence of coordinates representing stops on a walk path into
   a sequence of shorter sequences that map large coordinates back to the
@@ -41,25 +73,27 @@
   (except where this is impossible for the paths on the end of the
   sequence).  The result will be that the last two elements of each path
   will be identical to the first to elements of the next path." [paths]
+  [paths]
   (let [paths (vec paths)
-	;; For each path that's not first or last, add last and first
-	elements ;; of adjacent paths.  (First and last paths need
-	special handling.) middle-paths (map (fn [[before middle after]]
-				   (cons (last (vec before))
-					 (conj (vec middle) (first
-					 after))))
-			       (partition 3 1 paths))
-	;; These were left out of middle-paths: end-path (cons (last
-	; add last element of
-			 (last (butlast paths))) ; second to last seq
-		       (last paths))             ; to last seq
-	beg-path (conj (vec (first paths))       ; add to end of first
-	seq
-		       (first (second paths)))]  ; first element in
-		       second
+        ;; For each path that's not first or last, add last and first elements
+        ;; of adjacent paths.  (First and last paths need special handling.) 
+        middle-paths (map (fn [[before middle after]]
+                              (cons (last (vec before))
+                                    (conj (vec middle) (first
+                                                         after))))
+                          (partition 3 1 paths))
+        ;; These were left out of middle-paths:
+        end-path (cons (last                     ; Add last element of
+                             (last (butlast paths))) ; second to last seq
+                       (last paths))             ; to last seq.
+        beg-path (conj (vec (first paths))       ; Add to end of first seq
+                       (first (second paths)))]  ; first element in second.
     (cons beg-path
-	  (conj (vec middle-paths)
-		end-path))))
+          (conj (vec middle-paths)
+                end-path))))
+
+;(defn stop-ends-at-edge
+;  [paths
 
 
 
