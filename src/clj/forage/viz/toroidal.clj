@@ -60,12 +60,6 @@
                          x-split-paths)]
     xy-split-paths))
 
-(defn wrap-stops-toroidally
-  "Map coordinates in a sequence of points to their values mod maxx and maxy."
-  [maxx maxy stops]
-  (map (fn [[x y]] [(rem x maxx) (rem y maxy)])
-       stops))
-
 (defn overlap-ends
   "Given a sequence of paths (each a sequence of coordinate pairs), adds
   the first element of each path to the end of the preceding path, and
@@ -92,10 +86,37 @@
           (conj (vec middle-paths)
                 end-path))))
 
-;(defn stop-ends-at-edge
-;  [paths
+(defn wrap-stops-toroidally
+  "Map coordinates in a sequence of points to their values mod maxx and maxy."
+  [maxx maxy stops]
+  (map (fn [[x y]] [(rem x maxx) (rem y maxy)])
+       stops))
 
+(defn clip-to-env
+  "Returns [x y] if x and y lie within [-maxx,maxx] and [-maxy,maxy],
+  respectively; otherwise replaces x or y with the nearest of the extremes."
+  [maxx maxy [x y]]
+  (let [-maxx (- maxx)
+        -maxy (- maxy)]
+    [(cond (> x maxx)  maxx
+           (< x -maxx) -maxx
+           :else x)
+     (cond (> y maxy)  maxy
+           (< y -maxy) -maxy
+           :else y)]))
 
+;; One could instead simply map clip-to-env over all of the points in ech
+;; subwalk, since only the endpoints will exceed extremes, but it's not
+;; hard to just do the endpoints.
+(defn clip-ends-to-env
+  "Returns path modified by applying (clip-to-end maxx maxy ...) to its 
+  first and last points."
+  [maxx maxy path]
+  (let [path (vec path)
+        left (clip-to-env maxx maxy (first path))
+        right (clip-to-env maxx maxy (last path))
+        middle (vec (rest (butlast path)))]
+    (cons left (conj middle right))))
 
 ;; FIXME? behaves oddly if env-width, env-height are not even?
 ;; See forage/core_test.clj for a test of this function.
@@ -110,11 +131,15 @@
   in this way, adds the first element of each path after the first to the end
   of the preceding path, and returns the resulting modified sequence of paths.
   Finally, goes through the inner sequences and replaces coordinates by
-  coordinates mod env-width/2 and env-height/2 (since (0,0) is in the center
-  of the environment)."
+  coordinates mod env-width/2 and env-height/2 [since (0,0) is in the center
+  of the environment], and reduces values on the ends so that they stop at
+  the environment boundaries."
   [env-width env-height stops]
   (let [maxx (/ env-width  2)  ; rem will preserve neg signs using pos divisor
         maxy (/ env-height 2)]
     ;; could be more efficient with comp or transducer, but this is just for prep'ing data for display
-    (map (partial wrap-stops-toroidally maxx maxy)
-         (overlap-ends (toroidal-partition maxx maxy stops)))))
+    ;; FIXME Is this right??? :
+    (map (partial clip-ends-to-env maxx maxy) 
+         (map (partial wrap-stops-toroidally maxx maxy)
+              (overlap-ends (toroidal-partition maxx maxy stops))))))
+
