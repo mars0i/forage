@@ -7,6 +7,12 @@
 (defn sin [theta] (Math/sin theta))
 (defn tan [theta] (Math/tan theta))
 
+(defn sign
+  [x]
+  (cond (pos? x) 1
+        (neg? x) -1
+        :else 0))
+
 (defn rotate
   "Given an angle theta and a pair of coordinates [x y], returns a
   new pair of coordinates that is the rotation of [x y] by theta."
