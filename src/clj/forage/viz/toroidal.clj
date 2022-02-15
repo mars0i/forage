@@ -43,15 +43,19 @@
 ;; at the edge of the plot area.
 
 
-;; The purpose of this function is to keep numbers that are exactly on the 
-;; edge of an environment from being mapped into zero.
-(defn rem*
-  "Returns (rem x m) unless (rem x m) = 0, in which case returns x."
+;; The purpose of this function is to make numbers that are exactly on the 
+;; edge of an environment, or on an "edge" that is some multiple of it, 
+;; from being mapped into zero.
+(defn rem+
+  "Returns the value of (rem x m) unless (rem x m) = 0 and x != 0, in 
+  which case it returns m."
   [x m]
-  (let [remx (rem x m)]
-    (if (zero? remx)
-      x
-      remx)))
+  (if (zero? x)
+    x
+    (let [remx (rem x m)]
+      (if (zero? remx)
+        (* (sign x) m)
+        remx))))
 
 
 (defn toroidal-partition
@@ -99,7 +103,7 @@
 (defn wrap-stops-toroidally
   "Map coordinates in a sequence of points to their values mod maxx and maxy."
   [maxx maxy stops]
-  (map (fn [[x y]] [(rem* x maxx) (rem* y maxy)])
+  (map (fn [[x y]] [(rem+ x maxx) (rem+ y maxy)])
        stops))
 
 (defn clip-to-env
