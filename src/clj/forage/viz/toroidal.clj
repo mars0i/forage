@@ -1,5 +1,6 @@
 ;; Toroidal ("periodic boundary conditions") wrapping of coordinates for viz
-(ns forage.viz.toroidal)
+(ns forage.viz.toroidal
+  (require [utils.math :as m]))
 
 ;; These are oriented toward plotting with Vega-Lite/Hanami, and they
 ;; shouldn't be needed for data analysis; maybe they will be useful
@@ -46,15 +47,20 @@
 ;; The purpose of this function is to make numbers that are exactly on the 
 ;; edge of an environment, or on an "edge" that is some multiple of it, 
 ;; from being mapped into zero.
+;; THIS IS STILL NOT RIGHT.  Supose env is from -m to m, with 0 in the center.
+;; Then 2m should be mapped to m, and -2m to -m, but 3m = 2m+m should
+;; be represented by 0.  This would be easier if I put the origin in the 
+;; corner.
+
 (defn rem+
   "Returns the value of (rem x m) unless (rem x m) = 0 and x != 0, in 
-  which case it returns m."
+  which case it returns m or -m, depending on the sign of x."
   [x m]
   (if (zero? x)
     x
     (let [remx (rem x m)]
       (if (zero? remx)
-        (* (sign x) m)
+        (* (m/sign x) m)
         remx))))
 
 
