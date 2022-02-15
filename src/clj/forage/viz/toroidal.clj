@@ -43,27 +43,10 @@
 ;; Step 4: Overwrite the endpoints of the subwalks so that they stop
 ;; at the edge of the plot area.
 
-(defn sign-fn
-  [x]
-  (if (neg? x) - +))
-
 
 ;; The purpose of this function is to make numbers that are exactly on the 
 ;; edge of an environment, or on an "edge" that is some multiple of it, 
 ;; from being mapped into zero.
-;; Explanation:
-;; Supose env is from -m to m, with 0 in the center.
-;; Then 2m should be mapped to m, and -2m to -m, but 3m = 2m+m should
-;; be represented by 0.  This would be easier if I put the origin in the 
-;; corner.  So let's do that temporarily:
-;; Let x' = x+m.  Then while x is in multiples of [-m,m], x' is in multiples
-;; of [0,2m].  So now run (mod x' 2m).  That will map x' to some location
-;; in [0,2m].  Subtract m from that to get a value [-m,m].  0, 3m, 5m, etc.,
-;; and -3m, -5m too, but multiples of 2m, whether positive or negative,
-;; will be mapped to m or -m.
-;; SO SHOULD THE ARGUMENT BE env-width, env-height, and then I don't
-;; have to multiply by 2?
-
 ;; Desired output for env-width 10, i.e. maxx = 5:
 ;     0 -> 0
 ;     1 -> 1
@@ -90,38 +73,24 @@
 ;     -5 -> -5
 ;     -6 -> 4
 ;     -7 -> 3
+;     -7 -> 3
+;; i.e. when a number is wrapped, if it's a little bit over, it
+;; should wrap to the other side--negative if it was positive, positive
+;; if it was negative.
 
-(defn rem'
-  [x m]
-  (let [x' (if (neg? x) (- x) x)
-        remx' (rem x' m)]
-    (if (neg? x)
-      (- remx')
-      remx')))
+;; MASON's Continuous2D simplifies this by putting the origin in the corner.
 
+;; This one is good, but doesn't implement the above.  It implements rem
+;; but maps x to m or -m when it's an odd-numbered multiple of m.
+;; (Even-numbered multiples should map to zero.)
 (defn rem*
-  "Maps x into [-m,m], preserving relative location within multiples of 
-  that interval."
   [x m]
-  ((sign-fn x) (rem (+ x m)   ; see comment above for explanaton
-          m)
-     m))
-
-(defn rem+
-  [x m]
-  (if (and (>= x 0) (< x m))
-    x
-    (let [remx (rem x m)]
-      (if (neg? x)
-        remx
-        remx))))
-
-(defn rem-
-  "Maps x into [-m,m], preserving relative location within multiples of 
-  that interval."
-  [x m]
-  (* (m/sign x) (rem (+ x m)   ; see comment above for explanaton
-                   (* 2 m))))
+  (let [remx (rem x m)]
+    (if (zero? remx)
+      (if (even? (quot x m))
+        0
+        (if (neg? x) (- m) m))
+      remx)))
 
 (defn toroidal-partition
   "Maps a sequence of coordinates representing stops on a walk path into
