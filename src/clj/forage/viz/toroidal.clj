@@ -1,6 +1,6 @@
 ;; Toroidal ("periodic boundary conditions") wrapping of coordinates for viz
 (ns forage.viz.toroidal
-  (require [utils.math :as m]))
+  (:require [utils.math :as m]))
 
 ;; These are oriented toward plotting with Vega-Lite/Hanami, and they
 ;; shouldn't be needed for data analysis; maybe they will be useful
@@ -43,26 +43,58 @@
 ;; Step 4: Overwrite the endpoints of the subwalks so that they stop
 ;; at the edge of the plot area.
 
+(defn sign-fn
+  [x]
+  (if (neg? x) - +))
+
 
 ;; The purpose of this function is to make numbers that are exactly on the 
 ;; edge of an environment, or on an "edge" that is some multiple of it, 
 ;; from being mapped into zero.
-;; THIS IS STILL NOT RIGHT.  Supose env is from -m to m, with 0 in the center.
+;; Explanation:
+;; Supose env is from -m to m, with 0 in the center.
 ;; Then 2m should be mapped to m, and -2m to -m, but 3m = 2m+m should
 ;; be represented by 0.  This would be easier if I put the origin in the 
-;; corner.
+;; corner.  So let's do that temporarily:
+;; Let x' = x+m.  Then while x is in multiples of [-m,m], x' is in multiples
+;; of [0,2m].  So now run (mod x' 2m).  That will map x' to some location
+;; in [0,2m].  Subtract m from that to get a value [-m,m].  0, 3m, 5m, etc.,
+;; and -3m, -5m too, but multiples of 2m, whether positive or negative,
+;; will be mapped to m or -m.
+;; SO SHOULD THE ARGUMENT BE env-width, env-height, and then I don't
+;; have to multiply by 2?
+
+(defn rem'
+  [x m]
+  (let [x' (if (neg? x) (- x) x)
+        remx' (rem x' m)]
+    (if (neg? x)
+      (- remx')
+      remx')))
+
+(defn rem*
+  "Maps x into [-m,m], preserving relative location within multiples of 
+  that interval."
+  [x m]
+  ((sign-fn x) (rem (+ x m)   ; see comment above for explanaton
+          m)
+     m))
 
 (defn rem+
-  "Returns the value of (rem x m) unless (rem x m) = 0 and x != 0, in 
-  which case it returns m or -m, depending on the sign of x."
   [x m]
-  (if (zero? x)
+  (if (and (>= x 0) (< x m))
     x
     (let [remx (rem x m)]
-      (if (zero? remx)
-        (* (m/sign x) m)
+      (if (neg? x)
+        remx
         remx))))
 
+(defn rem-
+  "Maps x into [-m,m], preserving relative location within multiples of 
+  that interval."
+  [x m]
+  (* (m/sign x) (rem (+ x m)   ; see comment above for explanaton
+                   (* 2 m))))
 
 (defn toroidal-partition
   "Maps a sequence of coordinates representing stops on a walk path into
@@ -109,7 +141,7 @@
 (defn wrap-stops-toroidally
   "Map coordinates in a sequence of points to their values mod maxx and maxy."
   [maxx maxy stops]
-  (map (fn [[x y]] [(rem+ x maxx) (rem+ y maxy)])
+  (map (fn [[x y]] [(rem* x maxx) (rem* y maxy)])
        stops))
 
 (defn clip-to-env
@@ -137,6 +169,12 @@
         right (clip-to-env maxx maxy (last path))
         middle (vec (rest (butlast path)))]
     (cons left (conj middle right))))
+
+;(->> path
+;     (toroidal-partition (/ env-width 2) (/ env-height 2))
+;     overlap-ends           ; these two
+;     (map (partial wrap-stops-toroidally maxx maxy)) ; can be done in either order
+;     )
 
 ;; FIXME? behaves oddly if env-width, env-height are not even?
 ;; See forage/core_test.clj for a test of this function.
