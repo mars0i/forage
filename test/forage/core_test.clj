@@ -8,8 +8,7 @@
           (map vector (range 10 20) (range 100 110))
           (map vector (range 7 14) (range 21 28))
           (map vector (range 18 25) (range 9 16))
-          (map vector (range 7 16) (range 200
-                                          209))]))
+          (map vector (range 7 16) (range 200 209))]))
 
 (def toroidal-wrapped-partition-expected-result
   [[[0 0] [1 1] [2 2] [3 3] [4 4] [4 0]]
