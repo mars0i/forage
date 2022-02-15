@@ -1,6 +1,7 @@
 ;; Toroidal ("periodic boundary conditions") wrapping of coordinates for viz
 (ns forage.viz.toroidal
-  (:require [utils.math :as m]))
+  (:require ;[utils.math :as m]
+            [clojure.math.numeric-tower :as nt]))
 
 ;; These are oriented toward plotting with Vega-Lite/Hanami, and they
 ;; shouldn't be needed for data analysis; maybe they will be useful
@@ -77,8 +78,19 @@
 ;; i.e. when a number is wrapped, if it's a little bit over, it
 ;; should wrap to the other side--negative if it was positive, positive
 ;; if it was negative.
+;; (MASON's Continuous2D simplifies this by putting the origin in the corner.)
 
-;; MASON's Continuous2D simplifies this by putting the origin in the corner.
+;; I THINK THIS IS IT
+(defn rem+
+  [x env-size] ; env-size = width or height
+  (let [abs-x (nt/abs x) ; to avoid confusion, just work with pos nums
+        env-max (/ env-size 2) ; since env symmetric from neg to pos
+        shifted-x (+ abs-x env-max) ; shift to all pos 
+        shifted-x-rem (rem shifted-x env-size) ; now rem without confusion
+        unshifted (- shifted-x-rem env-max)] ; but we have to go back
+    (if (neg? x)      ; and we have to put neg nums back to neg
+      (- unshifted)
+      unshifted)))
 
 ;; This one is good, but doesn't implement the above.  It implements rem
 ;; but maps x to m or -m when it's an odd-numbered multiple of m.
@@ -91,6 +103,18 @@
         0
         (if (neg? x) (- m) m))
       remx)))
+
+(defn unshift-fn
+  [x]
+  (if (neg? x) + -))
+
+;; Seems to work right for positive numbers ...
+(defn rem-
+  [x env-size]
+  (let [env-max (/ env-size 2)
+        shifted-x (+ x env-max)
+        shifted-x-rem (rem shifted-x env-size)]
+    ((unshift-fn x) shifted-x-rem env-max)))
 
 (defn toroidal-partition
   "Maps a sequence of coordinates representing stops on a walk path into
@@ -137,7 +161,7 @@
 (defn wrap-stops-toroidally
   "Map coordinates in a sequence of points to their values mod maxx and maxy."
   [maxx maxy stops]
-  (map (fn [[x y]] [(rem* x maxx) (rem* y maxy)])
+  (map (fn [[x y]] [(rem+ x maxx) (rem+ y maxy)])
        stops))
 
 (defn clip-to-env
