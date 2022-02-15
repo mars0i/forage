@@ -43,6 +43,16 @@
 ;; at the edge of the plot area.
 
 
+;; The purpose of this function is to keep numbers that are exactly on the 
+;; edge of an environment from being mapped into zero.
+(defn rem*
+  "Returns (rem x m) unless (rem x m) = 0, in which case returns x."
+  [x m]
+  (let [remx (rem x m)]
+    (if (zero? remx)
+      x
+      remx)))
+
 
 (defn toroidal-partition
   "Maps a sequence of coordinates representing stops on a walk path into
@@ -89,7 +99,7 @@
 (defn wrap-stops-toroidally
   "Map coordinates in a sequence of points to their values mod maxx and maxy."
   [maxx maxy stops]
-  (map (fn [[x y]] [(rem x maxx) (rem y maxy)])
+  (map (fn [[x y]] [(rem* x maxx) (rem* y maxy)])
        stops))
 
 (defn clip-to-env
