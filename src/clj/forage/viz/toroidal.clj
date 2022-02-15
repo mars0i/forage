@@ -64,6 +64,33 @@
 ;; SO SHOULD THE ARGUMENT BE env-width, env-height, and then I don't
 ;; have to multiply by 2?
 
+;; Desired output for env-width 10, i.e. maxx = 5:
+;     0 -> 0
+;     1 -> 1
+;     2 -> 2
+;     3 -> 3
+;     4 -> 4
+;     5 -> 5
+;     6 -> -4
+;     7 -> -3
+;     8 -> -2
+;     9 -> -1
+;     10 -> 0
+;     11 -> 1
+;     12 -> 2
+;     13 -> 3
+;     14 -> 4
+;     15 -> 5
+;     16 -> -1
+;     ...
+;     -1 -> -1
+;     -2 -> -2
+;     -3 -> -3
+;     -4 -> -4
+;     -5 -> -5
+;     -6 -> 4
+;     -7 -> 3
+
 (defn rem'
   [x m]
   (let [x' (if (neg? x) (- x) x)
