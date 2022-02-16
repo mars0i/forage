@@ -26,6 +26,7 @@
         vert-lines  (for [x (range neg-xmax xmax sep)] [[x neg-ymax] [x ymax]])]
     (concat horiz-lines vert-lines)))
 
+;; FIXME Rewrite for origin-in-corner rather than in center
 (defn rectangular-grid
   "Make a sequence of coordinate pairs spaced out every sep integers,
   from -quandrant-width to quadrant-width, and from -quadrant-height
@@ -62,7 +63,8 @@
   ([env-width env-height]
    (centerless-rectangular-grid 1 env-width env-height))
   ([sep env-width env-height]
-   (remove both-zero? 
+   (remove (fn [[x y]] (and (= x (/ env-width 2))    ; assumes width, height 
+                            (= y (/ env-height 2)))) ; are even
            (rectangular-grid sep env-width env-height))))
 
 (defn perc-foodspot-coords-in-coll

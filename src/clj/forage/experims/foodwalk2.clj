@@ -28,6 +28,7 @@
 (def perc-radius 4)  ; distance that an animal can "see" in searching for food
 (def food-distance 100)
 (def env-size 500)
+(def half-size (/ env-size 2))
 (def powerlaw-scale 1) ; scale parameter of distribution
 (def powerlaw-exponent 2) ; must be > 1; 2 supposed to be optimal sparse targets
 (def maxpathlen 5000) ; max length of a path (sequence of line segments)
@@ -60,7 +61,7 @@
                     (w/step-vector-fn rng dist 1 trunclen))))
 
 ;; Corresponding path of coordinate pairs:
-(def stop-walk (w/walk-stops [0 0] step-walk))
+(def stop-walk (w/walk-stops [half-size half-size] step-walk))
 
 ;(println "Made stop-walk; starting food-walk construction")
 
