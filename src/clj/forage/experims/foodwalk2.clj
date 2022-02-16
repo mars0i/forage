@@ -12,15 +12,8 @@
       [utils.random :as r]))
 
 ;(def seed (inc (r/make-seed)))
-
-;; FIXME
-;; WITH THE FOLLOWING SEED THE PATH GOES ABOVE THE TOP OF THE PLOT.
-;; WITH autosize=none (see below) THIS CAUSES THE TEXT AT THE
-;; TOP TO BE CUT OFF.  AUTOSIZE ALSO SEEMS TO CAUSE THE LEGEND
-;; TO BE CUT OFF.  CAN I FIX THIS BY EMBEDDING AUTOSIZE IN AN
-;; INNER LAYER??  DOESN'T SEEM TO WORK.  SEE hanami.clj.
-(def seed 
-  1646130811754)
+;(def seed 1646130811754)
+(def seed 1646924435253)
 
 (println "SEED:" seed)
 
@@ -73,7 +66,7 @@
 (def food-walk (first walk-with-food))
 
 (def walk-segments
-  (map (partial h/add-walk-labels "μ=2 walk")
+  (map (partial h/add-walk-labels "toroidal")
        (t/toroidal-wrapped-partition env-size env-size food-walk)))
 
 (def walk-plots 

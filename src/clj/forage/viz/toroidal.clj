@@ -189,7 +189,7 @@
 (defn wrap-stops-toroidally
   "Map coordinates in a sequence of points to their values mod maxx and maxy."
   [env-width env-height stops]
-  (map (fn [[x y]] [(rem+ x env-width) (rem+ y env-height)])
+  (map (fn [[x y]] [(rem x env-width) (rem y env-height)])
        stops))
 
 (defn clip-to-env
@@ -246,7 +246,7 @@
     ;; could be more efficient with comp or transducer, but this is just for prep'ing data for display
     ;; FIXME Is this right??? :
     (->> stops
-         (toroidal-partition maxx maxy)
+         (toroidal-partition env-width env-height)
          (map (partial wrap-stops-toroidally env-width env-height))
          ;(overlap-ends)
          ;(map (partial clip-ends-to-env env-width env-height))
