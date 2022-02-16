@@ -4,6 +4,7 @@
       ;[aerial.hanami.templates :as ht]
       [clojure.math.numeric-tower :as nt]
       [forage.viz.hanami :as h]
+      [forage.viz.toroidal :as t]
       [forage.walks :as w]
       [forage.food :as f]
       [forage.mason.foodspot :as mf]
@@ -70,25 +71,33 @@
 
 (def food-walk (first walk-with-food))
 
-;(println "Made food-walk")
+(def walk-segments
+  (map (partial h/add-walk-labels "μ=2 walk")
+       (t/toroidal-wrapped-partition env-size env-size food-walk)))
 
-;; ghost walk is the full walk that would have taken place if food wasn't found
-(def gridwalk-plot ;(->
-                     (h/vega-gridwalk-plot ; overall plot config
-                       perc-radius maxpathlen powerlaw-scale [(count food-walk)
-                                                              (count stop-walk)]
-                       (h/vega-foodgrid-plot env-size plot-dim   ; place food circles
-                                             food-distance perc-radius)
+(def walk-plots 
+  (map (partial h/vega-walk-plot env-size plot-dim)
+       walk-segments))
+
+(def gridwalk-plot 
+                (apply
+                  h/vega-gridwalk-plot ; overall plot config
+                  perc-radius
+                  maxpathlen
+                  powerlaw-scale 
+                  [(count food-walk) (count stop-walk)]
+                  ;(h/vega-foodgrid-plot env-size plot-dim
+                  ;                      food-distance perc-radius)
+;; this shows toroidal functions not working:
+                  (h/vega-walk-plot env-size plot-dim  ; food search path
+                                    (h/add-walk-labels
+                                      "full walk" food-walk))
+                  walk-plots
+                  ))
+
                        ;(h/vega-walk-plot env-size plot-dim   ; full path without food stop
                        ;                  (h/add-walk-labels
                        ;                    "a ghost walk" stop-walk))
-                       (h/vega-walk-plot env-size plot-dim  ; food search path
-                                         (h/add-walk-labels
-                                           "μ=2 walk" food-walk)))
-                     ;; See https://vega.github.io/vega-lite/docs/size.html#autosize
-                     ;(assoc "autosize" {"type" "none",
-                     ;                   "contains" "content"})
-                          )
 
 ;; Now view gridwalk-plot e.g. with:
 (comment
