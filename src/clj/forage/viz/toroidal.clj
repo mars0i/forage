@@ -54,7 +54,7 @@
 ;     2 -> 2
 ;     3 -> 3
 ;     4 -> 4
-;     5 -> 5
+;     5 -> 5  [-5 might work, too]
 ;     6 -> -4
 ;     7 -> -3
 ;     8 -> -2
@@ -64,14 +64,14 @@
 ;     12 -> 2
 ;     13 -> 3
 ;     14 -> 4
-;     15 -> 5
+;     15 -> 5  [-5 might work, too]
 ;     16 -> -1
 ;     ...
 ;     -1 -> -1
 ;     -2 -> -2
 ;     -3 -> -3
 ;     -4 -> -4
-;     -5 -> -5
+;     -5 -> -5  [5 might work, too]
 ;     -6 -> 4
 ;     -7 -> 3
 ;     -7 -> 3
@@ -84,8 +84,8 @@
 ;; NOTE ENV-SIZE PARAMETER
 (defn rem+
   [x env-size] ; env-size = width or height
-  (let [abs-x (nt/abs x) ; to avoid confusion, just work with pos nums
-        env-max (/ env-size 2) ; since env symmetric from neg to pos
+  (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
+        abs-x (nt/abs x) ; to avoid confusion, just work with pos nums
         shifted-x (+ abs-x env-max) ; shift to all pos 
         shifted-x-rem (rem shifted-x env-size) ; now rem without confusion
         unshifted (- shifted-x-rem env-max)] ; but we have to go back
@@ -218,7 +218,14 @@
         maxy (/ env-height 2)]
     ;; could be more efficient with comp or transducer, but this is just for prep'ing data for display
     ;; FIXME Is this right??? :
-    (map (partial clip-ends-to-env maxx maxy) 
-         (map (partial wrap-stops-toroidally env-width env-height)
-              (overlap-ends (toroidal-partition maxx maxy stops))))))
+    (->> stops
+         (toroidal-partition maxx maxy)
+         (map (partial wrap-stops-toroidally env-width env-height))
+         ;(overlap-ends)
+         ;;(map (partial clip-ends-to-env maxx maxy)) ; FIXME HAS NO EFFECT
+         )))
 
+;; old version:
+;    (map (partial clip-ends-to-env maxx maxy) 
+;         (map (partial wrap-stops-toroidally env-width env-height)
+;              (overlap-ends (toroidal-partition maxx maxy stops))))))
