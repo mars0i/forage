@@ -45,78 +45,6 @@
 ;; at the edge of the plot area.
 
 
-;; The purpose of this function is to make numbers that are exactly on the 
-;; edge of an environment, or on an "edge" that is some multiple of it, 
-;; from being mapped into zero.
-;; Desired output for env-width 10, i.e. maxx = 5:
-;     0 -> 0
-;     1 -> 1
-;     2 -> 2
-;     3 -> 3
-;     4 -> 4
-;     5 -> 5  [-5 might work, too]
-;     6 -> -4
-;     7 -> -3
-;     8 -> -2
-;     9 -> -1
-;     10 -> 0
-;     11 -> 1
-;     12 -> 2
-;     13 -> 3
-;     14 -> 4
-;     15 -> 5  [-5 might work, too]
-;     16 -> -1
-;     ...
-;     -1 -> -1
-;     -2 -> -2
-;     -3 -> -3
-;     -4 -> -4
-;     -5 -> -5  [5 might work, too]
-;     -6 -> 4
-;     -7 -> 3
-;     -7 -> 3
-;; i.e. when a number is wrapped, if it's a little bit over, it
-;; should wrap to the other side--negative if it was positive, positive
-;; if it was negative.
-;; (MASON's Continuous2D simplifies this by putting the origin in the corner.)
-
-;; I THINK THIS IS IT
-;; NOTE ENV-SIZE PARAMETER
-(defn rem+
-  [x env-size] ; env-size = width or height
-  (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
-        abs-x (nt/abs x) ; to avoid confusion, just work with pos nums
-        shifted-x (+ abs-x env-max) ; shift to all pos 
-        shifted-x-rem (rem shifted-x env-size) ; now rem without confusion
-        unshifted (- shifted-x-rem env-max)] ; but we have to go back
-    (if (neg? x)      ; and we have to put neg nums back to neg
-      (- unshifted)
-      unshifted)))
-
-;; This one is good, but doesn't implement the above.  It implements rem
-;; but maps x to m or -m when it's an odd-numbered multiple of m.
-;; (Even-numbered multiples should map to zero.)
-(defn rem*
-  [x m]
-  (let [remx (rem x m)]
-    (if (zero? remx)
-      (if (even? (quot x m))
-        0
-        (if (neg? x) (- m) m))
-      remx)))
-
-(defn unshift-fn
-  [x]
-  (if (neg? x) + -))
-
-;; Seems to work right for positive numbers ...
-(defn rem-
-  [x env-size]
-  (let [env-max (/ env-size 2)
-        shifted-x (+ x env-max)
-        shifted-x-rem (rem shifted-x env-size)]
-    ((unshift-fn x) shifted-x-rem env-max)))
-
 (defn toroidal-partition
   "Maps a sequence of coordinates representing stops on a walk path into
   a sequence of shorter sequences that map large coordinates back to the
@@ -158,6 +86,79 @@
     (cons beg-path
           (conj (vec middle-paths)
                 end-path))))
+
+
+;; This one is good, but doesn't implement the above.  It implements rem
+;; but maps x to m or -m when it's an odd-numbered multiple of m.
+;; (Even-numbered multiples should map to zero.)
+(defn rem*
+  [x m]
+  (let [remx (rem x m)]
+    (if (zero? remx)
+      (if (even? (quot x m))
+        0
+        (if (neg? x) (- m) m))
+      remx)))
+
+(defn unshift-fn
+  [x]
+  (if (neg? x) + -))
+
+;; Seems to work right for positive numbers ...
+(defn rem-
+  [x env-size]
+  (let [env-max (/ env-size 2)
+        shifted-x (+ x env-max)
+        shifted-x-rem (rem shifted-x env-size)]
+    ((unshift-fn x) shifted-x-rem env-max)))
+
+;; The purpose of this function is to make numbers that are exactly on the 
+;; edge of an environment, or on an "edge" that is some multiple of it, 
+;; from being mapped into zero.
+;; Desired output for env-width 10, i.e. maxx = 5:
+;     0 -> 0
+;     1 -> 1
+;     2 -> 2
+;     3 -> 3
+;     4 -> 4
+;     5 -> 5  [-5 might work, too]
+;     6 -> -4
+;     7 -> -3
+;     8 -> -2
+;     9 -> -1
+;     10 -> 0
+;     11 -> 1
+;     12 -> 2
+;     13 -> 3
+;     14 -> 4
+;     15 -> 5  [-5 might work, too]
+;     16 -> -1
+;     ...
+;     -1 -> -1
+;     -2 -> -2
+;     -3 -> -3
+;     -4 -> -4
+;     -5 -> -5  [5 might work, too]
+;     -6 -> 4
+;     -7 -> 3
+;     -7 -> 3
+;; i.e. when a number is wrapped, if it's a little bit over, it
+;; should wrap to the other side--negative if it was positive, positive
+;; if it was negative.
+;; (MASON's Continuous2D simplifies this by putting the origin in the corner.)
+
+;; I THINK THIS IS IT
+;; NOTE ENV-SIZE PARAMETER
+(defn rem+
+  [x env-size] ; env-size = width or height
+  (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
+        abs-x (nt/abs x) ; to avoid confusion, just work with pos nums
+        shifted-x (+ abs-x env-max) ; result is outside bounds for all x
+        shifted-x-rem (rem shifted-x env-size) ; now rem without confusion
+        unshifted (- shifted-x-rem env-max)] ; but we have to go back
+    (if (neg? x)      ; and we have to put neg nums back to neg
+      (- unshifted)
+      unshifted)))
 
 (defn wrap-stops-toroidally
   "Map coordinates in a sequence of points to their values mod maxx and maxy."
@@ -222,7 +223,7 @@
          (toroidal-partition maxx maxy)
          (map (partial wrap-stops-toroidally env-width env-height))
          ;(overlap-ends)
-         ;;(map (partial clip-ends-to-env maxx maxy)) ; FIXME HAS NO EFFECT
+         ;(map (partial clip-ends-to-env env-width env-height))
          )))
 
 ;; old version:
