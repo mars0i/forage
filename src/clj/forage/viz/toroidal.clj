@@ -149,7 +149,7 @@
 
 ;; I THINK THIS IS IT
 ;; NOTE ENV-SIZE PARAMETER
-(defn rem+
+(defn rem+old
   [x env-size] ; env-size = width or height
   (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
         abs-x (nt/abs x) ; to avoid confusion, just work with pos nums
@@ -159,6 +159,32 @@
     (if (neg? x)      ; and we have to put neg nums back to neg
       (- unshifted)
       unshifted)))
+
+(defn rem+not
+  [x env-size] ; env-size = width or height
+  (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
+        shifted-x (+ x env-max) ; result is outside bounds for all x
+        shifted-x-rem (rem shifted-x env-size) ; now rem without confusion
+        unshifted (- shifted-x-rem env-max)] ; but we have to go back
+    unshifted))
+
+;; Based on tx() in MASON's Continuous2D.java
+(defn mason-toroidal
+  [x size]
+  (if (and (>= x 0) (< x size))
+    x
+    (let [modx (mod x size)]
+      (if (neg? modx)
+        (+ modx size)
+        modx))))
+
+(defn rem+
+  [x env-size] ; env-size = width or height
+  (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
+        shifted-x (+ x env-max) ; result is outside bounds for all x
+        shifted-x-rem (rem shifted-x env-size) 
+        unshifted-x (- shifted-x-rem env-max)] ; but we have to go back
+    unshifted-x))
 
 (defn wrap-stops-toroidally
   "Map coordinates in a sequence of points to their values mod maxx and maxy."
