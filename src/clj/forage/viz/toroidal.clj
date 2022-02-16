@@ -81,6 +81,7 @@
 ;; (MASON's Continuous2D simplifies this by putting the origin in the corner.)
 
 ;; I THINK THIS IS IT
+;; NOTE ENV-SIZE PARAMETER
 (defn rem+
   [x env-size] ; env-size = width or height
   (let [abs-x (nt/abs x) ; to avoid confusion, just work with pos nums
@@ -160,8 +161,8 @@
 
 (defn wrap-stops-toroidally
   "Map coordinates in a sequence of points to their values mod maxx and maxy."
-  [maxx maxy stops]
-  (map (fn [[x y]] [(rem+ x maxx) (rem+ y maxy)])
+  [env-width env-height stops]
+  (map (fn [[x y]] [(rem+ x env-width) (rem+ y env-height)])
        stops))
 
 (defn clip-to-env
@@ -218,6 +219,6 @@
     ;; could be more efficient with comp or transducer, but this is just for prep'ing data for display
     ;; FIXME Is this right??? :
     (map (partial clip-ends-to-env maxx maxy) 
-         (map (partial wrap-stops-toroidally maxx maxy)
+         (map (partial wrap-stops-toroidally env-width env-height)
               (overlap-ends (toroidal-partition maxx maxy stops))))))
 
