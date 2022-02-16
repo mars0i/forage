@@ -29,12 +29,13 @@
   over the range (2*quadrant-sz x 2*quandrant-sz), with physical size 
   plot-dim x plot-dim.  If there are additional Vega-Lite specs
   to add, they can be entered in a map as an additional argument."
-  [quadrant-sz plot-dim data & addl-kvs-map]
+  [plot-dim data & addl-kvs-map]
   (merge
      (-> (hc/xform ht/line-chart
                 :DATA data
-                :XSCALE {"domain" [(- quadrant-sz) quadrant-sz]}
-                :YSCALE {"domain" [(- quadrant-sz) quadrant-sz]}
+                ; Let the food plot choose domain implicitly
+                ;:XSCALE {"domain" [(- quadrant-sz) quadrant-sz]}
+                ;:YSCALE {"domain" [(- quadrant-sz) quadrant-sz]}
                 :COLOR "label"
                 :WIDTH  plot-dim
                 :HEIGHT plot-dim)

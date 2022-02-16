@@ -25,9 +25,9 @@
 (println "SEED:" seed)
 
 
-(def perc-radius 4)  ; distance that an animal can "see" in searching for food
+(def perc-radius 5)  ; distance that an animal can "see" in searching for food
 (def food-distance 100)
-(def env-size 500)
+(def env-size 1000) ; full width of env
 (def half-size (/ env-size 2))
 (def powerlaw-scale 1) ; scale parameter of distribution
 (def powerlaw-exponent 2) ; must be > 1; 2 supposed to be optimal sparse targets
@@ -77,20 +77,21 @@
        (t/toroidal-wrapped-partition env-size env-size food-walk)))
 
 (def walk-plots 
-  (map (partial h/vega-walk-plot env-size plot-dim)
+  (map (partial h/vega-walk-plot plot-dim)
        walk-segments))
 
 (def gridwalk-plot 
-                (apply
+                (
+                 apply
                   h/vega-gridwalk-plot ; overall plot config
                   perc-radius
                   maxpathlen
                   powerlaw-scale 
                   [(count food-walk) (count stop-walk)]
-                  ;(h/vega-foodgrid-plot env-size plot-dim
-                  ;                      food-distance perc-radius)
+                  (h/vega-foodgrid-plot env-size plot-dim
+                                        food-distance perc-radius)
 ;; this shows toroidal functions not working:
-                  (h/vega-walk-plot env-size plot-dim  ; food search path
+                  (h/vega-walk-plot plot-dim  ; food search path
                                     (h/add-walk-labels
                                       "full walk" food-walk))
                   walk-plots

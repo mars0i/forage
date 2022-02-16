@@ -26,18 +26,19 @@
         vert-lines  (for [x (range neg-xmax xmax sep)] [[x neg-ymax] [x ymax]])]
     (concat horiz-lines vert-lines)))
 
-;; FIXME Rewrite for origin-in-corner rather than in center
 (defn rectangular-grid
   "Make a sequence of coordinate pairs spaced out every sep integers,
-  from -quandrant-width to quadrant-width, and from -quadrant-height
+  from -quadrant-width to quadrant-width, and from -quadrant-height
   to quadrant-height, including [0,0]."
   ([env-width env-height]
    (rectangular-grid 1 env-width env-height))
   ([sep env-width env-height]
-   (let [xmax (inc env-width)  ; inc: range should all the way to env-width 
-         ymax (inc env-height) ;  below
-         neg-xmax (- xmax)
-         neg-ymax (- ymax)
+   (rectangular-grid sep 0 0 env-width env-height)) ; origin at lower left
+  ([sep left-offset bottom-offset env-width env-height]
+   (let [xmax (inc (- env-width left-offset))  ; inc: range should go all the way to env-width 
+         ymax (inc (- env-height bottom-offset)) ;  and env-height
+         neg-xmax (- left-offset)
+         neg-ymax (- bottom-offset)
          neg-sep (- sep)
          ne-pairs (for [x (range 0 xmax sep)  ; rest excludes 0,0 but
                         y (range 0 ymax sep)] ;  includes 0,1 and 1,0
