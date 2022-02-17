@@ -13,6 +13,11 @@
         (neg? x) -1
         :else 0))
 
+(defn intercept-from-slope
+  "Given a slope and a point on a line, return the line's x intercept."
+  [slope [x y]]
+  (- y (* slope x)))
+
 (defn rotate
   "Given an angle theta and a pair of coordinates [x y], returns a
   new pair of coordinates that is the rotation of [x y] by theta."
