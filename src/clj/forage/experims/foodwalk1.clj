@@ -11,6 +11,10 @@
       [utils.random :as r]))
 
 
+;(def seed (inc (r/make-seed)))
+(def seed 1646491613196)
+(println "SEED:" seed)
+
 (def perc-radius 10)  ; distance that an animal can "see" in searching for food
 (def food-distance 100)
 (def env-size 1600) ; full width of env
@@ -38,6 +42,7 @@
 (def seed (inc (r/make-seed)))
 ;(def seed 41221)
 (println "SEED:" seed)
+
 (def rng (r/make-well19937 seed))
 
 ;; mu=3: Brownian; mu=2: Levy optimal; mu near 1: "ballistic":
