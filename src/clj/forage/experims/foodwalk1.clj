@@ -11,6 +11,11 @@
       [utils.random :as r]))
 
 
+;(def seed (inc (r/make-seed)))
+(def seed 1645687919311)
+(println "SEED:" seed)
+
+
 (def perc-radius 5)  ; distance that an animal can "see" in searching for food
 (def food-distance 100)
 (def env-size 400)
@@ -34,9 +39,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
 
-(def seed (inc (r/make-seed)))
-;(def seed 41221)
-(println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 
 ;; mu=3: Brownian; mu=2: Levy optimal; mu near 1: "ballistic":
@@ -68,9 +70,9 @@
                                                             (count stop-walk)]
                      (h/vega-foodgrid-plot env-size plot-dim   ; place food circles
                                            food-distance perc-radius)
-                     ;(h/vega-walk-plot env-size plot-dim   ; full path without food stop
-                     ;                  (h/add-walk-labels
-                     ;                    "a ghost walk" stop-walk))
+                     (h/vega-walk-plot env-size plot-dim   ; full path without food stop
+                                       (h/add-walk-labels
+                                         "a ghost walk" stop-walk))
                      (h/vega-walk-plot env-size plot-dim  ; food search path
                                        (h/add-walk-labels
                                          "food walk" food-walk))))

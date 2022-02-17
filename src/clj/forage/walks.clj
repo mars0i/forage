@@ -120,6 +120,7 @@
   the shifts in the x and y directions that would produce the desired shift
   (i.e. the vectors along x and y that would sum to the desired shift)."
   [eps slope]
+  (println "eps is" eps "slope is" slope)
   (if slope ; if not vertical
     (let [a (+ 1 (* slope slope))
           x-eps (/ eps a)
@@ -151,14 +152,16 @@
         y-pos-dir? (<= y1 y2)
         slope (slope-from-coords [x1 y1] [x2 y2])
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
-        ;[x-eps y-eps] (old-xy-shifts eps slope 0) ; OLD VERSION
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
         y-shift (if y-pos-dir? y-eps (- y-eps))
         x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
-        y-comp (if y-pos-dir? > <)]  ;  gone too far
-    ;(println "slope,x-eps,y-eps:" slope x-shift y-shift) ; DEBUG
+        y-comp (if y-pos-dir? > <)
+        yow (atom true) ; DEBUG
+        ]  ;  gone too far
+    (prn x1 y1 x-shift y-shift) ; DEBUG
     (loop [x x1, y y1]
-      (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
+      (when @yow (swap! yow not) (prn x y)) ; DEBUG
+      (if (or (Double/isNaN x) (Double/isNaN y))
         "\ndone: NaN"
         (let [food (look-fn [x y])]
           (cond food [[x y] food]
