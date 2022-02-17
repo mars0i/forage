@@ -6,3 +6,8 @@
   (alter-var-root 
     #'clojure.pprint/*print-right-margin* 
     (constantly cols)))
+
+(defn second-to-last
+  "Returns the second to last item in a sequence."
+  [xs]
+  (last (pop (vec xs))))
