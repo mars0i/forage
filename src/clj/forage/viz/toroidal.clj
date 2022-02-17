@@ -1,6 +1,7 @@
 ;; Toroidal ("periodic boundary conditions") wrapping of coordinates for viz
 (ns forage.viz.toroidal
-  (:require [utils.math :as m]
+  (:require [utils.math :as ma]
+            [utils.misc :as mi]
             [clojure.math.numeric-tower :as nt]))
 
 ;; These are oriented toward plotting with Vega-Lite/Hanami, and they
@@ -78,11 +79,11 @@
                                                          after))))
                           (partition 3 1 paths))
         ;; These were left out of middle-paths:
-        end-path (cons (last                     ; Add last element of
-                             (last (butlast paths))) ; second to last seq
-                       (last paths))             ; to last seq.
+        end-path (cons (last                        ; Add last element of
+                         (mi/second-to-last paths)) ; of second to last seq
+                       (last paths))                ; to last seq.
         beg-path (conj (vec (first paths))       ; Add to end of first seq
-                       (first (second paths)))]  ; first element in second.
+                       (first (second paths)))]  ; the first element in second.
     (cons beg-path
           (conj (vec middle-paths)
                 end-path))))
@@ -192,30 +193,32 @@
   (map (fn [[x y]] [(rem x env-width) (rem y env-height)])
        stops))
 
-;; FIXME Problem is that if only x exceeds a boundary, then it's
-;; clipped, but y isn't.  So y has the same value, and now you get
-;; a line segment with an inappropriate slope.  
-(defn clip-to-env
-  "Returns [x y] if x and y lie within [-maxx,maxx] and [-maxy,maxy],
-  respectively; otherwise replaces x or y with the nearest of the extremes."
-  [maxx maxy [x y]]
-  (let [-maxx (- maxx)
-        -maxy (- maxy)]
-    [(cond (> x maxx)  maxx
-           (< x -maxx) -maxx
-           :else x)
-     (cond (> y maxy)  maxy
-           (< y -maxy) -maxy
-           :else y)]))
+; ;; FIXME Problem is that if only x exceeds a boundary, then it's
+; ;; clipped, but y isn't.  So y has the same value, and now you get
+; ;; a line segment with an inappropriate slope.  
+; (defn old-clip-to-env
+;   "Returns [x y] if x and y lie within [-maxx,maxx] and [-maxy,maxy],
+;   respectively; otherwise replaces x or y with the nearest of the extremes."
+;   [maxx maxy [x y]]
+;   (let [-maxx (- maxx)
+;         -maxy (- maxy)]
+;     [(cond (> x maxx)  maxx
+;            (< x -maxx) -maxx
+;            :else x)
+;      (cond (> y maxy)  maxy
+;            (< y -maxy) -maxy
+;            :else y)]))
 
-(defn new-clip-to-env
+(defn clip-to-env
   "Returns [x y] if x and y lie within [-maxx,maxx] and [-maxy,maxy],
   respectively; otherwise replaces x or y with the nearest of the
   extremes, and adjusts the other coordinate so that the returned
   point is on the same line."
-  [slope maxx maxy [x y]]
+  [maxx maxy nextto-pt end-pt] ; end-point is at end of subwalk, before-point is one next to it
   (let [-maxx (- maxx)
         -maxy (- maxy)
+        [x y] end-pt
+        slope (ma/slope-from-coords nextto-pt end-pt)
         newx (cond (> x maxx)  maxx
                    (< x -maxx) -maxx
                    :else x)
@@ -223,13 +226,15 @@
                    (< y -maxy) -maxy
                    :else y)]
     (cond (and (not= x newx)
-               (not= y newy)) [newx newy] ; line runs through a corner
-          (not= x newx) [newx (+ (* slope newx)
-                                 (m/intercept-from-slope slope x y))]
-          (not= y newy) (let [yslope (/ slope)]
-                          [(+ (* yslope newy)
-                              (m/intercept-from-slope yslope y x))
-                           newy])
+               (not= y newy)) [newx newy] ; line runs through corner
+          (not= x newx) [newx (+ (* slope newx) ; slope can't be nil since line crossed left or right vertical border
+                                 (ma/intercept-from-slope slope [x y]))]
+          (not= y newy) (if slope ; if not vertical
+                          (let [yslope (/ slope)]
+                            [(+ (* yslope newy)
+                                (ma/intercept-from-slope yslope [y x]))
+                             newy])
+                          [x newy]) ; line is vertical, x doesn't change
           :else [x y])))
 
 
@@ -241,8 +246,8 @@
   first and last points."
   [maxx maxy path]
   (let [path (vec path)
-        left (clip-to-env maxx maxy (first path))
-        right (clip-to-env maxx maxy (last path))
+        left (clip-to-env maxx maxy (second path) (first path))
+        right (clip-to-env maxx maxy (mi/second-to-last path) (last path))
         middle (vec (rest (butlast path)))]
     (cons left (conj middle right))))
 
