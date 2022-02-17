@@ -39,10 +39,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WALKS
 
-(def seed (inc (r/make-seed)))
-;(def seed 41221)
-(println "SEED:" seed)
-
 (def rng (r/make-well19937 seed))
 
 ;; mu=3: Brownian; mu=2: Levy optimal; mu near 1: "ballistic":
