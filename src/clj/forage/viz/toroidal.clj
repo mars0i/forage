@@ -192,6 +192,9 @@
   (map (fn [[x y]] [(rem x env-width) (rem y env-height)])
        stops))
 
+;; FIXME Problem is that if only x exceeds a boundary, then it's
+;; clipped, but y isn't.  So y has the same value, and now you get
+;; a line segment with an inappropriate slope.  
 (defn clip-to-env
   "Returns [x y] if x and y lie within [-maxx,maxx] and [-maxy,maxy],
   respectively; otherwise replaces x or y with the nearest of the extremes."
@@ -247,9 +250,9 @@
     ;; FIXME Is this right??? :
     (->> stops
          (toroidal-partition env-width env-height)
-         (map (partial wrap-stops-toroidally env-width env-height))
-         ;(overlap-ends)
-         ;(map (partial clip-ends-to-env env-width env-height))
+         (overlap-ends)
+         (map (partial clip-ends-to-env env-width env-height))
+         ;(map (partial wrap-stops-toroidally env-width env-height))
          )))
 
 ;; old version:
