@@ -60,8 +60,7 @@
 
 ;; ghost walk is the full walk that would have taken place if food wasn't found
 (def gridwalk-plot (apply h/vega-gridwalk-plot
-                     perc-radius maxpathlen powerlaw-scale [(count food-walk)
-                                                            (count stop-walk)]
+                     perc-radius maxpathlen powerlaw-scale [(count stop-walk)]
                      (h/vega-foodgrid-plot env-size plot-dim   ; place food circles
                                            food-distance perc-radius)
                      (h/vega-walk-plot plot-dim   ; full path without food stop
