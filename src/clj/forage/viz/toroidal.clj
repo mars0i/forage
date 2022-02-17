@@ -1,6 +1,6 @@
 ;; Toroidal ("periodic boundary conditions") wrapping of coordinates for viz
 (ns forage.viz.toroidal
-  (:require ;[utils.math :as m]
+  (:require [utils.math :as m]
             [clojure.math.numeric-tower :as nt]))
 
 ;; These are oriented toward plotting with Vega-Lite/Hanami, and they
@@ -207,6 +207,31 @@
      (cond (> y maxy)  maxy
            (< y -maxy) -maxy
            :else y)]))
+
+(defn new-clip-to-env
+  "Returns [x y] if x and y lie within [-maxx,maxx] and [-maxy,maxy],
+  respectively; otherwise replaces x or y with the nearest of the
+  extremes, and adjusts the other coordinate so that the returned
+  point is on the same line."
+  [slope maxx maxy [x y]]
+  (let [-maxx (- maxx)
+        -maxy (- maxy)
+        newx (cond (> x maxx)  maxx
+                   (< x -maxx) -maxx
+                   :else x)
+        newy (cond (> y maxy)  maxy
+                   (< y -maxy) -maxy
+                   :else y)]
+    (cond (and (not= x newx)
+               (not= y newy)) [newx newy] ; line runs through a corner
+          (not= x newx) [newx (+ (* slope newx)
+                                 (m/intercept-from-slope slope x y))]
+          (not= y newy) (let [yslope (/ slope)]
+                          [(+ (* yslope newy)
+                              (m/intercept-from-slope yslope y x))
+                           newy])
+          :else [x y])))
+
 
 ;; One could instead simply map clip-to-env over all of the points in ech
 ;; subwalk, since only the endpoints will exceed extremes, but it's not
