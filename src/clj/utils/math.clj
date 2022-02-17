@@ -13,6 +13,14 @@
         (neg? x) -1
         :else 0))
 
+(defn slope-from-coords
+  "Given a pair of points on a line, return its slope.  If the line is
+  vertical, returns nil to indicate that."
+  [[x1 y1] [x2 y2]]
+  (if (= x1 x2)
+    nil ; represents the vertical slope
+    (/ (- y2 y1) (- x2 x1))))
+
 (defn intercept-from-slope
   "Given a slope and a point on a line, return the line's x intercept."
   [slope [x y]]

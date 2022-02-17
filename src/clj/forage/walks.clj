@@ -105,14 +105,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FINDING FOOD
 
-(defn slope-from-coords
-  "Given a pair of points on a line, return its slope.  If the line is
-  vertical, returns nil to indicate that."
-  [[x1 y1] [x2 y2]]
-  (if (= x1 x2)
-    nil ; represents the vertical slope
-    (/ (- y2 y1) (- x2 x1))))
-
 ;; See doc/xyshifts.md for detailed notes about this function and find-in-seg.
 (defn xy-shifts
   "Given an incremental shift (vector) in the direction of a line specified 
@@ -150,7 +142,7 @@
   ;(println "f-i-s:\nshift,[x1 y1],[x2 y2]:" eps [x1 y1] [x2 y2]) ; DEBUG
   (let [x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
-        slope (slope-from-coords [x1 y1] [x2 y2])
+        slope (m/slope-from-coords [x1 y1] [x2 y2])
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
         ;[x-eps y-eps] (old-xy-shifts eps slope 0) ; OLD VERSION
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
