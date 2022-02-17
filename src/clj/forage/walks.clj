@@ -106,9 +106,12 @@
 ;; FINDING FOOD
 
 (defn slope-from-coords
-  "Given a pair of points on a line, return its slope."
+  "Given a pair of points on a line, return its slope.  If the line is
+  vertical, returns nil to indicate that."
   [[x1 y1] [x2 y2]]
-  (/ (- y2 y1) (- x2 x1)))
+  (if (= x1 x2)
+    nil ; represents the vertical slope
+    (/ (- y2 y1) (- x2 x1))))
 
 (defn intercept-from-slope
   "Given a slope and a point on a line, return the line's x intercept."
@@ -122,24 +125,12 @@
   the shifts in the x and y directions that would produce the desired shift
   (i.e. the vectors along x and y that would sum to the desired shift)."
   [eps slope]
-  (let [a (+ 1 (* slope slope))
-        x-eps (/ eps a)
-        y-eps (nt/abs (* slope x-eps))]
-    [x-eps y-eps]))
-
-;; OBSOLETE DELETE WHEN DON'T NEED FOR COMPARISON
-(defn old-xy-shifts
-  "Given an incremental shift (vector) in the direction of a line specified 
-  by its slope and intercept, return a pair [x-eps y-eps] that give
-  the shifts in the x and y directions that would produce the desired shift
-  (i.e. the vectors along x and y that would sum to the desired shift)."
-  [eps slope intercept]
-  (let [a (+ 1 (* slope slope))
-        b (* 2 slope intercept)
-        c (- (* intercept intercept) (* eps eps))
-        x-eps (nt/abs (m/quadratic-formula + a b c))
-        y-eps (nt/abs (+ (* slope x-eps) intercept))]
-    [x-eps y-eps]))
+  (if slope ; if not vertical
+    (let [a (+ 1 (* slope slope))
+          x-eps (/ eps a)
+          y-eps (nt/abs (* slope x-eps))]
+      [x-eps y-eps]))
+  [0 eps])
 
 ;; See doc/xyshifts.md for notes about this function and xy-shifts.
 ;; Possibly store slope and/or intercept earlier; they were available
