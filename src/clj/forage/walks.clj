@@ -113,11 +113,6 @@
     nil ; represents the vertical slope
     (/ (- y2 y1) (- x2 x1))))
 
-(defn intercept-from-slope
-  "Given a slope and a point on a line, return the line's x intercept."
-  [slope [x y]]
-  (- y (* slope x)))
-
 ;; See doc/xyshifts.md for detailed notes about this function and find-in-seg.
 (defn xy-shifts
   "Given an incremental shift (vector) in the direction of a line specified 
