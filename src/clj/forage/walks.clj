@@ -124,8 +124,9 @@
     (let [a (+ 1 (* slope slope))
           x-eps (/ eps a)
           y-eps (nt/abs (* slope x-eps))]
-      [x-eps y-eps]))
-  [0 eps])
+      [x-eps y-eps])
+    [0 eps]))
+
 
 ;; See doc/xyshifts.md for notes about this function and xy-shifts.
 ;; Possibly store slope and/or intercept earlier; they were available
