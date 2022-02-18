@@ -1,0 +1,91 @@
+(ns forage.experims.foodwalk2
+    (:require 
+      ;[aerial.hanami.common :as hc]
+      ;[aerial.hanami.templates :as ht]
+      [clojure.math.numeric-tower :as nt]
+      [forage.viz.hanami :as h]
+      [forage.walks :as w]
+      [forage.food :as f]
+      [forage.mason.foodspot :as mf]
+      [utils.math :as m]
+      [utils.random :as r]))
+
+
+;(def seed (inc (r/make-seed)))
+;(def seed 1646491613196)
+;(println "SEED:" seed)
+
+(def perc-radius 1)  ; distance that an animal can "see" in searching for food
+(def display-radius 50) ; if want foodspots to be displayed larger
+(def food-distance 500)
+(def env-size 5000) ; full width of env
+(def half-size (/ env-size 2))
+(def powerlaw-scale 1) ; scale parameter of distribution
+(def powerlaw-exponent 2) ; must be > 1; 2 supposed to be optimal sparse targets
+(def maxpathlen 5000) ; max length of a path (sequence of line segments)
+(def trunclen 5000)   ; max length of any line segment
+(def intra-seg-epsilon 0.1) ; increment within line segments for food check
+
+;; For Hanami/vega-lite plots, size of plot display:
+(def plot-dim 700)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; FOOD
+  
+(def env (mf/make-env food-distance env-size
+                      (f/centerless-rectangular-grid food-distance
+                                                     env-size
+                                                     env-size)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; WALKS
+
+;(def rng (r/make-well19937 seed))
+
+;; mu=3: Brownian; mu=2: Levy optimal; mu near 1: "ballistic":
+;(def dist (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
+
+;; Path consisting of (direction,length) pairs
+;(def step-walk (w/vecs-upto-len ; generate a path
+;                 maxpathlen    ;  with total length maxpathlen
+;                 (repeatedly ; generate steps with lengths <= trunclen
+;                    (w/step-vector-fn rng dist 1 trunclen))))
+
+;; FIXME Bug? walk-stops below seems to need two elements.  Why?
+(def step-walk [[(/ m/pi 4) 2000]])
+
+(println step-walk)
+
+;; Corresponding path of coordinate pairs:
+(def stop-walk (w/walk-stops [half-size half-size] step-walk))
+
+(println stop-walk)
+
+(def walk-with-food (w/path-with-food 
+                      (partial mf/perc-foodspots-exactly env perc-radius)
+                      intra-seg-epsilon
+                      stop-walk))
+
+(println walk-with-food)
+
+(def food-walk (first walk-with-food))
+
+
+;; ghost walk is the full walk that would have taken place if food wasn't found
+(def gridwalk-plot (h/vega-gridwalk-plot ; overall plot config
+                     perc-radius maxpathlen powerlaw-scale [(count food-walk)
+                                                            (count stop-walk)]
+                     (h/vega-foodgrid-plot env-size plot-dim   ; place food circles
+                                           food-distance display-radius)
+                     (h/vega-walk-plot plot-dim   ; full path without food stop
+                                       (h/add-walk-labels
+                                         "a ghost walk" stop-walk))
+                     (h/vega-walk-plot plot-dim  ; food search path
+                                       (h/add-walk-labels
+                                         "food walk" food-walk))))
+
+;; Now view gridwalk-plot e.g. with:
+(comment
+  (require '[oz.core :as oz]) ; (oz/start-server!) ; view! will call start-server! if needed
+  (oz/view! gridwalk-plot)
+)
