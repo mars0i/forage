@@ -4,10 +4,10 @@
             [utils.misc :as mi]
             [clojure.math.numeric-tower :as nt]))
 
-(println "Don't use forage.viz.toroidal!")
+(println "DON'T USE forage.viz.toroidal!")
 (println "It's not worth it.  Just make your worlds large, or don't
          bother to plot lines toroidally.  Or maybe use MASON for
-         that, if it can do it.")
+         that purpose (but that will require further work)."
 
 ;; These are oriented toward plotting with Vega-Lite/Hanami, and they
 ;; shouldn't be needed for data analysis; maybe they will be useful
