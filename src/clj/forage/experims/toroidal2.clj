@@ -1,4 +1,6 @@
-(ns forage.experims.foodwalk2
+;; Food walk experiment for testing toroidal paths in Vega-Lite
+;; using a random Levy walk
+(ns forage.experims.toroidal2
     (:require 
       ;[aerial.hanami.common :as hc]
       ;[aerial.hanami.templates :as ht]
