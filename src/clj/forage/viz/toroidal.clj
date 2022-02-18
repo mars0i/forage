@@ -199,37 +199,19 @@
   (map (fn [[x y]] [(rem+ x env-width) (rem+ y env-height)])
        stops))
 
-; ;; FIXME Problem is that if only x exceeds a boundary, then it's
-; ;; clipped, but y isn't.  So y has the same value, and now you get
-; ;; a line segment with an inappropriate slope.  
-; (defn old-clip-to-env
-;   "Returns [x y] if x and y lie within [-maxx,maxx] and [-maxy,maxy],
-;   respectively; otherwise replaces x or y with the nearest of the extremes."
-;   [maxx maxy [x y]]
-;   (let [-maxx (- maxx)
-;         -maxy (- maxy)]
-;     [(cond (> x maxx)  maxx
-;            (< x -maxx) -maxx
-;            :else x)
-;      (cond (> y maxy)  maxy
-;            (< y -maxy) -maxy
-;            :else y)]))
-
 (defn clip-to-env
   "Returns [x y] if x and y lie within [-maxx,maxx] and [-maxy,maxy],
   respectively; otherwise replaces x or y with the nearest of the
   extremes, and adjusts the other coordinate so that the returned
   point is on the same line."
-  [maxx maxy nextto-pt end-pt] ; end-point is at end of subwalk, before-point is one next to it
-  (let [-maxx (- maxx)
-        -maxy (- maxy)
-        [x y] end-pt
+  [minx maxx miny maxy nextto-pt end-pt] ; end-point is at end of subwalk, before-point is one next to it
+  (let [[x y] end-pt
         slope (ma/slope-from-coords nextto-pt end-pt)
         newx (cond (> x maxx)  maxx
-                   (< x -maxx) -maxx
+                   (< x minx) minx
                    :else x)
         newy (cond (> y maxy)  maxy
-                   (< y -maxy) -maxy
+                   (< y miny) miny
                    :else y)]
     (cond (and (not= x newx)
                (not= y newy)) [newx newy] ; line runs through corner
@@ -252,18 +234,15 @@
 (defn clip-ends-to-env
   "Returns path modified by applying (clip-to-end maxx maxy ...) to its 
   first and last points."
-  [maxx maxy path]
+  [minx maxx miny maxy path]
   (let [path (vec path)
-        left (clip-to-env maxx maxy (second path) (first path))
-        right (clip-to-env maxx maxy (mi/second-to-last path) (last path))
+        left (clip-to-env minx maxx miny maxy (second path) (first path))
+        right (clip-to-env minx maxx miny maxy
+                           (mi/second-to-last path)
+                           (last path))
         middle (vec (rest (butlast path)))]
     (cons left (conj middle right))))
 
-;(->> path
-;     (toroidal-partition (/ env-width 2) (/ env-height 2))
-;     overlap-ends           ; these two
-;     (map (partial wrap-stops-toroidally maxx maxy)) ; can be done in either order
-;     )
 
 ;; FIXME? behaves oddly if env-width, env-height are not even?
 ;; See forage/core_test.clj for a test of this function.
@@ -289,11 +268,6 @@
     (->> stops
          (toroidal-partition env-width env-height)
          (overlap-ends)
-         (map (partial clip-ends-to-env env-width env-height))
+         ;(map (partial clip-ends-to-env 0 env-width 0 env-height))
          ;(map (partial wrap-stops-toroidally env-width env-height))
          )))
-
-;; old version:
-;    (map (partial clip-ends-to-env maxx maxy) 
-;         (map (partial wrap-stops-toroidally env-width env-height)
-;              (overlap-ends (toroidal-partition maxx maxy stops))))))
