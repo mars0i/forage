@@ -92,26 +92,26 @@
 ;; This one is good, but doesn't implement the above.  It implements rem
 ;; but maps x to m or -m when it's an odd-numbered multiple of m.
 ;; (Even-numbered multiples should map to zero.)
-(defn rem*
-  [x m]
-  (let [remx (rem x m)]
-    (if (zero? remx)
-      (if (even? (quot x m))
-        0
-        (if (neg? x) (- m) m))
-      remx)))
+;(defn rem*
+;  [x m]
+;  (let [remx (rem x m)]
+;    (if (zero? remx)
+;      (if (even? (quot x m))
+;        0
+;        (if (neg? x) (- m) m))
+;      remx)))
 
 (defn unshift-fn
   [x]
   (if (neg? x) + -))
 
 ;; Seems to work right for positive numbers ...
-(defn rem-
-  [x env-size]
-  (let [env-max (/ env-size 2)
-        shifted-x (+ x env-max)
-        shifted-x-rem (rem shifted-x env-size)]
-    ((unshift-fn x) shifted-x-rem env-max)))
+;(defn rem-
+;  [x env-size]
+;  (let [env-max (/ env-size 2)
+;        shifted-x (+ x env-max)
+;        shifted-x-rem (rem shifted-x env-size)]
+;    ((unshift-fn x) shifted-x-rem env-max)))
 
 ;; The purpose of this function is to make numbers that are exactly on the 
 ;; edge of an environment, or on an "edge" that is some multiple of it, 
@@ -148,49 +148,55 @@
 ;; if it was negative.
 ;; (MASON's Continuous2D simplifies this by putting the origin in the corner.)
 
-;; I THINK THIS IS IT
-;; NOTE ENV-SIZE PARAMETER
-(defn rem+old
-  [x env-size] ; env-size = width or height
-  (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
-        abs-x (nt/abs x) ; to avoid confusion, just work with pos nums
-        shifted-x (+ abs-x env-max) ; result is outside bounds for all x
-        shifted-x-rem (rem shifted-x env-size) ; now rem without confusion
-        unshifted (- shifted-x-rem env-max)] ; but we have to go back
-    (if (neg? x)      ; and we have to put neg nums back to neg
-      (- unshifted)
-      unshifted)))
+;(defn rem+old
+;  [x env-size] ; env-size = width or height
+;  (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
+;        abs-x (nt/abs x) ; to avoid confusion, just work with pos nums
+;        shifted-x (+ abs-x env-max) ; result is outside bounds for all x
+;        shifted-x-rem (rem shifted-x env-size) ; now rem without confusion
+;        unshifted (- shifted-x-rem env-max)] ; but we have to go back
+;    (if (neg? x)      ; and we have to put neg nums back to neg
+;      (- unshifted)
+;      unshifted)))
 
-(defn rem+not
-  [x env-size] ; env-size = width or height
-  (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
-        shifted-x (+ x env-max) ; result is outside bounds for all x
-        shifted-x-rem (rem shifted-x env-size) ; now rem without confusion
-        unshifted (- shifted-x-rem env-max)] ; but we have to go back
-    unshifted))
+;(defn rem+not
+;  [x env-size] ; env-size = width or height
+;  (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
+;        shifted-x (+ x env-max) ; result is outside bounds for all x
+;        shifted-x-rem (rem shifted-x env-size) ; now rem without confusion
+;        unshifted (- shifted-x-rem env-max)] ; but we have to go back
+;    unshifted))
 
 ;; Based on tx() in MASON's Continuous2D.java
-(defn mason-toroidal
-  [x size]
-  (if (and (>= x 0) (< x size))
-    x
-    (let [modx (mod x size)]
-      (if (neg? modx)
-        (+ modx size)
-        modx))))
+;(defn mason-toroidal
+;  [x size]
+;  (if (and (>= x 0) (< x size))
+;    x
+;    (let [modx (mod x size)]
+;      (if (neg? modx)
+;        (+ modx size)
+;        modx))))
+
+;(defn rem+
+;  [x env-size] ; env-size = width or height
+;  (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
+;        shifted-x (+ x env-max) ; result is outside bounds for all x
+;        shifted-x-rem (rem shifted-x env-size) 
+;        unshifted-x (- shifted-x-rem env-max)] ; but we have to go back
+;    unshifted-x))
 
 (defn rem+
-  [x env-size] ; env-size = width or height
-  (let [env-max (/ env-size 2) ; since env symmetric from neg to pos
-        shifted-x (+ x env-max) ; result is outside bounds for all x
-        shifted-x-rem (rem shifted-x env-size) 
-        unshifted-x (- shifted-x-rem env-max)] ; but we have to go back
-    unshifted-x))
+  [x m]
+  (let [remx (rem x m)]
+    (if (zero? remx) ; if x on border, leave it there; don't replace with zero
+      m
+      remx)))
+
 
 (defn wrap-stops-toroidally
   "Map coordinates in a sequence of points to their values mod maxx and maxy."
   [env-width env-height stops]
-  (map (fn [[x y]] [(rem x env-width) (rem y env-height)])
+  (map (fn [[x y]] [(rem+ x env-width) (rem+ y env-height)])
        stops))
 
 ; ;; FIXME Problem is that if only x exceeds a boundary, then it's
@@ -227,12 +233,14 @@
                    :else y)]
     (cond (and (not= x newx)
                (not= y newy)) [newx newy] ; line runs through corner
-          (not= x newx) [newx (+ (* slope newx) ; slope can't be nil since line crossed left or right vertical border
-                                 (ma/intercept-from-slope slope [x y]))]
+          (not= x newx) [newx  ; double-wrapped: Vega-Lite doesn't like Clojure's funny numbers
+                         (double (+ (* slope newx) ; slope can't be nil since line crossed left or right vertical border
+                                    (ma/intercept-from-slope slope [x y])))]
           (not= y newy) (if slope ; if not vertical
                           (let [yslope (/ slope)]
-                            [(+ (* yslope newy)
-                                (ma/intercept-from-slope yslope [y x]))
+                            [(double
+                               (+ (* yslope newy)
+                                  (ma/intercept-from-slope yslope [y x])))
                              newy])
                           [x newy]) ; line is vertical, x doesn't change
           :else [x y])))
