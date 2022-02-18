@@ -1,4 +1,5 @@
-(ns forage.experims.foodwalk3
+;; Food walk experiment for testing toroidal paths in Vega-Lite
+(ns forage.experims.toroidal1  ; (formerly foodwalk3)
     (:require 
       ;[aerial.hanami.common :as hc]
       ;[aerial.hanami.templates :as ht]
