@@ -15,6 +15,9 @@ There is also an `isInfinite` method in `Double` and `Float.
 
 Note that infinity propagates, e.g. `(+ 42 ##Inf) ;;=> ##Inf`.
 
+Also note that `(/ 1.0 0.0) ;;=> ##Inf`, but `(/ 1 0)` throws an
+exception.
+
 ```clojure
 user=> Double/POSITIVE_INFINITY
 ;;=> ##Inf
