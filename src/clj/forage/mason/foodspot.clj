@@ -61,6 +61,8 @@
   [^Continuous2D env]
   (seq (map foodspot-coords (.getAllObjects env))))
 
+;; Possible TODO: Add toroidal foodspot perception
+
 (defn perc-foodspots-exactly
   "Returns a sequence of foodspots within perc-radius of (x,y),
   or nil if there are none.  Uses Continuous2D's local cell lookup."
