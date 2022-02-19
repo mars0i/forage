@@ -106,7 +106,7 @@
   "Given a pair of coordinates, returns a Vega-Lite map with an added
   label value \"food\"."
   [[x y]]
-  {"x" x, "y" y, "label" "perc radius"})
+  {"x" x, "y" y, "label" "food"})
 
 ;; For the Hanami :MSIZE value:
 ;; Vega-Lite "mark" sizes--i.e. a circle at a point--are specified
