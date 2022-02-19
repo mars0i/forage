@@ -11,8 +11,8 @@
       [utils.random :as r]))
 
 
-;(def seed (inc (r/make-seed)))
-(def seed 1646491613196)
+(def seed (inc (r/make-seed)))
+;(def seed 1646491613196)
 (println "SEED:" seed)
 
 (def perc-radius 10)  ; distance that an animal can "see" in searching for food
@@ -21,7 +21,7 @@
 (def half-size (/ env-size 2))
 (def powerlaw-scale 1) ; scale parameter of distribution
 (def powerlaw-exponent 2) ; must be > 1; 2 supposed to be optimal sparse targets
-(def maxpathlen 2000) ; max length of a path (sequence of line segments)
+(def maxpathlen 5000) ; max length of a path (sequence of line segments)
 (def trunclen 1000)   ; max length of any line segment
 (def intra-seg-epsilon 0.1) ; increment within line segments for food check
 
