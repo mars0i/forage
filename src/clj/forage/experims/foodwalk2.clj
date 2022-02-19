@@ -16,14 +16,14 @@
 ;(println "SEED:" seed)
 
 (def perc-radius 1)  ; distance that an animal can "see" in searching for food
-(def display-radius 50) ; if want foodspots to be displayed larger
-(def food-distance 500)
-(def env-size 5000) ; full width of env
+(def display-radius 100) ; if want foodspots to be displayed larger
+(def food-distance 1000)
+(def env-size 20000) ; full width of env
 (def half-size (/ env-size 2))
 (def powerlaw-scale 1) ; scale parameter of distribution
 (def powerlaw-exponent 2) ; must be > 1; 2 supposed to be optimal sparse targets
-(def maxpathlen 5000) ; max length of a path (sequence of line segments)
-(def trunclen 5000)   ; max length of any line segment
+(def maxpathlen 10000) ; max length of a path (sequence of line segments)
+(def trunclen 10000)   ; max length of any line segment
 (def intra-seg-epsilon 0.1) ; increment within line segments for food check
 
 ;; For Hanami/vega-lite plots, size of plot display:
@@ -52,21 +52,15 @@
 ;                    (w/step-vector-fn rng dist 1 trunclen))))
 
 ;; FIXME Bug? walk-stops below seems to need two elements.  Why?
-(def step-walk [[(/ m/pi 4) 2000]])
-
-(println step-walk)
+(def step-walk [[0.1 half-size]])
 
 ;; Corresponding path of coordinate pairs:
 (def stop-walk (w/walk-stops [half-size half-size] step-walk))
-
-(println stop-walk)
 
 (def walk-with-food (w/path-with-food 
                       (partial mf/perc-foodspots-exactly env perc-radius)
                       intra-seg-epsilon
                       stop-walk))
-
-(println walk-with-food)
 
 (def food-walk (first walk-with-food))
 
