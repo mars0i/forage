@@ -223,13 +223,13 @@
           (not= x newx) [newx  ; double-wrapped: Vega-Lite doesn't like Clojure's funny numbers
                          (double (+ (* slope newx) ; slope can't be nil since line crossed left or right vertical border
                                     (ma/intercept-from-slope slope [x y])))]
-          (not= y newy) (if slope ; if not vertical
+          (not= y newy) (if (not= slope ##Inf) ; if not vertical
                           (let [yslope (/ slope)]
                             [(double
                                (+ (* yslope newy)
                                   (ma/intercept-from-slope yslope [y x])))
                              newy])
-                          [x newy]) ; line is vertical, x doesn't change
+                          [x newy]) ; line is vertical, so x doesn't change
           :else [x y])))
 
 

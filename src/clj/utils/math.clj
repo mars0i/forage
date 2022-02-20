@@ -15,10 +15,10 @@
 
 (defn slope-from-coords
   "Given a pair of points on a line, return its slope.  If the line is
-  vertical, returns nil to indicate that."
+  vertical, returns ##Inf (infinity) to indicate that."
   [[x1 y1] [x2 y2]]
   (if (= x1 x2)
-    nil ; represents the vertical slope
+    ##Inf ; infinity is what division below would give for the vertical slope
     (/ (- y2 y1) (- x2 x1))))
 
 (defn intercept-from-slope
