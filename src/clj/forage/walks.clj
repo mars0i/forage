@@ -129,39 +129,41 @@
   points along the line segment at every shift length locations, checking 
   to see whether look-fn returns a truthy value representing one or more 
   foodspots from the perspective of that location, or a falsey value if
-  no foodspots are found.  If foodspots are found, this function stops
-  searching and returns a pair in which the first element is the coordinate
-  pair for the location from which the foodspots were perceived, and the
-  second element is the representation of the foodspots found, which may
-  be a collection of foodspot objects, a collection of coordinates of
+  no foodspots are found.  look-fn should take a single argument, a
+  pair representing the coordinates of a location from which to check
+  whether a foodspot is perceptible.  If foodspots are found, this function 
+  stops searching and returns a pair in which the first element is the 
+  coordinate pair for the location from which the foodspots were perceived,
+  and the second element is the representation of the foodspots found, which
+  may be a collection of foodspot objects, a collection of coordinates of
   foodspot objects, or some other truthy value.  (The kind of value to be
-  returned depends on look-fun, which should reflect the way that this 
+  returned depends on look-fn, which should reflect the way that this 
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
   [look-fn eps [x1 y1] [x2 y2]]
   ;(println "f-i-s:\nshift,[x1 y1],[x2 y2]:" eps [x1 y1] [x2 y2]) ; DEBUG
-  (let [x-pos-dir? (<= x1 x2)
-        y-pos-dir? (<= y1 y2)
+  (let [vertical (= x1 x2)  ; vertical slope: needs special handling
+        [[x1 y1] [x2 y2]] (if vertical
+                            [[y1 x1] [y2 x2]]    ; swap x and y
+                            [[x1 y1] [x2 y2]])   ; otherwise make no change
         slope (m/slope-from-coords [x1 y1] [x2 y2])
+        x-pos-dir? (<= x1 x2)
+        y-pos-dir? (<= y1 y2)
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
-        ;[x-eps y-eps] (old-xy-shifts eps slope 0) ; OLD VERSION
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
         y-shift (if y-pos-dir? y-eps (- y-eps))
         x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
         y-comp (if y-pos-dir? > <)]  ;  gone too far
     ;(println "slope,x-eps,y-eps:" slope x-shift y-shift) ; DEBUG
     (loop [x x1, y y1]
-      (if (or (Double/isNaN x) (Double/isNaN y)) ; DEBUG
-        "\ndone: NaN"
-        (let [food (look-fn [x y])]
-          (cond food [[x y] food]
-                (and (= x x2)
-                     (= y y2))  nil ; last point. check both: horizontal or vertical lines
-                :else  (let [xsh (+ x x-shift)
-                             ysh (+ y y-shift)]
-                         ;(println "x2,y2,xsh,ysh:" x2 y2 xsh ysh) ; DEBUG
-                         (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
-                                (if (y-comp ysh y2) y2 ysh)))))))))
+      (let [food (look-fn [x y])]
+        (cond food [(if vertical [y x] [x y]) food] ; vertical means we swapped x and y
+              (and (= x x2)
+                   (= y y2))  nil ; last point. check both: horizontal or vertical lines
+              :else  (let [xsh (+ x x-shift)
+                           ysh (+ y y-shift)]
+                       (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
+                              (if (y-comp ysh y2) y2 ysh))))))))
 
 ;; I might not care about the foodspot info returned,
 ;; but I might want to know when no food is found.  So the function has

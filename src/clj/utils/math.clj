@@ -13,6 +13,19 @@
         (neg? x) -1
         :else 0))
 
+;; Note that Java's Double/isInfinite and Float/isInfinite don't distinguish 
+;; between ##Inf and ##-Inf.
+(defn pos-inf?
+  "Returns true if and only if x is ##Inf."
+  [x]
+  (= x ##Inf))
+
+;; Just a wrapper for Double/isNaN
+(defn NaN?
+  "Returns true if and only if x is ##NaN."
+  [x]
+  (Double/isNaN x))
+
 (defn slope-from-coords
   "Given a pair of points on a line, return its slope.  If the line is
   vertical, returns ##Inf (infinity) to indicate that."

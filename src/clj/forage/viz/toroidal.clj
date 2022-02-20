@@ -7,7 +7,7 @@
 (println "DON'T USE forage.viz.toroidal!")
 (println "It's not worth it.  Just make your worlds large, or don't
          bother to plot lines toroidally.  Or maybe use MASON for
-         that purpose (but that will require further work)."
+         that purpose (but that will require further work).")
 
 ;; These are oriented toward plotting with Vega-Lite/Hanami, and they
 ;; shouldn't be needed for data analysis; maybe they will be useful
@@ -223,7 +223,7 @@
           (not= x newx) [newx  ; double-wrapped: Vega-Lite doesn't like Clojure's funny numbers
                          (double (+ (* slope newx) ; slope can't be nil since line crossed left or right vertical border
                                     (ma/intercept-from-slope slope [x y])))]
-          (not= y newy) (if (not= slope ##Inf) ; if not vertical
+          (not= y newy) (if (not (ma/pos-inf? slope)) ; if not vertical
                           (let [yslope (/ slope)]
                             [(double
                                (+ (* yslope newy)
