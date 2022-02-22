@@ -23,7 +23,6 @@
 ;(def seed 1645858441039) ; THIS SEED ALLOWS LEVY PATH TO FIND FOOD
 (println "SEED:" seed)
 (def rng (r/make-well19937 seed))
-(def dist (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
 
 ;; NOTE display-radius is much larger than actual perc-radius, so paths
 ;; appear to see foodspots, but they don't.  (But if food-distance is set to
@@ -41,6 +40,8 @@
 
 ;; For Hanami/vega-lite plots, size of plot display:
 (def plot-dim 700)
+
+(def dist (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FOOD
