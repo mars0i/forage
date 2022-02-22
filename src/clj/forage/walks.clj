@@ -12,17 +12,19 @@
   "Returns a function of no arguments that returns a random mathematical 
   vector in the form of pair containing a direction dir, in radians, and a
   length len.  dir is uniformly distributed in [0,2pi] using PRNG instance 
-  rng, and length is distributed according to distribution instance dist.
-  If low and high arguments are given, the distribution is truncated so that
-  lengths fall within [low, high].  (These vectors represent steps going from
-  one \"stop\" to the next in a random walk.)  Example use:
+  or distribution instance dir-dist, and length is distributed according to
+  distribution instance len-dist.  If low and high arguments are given, the
+  distribution is truncated so that lengths fall within [low, high].  (These
+  vectors represent steps going from one \"stop\" to the next in a random walk.)
+  Example use:
     (def step-vecs (repeatedly 
                      (step-vector-fn (make-well19937)
                                      (make-powerlaw 1 2)
                                      1 100)))"
-  ([rng dist] (fn [] [(r/next-radian rng) (r/next-double dist)]))
-  ([rng dist low high]
-   (fn [] [(r/next-radian rng) (r/next-double dist low high)])))
+  ([dir-dist len-dist] (fn [] [(r/next-radian dir-dist)
+                               (r/next-double len-dist)]))
+  ([dir-dist len-dist low high]
+   (fn [] [(r/next-radian dir-dist) (r/next-double len-dist low high)])))
 
 (defn subst-init-dir
   "Given a sequence step-seq of step vectors, i.e. [direction length] pairs,
@@ -232,4 +234,19 @@
         (if-let [more (next segments)]
           (recur more)         ; keep searching
           [start end nil]))))) ; no food in all segments, so return last seg
+
+
+;; TODO cause step-walk to start in direction init-dir
+;; (currenly init-dir is ignored)
+(defn levy-foodwalk
+  "ADD DOCSTRING" ; TODO
+  ([look-fn look-eps init-loc init-dir maxpathlen trunclen rng scale exponent]
+   (let [len-dist (r/make-powerlaw rng scale exponent)]
+     (levy-foodwalk init-loc init-dir maxpathlen trunclen rng len-dist)))
+  ([look-fn look-eps init-loc init-dir maxpathlen trunclen dir-dist len-dist]
+   (let [inf-step-walk (repeatedly (step-vector-fn dir-dist len-dist 1 trunclen))
+         step-walk (vecs-upto-len maxpathlen inf-step-walk)
+         stop-walk (walk-stops init-loc step-walk)
+         walk-with-food (path-with-food look-fn look-eps stop-walk)]
+     (concat walk-with-food [stop-walk inf-step-walk])))) ; only first element of walk-food usually used, but rest should be available for investigation
 
