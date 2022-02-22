@@ -1,4 +1,4 @@
-(ns forage.experims.foodwalk2
+(ns forage.experims.foodwalk2seed1645858441039
     (:require 
       ;[aerial.hanami.common :as hc]
       ;[aerial.hanami.templates :as ht]
