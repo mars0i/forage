@@ -236,17 +236,25 @@
           [start end nil]))))) ; no food in all segments, so return last seg
 
 
-;; TODO cause step-walk to start in direction init-dir
-;; (currenly init-dir is ignored)
 (defn levy-foodwalk
   "ADD DOCSTRING" ; TODO
   ([look-fn look-eps init-loc init-dir maxpathlen trunclen rng scale exponent]
    (let [len-dist (r/make-powerlaw rng scale exponent)]
      (levy-foodwalk init-loc init-dir maxpathlen trunclen rng len-dist)))
   ([look-fn look-eps init-loc init-dir maxpathlen trunclen dir-dist len-dist]
-   (let [inf-step-walk (repeatedly (step-vector-fn dir-dist len-dist 1 trunclen))
+   (let [inf-step-walk (subst-init-dir
+                         init-dir
+                         (repeatedly
+                           (step-vector-fn dir-dist len-dist 1 trunclen)))
          step-walk (vecs-upto-len maxpathlen inf-step-walk)
          stop-walk (walk-stops init-loc step-walk)
          walk-with-food (path-with-food look-fn look-eps stop-walk)]
      (concat walk-with-food [stop-walk inf-step-walk])))) ; only first element of walk-food usually used, but rest should be available for investigation
 
+(defn straight-foodwalk
+  "ADD DOCSTRING" ; TODO
+  [look-fn look-eps init-loc init-dir maxpathlen]
+  (let [step-walk [[init-dir maxpathlen]] ; a single step of the whole length
+         stop-walk (walk-stops init-loc step-walk) ; contains exacty 2 points
+         walk-with-food (path-with-food look-fn look-eps stop-walk)]
+     (concat walk-with-food [stop-walk step-walk]))) ; only first element of walk-food usually used, but rest should be available for investigation
