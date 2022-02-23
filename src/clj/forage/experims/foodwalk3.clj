@@ -35,13 +35,19 @@
                                                      env-size
                                                      env-size)))
 
-(def fw+
+(def lfw+
   (w/levy-foodwalk 
     (partial mf/perc-foodspots-exactly env perc-radius)
     look-eps [half-size half-size] 0 maxpathlen trunclen rng dist))
 
-(def gridwalk-plot
-  (let [[fw food stops inf-steps] fw+]
+(def sfw+
+  (w/straight-foodwalk
+    (partial mf/perc-foodspots-exactly env perc-radius)
+    look-eps [half-size half-size] 0.25 maxpathlen))
+
+(defn make-gridwalk-plot
+  [foodwalk+]
+  (let [[fw food stops inf-steps] foodwalk+]
     (h/vega-gridwalk-plot perc-radius 
                           maxpathlen
                           powerlaw-scale
@@ -56,4 +62,5 @@
                                               "food walk" fw)))))
 
 
+(def gridwalk-plot (make-gridwalk-plot lfw+))
 
