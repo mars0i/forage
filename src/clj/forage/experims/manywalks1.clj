@@ -1,6 +1,6 @@
 (ns forage.experims.manywalks1
     (:require 
-      ;[forage.viz.hanami :as h]
+      [forage.viz.hanami :as h]
       [forage.walks :as w]
       [forage.food :as f]
       [forage.mason.foodspot :as mf]
@@ -8,6 +8,7 @@
       [utils.random :as r]))
 
 (def seed (inc (r/make-seed)))
+;(def seed 1645758210410)
 (println "SEED:" seed)
 (def rng (r/make-well19937 seed))
 
@@ -27,8 +28,8 @@
 (def powerlaw-exponent 2) ; must be > 1; 2 supposed to be optimal sparse targets
 (def look-eps 0.1) ; increment within line segments for food check
 
-;(def display-radius 50) ; if want foodspots to be displayed larger
-;(def plot-dim 700) ; For Hanami/vega-lite plots, size of plot display:
+(def display-radius 50) ; if want foodspots to be displayed larger
+(def plot-dim 700) ; For Hanami/vega-lite plots, size of plot display:
 
 (def dist (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
 
@@ -49,25 +50,35 @@
 
 (def lws (repeatedly levy-fn))
 (def sws (map (fn [t] (straight-fn (* (/ t 200) m/pi))) (range 201)))
-
-(comment
-  (defn make-gridwalk-plot
-    [foodwalk+]
-    (let [[fw food stops inf-steps] foodwalk+]
-      (h/vega-gridwalk-plot perc-radius 
-                            maxpathlen
-                            powerlaw-scale
-                            [(count fw) (count stops)]
-                            (h/vega-foodgrid-plot env-size plot-dim   ; place food circles
-                                                  food-distance perc-radius)
-                            (h/vega-walk-plot plot-dim   ; full path without food stop
-                                              (h/add-walk-labels
-                                                "a ghost walk" stops))
-                            (h/vega-walk-plot plot-dim  ; food search path
-                                              (h/add-walk-labels
-                                                "food walk" fw)))))
+;; FIXME: I'm getting two foodspot results and a NaN.
+;; This only happens at index 101, which I think the vertical path.
+; user=> (clojure.pprint/pprint (first (drop 100 sws)))
+; ([[10000 10000] [10000.0 ##NaN]]
+;  (#object[forage.mason.foodspot.Foodspot 0x4e58c6d5 "forage.mason.foodspot.Foodspot@4e58c6d5"]
+;   #object[forage.mason.foodspot.Foodspot 0x5e3d4270 "forage.mason.foodspot.Foodspot@5e3d4270"])
+;  ([10000 10000] [10000.0 20000.0])
+;  [[1.5707963267948966 10000]])
+; user=> (map (fn [f] [(.x f) (.y f)]) (second (first (drop 100 sws))))
+; ([9800 0] [10000 0])
 
 
-  (def gridwalk-plot (make-gridwalk-plot lfw+))
-)
+(defn make-gridwalk-plot
+  [env-size plot-dim food-distance display-radius foodwalks+]
+  (apply h/vega-gridwalk-plot
+         perc-radius 
+         maxpathlen
+         powerlaw-scale
+         []
+         (h/vega-foodgrid-plot env-size plot-dim food-distance perc-radius)
+         (apply 
+           concat
+           (map 
+             (fn [fw+]
+                 (let [[fw food stops inf-steps] fw+]
+                   [(h/vega-walk-plot plot-dim (h/add-walk-labels "could've" stops))
+                    (h/vega-walk-plot plot-dim (h/add-walk-labels "walk" fw))]))
+             foodwalks+))))
+
+
+;  (def gridwalk-plot (make-gridwalk-plot lfw+))
 
