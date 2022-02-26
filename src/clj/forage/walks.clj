@@ -197,10 +197,6 @@
             (recur (inc i) (inc j))
             [stops nil])))))) ; no food in any segment; return entire input
 
-(defn path-until-food
-  [look-fn eps stops]
-  (first (path-with-food look-fn eps stops)))
-
 (defn levy-foodwalk
   "ADD DOCSTRING" ; TODO
   ([look-fn look-eps init-loc init-dir maxpathlen trunclen rng scale exponent]
