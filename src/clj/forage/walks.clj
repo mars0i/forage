@@ -143,8 +143,7 @@
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
   [look-fn eps [x1 y1] [x2 y2]]
-  ;(println "f-i-s:\nshift,[x1 y1],[x2 y2]:" eps [x1 y1] [x2 y2]) ; DEBUG
-  (let [vertical (= x1 x2)  ; vertical slope: needs special handling
+  (let [vertical (== x1 x2)  ; vertical slope: needs special handling
         [[x1 y1] [x2 y2]] (if vertical
                             [[y1 x1] [y2 x2]]    ; swap x and y
                             [[x1 y1] [x2 y2]])   ; otherwise make no change
@@ -156,7 +155,6 @@
         y-shift (if y-pos-dir? y-eps (- y-eps))
         x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
         y-comp (if y-pos-dir? > <)]  ;  gone too far
-    ;(println "slope,x-eps,y-eps:" slope x-shift y-shift) ; DEBUG
     (loop [x x1, y y1]
       (let [food (look-fn [x y])]
         (cond food [(if vertical [y x] [x y]) food] ; vertical means we swapped x and y
@@ -167,12 +165,6 @@
                        (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
                               (if (y-comp ysh y2) y2 ysh))))))))
 
-;; I might not care about the foodspot info returned,
-;; but I might want to know when no food is found.  So the function has
-;; to have a way to distinguish between running through the entire sequence
-;; and finding nothing, and finding something from the very last point
-;; in the sequence.  So the function also returns the foodspot info or nil
-;; in order to--at least--communicate that difference.
 (defn path-with-food
   "Given a sequence of stops (coordinate pairs) representing a random walk, 
   and a small eps length, starts at [x1 y1] and uses find-in-segment
