@@ -201,41 +201,6 @@
   [look-fn eps stops]
   (first (path-with-food look-fn eps stops)))
 
-;; UNNEEDED?  path-until-found seems more useful.
-;; otoh, path-until-found throws away the foodspots.
-;; In the following function, the reason for returning the start of the
-;; sequence along with the location from which food was found (followed
-;; by info about what was found) is that these are the coordinate pairs 
-;; that specify the final segment in the walk toward food found.  Having
-;; that segment's coordinates allows one to for display it, calculate
-;; its length, etc.  That's also why if food is not found, the function
-;; returns the original coordinates of the last segment.
-(defn find-food-in-walk
-  "Given a sequence of stops (coordinate pairs) representing a random walk, 
-  and a small shift length, starts at [x1 y1] and uses find-in-segment
-  to incrementally check each line segment defined by pairs of stops
-  to see whether look-fn returns a truthy value representing one
-  or more foodspots from the perspective of that location, or a falsey value 
-  if no foodspots are found.  The sequence stops must contain at least two
-  coordinate pairs.  If foodspots are found, this function finishes searching 
-  and returns a triple in which the first element is the coordinate pair for 
-  the beginning of the segment on which the food was found, the second 
-  element is the location from which the foodspots were perceived, and the
-  third element is the representation of the foodspots found.  (See
-  find-in-segment for more on the third element.)  If the input sequence
-  ends without any food being found, the return value will be the coordinates
-  of the last segment followed by nil."
-  [look-fn eps stops]
-  (loop [segments (partition 2 1 stops)]
-    (let [[start end] (first segments)
-          from-and-foodspots (find-in-seg look-fn eps start end)]
-      (if from-and-foodspots
-        (cons start from-and-foodspots) ; found some food
-        (if-let [more (next segments)]
-          (recur more)         ; keep searching
-          [start end nil]))))) ; no food in all segments, so return last seg
-
-
 (defn levy-foodwalk
   "ADD DOCSTRING" ; TODO
   ([look-fn look-eps init-loc init-dir maxpathlen trunclen rng scale exponent]
