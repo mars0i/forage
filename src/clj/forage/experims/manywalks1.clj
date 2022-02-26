@@ -50,16 +50,6 @@
 
 (def lws (repeatedly levy-fn))
 (def sws (map (fn [t] (straight-fn (* (/ t 200) m/pi))) (range 201)))
-;; FIXME: I'm getting two foodspot results and a NaN.
-;; This only happens at index 101, which I think the vertical path.
-; user=> (clojure.pprint/pprint (first (drop 100 sws)))
-; ([[10000 10000] [10000.0 ##NaN]]
-;  (#object[forage.mason.foodspot.Foodspot 0x4e58c6d5 "forage.mason.foodspot.Foodspot@4e58c6d5"]
-;   #object[forage.mason.foodspot.Foodspot 0x5e3d4270 "forage.mason.foodspot.Foodspot@5e3d4270"])
-;  ([10000 10000] [10000.0 20000.0])
-;  [[1.5707963267948966 10000]])
-; user=> (map (fn [f] [(.x f) (.y f)]) (second (first (drop 100 sws))))
-; ([9800 0] [10000 0])
 
 
 (defn make-gridwalk-plot
@@ -78,7 +68,3 @@
                    [(h/vega-walk-plot plot-dim (h/add-walk-labels "could've" stops))
                     (h/vega-walk-plot plot-dim (h/add-walk-labels "walk" fw))]))
              foodwalks+))))
-
-
-;  (def gridwalk-plot (make-gridwalk-plot lfw+))
-
