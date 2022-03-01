@@ -60,14 +60,18 @@
 ;(def sws (map (fn [t] (straight-fn (* (/ t 200) m/pi))) (range 201)))
 
 ;; To count the number of paths that find food, use e.g.
-;; (def sws5000 (straight-walks 5000)))
-;; (count (filter first sws5000)))
+;;    (def sws5000 (straight-walks 5000)))
+;;    (count (filter first sws5000)))
+;; This works because the first element of each search result is the
+;; food found, whichis nil if none was found before the walk hit its
+;; limit.
 ;;
-;; Some example stats for straight walks with various values of n:
-;;   n     number finding food
-;;   200     61
-;;  1000    305
-;;  5000    
+;; Some example stats for straight walks with various values of n, for
+;; food-distance 200, perc-radius 1, trunclen 10000:
+;;   n     number finding food    ratio
+;;   200       61                 0.305
+;;  1000      305                 0.305
+;;  5000     1573                 0.3146 (4 mins with production profile on MBA)
 
 
 (defn make-gridwalk-plot
