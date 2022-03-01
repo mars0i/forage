@@ -170,10 +170,10 @@
   to incrementally check each line segment defined by pairs of stops
   to see whether look-fn returns a truthy value, meaning that foodspots
   were found.  The sequence stops must contain at least two coordinate pairs.
-  If foodspots are found, returns a pair containing: first, a truncated 
-  sequence of stops in which the last element is the point from which the
-  food was seen, and remaining points have been removed, and second, the
-  foodspot information returned by look-fn.  If no food found in the entire
+  If foodspots are found, returns a pair vector containing: first, the foodspot
+  information returned by look-fn, and second, a truncated sequence of stops
+  in which the last element is the point from which the food was seen, and
+  remaining points have been removed.  If no food found in the entire
   sequence, a pair contining the unchanged sequence and nil is returned."
   [look-fn eps stops]
   (let [stopsv (vec stops)
@@ -201,7 +201,7 @@
          step-walk (vecs-upto-len maxpathlen inf-step-walk)
          stop-walk (walk-stops init-loc step-walk)
          walk-with-food (path-with-food look-fn look-eps stop-walk)]
-     (concat walk-with-food [stop-walk inf-step-walk])))) ; only first element of walk-food usually used, but rest should be available for investigation
+     (conj walk-with-food stop-walk))))
 
 (defn straight-foodwalk
   "ADD DOCSTRING" ; TODO
@@ -209,4 +209,4 @@
   (let [step-walk [[init-dir maxpathlen]] ; a single step of the whole length
          stop-walk (walk-stops init-loc step-walk) ; contains exacty 2 points
          walk-with-food (path-with-food look-fn look-eps stop-walk)]
-     (concat walk-with-food [stop-walk step-walk]))) ; only first element of walk-food usually used, but rest should be available for investigation
+     (conj walk-with-food stop-walk))) ; only first element of walk-food usually used, but rest should be available for investigation
