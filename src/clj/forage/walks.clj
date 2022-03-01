@@ -157,9 +157,8 @@
         y-comp (if y-pos-dir? > <)]  ;  gone too far
     (loop [x x1, y y1]
       (let [food (look-fn [x y])]
-        (cond food [(if vertical [y x] [x y]) food] ; vertical means we swapped x and y
-              (and (= x x2)
-                   (= y y2))  nil ; last point. check both: horizontal or vertical lines
+        (cond food  [food (if vertical [y x] [x y])] ; vertical means we swapped x and y
+              (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
               :else  (let [xsh (+ x x-shift)
                            ysh (+ y y-shift)]
                        (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
@@ -182,12 +181,12 @@
     (loop [i 0, j 1]
       (let [from+foodspots (find-in-seg look-fn eps (stopsv i) (stopsv j))]
         (if from+foodspots               ; all done--found food
-          [(conj (vec (take j stopsv))    ; replace end of stops with point
-                 (first from+foodspots))  ; on path from which food found
-           (second from+foodspots)]
+          [(first from+foodspots)        ; the found food
+           (conj (vec (take j stopsv))      ; replace end of stops with point
+                 (second from+foodspots))]  ; on path from which food found
           (if (< j numstops-)
             (recur (inc i) (inc j))
-            [stops nil])))))) ; no food in any segment; return entire input
+            [nil stops])))))) ; no food in any segment; return entire input
 
 (defn levy-foodwalk
   "ADD DOCSTRING" ; TODO
