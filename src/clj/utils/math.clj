@@ -46,7 +46,7 @@
   [(- (* x (cos theta)) (* y (sin theta)))
    (+ (* y (cos theta)) (* x (sin theta)))])
 
-(defn distance2D
+(defn distance-2D
   "Computes distance between two-dimensional points [x0 y0] and [x1 y1]
   using the Pythagorean theorem."
   [[x0 y0] [x1 y1]]

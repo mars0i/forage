@@ -74,7 +74,7 @@
   search through all foodspots in collection coll."
   [foodspot-coords perc-radius coords]
   (some (fn [foodspot-coord]
-            (if (<= (m/distance2D coords foodspot-coord) perc-radius)
+            (if (<= (m/distance-2D coords foodspot-coord) perc-radius)
               foodspot-coord))
         foodspot-coords))
 
