@@ -48,8 +48,26 @@
                        (partial mf/perc-foodspots-exactly env perc-radius)
                        look-eps [half-size half-size] maxpathlen init-dir)))
 
-(def lws (repeatedly levy-fn))
-(def sws (map (fn [t] (straight-fn (* (/ t 200) m/pi))) (range 201)))
+(defn straight-walks
+  "Return a sequence of n+1 straight walks using straight-fn with directions 
+  evenly spaced between 0 and pi, inclusive."
+  [n]
+  (map (fn [t] (straight-fn (* m/pi (/ t n))))
+       (range (inc n))))
+
+
+;(def lws (repeatedly levy-fn))
+;(def sws (map (fn [t] (straight-fn (* (/ t 200) m/pi))) (range 201)))
+
+;; To count the number of paths that find food, use e.g.
+;; (def sws5000 (straight-walks 5000)))
+;; (count (filter first sws5000)))
+;;
+;; Some example stats for straight walks with various values of n:
+;;   n     number finding food
+;;   200     61
+;;  1000    305
+;;  5000    
 
 
 (defn make-gridwalk-plot
