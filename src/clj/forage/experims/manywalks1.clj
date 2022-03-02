@@ -55,9 +55,32 @@
   (map (fn [t] (straight-fn (* m/pi (/ t n))))
        (range (inc n))))
 
-
 ;(def lws (repeatedly levy-fn))
 ;(def sws (map (fn [t] (straight-fn (* (/ t 200) m/pi))) (range 201)))
+
+
+;; HOW TO SPEED UP MULTIPLE RUNS:
+;;
+;; user=> (use 'forage.experims.manywalks1 :reload-all)
+;; SEED: 1645758210410
+;; nil
+;; user=> (def lws (repeatedly levy-fn))
+;; #'user/lws
+;; user=> (time (doall (pmap #(if (first %) 1 0) (take 40 lws))))
+;; "Elapsed time: 14308.335993 msecs"
+;; (0 1 1 0 0 1 0 1 0 1 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0)
+;; user=> (use 'forage.experims.manywalks1 :reload-all)
+;; SEED: 1645758210410
+;; nil
+;; user=> (def lw40 (repeat 40 #(if (first (levy-fn)) 1 0)))
+;; #'user/lw40
+;; user=> (time (doall (apply pcalls lw40)))
+;; "Elapsed time: 6612.328698 msecs"
+;; (0 0 1 0 0 0 0 1 0 0 0 0 0 0 1 0 0 1 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0)
+;;
+;; [That's on my MBA with standard lein repl--not production.  
+;; The improvement should be greater on the MBP, with more cores.]
+
 
 ;; To count the number of paths that find food, use e.g.
 ;;    (def sws5000 (straight-walks 5000)))
@@ -74,6 +97,26 @@
 ;;  3333+1   1030                 0.3089
 ;;  5000+1   1573                 0.3145 (4 mins with production profile on MBA)
 ;; 10000+1   3037                 0.3037 (8 mins)
+;;
+;; NOTE though that the percentage of successes isn't really the relevant
+;; dimension.  The angle-shifts represent persisting though not unlimited
+;; shifts in the environment.  If the organisms are stuck in a no-success
+;; environment for too long, they'll go extinct.
+;;
+;; I'm getting similar stats on the Levy walks, but in that case, failures
+;; and successes are interspersed.  No run represents a persistent env
+;; state.  Or rather, the runs don't care about that.
+;;
+;; BUT JUST TO VERIFY IT FOR SURE, I SHOULD VARY THE INITIAL DIRS IN LEVY RUNS.
+;;
+;; This seems to run the identical call repeatedly--not what I want:
+;; (def lw1000 (time (doall (apply pcalls (repeat 1000 levy-fn)))))
+;; I don't think this is working, either: 
+;; (def lw1000 (time (doall (apply pcalls (repeat 1000 #(levy-fn))))))
+;; 
+;; This works correctly, but doesn't return the full values:
+;; (def lw1000 (time (doall (apply pcalls (repeat 1000 #(if (first (levy-fn)) 1 0))))))
+;; Weird.
 
 
 (defn make-gridwalk-plot
