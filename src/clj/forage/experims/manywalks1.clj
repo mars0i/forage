@@ -69,9 +69,11 @@
 ;; Some example stats for straight walks with various values of n, for
 ;; food-distance 200, perc-radius 1, trunclen 10000:
 ;;   n     number finding food    ratio
-;;   200       61                 0.305
-;;  1000      305                 0.305
-;;  5000     1573                 0.3146 (4 mins with production profile on MBA)
+;;   200+1     61                 0.3035
+;;  1000+1    305                 0.3047
+;;  3333+1   1030                 0.3089
+;;  5000+1   1573                 0.3145 (4 mins with production profile on MBA)
+;; 10000+1   3037                 0.3037 (8 mins)
 
 
 (defn make-gridwalk-plot
