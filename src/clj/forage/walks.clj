@@ -37,8 +37,8 @@
     (cons newstep othersteps)))
 
 
-;; I probably don't need both of the next two:
-
+;; TODO I should probably rewrite this with loop/recur.  Using reduce for this
+;; is just confusing.
 (defn vecs-upto-len
   "Given a desired total path length, and a sequence of step vectors, returns 
   a sequence of vectors, from the front of the sequence, whose lengths sum to 
@@ -194,13 +194,20 @@
    (let [len-dist (r/make-powerlaw rng scale exponent)]
      (levy-foodwalk init-loc maxpathlen trunclen init-dir rng len-dist)))
   ([look-fn look-eps init-loc maxpathlen trunclen init-dir dir-dist len-dist]
-   (let [inf-step-walk (subst-init-dir
+   (let [inf-step-walk (subst-init-dir  ; lazy
                          init-dir
                          (repeatedly
                            (step-vector-fn dir-dist len-dist 1 trunclen)))
-         step-walk (vecs-upto-len maxpathlen inf-step-walk)
-         stop-walk (walk-stops init-loc step-walk)
-         walk-with-food (path-with-food look-fn look-eps stop-walk)]
+         ;_ (println (class inf-step-walk) (class (rest inf-step-walk))) ; DEBUG
+         step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
+         ;_ (println (class step-walk)) ; DEBUG
+         ;; TODO note vec in next line is experimental:
+         stop-walk (vec (walk-stops init-loc step-walk)) ; lazy, at least after first cons BUT I vec'ed IT
+         ;_ (println (class stop-walk) (class (rest stop-walk))) ; DEBUG
+         walk-with-food (path-with-food look-fn look-eps stop-walk) ; it's a vec, but second element is lazy if food was not found; else it's a vec
+         ;_ (println (class walk-with-food)) ; DEBUG
+         ;_ (println (map class walk-with-food) "\n") ; DEBUG
+         ]
      (conj walk-with-food stop-walk))))
 
 (defn straight-foodwalk
