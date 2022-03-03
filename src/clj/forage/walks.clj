@@ -202,7 +202,7 @@
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
          ;_ (println (class step-walk)) ; DEBUG
          ;; TODO note vec in next line is experimental:
-         stop-walk (vec (walk-stops init-loc step-walk)) ; lazy, at least after first cons BUT I vec'ed IT
+         stop-walk (vec (walk-stops init-loc step-walk)) ; lazy if no vec wrapper , at least after first cons
          ;_ (println (class stop-walk) (class (rest stop-walk))) ; DEBUG
          walk-with-food (path-with-food look-fn look-eps stop-walk) ; it's a vec, but second element is lazy if food was not found; else it's a vec
          ;_ (println (class walk-with-food)) ; DEBUG
