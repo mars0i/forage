@@ -7,6 +7,11 @@
 (defn sin [theta] (Math/sin theta))
 (defn tan [theta] (Math/tan theta))
 
+(defn bool-to-bin
+  "Returns 1 if x is truthy, 0 if it's falsey."
+  [x]
+  (if x 1 0))
+
 (defn sign
   [x]
   (cond (pos? x) 1
