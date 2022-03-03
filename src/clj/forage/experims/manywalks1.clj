@@ -59,6 +59,14 @@
 ;(def sws (map (fn [t] (straight-fn (* (/ t 200) m/pi))) (range 201)))
 
 
+;; FIXME BUT WAIT: I'm pmapping/pcalling calls to a PRNG.  I don't know 
+;; FIXME that they're handled atomically, and I'm not doing anything to do so.
+;; FIXME And it's in lazy subsidiary sequences, to boot, which might be
+;; FIXME interspersed in who knows what way.  
+;; FIXME I might be messing up the internal state.
+;; FIXME Maybe I should just get rid of all laziness.  Infinite sequences
+;; FIXME are kind of nice, but maybe it's just not worth it.
+
 ;; HOW TO SPEED UP MULTIPLE RUNS:
 ;;
 ;; user=> (use 'forage.experims.manywalks1 :reload-all)
@@ -117,6 +125,9 @@
 ;; This works correctly, but doesn't return the full values:
 ;; (def lw1000 (time (doall (apply pcalls (repeat 1000 #(if (first (levy-fn)) 1 0))))))
 ;; Weird.
+;;
+;; Seeming like you need to apply doall before pcalls.  Otherwise sometimes
+;; maybe pcalls is confused by the laziness?
 
 
 (defn make-gridwalk-plot
