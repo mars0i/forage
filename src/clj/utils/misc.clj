@@ -7,6 +7,14 @@
     #'clojure.pprint/*print-right-margin* 
     (constantly cols)))
 
+(defn third
+  [xs]
+  (nth xs 2))
+
+(defn fourth
+  [xs]
+  (nth xs 3))
+
 (defn second-to-last
   "Returns the second to last item in a sequence."
   [xs]
