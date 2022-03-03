@@ -37,7 +37,7 @@
              :speedtest  {:dependencies [[criterium "0.4.6"]]
                           :jvm-opts ["-XX:TieredStopAtLevel=4" "-Xms2g"]}
 
-             :production {:jvm-opts ["-Xms2g" ; small improvement--OK to drop down to run more processes
+             :production {:jvm-opts ["-Xms4g" ; small improvement--OK to drop down to run more processes
                                      "-XX:TieredStopAtLevel=4"]} ; 3X improvement
 
              :notespace {:dependencies [[scicloj/notespace "4-alpha-21"]
