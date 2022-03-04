@@ -1,7 +1,7 @@
-;; Oz tips
+(ns tips.oz
+  (require [oz.core :as oz]))
 
 (comment
-(require '[oz.core :as oz])
 (oz/start-server!)
 (oz/view! vega-lite-spec)
 )
