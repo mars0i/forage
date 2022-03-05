@@ -15,3 +15,5 @@
      (hist (take xs 1000) 100)"
   ([xs] (hist xs 50))
   ([xs bins] (tv/histogram xs "x" {:bin-count bins})))
+
+(comment (hist (take 10000 inverse-nums)))
