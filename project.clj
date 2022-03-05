@@ -7,6 +7,7 @@
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [org.apache.commons/commons-math3 "3.6.1"]
                  [aerial.hanami "0.17.0"]
+		 [techascent/tech.viz "6.00-beta-16-2"]
 		 [io.github.nextjournal/clerk "0.5.346"]
                  [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
 		;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
