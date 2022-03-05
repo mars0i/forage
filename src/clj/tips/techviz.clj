@@ -2,12 +2,25 @@
   (:require [tech.viz.vega :as tv]
             [utils.random :as r]))
 
-(def dist (r/make-powerlaw 1 2))
+(def seed (inc (r/make-seed)))
+(println "SEED:" seed)
+(def rng (r/make-well19937 seed))
 
+(def dist (r/make-powerlaw rng 1 2))
+
+(def unif-nums (repeatedly #(r/next-double rng)))
 (def levy-nums (repeatedly #(r/next-double dist)))
+(def inverse-nums (map #(.cumulativeProbability dist %) levy-nums))
+(def diffs (map - unif-nums inverse-nums)) ; interesting plot: triangular
 
-(def inverse-nums (map #(.cumulativeProbability dist %)
-                       levy-nums))
+;; Note you can't just apply .cumulativeProbability to the result
+;; to get an inverse truncated distribution; the cummlative probability
+;; is different for a truncated distribution.
+(defn truncated-levy
+  "Return a sequence made from levy-nums by removing all elements that
+  are >= maxval."
+  [maxval]
+  (filter (partial >= maxval) levy-nums))
 
 (defn hist
   "Slightly more convenient than tv/histogram, but with limitations.
@@ -16,4 +29,9 @@
   ([xs] (hist xs 50))
   ([xs bins] (tv/histogram xs "x" {:bin-count bins})))
 
-(comment (hist (take 10000 inverse-nums)))
+(comment
+(oz/view! (hist (take 100000 inverse-nums)))
+(oz/view! (hist (take 100000 unif-nums)))
+(oz/view! (hist (take 100000 (truncated-levy 25))))
+)
+
