@@ -21,8 +21,53 @@
               :color {:field "item" :type "nominal"}}
    :mark "line"})
 
-;; Render the plot
-; (oz/view! line-plot)
+;; From https://behrica.github.io/vl-galery/convert/
+(def simple-bar-chart
+  {:data {:values [{:a "A" :b 28}
+                   {:a "B" :b 55}
+                   {:a "C" :b 43}
+                   {:a "D" :b 91}
+                   {:a "E" :b 81}
+                   {:a "F" :b 53}
+                   {:a "G" :b 19}
+                   {:a "H" :b 87}
+                   {:a "I" :b 52}]}
+   :description "A simple bar chart with embedded data."
+   :encoding {:x {:axis {:labelAngle 0} :field "a" :type "nominal"}
+              :y {:field "b" :type "quantitative"}}
+   :mark "bar"})
+
+
+
+(def histogram
+  {:data {:url "https://raw.githubusercontent.com/vega/vega/master/docs/data/movies.json"}
+ :encoding {:x {:bin true :field "IMDB Rating"} :y {:aggregate "count"}}
+ :mark "bar"})
+
+
+(def relf-histogram
+  {:data {:url "https://raw.githubusercontent.com/vega/vega/master/docs/data/cars.json"}
+   :description "Relative frequency histogram. The data is binned
+                with first transform. The number of values per bin and the 
+                total number are calculated in the second and third transform
+                to calculate the relative frequency in the last transformation
+                step."
+   :encoding {:x {:bin {:binned true}
+                  :field "bin_Horsepower"
+                  :title "Horsepower"}
+              :x2 {:field "bin_Horsepower_end"}
+              :y {:axis {:format ".1~%"}
+                  :field "PercentOfTotal"
+                  :title "Relative Frequency"
+                  :type "quantitative"}}
+   :mark {:tooltip true :type "bar"}
+   :transform [{:as "bin_Horsepwoer" :bin true :field "Horsepower"}
+               {:aggregate [{:as "Count" :op "count"}]
+                :groupby ["bin_Horsepower" "bin_Horsepower_end"]}
+               {:joinaggregate [{:as "TotalCount" :field "Count" :op "sum"}]}
+               {:as "PercentOfTotal"
+                :calculate "datum.Count/datum.TotalCount"}]})
+
 
 (def stacked-bar
   {:data {:values (play-data "munchkin" "witch" "dog" "lion" "tiger" "bear")}
