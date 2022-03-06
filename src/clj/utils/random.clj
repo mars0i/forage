@@ -2,6 +2,12 @@
 ;; under the Gnu General Public License version 3.0 as specified in the
 ;; the file LICENSE.
 
+;; Functions for generating and using random numbers.
+;; (These are mostly wrappers for Java library stuff, and in some cases
+;; one could just as easily use the Java methods directly with
+;;   (.javaMethod instance arguments)
+;; However, I prefer to have a pure Clojure interface, partly so to
+;; facility passing the methods as functions to e.g. 'map'.)
 (ns utils.random
   (:import [ec.util MersenneTwisterFast]    ; https://cs.gmu.edu/~sean/research/mersenne/ec/util/MersenneTwisterFast.html
            [org.apache.commons.math3.random ; https://commons.apache.org/proper/commons-math
@@ -187,6 +193,12 @@
   [^RealDistribution dist x]
   (.density dist x))
 
+(defn cdf
+  "Return the value of the cumulative probability distribution at x for
+  (Apache Commons math) distribution dist."
+  [^RealDistribution dist x]
+  (.cumulativeProbability dist x))
+
 (defprotocol RandDist
   "Provides a common interface to some functionality shared by PRNG 
   and distribution classes.  next-double methods return the next
@@ -199,8 +211,8 @@
 ;; Apparently, the specializers have to be concrete classes; interfaces and 
 ;; abstract classes don't seem to work.  Too bad--it would save duplication.
 ;; (Note that when truncating, I test the high limit first because that's
-;; the constraint that a distribution is most likely to violate in foond,
-;; since 'and' short-circuits.)
+;; the constraint that a distribution is most likely to violate in my code,
+;; and since 'and' short-circuits.)
 (extend-protocol RandDist
   ; DISTRIBUTIONS:
   ParetoDistribution 
