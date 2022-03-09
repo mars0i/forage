@@ -89,6 +89,7 @@
         nexty (+ prevy vecy)]
     [nextx nexty]))
 
+;; TODO Should the `lazy-seq` be outside?
 (defn walk-stops
   "Generates a (possibly infinite) sequence of next points from an 
   initial-point and a (possibly infinite) sequence of [direction, length]
