@@ -5,7 +5,7 @@
 ;; Functions for generating and using random numbers.
 ;; (These are mostly wrappers for Java library stuff, and in some cases
 ;; one could just as easily use the Java methods directly with
-;;   (.javaMethod instance arguments)
+;; (.javaMethod instance arguments)
 ;; However, I prefer to have a pure Clojure interface, partly so to
 ;; facility passing the methods as functions to e.g. 'map'.)
 ;; (Also, in future versions of Apache Commons--used a lot below--the 
@@ -22,15 +22,17 @@
             RealDistribution])
   (:require [clojure.math.numeric-tower :as nt]))
 
-;; For the Apache commons PRNGs, most of the functions are documented in
-;; AbstractRandomGenerator or RandomGenerator.  Most of the same functions
+;; For the Apache commons Math 3.6.1 PRNGs, most of the functions are documented
+;; in AbstractRandomGenerator or RandomGenerator.  Most of the same functions
 ;; are also in Sean Luke's MersenneTwisterFast and MersenneTwister, which 
 ;; also include a few other signatures for the same names.   For example,
 ;; both Luke's MT and the Apache PRNGs include nextInt(), nextLong(), 
-;; nextDouble(), and nextGaussian().
+;; nextDouble(), and nextGaussian().  (The whole interface is going to
+;; be turned inside out with Math 4; all or most of the functionality will
+;; be in other packages.)
 
 ;; Note that sample code in the apache.commons.math3 manual page on
-;; random number generation seems to be obsolete and won't compile
+;; random number generation seems to be obsolete and won't compile,
 ;; with 404'ed javadoc links.
 
 ;; TODO For uniform numbers, use a RandomDataGenerator to normalize to
@@ -197,11 +199,11 @@
   [^RealDistribution dist x]
   (.density dist x))
 
-(defn cdf
+(defn cumulative
   "Return the value of the cumulative probability distribution at x for
-  (Apache Commons math) distribution dist."
-  [^RealDistribution dist x]
-  (.cumulativeProbability dist x))
+  (Apache Commons math) distribution dist, or ."
+  ([^RealDistribution dist x] (.cumulativeProbability dist x))
+  ([^RealDistribution dist low high] (.probability dist low high))
 
 (defprotocol RandDist
   "Provides a common interface to some functionality shared by PRNG 
