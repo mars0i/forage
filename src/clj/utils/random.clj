@@ -2,6 +2,11 @@
 ;; under the Gnu General Public License version 3.0 as specified in the
 ;; the file LICENSE.
 
+;; Wrappers and other convenience functions for creation and use of random
+;; number generators.  Note that Apache Commons, which most of the code
+;; below uses, is completely changing its API after Math 3.6.1, which
+;; this uses.  There's a new package RNG that most of what's used below
+;; will live in.  (All the more reason to have wrappers.)
 (ns utils.random
   (:import [ec.util MersenneTwisterFast]    ; https://cs.gmu.edu/~sean/research/mersenne/ec/util/MersenneTwisterFast.html
            [org.apache.commons.math3.random ; https://commons.apache.org/proper/commons-math
