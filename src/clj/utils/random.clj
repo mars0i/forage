@@ -194,6 +194,23 @@
 ;; and a distribution object have the same functionality, though the
 ;; methods might have different names.
 
+;; Notes on Apache Commons Math 3.6.1 methods:
+;; cumulativeProbablity:
+;;   cumulativeProbability(x) does what you think.
+;;   cumulativeProbability(x, y) returns 
+;;     cumulativeProbability(y) - cumulativeProbability(x).  However, 
+;;     the name is deprecated, and in fact cumulativeProbability(x,y) just
+;;     calls probability(x,y), which does the subtraction.
+;; probability:
+;;   probability(x,y) returns the probability of a value 
+;;     falling in the interval (x,y], i.e. 
+;;     cumulativeProbability(y) - cumulativeProbability(x).
+;;   probability(x) just returns zero for continuous distributions,
+;;     since the probability of a point is zero.
+;; density:
+;;   density(x) returns the value of the pdf at x, which is probably
+;;     what you wanted if you called probablity(x).
+
 (defn density
   "Return the density at x according to (Apache Commons math) distribution dist."
   [^RealDistribution dist x]
@@ -202,8 +219,13 @@
 (defn cumulative
   "Return the value of the cumulative probability distribution at x for
   (Apache Commons math) distribution dist, or ."
-  ([^RealDistribution dist x] (.cumulativeProbability dist x))
-  ([^RealDistribution dist low high] (.probability dist low high))
+  [^RealDistribution dist x]
+  (.cumulativeProbability dist x))
+
+(defn probability
+  "Return the probability that a value from dist falls within (low,high]."
+  ([^RealDistribution dist low high]
+   (.probability dist low high)))
 
 (defprotocol RandDist
   "Provides a common interface to some functionality shared by PRNG 
