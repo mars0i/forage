@@ -227,21 +227,43 @@
   ([^RealDistribution dist low high]
    (.probability dist low high)))
 
-;; FIXME not right, I'm sure
-(defn trunc-cum
-  "Return the value of the cumulative probability distribution at x for
-  distribution dist truncated so that values outside of (low, high]
-  are ignored."
-  [^RealDistribution dist low high x]
-  (cond (<= x low) 0.0
-        (> x high) 1.0
-        :else (let [old-args$ (atom {})
-                    tot-args [dist low high]
-                    tot-prob (if-let [oldval (@old-args$ tot-args)]
-                               oldval
-                               (swap! old-args$ assoc tot-args
-                                      (apply probability tot-args)))]
-                (/ (cumulative x) tot-prob))))
+;; FIXME experiment: to be deleted
+(def trunc-experiment
+  (let [prev$ (atom {})]
+    (fn [f h x]
+      (if-let [oldval (@prev$ [f h])]
+        oldval
+        (let [newval (f h)]
+          (reset! prev$ {[f h] newval})
+          newval)))))
+
+;; FIXME experiment: to be deleted
+(def trunc-experiment2
+  (let [prev$ (atom {})]
+    (fn [f h x]
+      (or (@prev$ [f h])
+          (let [newval (f h)]
+            (reset! prev$ {[f h] newval})
+            newval)))))
+
+;; FIXME merge into def of cumulative (?)
+(def trunc-cumulative
+  "Return the value of the cumulative probability distribution dist at
+  x for distribution dist for which values outside of (low, high] have
+  zero probability.  (Memoizes the normalizing value, but only if the
+  first three arguments are the same as on the previous call: dist must
+  be identical? to its previous value, while low and high each must be =
+  to their previous values.)"
+  (let [memo$ (atom {})]
+    (fn [^RealDistribution dist low high x]
+      (cond (<= x low) 0.0  ; Or throw exception? Return nil?
+            (> x high) 1.0
+            :else (let [args [dist low high]
+                        tot-prob (or (@memo$ args)
+                                     (let [newprob (apply probability args)]
+                                       (reset! memo$ {args newprob})
+                                       newprob))]
+                    (/ (cumulative x) tot-prob))))))
 
 
 (defprotocol RandDist
