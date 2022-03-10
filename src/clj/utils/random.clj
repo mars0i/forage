@@ -227,6 +227,23 @@
   ([^RealDistribution dist low high]
    (.probability dist low high)))
 
+;; FIXME not right, I'm sure
+(defn trunc-cum
+  "Return the value of the cumulative probability distribution at x for
+  distribution dist truncated so that values outside of (low, high]
+  are ignored."
+  [^RealDistribution dist low high x]
+  (if (or (<= x low) (> x high))
+    0.0
+    (let [old-args$ (atom {})
+          tot-args [dist low high]
+          tot-prob (if-let [oldval (@old-args$ tot-args)]
+                     oldval
+                     (swap! old-args$ assoc tot-args
+                            (apply probability tot-args))]
+      (/ (cumulative x) tot-prob))))))))
+
+
 (defprotocol RandDist
   "Provides a common interface to some functionality shared by PRNG 
   and distribution classes.  next-double methods return the next
