@@ -216,25 +216,22 @@
   [^RealDistribution dist x]
   (.density dist x))
 
-(defn cumulative
-  "Return the value of the cumulative probability distribution at x for
-  (Apache Commons math) distribution dist, or ."
-  [^RealDistribution dist x]
-  (.cumulativeProbability dist x))
-
 (defn probability
   "Return the probability that a value from dist falls within (low,high]."
   [^RealDistribution dist low high]
    (.probability dist low high))
 
-;; FIXME merge into def of cumulative (?)
+;; Easiest to keep this as a separate definition that can be called
+;; via arity-selection from cumulative.  This makes it easy to memoize
+;; using a closure.  Note that it's still a slightly faster to use this
+;; function directly rather than calling the multi-arity cumulative.
 (def trunc-cumulative
   "Return the value of the cumulative probability distribution dist at
   x for distribution dist for which values outside of (low, high] have
-  zero probability.  (Memoizes the normalizing value, but only if the
+  zero probability.  Memoizes the normalizing value, but only if the
   first three arguments are the same as on the previous call: dist must
   be identical? to its previous value, while low and high each must be =
-  to their previous values.)"
+  to their previous values."
   (let [memo$ (atom {})]
     (fn [^RealDistribution dist low high x]
       (cond (<= x low) 0.0  ; Or throw exception? Return nil?
@@ -246,6 +243,14 @@
                                        newprob))]
                     (/ (.cumulativeProbability dist x) tot-prob))))))
 
+(defn cumulative
+  "Return the value of the cumulative probability distribution at x for
+  (Apache Commons math) distribution dist.  If low and high are provided,
+  returns the the cumulative probability for the truncated distribution 
+  corresponding to for x in (low,high] but assigning zero probability to 
+  values outside of it."
+  ([^RealDistribution dist x] (.cumulativeProbability dist x))
+  ([^RealDistribution dist low high x] (trunc-cumulative dist low high x)))
 
 (defprotocol RandDist
   "Provides a common interface to some functionality shared by PRNG 
