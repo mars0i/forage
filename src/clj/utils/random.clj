@@ -224,27 +224,8 @@
 
 (defn probability
   "Return the probability that a value from dist falls within (low,high]."
-  ([^RealDistribution dist low high]
-   (.probability dist low high)))
-
-;; FIXME experiment: to be deleted
-(def trunc-experiment
-  (let [prev$ (atom {})]
-    (fn [f h x]
-      (if-let [oldval (@prev$ [f h])]
-        oldval
-        (let [newval (f h)]
-          (reset! prev$ {[f h] newval})
-          newval)))))
-
-;; FIXME experiment: to be deleted
-(def trunc-experiment2
-  (let [prev$ (atom {})]
-    (fn [f h x]
-      (or (@prev$ [f h])
-          (let [newval (f h)]
-            (reset! prev$ {[f h] newval})
-            newval)))))
+  [^RealDistribution dist low high]
+   (.probability dist low high))
 
 ;; FIXME merge into def of cumulative (?)
 (def trunc-cumulative
@@ -263,7 +244,7 @@
                                      (let [newprob (apply probability args)]
                                        (reset! memo$ {args newprob})
                                        newprob))]
-                    (/ (cumulative x) tot-prob))))))
+                    (/ (.cumulativeProbability dist x) tot-prob))))))
 
 
 (defprotocol RandDist
