@@ -2,9 +2,7 @@
 ;; (rectangular) spatial coordinates.
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
 (ns forage.food
-    (:require [utils.math :as m]
-              [utils.random :as r]
-              [clojure.math.numeric-tower :as nt]))
+    (:require [utils.math :as m]))
 
 
 (declare x-zero? y-zero? either-zero? both-zero?)
