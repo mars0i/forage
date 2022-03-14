@@ -256,9 +256,6 @@
   "Provides a common interface to some functionality shared by PRNG 
   and distribution classes."
   (next-double 
-    "next-double returns the next double distributed according to the
-    instance's class.  If arguments low and high are included the
-    results will be truncated to fall within [low, high]."
     [this]
     [this low high]))
 
