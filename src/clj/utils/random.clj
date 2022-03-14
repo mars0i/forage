@@ -17,7 +17,7 @@
            [org.apache.commons.math3.random ; https://commons.apache.org/proper/commons-math
             MersenneTwister Well1024a Well19937c Well44497b
             RandomGenerator]
-           [org.apache.commons.math3.distribution 
+           [org.apache.commons.math3.distribution
             LevyDistribution NormalDistribution ParetoDistribution
             RealDistribution])
   (:require [clojure.math.numeric-tower :as nt]))
@@ -254,12 +254,13 @@
 
 (defprotocol RandDist
   "Provides a common interface to some functionality shared by PRNG 
-  and distribution classes.  next-double methods return the next
-  double distributed according to the instance's class.  If arguments
-  low and high are included the results will be truncated to fall within
-  [low, high]."
-  (next-double [this]
-               [this low high]))
+  and distribution classes."
+  (next-double 
+    "next-double returns the next double distributed according to the
+    instance's class.  If arguments low and high are included the
+    results will be truncated to fall within [low, high]."
+    [this]
+    [this low high]))
 
 ;; Apparently, the specializers have to be concrete classes; interfaces and 
 ;; abstract classes don't seem to work.  Too bad--it would save duplication.
