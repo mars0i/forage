@@ -166,16 +166,17 @@
                               (if (y-comp ysh y2) y2 ysh))))))))
 
 (defn path-with-food
-  "Given a sequence of stops (coordinate pairs) representing a random walk, 
-  and a small eps length, starts at [x1 y1] and uses find-in-segment
-  to incrementally check each line segment defined by pairs of stops
-  to see whether look-fn returns a truthy value, meaning that foodspots
-  were found.  The sequence stops must contain at least two coordinate pairs.
-  If foodspots are found, returns a pair vector containing: first, the foodspot
-  information returned by look-fn, and second, a truncated sequence of stops
-  in which the last element is the point from which the food was seen, and
-  remaining points have been removed.  If no food found in the entire
-  sequence, a pair contining the unchanged sequence and nil is returned."
+  "Returns a Clojure vector: Given a sequence of stops (coordinate pairs)
+  representing a random walk, and a small eps length, starts at [x1 y1]
+  and uses find-in-segment to incrementally check each line segment 
+  defined by pairs of stops to see whether look-fn returns a truthy value,
+  meaning that foodspots were found.  The sequence stops must contain at
+  least two coordinate pairs.  If foodspots are found, returns a pair vector 
+  containing: first, the foodspot information returned by look-fn, and 
+  second, a truncated sequence of stops in which the last element is the
+  point from which the food was seen, and remaining points have been 
+  removed.  If no food found in the entire sequence, a pair vector
+  containing the unchanged sequence and nil is returned."
   [look-fn eps stops]
   (let [stopsv (vec stops)
         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
@@ -190,7 +191,11 @@
             [nil stops])))))) ; no food in any segment; return entire input
 
 (defn levy-foodwalk
-  "ADD DOCSTRING" ; TODO
+  "Generates a foodwalk starting from point init-loc in direction init-dir.
+  The foodwalk consists of a series of line segments and ends where a 
+  foodspot is first found, or when the sum of segment lengths is equal to
+  maxpathlen.  Food search uses look-fn to repeatedly check for food at
+  points that are look-eps apart, beginning from init-loc."
   ([look-fn look-eps init-loc init-dir maxpathlen trunclen rng scale exponent]
    (let [len-dist (r/make-powerlaw rng scale exponent)]
      (levy-foodwalk init-loc maxpathlen trunclen init-dir rng len-dist)))
@@ -202,8 +207,7 @@
          ;_ (println (class inf-step-walk) (class (rest inf-step-walk))) ; DEBUG
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
          ;_ (println (class step-walk)) ; DEBUG
-         ;; TODO note vec in next line is experimental:
-         stop-walk (vec (walk-stops init-loc step-walk)) ; lazy if no vec wrapper , at least after first cons
+         stop-walk (walk-stops init-loc step-walk) ; lazy if no vec wrapper , at least after first cons
          ;_ (println (class stop-walk) (class (rest stop-walk))) ; DEBUG
          walk-with-food (path-with-food look-fn look-eps stop-walk) ; it's a vec, but second element is lazy if food was not found; else it's a vec
          ;_ (println (class walk-with-food)) ; DEBUG
@@ -212,9 +216,13 @@
      (conj walk-with-food stop-walk))))
 
 (defn straight-foodwalk
-  "ADD DOCSTRING" ; TODO
+  "Generates a straight foodwalk starting from point init-loc in direction
+  init-dir.  The foodwalk consists of a single line segment, which ends 
+  where a foodspot is found or when maxpathlen is reached.  Food search uses
+  look-fn to repeatedly check for food at points that are look-eps apart,
+  beginning from init-loc."
   [look-fn look-eps init-loc maxpathlen init-dir]
   (let [step-walk [[init-dir maxpathlen]] ; a single step of the whole length
-         stop-walk (walk-stops init-loc step-walk) ; contains exacty 2 points
-         walk-with-food (path-with-food look-fn look-eps stop-walk)]
-     (conj walk-with-food stop-walk))) ; only first element of walk-food usually used, but rest should be available for investigation
+        stop-walk (walk-stops init-loc step-walk) ; contains exacty 2 points
+        walk-with-food (path-with-food look-fn look-eps stop-walk)]
+    (conj walk-with-food stop-walk)))
