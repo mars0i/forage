@@ -16,7 +16,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANAMI SPACE PARAMETERS:
 
-(def quadrant-size 1000)
+(def env-size 1600)
+(def half-size (/ env-size 2))
 (def plot-dim 700)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -28,10 +29,10 @@
 (def mus [1.000001 2 2.2 3])  ; mu near 1: decimal digits have big effect on speed
 ; (def mus [2])
 
-(def maxpathlen 3000)
-(def trunclen 2000)
-(def perceptual-radius 5) 
-(def food-distance 300)
+(def maxpathlen 2000)
+(def trunclen 2005)
+(def perceptual-radius 20) 
+(def food-distance 200)
 
 (def powerlaw-scale 1)
 
@@ -41,7 +42,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PRNGS and DISTS:
 
-(def seed (inc (r/make-int-seed)))
+(def seed (inc (r/make-seed)))
 (def rng (r/make-well19937 seed))
 
 (def dists (map (partial r/make-powerlaw rng powerlaw-scale) mus))
@@ -63,7 +64,9 @@
 
 
 ;; Infinite sequences of steps that result from the step vectors
-(def stop-seqs (map (fn [step-seq] (w/walk-stops [0 0] step-seq)) step-seqs))
+(def stop-seqs (map (fn [step-seq]
+                      (w/walk-stops [half-size half-size] step-seq))
+                    step-seqs))
 
 ;; Infinite sequences of stopes labeled for Hanami/Vega-Lite:
 (def vl-stop-seqs (map (fn [mu stop-seq]
@@ -81,13 +84,14 @@
 ;; HANAMI/VEGA-LITE
 
 (def gridwalk-plot (h/vega-gridwalk-plot
-                     (h/vega-foodgrid-plot quadrant-size plot-dim
+                     perceptual-radius maxpathlen powerlaw-scale n-steps
+                     (h/vega-foodgrid-plot env-size plot-dim
                                            food-distance perceptual-radius)
-                     (h/vega-walk-plot quadrant-size plot-dim walks)
-                     perceptual-radius maxpathlen powerlaw-scale n-steps))
+                     (h/vega-walk-plot plot-dim walks)))
 
 
 ;; Now view gridwalk as vega-lite, e.g. with
-;(require '[oz.core :as oz])
-;(oz/start-server!)
-;(oz/view! gridwalk-plot)
+(comment
+  (require '[oz.core :as oz])
+  (oz/view! gridwalk-plot)
+)
