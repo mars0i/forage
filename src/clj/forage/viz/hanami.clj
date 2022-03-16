@@ -139,7 +139,7 @@
 
 (defn make-foodgrid
   "Make a sequence of vega-lite food records on coordinates spaced out every 
-  sep integers, from -quandrant-width to quadrant-width, and from
+  sep integers, from -quadrant-width to quadrant-width, and from
   -quadrant-height to quadrant-height, excluding [0,0]."
   ([env-width env-height]
    (make-foodgrid 1 env-width env-height))
