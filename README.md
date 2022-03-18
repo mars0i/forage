@@ -1,5 +1,5 @@
 # forage
-Random foraging models in Clojure, with some help from MASON.
+Random foraging models in Clojure, with help from bits of the MASON ABM library.
 
 Work in progress.
 
