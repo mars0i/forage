@@ -23,12 +23,12 @@
 
 (def levy-nums (repeatedly #(r/next-double mu2dist)))
 (def inverse-levy-nums (map (partial r/cumulative mu2dist) levy-nums))
-(def levy-diffs (map - unif-nums inverse-nums)) ; interesting plot: triangular
+(def levy-diffs (map - unif-nums inverse-levy-nums)) ; interesting plot: triangular
 
 (def trunc-levy-nums (repeatedly #(r/next-double mu2dist 1 truncation-max)))
 (def inverse-trunc-levy-nums
   (map (partial r/cumulative mu2dist 1 truncation-max) trunc-levy-nums))
-(def trunc-levy-diffs (map - unif-nums inverse-nums))
+(def trunc-levy-diffs (map - unif-nums inverse-levy-nums))
 
 (defn hist
   "Slightly more convenient than tech.viz.vega/histogram, but with limitations.
