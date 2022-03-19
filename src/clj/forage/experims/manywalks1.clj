@@ -20,7 +20,7 @@
 (def env-size 20000) ; full width of env
 (def half-size (/ env-size 2))
 
-(def maxpathlen half-size) ; max length of a path (sequence of line segments)
+(def maxpathlen 40000) ; max length of a path (sequence of line segments)
 (def trunclen half-size)   ; max length of any line segment
 (def default-init-dir 0)
 
@@ -130,6 +130,10 @@
 ;; maybe pcalls is confused by the laziness?
 
 
+(comment 
+  (def walk (levy-fn))
+)
+
 (defn make-gridwalk-plot
   [env-size plot-dim food-distance display-radius foodwalks+]
   (apply h/vega-gridwalk-plot
@@ -142,7 +146,13 @@
            concat
            (map 
              (fn [fw+]
-                 (let [[fw food stops inf-steps] fw+]
+                 (let [[food fw stops] fw+]
                    [(h/vega-walk-plot plot-dim (h/add-walk-labels "could've" stops))
                     (h/vega-walk-plot plot-dim (h/add-walk-labels "walk" fw))]))
              foodwalks+))))
+
+(comment
+  (require '[oz.core :as oz])
+  (oz/view! (make-gridwalk-plot env-size plot-dim food-distance
+                                display-radius [walk]))
+)
