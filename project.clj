@@ -44,7 +44,7 @@
                                          [com.clojure-goes-fast/clj-async-profiler "0.5.1"]]
                           :jvm-opts ["-Djdk.attach.allowAttachSelf"   ; for clj-async-profile: needed for JDK9+
                                      "-XX:+UnlockDiagnosticVMOptions" ; for clj-async-profiler
-                                     "-XX:+DebugNonSafepoint"]}       ; for clj-async-profiler
+                                     "-XX:+DebugNonSafepoints"]}      ; for clj-async-profiler
 
              :notespace {:dependencies [[scicloj/notespace "4-alpha-21"]
                                         [org.scicloj/tempfiles "1-alpha2"]
