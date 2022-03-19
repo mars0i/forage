@@ -1,0 +1,3 @@
+#!/bin/sh
+set -x
+exec iced repl with-profile +production "$@"

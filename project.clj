@@ -21,7 +21,6 @@
   ;; to check JVM params.
 
   ;; To use a profile with the repl, add "+" to the profile name, e.g:
-  ;;   lein with-profile +speedtest repl  (see https://visibletrap.blogspot.com/2015/04/start-lein-repl-with-test-profile.html)
   :profiles {:fullmason {:dependencies [[org.clojure/tools.cli "1.0.206"] ; command line processing
                                         [mars0i/masonclj "0.2.0"]
                                         [org.beanshell/bsh "2.0b4"]
@@ -35,11 +34,17 @@
                                forage.mason.GUI
                                forage.mason.core]
                         }
-             :speedtest  {:dependencies [[criterium "0.4.6"]]
-                          :jvm-opts ["-XX:TieredStopAtLevel=4" "-Xms2g"]}
 
+             ;; Usage tip: lein with-profile +production
              :production {:jvm-opts ["-Xms4g" ; small improvement--OK to drop down to run more processes
                                      "-XX:TieredStopAtLevel=4"]} ; 3X improvement
+
+             ;; Usage tip: lein with-profile +production,profiling
+             :profiling  {:dependencies [[criterium "0.4.6"]
+                                         [com.clojure-goes-fast/clj-async-profiler "0.5.1"]]
+                          :jvm-opts ["-Djdk.attach.allowAttachSelf"   ; for clj-async-profile: needed for JDK9+
+                                     "-XX:+UnlockDiagnosticVMOptions" ; for clj-async-profiler
+                                     "-XX:+DebugNonSafepoint"]}       ; for clj-async-profiler
 
              :notespace {:dependencies [[scicloj/notespace "4-alpha-21"]
                                         [org.scicloj/tempfiles "1-alpha2"]

@@ -1,0 +1,3 @@
+#!/bin/sh
+set -x
+exec lein with-profile +production,+profiling repl "$@"
