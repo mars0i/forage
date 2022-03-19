@@ -166,17 +166,19 @@
                               (if (y-comp ysh y2) y2 ysh))))))))
 
 (defn path-with-food
-  "Returns a Clojure vector: Given a sequence of stops (coordinate pairs)
-  representing a random walk, and a small eps length, starts at [x1 y1]
-  and uses find-in-segment to incrementally check each line segment 
-  defined by pairs of stops to see whether look-fn returns a truthy value,
-  meaning that foodspots were found.  The sequence stops must contain at
-  least two coordinate pairs.  If foodspots are found, returns a pair vector 
-  containing: first, the foodspot information returned by look-fn, and 
-  second, a truncated sequence of stops in which the last element is the
-  point from which the food was seen, and remaining points have been 
-  removed.  If no food found in the entire sequence, a pair vector
-  containing the unchanged sequence and nil is returned."
+  "Returns a vector containing first, found foodspots or nil, and second
+  the sequence up to and including the location from which foodspots were
+  found, or the entire sequence.  More specifically, given a sequence of
+  stops (coordinate pairs) representing a random walk, and a small eps
+  length, starts at [x1 y1] and uses find-in-segment to incrementally check
+  each line segment defined by pairs of stops to see whether look-fn returns
+  a truthy value, meaning that foodspots were found.  The sequence stops must
+  contain at least two coordinate pairs.  If foodspots are found, returns a
+  pair vector containing: first, the foodspot information returned by look-fn,
+  and second, a truncated sequence of stops in which the last element is the
+  point from which the food was seen, and remaining points have been removed.
+  If no food found in the entire sequence, a pair vector containing nil and
+  the unchanged sequence is returned."
   [look-fn eps stops]
   (let [stopsv (vec stops)
         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
@@ -191,11 +193,15 @@
             [nil stops])))))) ; no food in any segment; return entire input
 
 (defn levy-foodwalk
-  "Generates a foodwalk starting from point init-loc in direction init-dir.
-  The foodwalk consists of a series of line segments and ends where a 
-  foodspot is first found, or when the sum of segment lengths is equal to
-  maxpathlen.  Food search uses look-fn to repeatedly check for food at
-  points that are look-eps apart, beginning from init-loc."
+  "Generates a random foodwalk starting from point init-loc in direction
+  init-dir, and returns a triple vector containing (a) a sequence of found
+  foodspots or nil if none found, (b) the generated sequence from start until
+  the point from which the foodspots were found, and (c) the entire generated
+  sequence including the stops after the foodspots were found.  More 
+  specifically, the generated foodwalk consists of a series of line segments
+  and ends where a foodspot is first found, or when the sum of segment
+  lengths is equal to maxpathlen.  Food search uses look-fn to repeatedly
+  check for food at points that are look-eps apart, beginning from init-loc."
   ([look-fn look-eps init-loc init-dir maxpathlen trunclen rng scale exponent]
    (let [len-dist (r/make-powerlaw rng scale exponent)]
      (levy-foodwalk init-loc maxpathlen trunclen init-dir rng len-dist)))
@@ -217,7 +223,11 @@
 
 (defn straight-foodwalk
   "Generates a straight foodwalk starting from point init-loc in direction
-  init-dir.  The foodwalk consists of a single line segment, which ends 
+  init-dir, and returns a triple vector containing (a) a sequence of found
+  foodspots or nil if none found, (b) the generated sequence from start until
+  the point from which the foodspots were found, and (c) the entire generated
+  sequence including the stops after the foodspots were found.  More
+  specifically, the foodwalk consists of a single line segment, which ends 
   where a foodspot is found or when maxpathlen is reached.  Food search uses
   look-fn to repeatedly check for food at points that are look-eps apart,
   beginning from init-loc."
