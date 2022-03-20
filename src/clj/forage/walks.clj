@@ -250,3 +250,14 @@
         stop-walk (walk-stops init-loc step-walk) ; contains exacty 2 points
         walk-with-food (path-with-food look-fn look-eps stop-walk)]
     (conj walk-with-food stop-walk)))
+
+(defn length-when-found
+  "Given a pair consisting of a possibly empty sequence of found foodspots and a
+  path of walk stops until they were found (if they were), returns the length
+  of the path, or nil if no foodspots were found.  If the argument is a sequence 
+  with more than two elements, its remaining elements are silently ignored."
+  [[found-foodspots path-until-found]]
+  (if (seq found-foodspots)
+    (stops-path-len path-until-found)
+    nil))
+
