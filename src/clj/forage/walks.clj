@@ -105,6 +105,20 @@
             (walk-stops (next-walk-stop next-step-vec base-pt)
                         (rest step-vectors))))))
 
+(defn vecs-path-len
+  "Calculate the length of a path specified by a sequence of vector representations
+  in the form of [direction, length] pairs."
+  [step-vectors]
+  (reduce + (map second step-vectors)))
+
+(defn stops-path-len
+  "Calculate the length of a path specified by a sequence of stops, i.e. [x y] 
+  coordinate pairs representing endpoints of connected line segments."
+  [stops]
+  (reduce +
+          (map m/distance-2D stops (rest stops))))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FINDING FOOD
 
