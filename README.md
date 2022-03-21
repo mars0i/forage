@@ -17,9 +17,9 @@ https://cs.gmu.edu/~eclab/projects/mason .  (If you were going to use
 MASON in a full-fledged manner, you'd also need some files from the
 source distribution, but I'm currently just using one class.) Then
 install this jar file in your local Maven configuration.  In unix
-systems such as MacOS, this is in $HOME/.m2 .  You can use Leiningen
-to do this if you want:  Temporarily add this line to project.clj (e.g.
-just before `:source-paths`).
+systems such as MacOS, this is in $HOME/.m2 .  You can use Leiningen to
+do perform the installation if you want:  Temporarily add this line to
+project.clj (e.g. just before `:source-paths`).
 ```clojure
 :plugins [[lein-localrepo "0.5.3"]]
 ```
