@@ -12,15 +12,14 @@
                  [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
 		;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
 		 [metasoarous/oz "2.0.0-alpha5"]
-                 [mason "20"] ; just for Continuous2D
-                ]
+                 [mason "20"]] ; just for Continuous2D
 
   :source-paths ["src/clj"]
 
   ;; Use (into [] (.getInputArguments (java.lang.management.ManagementFactory/getRuntimeMXBean)))
   ;; to check JVM params.
 
-  ;; To use a profile with the repl, add "+" to the profile name, e.g:
+  ;; To use a profile with the repl, add "+" to the profile name:
   :profiles {:fullmason {:dependencies [[org.clojure/tools.cli "1.0.206"] ; command line processing
                                         [mars0i/masonclj "0.2.0"]
                                         [org.beanshell/bsh "2.0b4"]
