@@ -73,9 +73,23 @@
              foodwalks+))))
 
 
-(comment 
+(comment
+  (println "yow")
   (def lws (repeatedly levy-fn))
   (def sws (map (fn [t] (straight-fn (* (/ t 200) m/pi))) (range 201)))
   (require '[oz.core :as oz])
-  (oz/view! (make-gridwalk-plot ...))
+  (count sws)
+  (oz/view! (make-gridwalk-plot env-size plot-dim food-distance display-radius (take 95 sws)))
+  (nth sws 97)
+
+
+)
+
+(comment
+  (require '[clj-async-profiler.core :as prof])
+  (prof/start {})
+;; run something here ...
+  (def svg (prof/stop {})) ;; filename of svg output file
+
+
 )
