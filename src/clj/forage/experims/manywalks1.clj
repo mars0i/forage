@@ -55,6 +55,7 @@
   (map (fn [t] (straight-fn (* m/pi (/ t n))))
        (range (inc n))))
 
+
 (defn make-gridwalk-plot
   [env-size plot-dim food-distance display-radius foodwalks+]
   (apply h/vega-gridwalk-plot
@@ -76,7 +77,7 @@
 (comment
   (println "yow")
   (def lws (repeatedly levy-fn))
-  (def sws (map (fn [t] (straight-fn (* (/ t 200) m/pi))) (range 201)))
+  (def sws (map (fn [t] (straight-fn (* (/ t 200) m/pi))) (range 92 201)))
   (require '[oz.core :as oz])
   (count sws)
   (oz/view! (make-gridwalk-plot env-size plot-dim food-distance display-radius (take 95 sws)))
