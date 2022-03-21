@@ -6,10 +6,9 @@ Work in progress.
 
 This project uses Leiningen: To start a REPL in a terminal so that you
 will have access to the code here, *cd* into the forage directory and
-run 'lein repl` (or on unix systems you can use the
-*repl* script, or one of the other scripts).  When you do this, Leiningen's
-project.clj file will download and install all of the needed libraries
-*except* MASON 20 (see below).
+run 'lein repl` (or use one of the scripts in *src/scripts*.  
+Leiningen's project.clj file will download and install all of
+the needed libraries *except* MASON 20 (see below).
 
 ---
 
