@@ -38,21 +38,21 @@
                                                      env-size
                                                      env-size)))
 
-(def levy-fn (fn [] (w/levy-foodwalk 
+(def levy-walk (fn [] (w/levy-foodwalk 
                       (partial mf/perc-foodspots-exactly env perc-radius)
                       look-eps [half-size half-size] maxpathlen 
                       trunclen default-init-dir rng dist)))
 
-(def straight-fn (fn [init-dir]
+(def straight-walk (fn [init-dir]
                      (w/straight-foodwalk
                        (partial mf/perc-foodspots-exactly env perc-radius)
                        look-eps [half-size half-size] maxpathlen init-dir)))
 
 (defn straight-walks
-  "Return a sequence of n+1 straight walks using straight-fn with directions 
+  "Return a sequence of n+1 straight walks using straight-walk with directions 
   evenly spaced between 0 and pi, inclusive."
   [n]
-  (map (fn [t] (straight-fn (* m/pi (/ t n))))
+  (map (fn [t] (straight-walk (* m/pi (/ t n))))
        (range (inc n))))
 
 
@@ -77,12 +77,9 @@
 (comment
   (println "yow")
   (def lws (repeatedly levy-fn))
-  (def sws (map (fn [t] (straight-fn (* (/ t 200) m/pi))) (range 92 201)))
+  (def sws (map (fn [t] (straight-walk (* (/ t 200) m/pi))) (range 201)))
   (require '[oz.core :as oz])
-  (count sws)
-  (oz/view! (make-gridwalk-plot env-size plot-dim food-distance display-radius (take 95 sws)))
-  (nth sws 97)
-
+  (oz/view! (make-gridwalk-plot env-size plot-dim food-distance display-radius sws))
 
 )
 
