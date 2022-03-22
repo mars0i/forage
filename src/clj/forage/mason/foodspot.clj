@@ -10,6 +10,11 @@
 ;; functions faster, with a speed improvement of about 20X when used
 ;; as part of a food search run.
 
+;; NOTE DON'T USE .getNeighborsWithinDistance .
+;; It can return foodspots that are too far away.
+
+;; Possible TODO: Add toroidal foodspot perception
+
 (deftype Foodspot [x y nutrition])
 
 (defn make-foodspot
@@ -49,26 +54,34 @@
 ;; NOTE: I call seq on results below to turn the result into nil
 ;; if the result is empty.
 
+;; TODO ? Don't call seq?
 (defn all-foodspots
   "Returns a sequence of all foodspots in environment env, or nil
   if there are none."
   [^Continuous2D env]
   (seq (.getAllObjects env)))
 
+;; TODO ? Don't call seq?
 (defn all-foodspot-coords
   "Returns coordinate pairs of all foodspots in environment env, or nil
   if there are none."
   [^Continuous2D env]
   (seq (map foodspot-coords (.getAllObjects env))))
 
-;; Possible TODO: Add toroidal foodspot perception
-
+;; Testing for emptiness of a MASON Bag and possibly returning it
+;; as is faster than calling seq to convert it into a Clojure sequence.
+;; Note that Bags are still truthy, and they can be converted into seqs--
+;; usually transparently--at any time.
 (defn perc-foodspots-exactly
-  "Returns a sequence of foodspots within perc-radius of (x,y),
+  "Returns a MASON Bag of foodspots within perc-radius of (x,y),
   or nil if there are none.  Uses Continuous2D's local cell lookup."
   [^Continuous2D env perc-radius [x y]]
-  (seq (.getNeighborsExactlyWithinDistance env (Double2D. x y) perc-radius)))
+  (let [foodspots-bag (.getNeighborsExactlyWithinDistance env
+                                                          (Double2D. x y)
+                                                          perc-radius)]
+    (if (.isEmpty foodspots-bag) nil foodspots-bag)))
 
+;; TODO ? Don't call seq?
 (defn perc-foodspot-coords-exactly
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
   or nil if there are none.  Uses Continuous2D's local cell lookup."
@@ -87,20 +100,3 @@
   (f/perc-foodspot-coords-in-coll (all-foodspot-coords env)
                                   perc-radius coords))
 
-
-
-;; DON'T USE: CAN RETURN FOODSPOT--IN CELL--THAT'S TOO FAR
-(defn dont-use-perc-foodspots-plus
-  "Returns a sequence of foodspots within perc-radius of (x,y), possibly 
-  with additional ones in the same Continous2D cell, or nil if there are none."
-  [^Continuous2D env perc-radius [x y]]
-  (seq (.getNeighborsWithinDistance env (Double2D. x y) perc-radius)))
-
-;; DON'T USE: CAN FOODSPOT--IN CELL--THAT'S TOO FAR
-(defn dont-use-perc-foodspot-coords-plus
-  "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
-  with possible additional ones from foodspots in the same Continuous2D cell, 
-  or nil if there are none."
-  [env perc-radius [x y]]
-  (seq (map foodspot-coords
-            (dont-use-perc-foodspots-plus env perc-radius [x y]))))
