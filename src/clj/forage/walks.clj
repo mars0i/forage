@@ -5,6 +5,12 @@
               [utils.random :as r]
               [clojure.math.numeric-tower :as nt]))
 
+(def number-of-ulps 
+  "This is used as the default number of ulp's for calls to 
+  utils/math/equalish? in this namespace.  See the documentation for that
+  function."
+  (nt/expt 2 18)) ; the resulting tolerance will still be quite small
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
 
@@ -158,8 +164,8 @@
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
   [look-fn eps [x1 y1] [x2 y2]]
-  (let [vertical (== x1 x2)  ; vertical slope: needs special handling
-        [[x1 y1] [x2 y2]] (if vertical
+  (let [vertical (m/equalish? number-of-ulps x1 x2) ; 
+        [[x1 y1] [x2 y2]] (if vertical  ; vertical slope needs special handling 
                             [[y1 x1] [y2 x2]]    ; swap x and y
                             [[x1 y1] [x2 y2]])   ; otherwise make no change
         slope (m/slope-from-coords [x1 y1] [x2 y2])
@@ -224,15 +230,9 @@
                          init-dir
                          (repeatedly
                            (step-vector-fn dir-dist len-dist 1 trunclen)))
-         ;_ (println (class inf-step-walk) (class (rest inf-step-walk))) ; DEBUG
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
-         ;_ (println (class step-walk)) ; DEBUG
          stop-walk (walk-stops init-loc step-walk) ; lazy if no vec wrapper , at least after first cons
-         ;_ (println (class stop-walk) (class (rest stop-walk))) ; DEBUG
-         walk-with-food (path-with-food look-fn look-eps stop-walk) ; it's a vec, but second element is lazy if food was not found; else it's a vec
-         ;_ (println (class walk-with-food)) ; DEBUG
-         ;_ (println (map class walk-with-food) "\n") ; DEBUG
-         ]
+         walk-with-food (path-with-food look-fn look-eps stop-walk)] ; it's a vec, but second element is lazy if food was not found; else it's a vec
      (conj walk-with-food stop-walk))))
 
 (defn straight-foodwalk
