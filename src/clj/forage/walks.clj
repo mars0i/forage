@@ -9,7 +9,7 @@
   "This is used as the default number of ulp's for calls to 
   utils/math/equalish? in this namespace.  See the documentation for that
   function."
-  (nt/expt 2 18)) ; the resulting tolerance will still be quite small
+  (nt/expt 2 20)) ; the resulting tolerance will still be quite small
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
@@ -143,6 +143,9 @@
     [0 eps]))
 
 
+;; TODO FIXME ?  Why am I checking for vertical slopes here and not
+;; in path-with-food?  Doing it here, it has to happen repeatedly.
+;; 
 ;; See doc/xyshifts.md for notes about this function and xy-shifts.
 ;; Possibly store slope and/or intercept earlier; they were available
 ;; when the line pair was created.
