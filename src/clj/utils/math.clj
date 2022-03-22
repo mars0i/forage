@@ -48,13 +48,13 @@
 (defn equalish?
   "True if numbers x and y are == or are within (* n-ulps ulp) of 
   each other, where ulp is the minimum of (Math/ulp x) and (Math/ulp y).
-  A ulp is minimum possible difference between two floating point numbers,
-  but the numeric value of a ulp differs depending on the number, even
-  within the same numeric class such as double.  We use the minimum since
-  that's the least difference between one of the numbers and the next one
-  up or down from  it.  (It seem as if multiplying a number that's one
-  ulp off produces a number that is some power of 2 ulp's away from the
-  correct value.) See java.lang.Math for more."
+  A ulp is \"units in the last place\", i.e. the minimum possible difference
+  between two floating point numbers, but the numeric value of a ulp differs
+  depending on the number, even within the same numeric class such as double.
+  We use the minimum since that's the least difference between one of the
+  numbers and the next one up or down from  it.  (It seem as if multiplying a
+  number that's one ulp off produces a number that is some power of 2 ulp's
+  away from the correct value.) See java.lang.Math for more."
   [n-ulps x y]
   (or (== x y)
       (let [xd (double x) ; Math/ulp doesn't work on integers
