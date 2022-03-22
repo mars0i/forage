@@ -1,6 +1,7 @@
 (ns utils.math
     (:require [clojure.math.numeric-tower :as nt]))
 
+
 ;; Make my code a little prettier, and allow passing as functions:
 (def pi Math/PI)
 (defn cos [theta] (Math/cos theta))
@@ -44,12 +45,32 @@
   [slope [x y]]
   (- y (* slope x)))
 
+(defn equalish?
+  "True if numbers x and y are == or are within (* n-ulps ulp) of 
+  each other, where ulp is the minimum of (Math/ulp x) and (Math/ulp y).
+  A ulp is minimum possible difference between two floating point numbers,
+  but the numeric value of a ulp differs depending on the number, even
+  within the same numeric class such as double.  We use the minimum since
+  that's the least difference between one of the numbers and the next one
+  up or down from  it.  (It seem as if multiplying a number that's one
+  ulp off produces a number that is some power of 2 ulp's away from the
+  correct value.) See java.lang.Math for more."
+  [n-ulps x y]
+  (or (== x y)
+      (let [xd (double x) ; Math/ulp doesn't work on integers
+            yd (double y)
+            ulp (min (Math/ulp xd) (Math/ulp yd))]
+        (<= (clojure.math.numeric-tower/abs (- xd yd))
+            (* n-ulps ulp)))))
+
 (defn rotate
   "Given an angle theta and a pair of coordinates [x y], returns a
   new pair of coordinates that is the rotation of [x y] by theta."
   [theta [x y]]
-  [(- (* x (cos theta)) (* y (sin theta)))
-   (+ (* y (cos theta)) (* x (sin theta)))])
+  [(- (* x (cos theta))
+      (* y (sin theta))) ,
+   (+ (* y (cos theta))
+      (* x (sin theta)))])
 
 (defn distance-2D
   "Computes distance between two-dimensional points [x0 y0] and [x1 y1]
@@ -82,12 +103,14 @@
   ([n xs] (mean (take n xs)))) ; don't divide by n explicitly: xs may be short
 
 
+;;;;;;;;;;;;;;;;;;;;;;;
+
 (comment
   ;; USE APACHE COMMONS PARETO DISTRIBUTION INSTEAD:
 
-;; Pareto PDF: $\mathsf{P}(x) = \frac{\alpha x_m^{\alpha}}{x^{\alpha + 1}}$, again for $x \leq x_m$.
-;; (Note that memoizing this makes it slower.  Rearranging to use expt only
-;; once also makes it slower.)
+  ;; Pareto PDF: $\mathsf{P}(x) = \frac{\alpha x_m^{\alpha}}{x^{\alpha + 1}}$, again for $x \leq x_m$.
+  ;; (Note that memoizing this makes it slower.  Rearranging to use expt only
+  ;; once also makes it slower.)
   (defn pareto
     "Given a scale parameter x_m (min value, should be positive) and a shape parameter
     alpha (positive), returns the value of the Pareto density function at x
@@ -99,19 +122,19 @@
       (/ (* alpha (nt/expt xm alpha))
          (nt/expt x (inc alpha)))))
 
-; Assuming that $\mu > 1$, 
-; $\int_r^{\infty} x^{-\mu} \; dl = \frac{r^{1-\mu}}{\mu-1} \,$.
-; &nbsp; So to distribute step lengths $x$ as $x^{-\mu}$ with $r$ as 
-; the minimum length,
-; $\mathsf{P}(x) = x^{-\mu}\frac{\mu-1}{r^{1-\mu}} = x^{-\mu}r^{\mu-1}(\mu-1)$.
-;; &nbsp; See steplengths.md for further details.  &nbsp; cf. Viswanathan et al., *Nature* 1999.
-;; This can be viewed as a Pareto distribution, but parameterized differently.
-(defn powerlaw
-  "Returns probability of x with normalized density x^mu, where r is
-  x's minimum value.  Returns 0 if x < minumum."
-  [r mu x]
-  (if (< x r)
-    0
-    (let [mu- (dec mu)]
-      (* (nt/expt x (- mu)) (nt/expt r mu-) mu-))))
+  ; Assuming that $\mu > 1$, 
+  ; $\int_r^{\infty} x^{-\mu} \; dl = \frac{r^{1-\mu}}{\mu-1} \,$.
+  ; &nbsp; So to distribute step lengths $x$ as $x^{-\mu}$ with $r$ as 
+  ; the minimum length,
+  ; $\mathsf{P}(x) = x^{-\mu}\frac{\mu-1}{r^{1-\mu}} = x^{-\mu}r^{\mu-1}(\mu-1)$.
+  ;; &nbsp; See steplengths.md for further details.  &nbsp; cf. Viswanathan et al., *Nature* 1999.
+  ;; This can be viewed as a Pareto distribution, but parameterized differently.
+  (defn powerlaw
+    "Returns probability of x with normalized density x^mu, where r is
+    x's minimum value.  Returns 0 if x < minumum."
+    [r mu x]
+    (if (< x r)
+      0
+      (let [mu- (dec mu)]
+        (* (nt/expt x (- mu)) (nt/expt r mu-) mu-))))
 )
