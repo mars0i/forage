@@ -74,10 +74,17 @@
              foodwalks+))))
 
 
+(def lws (repeatedly levy-walk))
+(def sws (map (fn [t] (straight-walk (* (/ t 200) m/pi))) (range 201)))
+
+(defn swses
+  [times]
+  (dotimes [n times]
+    (let [sws (map (fn [t] (straight-walk (* (/ t 200) m/pi))) (range 201))]
+      (prn (count sws))))) ; make sure the compiler thinks needs evaluating
+
 (comment
   (println "yow")
-  (def lws (repeatedly levy-fn))
-  (def sws (map (fn [t] (straight-walk (* (/ t 200) m/pi))) (range 201)))
   (require '[oz.core :as oz])
   (oz/view! (make-gridwalk-plot env-size plot-dim food-distance display-radius sws))
 
