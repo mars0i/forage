@@ -51,6 +51,11 @@
      (add-foodspots env locs)
      env)))
 
+(defn env-size
+  "Returns the width (assumed to be equal to height) of env."
+  [^Continuous2D env]
+  (.width env))
+
 ;; NOTE: I call seq on results below to turn the result into nil
 ;; if the result is empty.
 
