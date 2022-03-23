@@ -29,31 +29,68 @@
                                                      env-size
                                                      env-size)))
 
+;; FIXME profile-walks is getting hung up in the first levy-walk.  And yet it works with straight-walk.
 (def levy-walk (fn [rng dist init-dir]
+                 ;(print ".") (flush) ; DEBUG
                  (w/levy-foodwalk 
-                  (partial mf/perc-foodspots-exactly env perc-radius)
-                  look-eps [half-size half-size] maxpathlen 
-                  trunclen init-dir rng dist)))
+                   (partial mf/perc-foodspots-exactly env perc-radius)
+                   look-eps
+                   [half-size half-size]
+                   maxpathlen 
+                   init-dir
+                   trunclen
+                   rng
+                   dist)))
 
 (def straight-walk (fn [rng dist init-dir]
                      (w/straight-foodwalk
-                      (partial mf/perc-foodspots-exactly env perc-radius)
-                      look-eps [half-size half-size] maxpathlen init-dir)))
+                       (partial mf/perc-foodspots-exactly env perc-radius)
+                       look-eps
+                       [half-size half-size]
+                       maxpathlen
+                       init-dir)))
 
 (def default-directions (repeat default-direction))
 ;; Divide quadrant into n directions in radians:
 (def quadrant-100-directions  (doall (map #(* (/ % 100) (/ m/pi 2)) (range 100)))) 
 (def quadrant-200-directions  (doall (map #(* (/ % 200) (/ m/pi 2)) (range 200)))) 
 
+
+;; The goal of this function is to profile only the random walk, not the creation
+;; of the rng, etc.  (TODO: Another way to do it would be to reset the seed.)
+;; We create the rng and dist multiple times so that each time, the rng restarts in
+;; the same state.  So an interation really is an iteration.  But then we also need
+;; to create repetitions of the sequences of walks, using the restarted rng and dist.
 (defn profile-walks
   [walk-fn initial-directions seed num-walks iterations]
+  ;(print "-") (flush) ; DEBUG
+  (let [rngs  (repeatedly #(r/make-well19937 seed))
+        dists (map (fn [rng]
+                     (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
+                rngs)
+        walkses (map (fn [rng dist]   ; (English has no plural of plurals)
+                       (take num-walks
+                         (map (partial walk-fn rng dist) initial-directions)))
+                  rngs dists)]
+    ;(print "+") (flush) ; DEBUG
+    (prof/start {})
+    (run!
+      (fn [walks]
+        ;(print "/") (flush) ; DEBUG
+        (doall walks))
+      (take iterations walkses))
+    (prof/stop {})))
+
+
+;; Can't actually run the computation multiple times
+(defn simple-profile-walks
+  [walk-fn initial-directions seed num-walks]
   (let [rng (r/make-well19937 seed)
         dist (r/make-powerlaw rng powerlaw-scale powerlaw-exponent)
-        walks (map (partial rng dist walk-fn) initial-directions)]
-  (prof/start {})
-  (dotimes [n iterations]
-    (prn (first (last (take num-walks walks))))) ; make sure it can't be compiled away
-  (prof/stop {})))
+        walks (map (partial walk-fn rng dist) initial-directions)]
+    (prof/start {})
+    (doall (take num-walks walks)) ; no point in iterating--it's lazy, so first time does all the work
+    (prof/stop {})))
 
 
 (comment
