@@ -4,6 +4,7 @@
     (:require [clojure.math.numeric-tower :as nt]
               [aerial.hanami.common :as hc]
               [aerial.hanami.templates :as ht]
+              [forage.mason.foodspot :as mf]
               [forage.food :as f]
               [utils.math :as m]))
 
@@ -147,17 +148,30 @@
   (map make-foodspot 
        (f/centerless-rectangular-grid sep env-width env-height))))
 
-(defn vega-foodgrid-plot
-  "Plot foodspot perceptual radius on a rectangular grid using make-foodgrid."
-  [env-sz plot-dim food-distance perc-radius]
+(defn vega-food-plot
+  "Plot foodspot display radii where foodspots are."
+  [foodspots env-sz plot-dim display-radius]
   (hc/xform ht/point-chart 
-            :DATA (make-foodgrid food-distance env-sz env-sz) 
+            :DATA foodspots
             :X "x"
             :Y "y"
             :COLOR "label"
-            :MSIZE (foodspot-mark-size env-sz plot-dim perc-radius)
+            :MSIZE (foodspot-mark-size env-sz plot-dim display-radius)
             :OPACITY 0.5  ; default is 0.7
             :WIDTH  plot-dim  ; sets dim for plot only, label area not included
             :HEIGHT plot-dim))
 
+(defn vega-foodgrid-plot
+  "Plot foodspot display radii on a rectangular grid using make-foodgrid."
+  [env-sz plot-dim food-distance display-radius]
+  (vega-food-plot (make-foodgrid food-distance env-sz env-sz) 
+                  env-sz plot-dim display-radius))
+
+(defn vega-env-plot
+  "Plot foodspot display radii on where foodspots from env are."
+  [env plot-dim display-radius]
+  (vega-food-plot (mf/all-foodspot-coords env)
+                  (mf/env-size env)
+                  plot-dim
+                  display-radius))
 
