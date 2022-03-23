@@ -20,7 +20,7 @@
 (def env-size 20000) ; full width of env
 (def half-size (/ env-size 2))
 
-(def maxpathlen 40000) ; max length of a path (sequence of line segments)
+(def maxpathlen 10000) ; for straight walk should be <= env-size/2 because will start at (env-size, env-size)
 (def trunclen half-size)   ; max length of any line segment
 (def default-init-dir 0)
 
@@ -73,6 +73,25 @@
                   (h/vega-walk-plot plot-dim (h/add-walk-labels "walk" fw))]))
              foodwalks+))))
 
+(defn make-gridwalk-plot-from-env
+  [env plot-dim perc-radius display-radius foodwalks+]
+  (let [env-size (mf/env-size env)
+        foodspots (mf/all-foodspot-coords env)]
+  (apply h/vega-gridwalk-plot
+         perc-radius 
+         maxpathlen
+         powerlaw-scale
+         []
+         (h/vega-foodgrid-plot env-size plot-dim food-distance display-radius)
+         (apply 
+           concat
+           (map 
+             (fn [fw+]
+               (let [[food fw stops] fw+]
+                 [(h/vega-walk-plot plot-dim (h/add-walk-labels "could've" stops))
+                  (h/vega-walk-plot plot-dim (h/add-walk-labels "walk" fw))]))
+             foodwalks+)))))
+
 
 (def lws (repeatedly levy-walk))
 (def sws2 (map (fn [t] (straight-walk (* (/ t 200) m/pi))) (range 201)))
@@ -89,14 +108,12 @@
   (require '[oz.core :as oz])
   (oz/view! (make-gridwalk-plot env-size plot-dim food-distance perc-radius display-radius sws1))
   (oz/view! (make-gridwalk-plot env-size plot-dim food-distance perc-radius display-radius sws2))
-  (oz/view! (make-gridwalk-plot env-size plot-dim food-distance perc-radius display-radius [(first lws)]))
-)
+  (oz/view! (make-gridwalk-plot env-size plot-dim food-distance perc-radius display-radius [(nth lws 0)]))
 
-(comment
-  (require '[clj-async-profiler.core :as prof])
-  (prof/start {})
-;; run something here ...
-  (def svg (prof/stop {})) ;; filename of svg output file
+  (oz/view! (make-gridwalk-plot env-size plot-dim food-distance perc-radius display-radius 
+                                [(nth (filter #(first %) (take 200 lws)) 0)])) ; first Levy walk that found food
 
-
+  ;; How many found food?
+  (count (filter #(first %) (take 200 lws)))
+  (count (filter #(first %) sws1))
 )
