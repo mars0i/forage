@@ -225,10 +225,10 @@
   and ends where a foodspot is first found, or when the sum of segment
   lengths is equal to maxpathlen.  Food search uses look-fn to repeatedly
   check for food at points that are look-eps apart, beginning from init-loc."
-  ([look-fn look-eps init-loc init-dir maxpathlen trunclen rng scale exponent]
+  ([look-fn look-eps init-loc maxpathlen init-dir trunclen rng scale exponent]
    (let [len-dist (r/make-powerlaw rng scale exponent)]
-     (levy-foodwalk init-loc maxpathlen trunclen init-dir rng len-dist)))
-  ([look-fn look-eps init-loc maxpathlen trunclen init-dir dir-dist len-dist]
+     (levy-foodwalk look-fn look-eps init-loc maxpathlen init-dir trunclen rng len-dist)))
+  ([look-fn look-eps init-loc maxpathlen init-dir trunclen dir-dist len-dist]
    (let [inf-step-walk (subst-init-dir  ; lazy
                          init-dir
                          (repeatedly
