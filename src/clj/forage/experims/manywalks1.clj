@@ -57,13 +57,13 @@
 
 
 (defn make-gridwalk-plot
-  [env-size plot-dim food-distance display-radius foodwalks+]
+  [env-size plot-dim food-distance perc-radius display-radius foodwalks+]
   (apply h/vega-gridwalk-plot
          perc-radius 
          maxpathlen
          powerlaw-scale
          []
-         (h/vega-foodgrid-plot env-size plot-dim food-distance perc-radius)
+         (h/vega-foodgrid-plot env-size plot-dim food-distance display-radius)
          (apply 
            concat
            (map 
@@ -75,7 +75,8 @@
 
 
 (def lws (repeatedly levy-walk))
-(def sws (map (fn [t] (straight-walk (* (/ t 200) m/pi))) (range 201)))
+(def sws2 (map (fn [t] (straight-walk (* (/ t 200) m/pi))) (range 201)))
+(def sws1 (map (fn [t] (straight-walk (* (/ t 100) (/ m/pi 2)))) (range 100)))
 
 (defn swses
   [times]
@@ -86,8 +87,9 @@
 (comment
   (println "yow")
   (require '[oz.core :as oz])
-  (oz/view! (make-gridwalk-plot env-size plot-dim food-distance display-radius sws))
-
+  (oz/view! (make-gridwalk-plot env-size plot-dim food-distance perc-radius display-radius sws1))
+  (oz/view! (make-gridwalk-plot env-size plot-dim food-distance perc-radius display-radius sws2))
+  (oz/view! (make-gridwalk-plot env-size plot-dim food-distance perc-radius display-radius [(first lws)]))
 )
 
 (comment
