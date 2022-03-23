@@ -20,9 +20,9 @@
 (def env-size 20000) ; full width of env
 (def half-size (/ env-size 2))
 
-(def maxpathlen 10000) ; for straight walk should be <= env-size/2 because will start at (env-size, env-size)
-(def trunclen half-size)   ; max length of any line segment
-(def default-init-dir 0)
+(def maxpathlen half-size) ; for straight walk should be <= env-size/2 because will start at (env-size, env-size)
+(def trunclen maxpathlen)   ; max length of any line segment
+(def initial-direction 0)
 
 (def powerlaw-scale 1) ; scale parameter of distribution
 (def powerlaw-exponent 2) ; must be > 1; 2 supposed to be optimal sparse targets
@@ -41,7 +41,7 @@
 (def levy-walk (fn [] (w/levy-foodwalk 
                       (partial mf/perc-foodspots-exactly env perc-radius)
                       look-eps [half-size half-size] maxpathlen 
-                      trunclen default-init-dir rng dist)))
+                      trunclen initial-direction rng dist)))
 
 (def straight-walk (fn [init-dir]
                      (w/straight-foodwalk
