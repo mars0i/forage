@@ -56,6 +56,8 @@
        (range (inc n))))
 
 
+;; TODO Redo this using hanami/vega-env-plot
+;; (to make sure that display isn't out of sync with env).
 (defn make-gridwalk-plot
   [env-size plot-dim food-distance perc-radius display-radius foodwalks+]
   (apply h/vega-gridwalk-plot
@@ -72,25 +74,6 @@
                  [(h/vega-walk-plot plot-dim (h/add-walk-labels "could've" stops))
                   (h/vega-walk-plot plot-dim (h/add-walk-labels "walk" fw))]))
              foodwalks+))))
-
-(defn make-gridwalk-plot-from-env
-  [env plot-dim perc-radius display-radius foodwalks+]
-  (let [env-size (mf/env-size env)
-        foodspots (mf/all-foodspot-coords env)]
-  (apply h/vega-gridwalk-plot
-         perc-radius 
-         maxpathlen
-         powerlaw-scale
-         []
-         (h/vega-foodgrid-plot env-size plot-dim food-distance display-radius)
-         (apply 
-           concat
-           (map 
-             (fn [fw+]
-               (let [[food fw stops] fw+]
-                 [(h/vega-walk-plot plot-dim (h/add-walk-labels "could've" stops))
-                  (h/vega-walk-plot plot-dim (h/add-walk-labels "walk" fw))]))
-             foodwalks+)))))
 
 
 (def lws (repeatedly levy-walk))
