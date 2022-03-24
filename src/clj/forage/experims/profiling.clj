@@ -1,3 +1,4 @@
+;; For profiling and benchmarking
 (ns forage.experims.profiling
   (:require
    [forage.walks :as w]
@@ -62,8 +63,20 @@
 ;; the same state.  So an interation really is an iteration.  But then we also need
 ;; to create repetitions of the sequences of walks, using the restarted rng and dist.
 (defn profile-walks
-  [walk-fn initial-directions seed num-walks iterations]
-  ;(print "-") (flush) ; DEBUG
+  "walk-fn, a function taking arguments rng, dist, and init-direction, is 
+  called on the first num-walks elements of init-directions, using seed to
+  construct a Well19937 rng, which will also be used to create a power law
+  distribution dist using powerlaw-scale and powerlaw-exponent specified
+  at the top level.  This is done iterations times.  By default, all of those
+  runs will be profiled by clj-async-profiler.  If :profile is passed and
+  its value is false, no profiling takes place.  Summary: num-walks gives
+  the number of (usually different) walks possibly using different initial
+  directions, but all using the same rng.  i.e. if the walks are random,
+  they'll be based on subsequent uses of the same rng.  iterations, by
+  contrast, is used to repeat that whole process--with the same starting
+  seed each time."
+  [walk-fn initial-directions seed num-walks iterations
+    & {profile :profile :or {profile true}}]
   (let [rngs  (repeatedly #(r/make-well19937 seed))
         dists (map (fn [rng]
                      (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
@@ -72,14 +85,14 @@
                        (take num-walks
                          (map (partial walk-fn rng dist) initial-directions)))
                   rngs dists)]
-    ;(print "+") (flush) ; DEBUG
-    (prof/start {})
+    (when profile
+      (prof/start {}))
     (run!
       (fn [walks]
-        ;(print "/") (flush) ; DEBUG
         (doall walks))
       (take iterations walkses))
-    (prof/stop {})))
+    (when profile
+      (prof/stop {}))))
 
 
 ;; Can't actually run the computation multiple times
