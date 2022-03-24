@@ -29,7 +29,7 @@ Then start the repl, and run
 ```clojure
 lein localrepo install <jarfilepath> MASON 20
 ```
-where `<jarfilepath>` is a string containing he full path and filename
+where `<jarfilepath>` is a string containing the full path and filename
 for your mason.20.jar file.  This will copy the file to the
 appropriate place under .m2, and will add an additional pom
 configuration file.  After this, you can delete the above `:plugins`
