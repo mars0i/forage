@@ -2,6 +2,11 @@
     (:require [clojure.math.numeric-tower :as nt]))
 
 
+;; TODO Consider revising to use clojure.math in Clojure 1.11:
+;; https://clojure.org/news/2022/03/22/clojure-1-11-0
+;; https://clojure.github.io/clojure/clojure.math-api.html
+
+
 ;; Make my code a little prettier, and allow passing as functions:
 (def pi Math/PI)
 (defn cos [theta] (Math/cos theta))
