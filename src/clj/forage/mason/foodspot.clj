@@ -80,7 +80,7 @@
 (defn perc-foodspots-exactly
   "Returns a MASON Bag of foodspots within perc-radius of (x,y),
   or nil if there are none.  Uses Continuous2D's local cell lookup."
-  [^Continuous2D env perc-radius [x y]]
+  [^Continuous2D env perc-radius x y]
   (let [foodspots-bag (.getNeighborsExactlyWithinDistance env
                                                           (Double2D. x y)
                                                           perc-radius)]
@@ -90,9 +90,9 @@
 (defn perc-foodspot-coords-exactly
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
   or nil if there are none.  Uses Continuous2D's local cell lookup."
-  [env perc-radius [x y]]
+  [env perc-radius x y]
   (seq (map foodspot-coords
-            (perc-foodspots-exactly env perc-radius [x y]))))
+            (perc-foodspots-exactly env perc-radius x y))))
 
 ;; Once we have all possible foodspot coordinates, we don't need to
 ;; use MASON lookup for a linear search.   This is probably slower
