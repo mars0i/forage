@@ -6,11 +6,10 @@ Work in progress.
 
 Because there are now several standard build tools for Clojure, note
 that this project uses Leiningen: to start a REPL in a terminal so that you
-can play with the code here, *cd* into the forage directory and
-run *lein repl* (or use one of the scripts in src/scripts).  
-Leiningen's project.clj file will download and install all of
-the needed libraries *except* MASON 20 (see below).  Or your editor
-might do all of that for you if it's configured for use with Clojure.
+can play with the code here, *cd* into the forage directory and run *lein repl*
+(or use one of the scripts in src/scripts). Leiningen's project.clj file will
+download and install all of the needed libraries *except* MASON 20 (see below).
+Or your editor might do all of that for you if it's configured for use with Clojure.
 
 ---
 
