@@ -1,6 +1,7 @@
 # forage
 Random foraging models in Clojure.
 Work in progress.
+More documentation in the future.
 
 ---
 
