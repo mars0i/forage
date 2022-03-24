@@ -217,14 +217,15 @@
 
 (defn levy-foodwalk
   "Generates a random foodwalk starting from point init-loc in direction
-  init-dir, and returns a triple vector containing (a) a sequence of found
+  init-dir, and returns a vector triple containing (a) a sequence of found
   foodspots or nil if none found, (b) the generated sequence from start until
   the point from which the foodspots were found, and (c) the entire generated
   sequence including the stops after the foodspots were found.  More 
   specifically, the generated foodwalk consists of a series of line segments
   and ends where a foodspot is first found, or when the sum of segment
   lengths is equal to maxpathlen.  Food search uses look-fn to repeatedly
-  check for food at points that are look-eps apart, beginning from init-loc."
+  check for food at points that are look-eps apart, beginning from init-loc.
+  (The environment is to be wrapped up in look-fn and carried with it.)"
   ([look-fn look-eps init-loc maxpathlen init-dir trunclen rng scale exponent]
    (let [len-dist (r/make-powerlaw rng scale exponent)]
      (levy-foodwalk look-fn look-eps init-loc maxpathlen init-dir trunclen rng len-dist)))
@@ -240,7 +241,7 @@
 
 (defn straight-foodwalk
   "Generates a straight foodwalk starting from point init-loc in direction
-  init-dir, and returns a triple vector containing (a) a sequence of found
+  init-dir, and returns a vector triple containing (a) a sequence of found
   foodspots or nil if none found, (b) the generated sequence from start until
   the point from which the foodspots were found, and (c) the entire generated
   sequence including the stops after the foodspots were found.  More
@@ -264,3 +265,18 @@
     (stops-path-len path-until-found)
     nil))
 
+;; These next two functions might return different results if foodspots
+;; are randomly distributed:
+
+(defn count-successful-walks
+  "Returns the number of foodwalks that found any food."
+  [foodwalks]
+  (count (filter #(first %) foodwalks)))
+
+(defn count-found-foodspots
+  "Returns the number of foodspots found by the foodwalks.  If it's
+  possible for a foodwalk to find multiple foodspots, they'll be counted."
+  [foodwalks]
+  (reduce (fn [tot walk]
+            (+ tot (count (first walk))))
+          foodwalks))
