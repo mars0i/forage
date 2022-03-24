@@ -1,5 +1,5 @@
 ;; For profiling and benchmarking
-(ns forage.experims.profiling
+(ns forage.profiling
   (:require
    [forage.walks :as w]
    [forage.food :as f]
@@ -12,9 +12,6 @@
 (def seed 1649589834894)
 (println "SEED:" seed)
 
-;; NOTE display-radius is much larger than actual perc-radius, so paths
-;; appear to see foodspots, but they don't.  (But if food-distance is set to
-;; 100, many paths succeed.)
 (def perc-radius 1)  ; distance that an animal can "see" in searching for food
 (def food-distance 200)
 (def env-size 20000) ; full width of env
@@ -30,9 +27,7 @@
                                                      env-size
                                                      env-size)))
 
-;; FIXME profile-walks is getting hung up in the first levy-walk.  And yet it works with straight-walk.
 (def levy-walk (fn [rng dist init-dir]
-                 ;(print ".") (flush) ; DEBUG
                  (w/levy-foodwalk 
                    (partial mf/perc-foodspots-exactly env perc-radius)
                    look-eps
