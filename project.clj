@@ -40,6 +40,7 @@
 
              ;; Usage tip: lein with-profile +production,profiling
              :profiling  {:dependencies [[criterium "0.4.6"]
+                                         ;[com.clojure-goes-fast/jvm-hiccup-meter "0.1.1"]
                                          [com.clojure-goes-fast/clj-async-profiler "0.5.1"]]
                           :jvm-opts ["-Djdk.attach.allowAttachSelf"   ; for clj-async-profile: needed for JDK9+
                                      "-XX:+UnlockDiagnosticVMOptions" ; for clj-async-profiler
