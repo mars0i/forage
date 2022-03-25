@@ -138,7 +138,7 @@
   (if slope ; if not vertical
     (let [a (+ 1 (* slope slope))
           x-eps (/ eps a)
-          y-eps (nt/abs (* slope x-eps))]
+          y-eps (abs (* slope x-eps))]
       [x-eps y-eps])
     [0 eps]))
 
@@ -168,13 +168,7 @@
   is checked, this function returns nil."
   [look-fn eps [x1 y1] [x2 y2]]
   ;(prn [x1 y1] [x2 y2]) ; DEBUG
-  (let [vertical (m/equalish? number-of-ulps x1 x2) ; 
-        [[x1 y1] [x2 y2]] (if vertical  ; vertical slope needs special handling 
-                            [[y1 x1] [y2 x2]]    ; swap x and y
-                            [[x1 y1] [x2 y2]])   ; otherwise make no change
-        slope (m/slope-from-coords [x1 y1] [x2 y2])
-        ;_ (prn slope) ; DEBUG
-        x-pos-dir? (<= x1 x2)
+  (let [x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
@@ -183,12 +177,13 @@
         y-comp (if y-pos-dir? > <)]  ;  gone too far
     (loop [x x1, y y1]
       (let [food (look-fn x y)]
-        (cond food  [food (if vertical [y x] [x y])] ; vertical means we swapped x and y
-              (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
-              :else  (let [xsh (+ x x-shift)
-                           ysh (+ y y-shift)]
-                       (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
-                              (if (y-comp ysh y2) y2 ysh))))))))
+        (or food
+            (if (and (= x x2) (= y y2)) ; last point. check both: horizontal or vertical lines
+              nil
+              (let [xsh (+ x x-shift)
+                    ysh (+ y y-shift)]
+                (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
+                       (if (y-comp ysh y2) y2 ysh)))))))))
 
 (defn path-with-food
   "Returns a vector containing first, found foodspots or nil, and second
@@ -208,8 +203,15 @@
   (let [stopsv (vec stops)
         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
     (loop [i 0, j 1]
-      (def last-endpts [(stopsv i) (stopsv j)]) ; DEBUG
-      (let [from+foodspots (find-in-seg look-fn eps (stopsv i) (stopsv j))]
+      ;(def last-endpts [(stopsv i) (stopsv j)]) ; DEBUG
+      (let [[x1 y1] (stopsv i)
+            [x2 y2] (stopsv j)
+            slope (m/slope-from-coords [x1 y1] [x2 y2])
+            steep (or (infinite? slope) (> 1 (abs slope))) ; by swapping x and y
+            [[x1 y1] [x2 y2]] (if steep      ; when > 45 degs, avoid verticals
+                                [[y1 x1] [y2 x2]]    ; swap x and y
+                                [[x1 y1] [x2 y2]])   ; otherwise make no change
+            from+foodspots (find-in-seg look-fn eps [x1 y1] [x2 y2])
         (if from+foodspots               ; all done--found food
           [(first from+foodspots)        ; the found food
            (conj (vec (take j stopsv))      ; replace end of stops with point
@@ -217,6 +219,8 @@
           (if (< j numstops-)
             (recur (inc i) (inc j))
             [nil stops])))))) ; no food in any segment; return entire input
+
+(if vertical [y x] [x y])
 
 (defn levy-foodwalk
   "Generates a random foodwalk starting from point init-loc in direction
