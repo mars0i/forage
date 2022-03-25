@@ -31,7 +31,7 @@
   [x]
   (= x ##Inf))
 
-;; Just a wrapper for Double/isNaN
+;; DEPRECATED: Added to clojure.core in 1.11
 (defn NaN?
   "Returns true if and only if x is ##NaN."
   [x]
