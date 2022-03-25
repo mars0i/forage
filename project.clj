@@ -3,7 +3,7 @@
   :url "https://github.com/mars0i/forage"
   :license {:name "GPL-3.0"
             :url "https://www.gnu.org/licenses/gpl-3.0.en.html"}
-  :dependencies [[org.clojure/clojure "1.10.3"]
+  :dependencies [[org.clojure/clojure "1.11.0"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [org.apache.commons/commons-math3 "3.6.1"]
                  [aerial.hanami "0.17.0"]
