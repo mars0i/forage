@@ -55,6 +55,10 @@
         h (System/identityHashCode (Object.))] ; int
     (+ t h)))
 
+(defn set-seed
+  "Resets the seed of rng to seed."
+  [rng seed]
+  (.setSeed rng seed))
 
 ;; NOTE: I've decided to flush some initial state from WELL generators,
 ;; and not only from MersenneTwisters, even though unlike MersenneTwisters, 
