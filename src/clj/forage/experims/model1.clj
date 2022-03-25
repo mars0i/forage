@@ -69,6 +69,6 @@
 
 
 (comment
-  (def successful (time (w/count-successful-walks (take 1000 (levy-fws rng 1 2)))))
+  (def successful (time (w/count-successful (take 1000 (levy-fws rng 1 2)))))
   (def successful (time (w/count-found-foodspots  (take 1000 (levy-fws rng 1 2)))))
 )
