@@ -9,7 +9,7 @@
   "This is used as the default number of ulp's for calls to 
   utils/math/equalish? in this namespace.  See the documentation for that
   function."
-  (nt/expt 2 20)) ; the resulting tolerance will still be quite small
+  (nt/expt 2.0 24)) ; the resulting tolerance will still be quite small
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
@@ -208,6 +208,7 @@
   (let [stopsv (vec stops)
         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
     (loop [i 0, j 1]
+      (def last-endpts [(stopsv i) (stopsv j)]) ; DEBUG
       (let [from+foodspots (find-in-seg look-fn eps (stopsv i) (stopsv j))]
         (if from+foodspots               ; all done--found food
           [(first from+foodspots)        ; the found food
@@ -270,7 +271,7 @@
 ;; These next two functions might return different results if foodspots
 ;; are randomly distributed.
 
-(defn count-successful-walks
+(defn count-successful
   "Returns the number of foodwalks that found any food."
   [foodwalks]
   (reduce (fn [tot walk]
