@@ -7,7 +7,7 @@
    [utils.random :as r]))
 
 (def seed (inc (r/make-seed)))
-;(def seed 1649589834894)
+(def seed 1650047888816)
 (println "SEED:" seed)
 
 (def perc-radius 1)  ; distance that an animal can "see" in searching for food
