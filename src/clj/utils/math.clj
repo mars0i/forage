@@ -65,7 +65,7 @@
       (let [xd (double x) ; Math/ulp doesn't work on integers
             yd (double y)
             ulp (min (Math/ulp xd) (Math/ulp yd))]
-        (<= (clojure.math.numeric-tower/abs (- xd yd))
+        (<= (nt/abs (- xd yd))
             (* n-ulps ulp)))))
 
 (defn rotate
