@@ -1,17 +1,17 @@
 WhatIsThisBranch.md
 ===
-This is branch **main**, formerly **origin-in-corner**.
 
-Some history:
+This branch forked from main o0n 3/25/2022 to explore the idea
+of flipping x and y more readily in walks.clj.  i.e. currently I flip
+them (temporarily) when the slope is vertical or nearly vertical.
+Otherwise the math doesn't work in practice, and we end up in an
+infinite or near-infinite loop.  
 
-Up until 2/16/2022, I had a single branch, **main**, and I always put
-the origin (0,0) in the center of the environment.  I was having trouble
-implementing toroidal paths for display in Vega-Lite.  The origin in the
-center seemed to complicate that.  I decided to try putting the origin
-in the corner (lower left), and created **origin-in-corner** for that
-purpose.  As of 2/18/2022, although I hadn't gotten toroidal display
-working (despite some apparent progress), I decided to continue placing
-the origin in the corner going forward, so I replaced **main** with
-**origin-in-corner**.  (The previous version of **main** is now
-preserved in branch **origin-in-center**, and the **origin-in-corner**
-branch preserves the state before the merge.)
+Currently I test for a vertical-ish slope by checking for equality or
+near-equality of the x coordinates that are the endpoints of a line
+segment.
+
+In this branch I want to explore swapping x and y whenever the absolute
+slope is is greater than 45 degrees.  (I also ought to test for slope in
+path-with-food rather than find-in-seg, since the former is called fewer
+times, and it has the endpoints of a full line segment.)
