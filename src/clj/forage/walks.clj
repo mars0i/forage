@@ -176,8 +176,8 @@
         x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
         y-comp (if y-pos-dir? > <)]  ;  gone too far
     (loop [x x1, y y1]
-      (let [food (look-fn x y)]
-        (or food
+      (let [food (look-fn x y)] ; FIXME WAIT DON'T I NEED TO SWAP x,y IF THEY WERE SWAPPED?
+        (or food                ;  OR PASS A DIFFERENT look-fn?
             (if (and (= x x2) (= y y2)) ; last point. check both: horizontal or vertical lines
               nil
               (let [xsh (+ x x-shift)
@@ -211,6 +211,7 @@
             [[x1 y1] [x2 y2]] (if steep      ; when > 45 degs, avoid verticals
                                 [[y1 x1] [y2 x2]]    ; swap x and y
                                 [[x1 y1] [x2 y2]])   ; otherwise make no change
+            ; TODO: undo the x,y swap at tend
             from+foodspots (find-in-seg look-fn eps [x1 y1] [x2 y2])
         (if from+foodspots               ; all done--found food
           [(first from+foodspots)        ; the found food
