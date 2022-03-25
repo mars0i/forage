@@ -167,11 +167,13 @@
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
   [look-fn eps [x1 y1] [x2 y2]]
+  ;(prn [x1 y1] [x2 y2]) ; DEBUG
   (let [vertical (m/equalish? number-of-ulps x1 x2) ; 
         [[x1 y1] [x2 y2]] (if vertical  ; vertical slope needs special handling 
                             [[y1 x1] [y2 x2]]    ; swap x and y
                             [[x1 y1] [x2 y2]])   ; otherwise make no change
         slope (m/slope-from-coords [x1 y1] [x2 y2])
+        ;_ (prn slope) ; DEBUG
         x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
@@ -266,12 +268,14 @@
     nil))
 
 ;; These next two functions might return different results if foodspots
-;; are randomly distributed:
+;; are randomly distributed.
 
 (defn count-successful-walks
   "Returns the number of foodwalks that found any food."
   [foodwalks]
-  (count (filter #(first %) foodwalks)))
+  (reduce (fn [tot walk]
+            (+ tot (if (first walk) 1 0)))
+          0 foodwalks))
 
 (defn count-found-foodspots
   "Returns the number of foodspots found by the foodwalks.  If it's
@@ -279,4 +283,4 @@
   [foodwalks]
   (reduce (fn [tot walk]
             (+ tot (count (first walk))))
-          foodwalks))
+          0 foodwalks))
