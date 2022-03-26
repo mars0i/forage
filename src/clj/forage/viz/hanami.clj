@@ -11,14 +11,16 @@
 ;; Note field names have to be strings, not keywords, in order
 ;; for vega-lite to make full use of them.
 
+;; TODO Rationalize parameter lists.
+
 (defn vega-gridwalk-plot
   "Configure a Vega-Lite plot to be filled with search path(s) for foodspots 
   represented by circles with size equal to the perceptual radius.  (Doesn't put 
   any foodspots or paths in the plot; just defines the overall plot configuration.)"
-  [perc-radius maxpathlen powerlaw-scale n-steps foodgrid-plot & walk-plots]
+  [perc-radius maxpathlen powerlaw-scale n-steps env-plot & walk-plots]
   (hc/xform
     ht/layer-chart
-    :LAYER (cons foodgrid-plot walk-plots)
+    :LAYER (cons env-plot walk-plots)
     :TITLE (str "perceptual radius = " perc-radius ";  "
                 "max path len = " maxpathlen ";  "
                 "scale = " powerlaw-scale ";  "
@@ -170,8 +172,29 @@
 (defn vega-env-plot
   "Plot foodspot display radii on where foodspots from env are."
   [env plot-dim display-radius]
-  (vega-food-plot (mf/all-foodspot-coords env)
+  (vega-food-plot (add-point-labels "food" (mf/all-foodspot-coords env))
                   (mf/env-size env)
                   plot-dim
                   display-radius))
+
+(defn did-couldve-walk-plot
+  "Given a single foodwalk consisting of a sequence of found foodspots,
+  a walk--a sequence of coordinates until the point at which food was 
+  found--and a sequence of coordinates for the entire possible walk,
+  creates a vega-lite plot of size plot-dim x plot-dim."
+  [plot-dim foodwalk]
+  (let [[food walk stops] foodwalk]
+    [(vega-walk-plot plot-dim (add-walk-labels "could've" stops))
+     (vega-walk-plot plot-dim (add-walk-labels "walk" walk))]))
+
+;; TODO add a nice header
+(defn vega-envwalk-plot
+  "Simple plot that plots whatever foodspots are in env and then
+  plots foodwalks and their hypothetical extensions."
+  [env plot-dim display-radius foodwalks]
+  (let [env-plot (vega-env-plot env plot-dim display-radius)
+        did-couldve-plots (mapcat (partial did-couldve-walk-plot plot-dim) foodwalks)]
+    (hc/xform
+     ht/layer-chart
+     :LAYER (cons env-plot did-couldve-plots))))
 
