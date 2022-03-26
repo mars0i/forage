@@ -176,25 +176,23 @@
   returned depends on look-fn, which should reflect the way that this 
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
-  [look-fn eps [x1 y1] [x2 y2]]
+  [look-fn x-eps y-eps x1 y1 x2 y2]
   ;(prn [x1 y1] [x2 y2]) ; DEBUG
   (let [x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
-        slope 'dummyval ; FIXME
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
         y-shift (if y-pos-dir? y-eps (- y-eps))
         x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
         y-comp (if y-pos-dir? > <)]  ;  gone too far
     (loop [x x1, y y1]
-      (let [food (look-fn x y)] ; FIXME WAIT DON'T I NEED TO SWAP x,y IF THEY WERE SWAPPED?
-        (or food                ;  OR PASS A DIFFERENT look-fn?
-            (if (and (= x x2) (= y y2)) ; last point. check both: horizontal or vertical lines
-              nil
-              (let [xsh (+ x x-shift)
-                    ysh (+ y y-shift)]
-                (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
-                       (if (y-comp ysh y2) y2 ysh)))))))))
+      (let [food (look-fn x y)]
+        (cond food  [food [x y]]
+              (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
+              :else (let [xsh (+ x x-shift)
+                          ysh (+ y y-shift)]
+                      (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
+                             (if (y-comp ysh y2) y2 ysh)))))))))
 
 ;; FIXME NOTE that in the main branch, when I swapped x and y because
 ;; the slope was vertical, I didn't swap them into look-fn, as I should
