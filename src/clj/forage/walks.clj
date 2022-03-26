@@ -11,6 +11,15 @@
   function."
   (nt/expt 2.0 24)) ; the resulting tolerance will still be quite small
 
+(def steep-slope-inf
+  "If a slope is greater than this value, the x and y coordinates will
+  be swapped temporarily and then unswapped later.  This is a way to
+  deal with both truly vertical slopes (slope = ##Inf) and slopes that are
+  so close to vertical that moving through a line segment with this slope
+  will be problematic.  It also sidesteps the problem of slopes that are
+  actually vertical, but don't appear so because of float slop."
+  1)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
 
@@ -138,23 +147,18 @@
   (if slope ; if not vertical
     (let [a (+ 1 (* slope slope))
           x-eps (/ eps a)
-          y-eps (nt/abs (* slope x-eps))]
+          y-eps (abs (* slope x-eps))]
       [x-eps y-eps])
     [0 eps]))
 
 
-(defn swap-args
+(defn swap-args-fn
   "Given a function that accepts two arguments, wraps it in a function
   that reverses the arguments and passes them to the original function."
   [f]
   (fn [x y] (f y x)))
 
 
-;; (Why am I checking for vertical slopes here and not
-;; in path-with-food?  Doing it here, it has to happen repeatedly.
-;; NO THAT'S WRONG.  The slope calculation occurs once for each
-;; line segment (here), and outside of the loop through microsegments.)
-;; 
 ;; See doc/xyshifts.md for notes about this function and xy-shifts.
 ;; Possibly store slope and/or intercept earlier; they were available
 ;; when the line pair was created.
@@ -177,12 +181,14 @@
   is checked, this function returns nil."
   [look-fn eps [x1 y1] [x2 y2]]
   ;(prn [x1 y1] [x2 y2]) ; DEBUG
-  (let [vertical (m/equalish? number-of-ulps x1 x2) ; 
-        [[x1 y1] [x2 y2]] (if vertical  ; vertical slope needs special handling 
+  (let [slope (m/slope-from-coords [x1 y1] [x2 y2])
+        steep (or (infinite? slope)
+                  (> (abs slope) steep-slope-inf))
+        slope (if steep (/ slope) slope)
+        look-fn (if steep (swap-args-fn look-fn) look-fn)
+        [[x1 y1] [x2 y2]] (if steep
                             [[y1 x1] [y2 x2]]    ; swap x and y
-                            [[x1 y1] [x2 y2]])   ; otherwise make no change
-        slope (m/slope-from-coords [x1 y1] [x2 y2])
-        ;_ (prn slope) ; DEBUG
+                            [[x1 y1] [x2 y2]])   ; make no change
         x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
@@ -191,9 +197,8 @@
         x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
         y-comp (if y-pos-dir? > <)]  ;  gone too far
     (loop [x x1, y y1]
-      (let [food (look-fn x y)] ; FIXME WAIT DON'T I NEED TO SWAP x, y IF VERTICAL? NO SEEMS TO WORK. BUT WHY??
-                                ; UH MAYBE ONLY FOR VERTICAL SLOPES.
-        (cond food  [food (if vertical [y x] [x y])] ; vertical means we swapped x and y
+      (let [food (look-fn x y)]
+        (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
               (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
               :else  (let [xsh (+ x x-shift)
                            ysh (+ y y-shift)]
