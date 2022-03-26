@@ -7,7 +7,7 @@
    [utils.random :as r]))
 
 (def seed (inc (r/make-seed)))
-(def seed 1650047888816)
+(def seed 1649988521705)
 (println "SEED:" seed)
 
 (def perc-radius 1)  ; distance that an animal can "see" in searching for food
@@ -69,6 +69,22 @@
 
 
 (comment
+  (def lfws (levy-fws rng 1 2))
+  (mf/foodspot-coords (first (first (nth lfws 2))))
+  (require '[oz.core :as oz] :reload)
+  ;(require '[forage.experims.manywalks1 :as mw])
+  (require '[forage.viz.hanami :as h] :reload)
+  (def plot (h/vega-envwalk-plot env 800 50 [(nth lfws 7)]))
+  (oz/view! plot)
+  (oz/start-server!)
+
+  [(mf/foodspot-coords (first (first (nth lfws 7))))
+   (last (second (nth lfws 7)))]
+
+  (prn (mf/foodspot-coords (first (first (nth lfws 7)))))
+  (prn (last (second (nth lfws 7)))
+
+
+
   (def successful (time (w/count-successful (take 1000 (levy-fws rng 1 2)))))
-  (def successful (time (w/count-found-foodspots  (take 1000 (levy-fws rng 1 2)))))
-)
+  (def successful (time (w/count-found-foodspots  (take 1000 (levy-fws rng 1 2))))))
