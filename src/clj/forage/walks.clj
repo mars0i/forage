@@ -182,7 +182,8 @@
         x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
         y-comp (if y-pos-dir? > <)]  ;  gone too far
     (loop [x x1, y y1]
-      (let [food (look-fn x y)] ; FIXME WAIT DON'T I NEED TO SWAP x, y IF VERTICAL?
+      (let [food (look-fn x y)] ; FIXME WAIT DON'T I NEED TO SWAP x, y IF VERTICAL? NO SEEMS TO WORK. BUT WHY??
+                                ; UH MAYBE ONLY FOR VERTICAL SLOPES.
         (cond food  [food (if vertical [y x] [x y])] ; vertical means we swapped x and y
               (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines
               :else  (let [xsh (+ x x-shift)
