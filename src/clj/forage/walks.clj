@@ -143,6 +143,18 @@
     [0 eps]))
 
 
+;; FIXME NOTE that in the main branch, when I swapped x and y because
+;; the slope was vertical, I didn't swap them into look-fn, as I should
+;; have.  This didn't appeaer to be a problem because the slopes are rarely
+;; vertical.  However, in this new scheme I will often swap x and y, so
+;; look-fn needs its arguments swapped as well.
+(defn swap-args
+  "Given a function that accepts two arguments, wraps it in a function
+  that reverses the arguments and passes them to the original function."
+  [f]
+  (fn [x y] (f y x)))
+
+
 ;; TODO FIXME ?  Why am I checking for vertical slopes here and not
 ;; in path-with-food?  Doing it here, it has to happen repeatedly.
 ;; 
