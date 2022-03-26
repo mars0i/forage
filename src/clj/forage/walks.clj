@@ -11,6 +11,15 @@
   function."
   (nt/expt 2.0 24)) ; the resulting tolerance will still be quite small
 
+(def steep-slope-inf
+  "If a slope is greater than this value, the x and y coordinates will
+  be swapped temporarily and then unswapped later.  This is a way to
+  deal with both truly vertical slopes (slope = ##Inf) and slopes that are
+  so close to vertical that moving through a line segment with this slope
+  will be problematic.  It also sidesteps the problem of slopes that are
+  actually vertical, but don't appear so because of float slop."
+  1)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
 
@@ -143,17 +152,6 @@
     [0 eps]))
 
 
-;; FIXME NOTE that in the main branch, when I swapped x and y because
-;; the slope was vertical, I didn't swap them into look-fn, as I should
-;; have.  This didn't appeaer to be a problem because the slopes are rarely
-;; vertical.  However, in this new scheme I will often swap x and y, so
-;; look-fn needs its arguments swapped as well.
-(defn swap-args
-  "Given a function that accepts two arguments, wraps it in a function
-  that reverses the arguments and passes them to the original function."
-  [f]
-  (fn [x y] (f y x)))
-
 
 ;; TODO FIXME ?  Why am I checking for vertical slopes here and not
 ;; in path-with-food?  Doing it here, it has to happen repeatedly.
@@ -182,6 +180,7 @@
   ;(prn [x1 y1] [x2 y2]) ; DEBUG
   (let [x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
+        slope 'dummyval ; FIXME
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
         y-shift (if y-pos-dir? y-eps (- y-eps))
@@ -196,6 +195,17 @@
                     ysh (+ y y-shift)]
                 (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
                        (if (y-comp ysh y2) y2 ysh)))))))))
+
+;; FIXME NOTE that in the main branch, when I swapped x and y because
+;; the slope was vertical, I didn't swap them into look-fn, as I should
+;; have.  This didn't appeaer to be a problem because the slopes are rarely
+;; vertical.  However, in this new scheme I will often swap x and y, so
+;; look-fn needs its arguments swapped as well.
+(defn swap-args
+  "Given a function that accepts two arguments, wraps it in a function
+  that reverses the arguments and passes them to the original function."
+  [f]
+  (fn [x y] (f y x)))
 
 (defn path-with-food
   "Returns a vector containing first, found foodspots or nil, and second
@@ -219,12 +229,13 @@
       (let [[x1 y1] (stopsv i)
             [x2 y2] (stopsv j)
             slope (m/slope-from-coords [x1 y1] [x2 y2])
-            steep (or (infinite? slope) (> 1 (abs slope))) ; by swapping x and y
-            [[x1 y1] [x2 y2]] (if steep      ; when > 45 degs, avoid verticals
+            steep (or (infinite? slope) (> (abs slope) steep-slope-inf)) ; by swapping x and y
+            [[x1 y1] [x2 y2]] (if steep      ; when steep, avoid verticals
                                 [[y1 x1] [y2 x2]]    ; swap x and y
                                 [[x1 y1] [x2 y2]])   ; otherwise make no change
-            ; TODO: undo the x,y swap at tend
-            from+foodspots (find-in-seg look-fn eps [x1 y1] [x2 y2])
+            look-fn' (if steep look-fn (swap-args look-fn))
+            ; TODO: undo the x,y swap at end
+            from+foodspots (find-in-seg look-fn' eps [x1 y1] [x2 y2])
         (if from+foodspots               ; all done--found food
           [(first from+foodspots)        ; the found food
            (conj (vec (take j stopsv))      ; replace end of stops with point
