@@ -143,10 +143,17 @@
     [0 eps]))
 
 
-;; Why am I checking for vertical slopes here and not
+(defn swap-args
+  "Given a function that accepts two arguments, wraps it in a function
+  that reverses the arguments and passes them to the original function."
+  [f]
+  (fn [x y] (f y x)))
+
+
+;; (Why am I checking for vertical slopes here and not
 ;; in path-with-food?  Doing it here, it has to happen repeatedly.
 ;; NO THAT'S WRONG.  The slope calculation occurs once for each
-;; line segment (here), and outside of the loop through microsegments.
+;; line segment (here), and outside of the loop through microsegments.)
 ;; 
 ;; See doc/xyshifts.md for notes about this function and xy-shifts.
 ;; Possibly store slope and/or intercept earlier; they were available
