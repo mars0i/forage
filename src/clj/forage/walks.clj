@@ -143,8 +143,10 @@
     [0 eps]))
 
 
-;; TODO FIXME ?  Why am I checking for vertical slopes here and not
+;; Why am I checking for vertical slopes here and not
 ;; in path-with-food?  Doing it here, it has to happen repeatedly.
+;; NO THAT'S WRONG.  The slope calculation occurs once for each
+;; line segment (here), and outside of the loop through microsegments.
 ;; 
 ;; See doc/xyshifts.md for notes about this function and xy-shifts.
 ;; Possibly store slope and/or intercept earlier; they were available
