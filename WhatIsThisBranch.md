@@ -1,6 +1,10 @@
 WhatIsThisBranch.md
 ===
 
+(ABANDONED BRANCH. I incorporated some ideas from this branch
+piecemeal into main branch.  Some assumptions in this branch were
+mistaken, though.)
+
 This branch forked from main o0n 3/25/2022 to explore the idea
 of flipping x and y more readily in walks.clj.  i.e. currently I flip
 them (temporarily) when the slope is vertical or nearly vertical.
