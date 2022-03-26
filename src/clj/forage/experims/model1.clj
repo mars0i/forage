@@ -7,7 +7,7 @@
    [utils.random :as r]))
 
 (def seed (inc (r/make-seed)))
-(def seed 1650047888816)
+(def seed 1649988521705)
 (println "SEED:" seed)
 
 (def perc-radius 1)  ; distance that an animal can "see" in searching for food
@@ -46,6 +46,7 @@
   [rng scale exponent]
   (repeatedly #(levy-fw rng scale exponent)))
 
+;; Could be defined with partial, but this way there's a docstring ; parameter to *this* function
 (defn straight-fw 
   "Generates straight foodwalk data.  Returns a vector triple containing
   (a) a sequence of found foodspots or nil if none found, (b) the
@@ -54,9 +55,9 @@
   including the stop after the foodspots were found.  See
   forage.walks/straight-foodwalk for further details."
   [init-dir]
-  (w/levy-foodwalk (partial mf/perc-foodspots-exactly env perc-radius) ; env, perc-radius defined above
-                   look-eps init-loc maxpathlen init-dir               ; also defined above
-                   init-dir)) ; parameters to this function
+  (w/straight-foodwalk (partial mf/perc-foodspots-exactly env perc-radius) ; env, perc-radius above
+                   look-eps init-loc maxpathlen                            ; also above
+                   init-dir))
 
 ;; Divide quadrant into n directions in radians:
 (def quadrant-100-directions  (doall (map #(* (/ % 100) (/ m/pi 2)) (range 100)))) 
@@ -67,8 +68,28 @@
   (map straight-fw init-dirs))
 
 
-
 (comment
+  (def sw (straight-fw (/ m/pi 2)))
+  (mf/foodspot-coords (first (first sw)))
+  (last (second sw))
+  (def plot (h/vega-envwalk-plot env 800 50 [sw]))
+
+  (def lfws (levy-fws rng 1 2))
+  (mf/foodspot-coords (first (first (nth lfws 2))))
+  (def plot (h/vega-envwalk-plot env 800 50 [(nth lfws 7)]))
+
+  (require '[oz.core :as oz] :reload)
+  ;(require '[forage.experims.manywalks1 :as mw])
+  (require '[forage.viz.hanami :as h] :reload)
+  (oz/start-server!)
+  (oz/view! plot)
+
+  [(mf/foodspot-coords (first (first (nth lfws 7))))
+   (last (second (nth lfws 7)))]
+
+  (prn (mf/foodspot-coords (first (first (nth lfws 7)))))
+  (prn (last (second (nth lfws 7)))
+
   (def successful (time (w/count-successful (take 1000 (levy-fws rng 1 2)))))
-  (def successful (time (w/count-found-foodspots  (take 1000 (levy-fws rng 1 2)))))
+  (def successful (time (w/count-found-foodspots  (take 1000 (levy-fws rng 1 2))))))
 )
