@@ -1,5 +1,5 @@
-(ns utils.math
-    (:require [clojure.math.numeric-tower :as nt]))
+(ns utils.math)
+; (:require [clojure.math.numeric-tower :as nt])
 
 
 ;; TODO Consider revising to use clojure.math in Clojure 1.11:
@@ -32,10 +32,10 @@
   (= x ##Inf))
 
 ;; DEPRECATED: Added to clojure.core in 1.11
-(defn NaN?
-  "Returns true if and only if x is ##NaN."
-  [x]
-  (Double/isNaN x))
+;(defn NaN?
+;  "Returns true if and only if x is ##NaN."
+;  [x]
+;  (Double/isNaN x))
 
 (defn slope-from-coords
   "Given a pair of points on a line, return its slope.  If the line is
@@ -65,7 +65,7 @@
       (let [xd (double x) ; Math/ulp doesn't work on integers
             yd (double y)
             ulp (min (Math/ulp xd) (Math/ulp yd))]
-        (<= (nt/abs (- xd yd))
+        (<= (abs (- xd yd))
             (* n-ulps ulp)))))
 
 (defn rotate
