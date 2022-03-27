@@ -110,6 +110,6 @@
   (count (filter #(first %) (take 200 lws)))
   (count (filter #(first %) sws100))
  
-  (profile-walks levy-walk     default-directions      seed 200 4)
-  (profile-walks straight-walk quadrant-200-directions seed 200 4)
+  (time (profile-walks levy-walk     default-directions      seed 1000 20))
+  (time (profile-walks straight-walk quadrant-200-directions seed 200 4))
 )

@@ -69,18 +69,24 @@
 
 
 (comment
-  (def sw (straight-fw (/ m/pi 2)))
+  (first (straight-fw (* m/pi 0.40)))
+  (def sw (straight-fw (* m/pi 0.40)))
+  (def sw (straight-fw (* m/pi 0.25)))
   (mf/foodspot-coords (first (first sw)))
   (last (second sw))
   (def plot (h/vega-envwalk-plot env 800 50 [sw]))
 
+  (def sws (straight-fws quadrant-100-directions))
+  (def fws (filter first sws))
+
   (def lfws (levy-fws rng 1 2))
   (mf/foodspot-coords (first (first (nth lfws 2))))
+  
+  (require '[forage.viz.hanami :as h] :reload)
   (def plot (h/vega-envwalk-plot env 800 50 [(nth lfws 7)]))
+  (def plot (h/vega-envwalk-plot env 800 50 sws))
 
   (require '[oz.core :as oz] :reload)
-  ;(require '[forage.experims.manywalks1 :as mw])
-  (require '[forage.viz.hanami :as h] :reload)
   (oz/start-server!)
   (oz/view! plot)
 
@@ -88,7 +94,7 @@
    (last (second (nth lfws 7)))]
 
   (prn (mf/foodspot-coords (first (first (nth lfws 7)))))
-  (prn (last (second (nth lfws 7)))
+  (prn (last (second (nth lfws 7))))
 
   (def successful (time (w/count-successful (take 1000 (levy-fws rng 1 2)))))
   (def successful (time (w/count-found-foodspots  (take 1000 (levy-fws rng 1 2))))))
