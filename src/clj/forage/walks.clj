@@ -5,12 +5,6 @@
               [utils.random :as r]
               [clojure.math.numeric-tower :as nt]))
 
-(def number-of-ulps 
-  "This is used as the default number of ulp's for calls to 
-  utils/math/equalish? in this namespace.  See the documentation for that
-  function."
-  (nt/expt 2.0 24)) ; the resulting tolerance will still be quite small
-
 ;; Setting this to 1 would give us symmetry between the swapped and
 ;; unswapped coordinates.  But swapping incurs a very small cost, and
 ;; the main point is to swap when slopes are very steep.  So one might
