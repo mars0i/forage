@@ -22,7 +22,7 @@
   so close to vertical that moving through a line segment with this slope
   will be problematic.  It also sidesteps the problem of slopes that are
   actually vertical, but don't appear so because of float slop."
-  1)
+  8)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
