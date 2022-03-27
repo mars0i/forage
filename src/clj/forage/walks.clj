@@ -5,6 +5,11 @@
               [utils.random :as r]
               [clojure.math.numeric-tower :as nt]))
 
+; [fastmath.core :as fm]
+; (use-primitive-operators)
+; (unuse-primitive-operators)
+
+
 ;; Setting this to 1 would give us symmetry between the swapped and
 ;; unswapped coordinates.  But swapping incurs a very small cost, and
 ;; the main point is to swap when slopes are very steep.  So one might

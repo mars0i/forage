@@ -1,6 +1,10 @@
 (ns utils.math
     (:require [clojure.math.numeric-tower :as nt]))
 
+; [fastmath.core :as fm]
+; (use-primitive-operators)
+; (unuse-primitive-operators)
+
 
 ;; TODO Consider revising to use clojure.math in Clojure 1.11:
 ;; https://clojure.org/news/2022/03/22/clojure-1-11-0
