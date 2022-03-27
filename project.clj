@@ -7,11 +7,11 @@
                  [org.clojure/math.numeric-tower "0.0.5"]
                  [org.apache.commons/commons-math3 "3.6.1"]
                  [aerial.hanami "0.17.0"]
-		 [techascent/tech.viz "6.00-beta-16-2"]
-		 [io.github.nextjournal/clerk "0.5.346"]
+                 [techascent/tech.viz "6.00-beta-16-2"]
+                 [io.github.nextjournal/clerk "0.5.346"]
                  [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
 		;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
-		 [metasoarous/oz "2.0.0-alpha5"]
+                 [metasoarous/oz "2.0.0-alpha5"]
                  [mason "20"]] ; just for Continuous2D
 
   :source-paths ["src/clj"]
@@ -31,15 +31,16 @@
                          :aot [forage.mason.foodspot
                                forage.mason.Sim
                                forage.mason.GUI
-                               forage.mason.core]
-                        }
+                               forage.mason.core]}
 
-             ;; Usage tip: lein with-profile +production
-             :production {:jvm-opts ["-Xms4g" ; small improvement--OK to drop down to run more processes
+;; Usage tip: lein with-profile +production
+             :production {;:dependencies [[generateme/fastmath "2.1.8"]
+                          :jvm-opts ["-Xms4g" ; small improvement--OK to drop down to run more processes
                                      "-XX:TieredStopAtLevel=4"]} ; 3X improvement
 
              ;; Usage tip: lein with-profile +production,profiling
-             :profiling  {:dependencies [[criterium "0.4.6"]
+             :profiling  {:dependencies [;[generateme/fastmath "2.1.8"]
+                                         [criterium "0.4.6"]
                                          ;[com.clojure-goes-fast/jvm-hiccup-meter "0.1.1"]
                                          [com.clojure-goes-fast/clj-async-profiler "0.5.1"]]
                           :jvm-opts ["-Djdk.attach.allowAttachSelf"   ; for clj-async-profile: needed for JDK9+
@@ -49,10 +50,9 @@
              :notespace {:dependencies [[scicloj/notespace "4-alpha-21"]
                                         [org.scicloj/tempfiles "1-alpha2"]
                                         [org.scicloj/kindly "1-alpha3"]]
-                         :repl-options {:nrepl-middleware [scicloj.notespace.v4.nrepl/middleware]}}
-            }
+                         :repl-options {:nrepl-middleware [scicloj.notespace.v4.nrepl/middleware]}}}
 
-  ;:repl-options {:init-ns forage.core}
+;:repl-options {:init-ns forage.core}
   ;:global-vars {*warn-on-reflection* true}
   ;:aot [forage.Sim forage.GUI]
   ; SEE pasta/project.clj for other lines here I might want to include
@@ -62,5 +62,4 @@
   ;;    lein localrepo install <jarfilename> <libname> <version num>'
   ;:plugins [[lein-localrepo "0.5.3"]
   ;          [lein-expand-resource-paths "0.0.1"]] ; allows wildcards in resource-paths (https://github.com/dchelimsky/lein-expand-resource-paths)
-
-)
+  )
