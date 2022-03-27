@@ -21,8 +21,8 @@ not agent-based at present.)  To use MASON, download mason.20.jar from
 https://cs.gmu.edu/~eclab/projects/mason .  (If you were going to use
 MASON in a full-fledged manner, you'd also need some other files as well.)
 Then install that jar file in your local Maven configuration so that Leiningen
-can find it.  In unix systems such as MacOS, the local Maven repoistory is in
-$HOME/.m2 .  You can use Leiningen to perform the installation if you want:
+can find it.  In unix systems such as MacOS, your local Maven repoistory is
+probably in $HOME/.m2 .  You can use Leiningen to perform the installation if you want:
 Temporarily add this line to project.clj (e.g. just before `:source-paths`).
 ```clojure
 :plugins [[lein-localrepo "0.5.3"]]
