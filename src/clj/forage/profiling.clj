@@ -6,6 +6,7 @@
    [forage.mason.foodspot :as mf]
    [utils.math :as m]
    [utils.random :as r]
+   ;[criterium.core :as crit]
    [clj-async-profiler.core :as prof]))
 
 ;(def seed (inc (r/make-seed)))
@@ -102,6 +103,7 @@
 
 
 (comment
+
   (def lws (map levy-walk (repeat default-direction)))
   (def sws100 (map straight-walk quadrant-100-directions))
   (def sws200 (map straight-walk quadrant-200-directions))

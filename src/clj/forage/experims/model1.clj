@@ -97,5 +97,12 @@
   (prn (last (second (nth lfws 7))))
 
   (def successful (time (w/count-successful (take 1000 (levy-fws rng 1 2)))))
-  (def successful (time (w/count-found-foodspots  (take 1000 (levy-fws rng 1 2))))))
+  (def successful (time (w/count-found-foodspots  (take 1000 (levy-fws rng 1 2)))))
+
+  (require '[criterium.core :as crit])
+  (time (crit/quick-bench
+          (def successful
+            (do (r/set-seed rng seed)
+                (w/count-successful (take 1000 (levy-fws rng 1 2)))))))
+
 )
