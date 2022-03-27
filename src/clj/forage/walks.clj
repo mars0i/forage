@@ -11,6 +11,10 @@
   function."
   (nt/expt 2.0 24)) ; the resulting tolerance will still be quite small
 
+;; Setting this to 1 would give us symmetry between the swapped and
+;; unswapped coordinates.  But swapping incurs a very small cost, and
+;; the main point is to swap when slopes are very steep.  So one might
+;; as well set this value much higher than 1, but not too high.
 (def steep-slope-inf
   "If a slope is greater than this value, the x and y coordinates will
   be swapped temporarily and then unswapped later.  This is a way to
