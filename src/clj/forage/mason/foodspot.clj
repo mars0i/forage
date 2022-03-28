@@ -22,7 +22,15 @@
   ([x y nutrition] (->Foodspot x y nutrition)))
 
 (defn foodspot-coords
+  "Returns the coordinates of a foodspot."
   [^Foodspot foodspot]
+  [(.x foodspot) (.y foodspot)])
+
+(defn foodspot-coords*
+  "Does the same thing as foodspot-coords, but without the type hint.  Therefore
+  this function might be slightly slower in some contexts, but it can be more
+  flexible when this file is repeatedly reloaded during testing."
+  [foodspot]
   [(.x foodspot) (.y foodspot)])
 
 (defn add-foodspots
