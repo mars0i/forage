@@ -67,6 +67,21 @@
   [init-dirs]
   (map straight-fw init-dirs))
 
+(defn foodspot-coords-if-found
+  "Given a triple returned by walks/levy-foodwalk or walks/straight-foodwalk,
+  returns the coordinates of the first found foodspot, or nil if there are none.
+  Note that this uses foodspot/foodspot-coords* , which shouldn't be used in
+  production code."
+  [[found-foodspot-seq _ _]]
+  (if found-foodspot-seq
+    (mf/foodspot-coords* (first found-foodspot-seq))
+    nil))
+
+(defn foodspot-coords-if-found-seq
+  "Maps foodspot-coords-if-found over each element in a sequence of returned
+  foodwalk triples and returns the resulting (lazy) sequence."
+  [foodwalks]
+  (map foodspot-coords-if-found foodwalks))
 
 (comment
   (first (straight-fw (* m/pi 0.40)))
@@ -97,6 +112,8 @@
   (prn (last (second (nth lfws 7))))
 
   (def lfws1 (doall (take 1000 (levy-fws rng 1 2))))
+
+  (= (foodspot-coords-if-found-seq lfws1) (foodspot-coords-if-found-seq lfws0125))
 
   (def successful (time (w/count-successful (take 1000 (levy-fws rng 1 2)))))
   (def successful (time (w/count-found-foodspots  (take 1000 (levy-fws rng 1 2)))))
