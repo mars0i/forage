@@ -238,8 +238,10 @@
                  (second from+foodspots))]  ; on path from which food found
           (if (< j numstops-)
             (recur (inc i) (inc j))
-            [nil stops])))))) ; no food in any segment; return entire input
+            [nil stopsv])))))) ; no food in any segment; return entire input
 
+;; NOTE: CURRENTLY ADDING doall AROUND walk-stops TO MAKE SURE THAT THE
+;; PRNG IS CALLED EXACTLY THE SAME NUMBER OF TIMES IF I RERUN THIS.
 (defn levy-foodwalk
   "Generates a random foodwalk starting from point init-loc in direction
   init-dir, and returns a vector triple containing (a) a sequence of found
@@ -260,10 +262,13 @@
                          (repeatedly
                            (step-vector-fn dir-dist len-dist 1 trunclen)))
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
-         stop-walk (walk-stops init-loc step-walk) ; lazy if no vec wrapper , at least after first cons
+         stop-walk (doall (walk-stops init-loc step-walk)) ; lazy if no vec wrapper , at least after first cons
          walk-with-food (path-with-food look-fn look-eps stop-walk)] ; it's a vec, but second element is lazy if food was not found; else it's a vec
      (conj walk-with-food stop-walk))))
 
+;; NOTE: CURRENTLY ADDING vec AROUND walk-stops TO MAKE SURE THAT THE
+;; PRNG IS CALLED EXACTLY THE SAME NUMBER OF TIMES IF I RERUN THIS.
+;; (Probably completely irrelevant since only two points.)
 (defn straight-foodwalk
   "Generates a straight foodwalk starting from point init-loc in direction
   init-dir, and returns a vector triple containing (a) a sequence of found
@@ -276,7 +281,7 @@
   beginning from init-loc."
   [look-fn look-eps init-loc maxpathlen init-dir]
   (let [step-walk [[init-dir maxpathlen]] ; a single step of the whole length
-        stop-walk (walk-stops init-loc step-walk) ; contains exacty 2 points
+        stop-walk (vec (walk-stops init-loc step-walk)) ; contains exacty 2 points
         walk-with-food (path-with-food look-fn look-eps stop-walk)]
     (conj walk-with-food stop-walk)))
 
