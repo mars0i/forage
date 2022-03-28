@@ -5,15 +5,19 @@
               [utils.random :as r]
               [clojure.math.numeric-tower :as nt]))
 
+;; Try this?
 ; [fastmath.core :as fm]
 ; (use-primitive-operators)
 ; (unuse-primitive-operators)
+;; Note find-in-seg passes around the functions <, > .  This
+;; might not work with fastmath.
 
 
 ;; Setting this to 1 would give us symmetry between the swapped and
-;; unswapped coordinates.  But swapping incurs a very small cost, and
-;; the main point is to swap when slopes are very steep.  So one might
-;; as well set this value much higher than 1, but not too high.
+;; unswapped coordinates.  Seems as if it would improve performance
+;; slightly to have a higher value, since then the x,y swap operations
+;; would happen less often.  However, benchmarking shows otherwise.
+;; See steep-slope-inf-benchmarks.txt.
 (def steep-slope-inf
   "If a slope is greater than this value, the x and y coordinates will
   be swapped temporarily and then unswapped later.  This is a way to
