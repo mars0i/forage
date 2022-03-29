@@ -1,4 +1,4 @@
-(ns forage.experims.xyshiftsbench
+(ns forage.explore.xyshiftsbench
     (:require
       ;[clojure.math.numeric-tower :as nt]
       [forage.walks :as w]

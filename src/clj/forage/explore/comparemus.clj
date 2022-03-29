@@ -1,6 +1,6 @@
 ;; Compare effects of on walks of different values for mu.
 ;; No food search.
-(ns forage.experims.comparemus
+(ns forage.explore.comparemus
     (:require 
       [aerial.hanami.common :as hc]
       [aerial.hanami.templates :as ht]

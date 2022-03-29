@@ -1,4 +1,4 @@
-(ns forage.experims.manywalks1
+(ns forage.explore.manywalks1
   (:require 
     [forage.viz.hanami :as h]
     [forage.walks :as w]

@@ -1,4 +1,4 @@
-(ns forage.experims.model2
+(ns forage.explore.model1
   (:require
    [forage.walks :as w]
    [forage.food :as f]
@@ -7,7 +7,7 @@
    [utils.random :as r]))
 
 (def seed (inc (r/make-seed)))
-;(def seed 1649988521705)
+(def seed 1649988521705)
 (println "SEED:" seed)
 
 (def perc-radius 1)  ; distance that an animal can "see" in searching for food
@@ -84,5 +84,49 @@
   (map foodspot-coords-if-found foodwalks))
 
 (comment
+  (first (straight-fw (* m/pi 0.40)))
+  (def sw (straight-fw (* m/pi 0.40)))
+  (def sw (straight-fw (* m/pi 0.25)))
+  (mf/foodspot-coords (first (first sw)))
+  (last (second sw))
+  (def plot (h/vega-envwalk-plot env 800 50 [sw]))
 
-        )
+  (def sws (straight-fws quadrant-100-directions))
+  (def fws (filter first sws))
+
+  (def lfws (levy-fws rng 1 2))
+  (mf/foodspot-coords (first (first (nth lfws 2))))
+
+  (require '[forage.viz.hanami :as h] :reload)
+  (def plot (h/vega-envwalk-plot env 800 50 [(nth lfws 7)]))
+  (def plot (h/vega-envwalk-plot env 800 50 sws))
+
+  (require '[oz.core :as oz] :reload)
+  (oz/start-server!)
+  (oz/view! plot)
+
+  [(mf/foodspot-coords (first (first (nth lfws 7))))
+   (last (second (nth lfws 7)))]
+
+  (prn (mf/foodspot-coords (first (first (nth lfws 7)))))
+  (prn (last (second (nth lfws 7))))
+
+  (def lfws1 (doall (take 1000 (levy-fws rng 1 2))))
+
+  (= (foodspot-coords-if-found-seq lfws1) (foodspot-coords-if-found-seq lfws0125))
+
+  (def successful (time (w/count-successful (take 1000 (levy-fws rng 1 2)))))
+  (def successful (time (w/count-found-foodspots  (take 1000 (levy-fws rng 1 2)))))
+
+  (require '[criterium.core :as crit])
+  (time (crit/quick-bench
+         (def successful
+           (do (r/set-seed rng seed)
+               (w/count-successful (take 1000 (levy-fws rng 1 2)))))))
+
+  (time (crit/quick-bench
+          (def lfws1 (do (r/set-seed rng seed)
+                        (doall (take 1000 (levy-fws rng 1 2)))))))
+
+
+)

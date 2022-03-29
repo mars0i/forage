@@ -1,4 +1,4 @@
-(ns forage.experims.foodwalk2
+(ns forage.explore.foodwalk2seed1645858441039
     (:require 
       ;[aerial.hanami.common :as hc]
       ;[aerial.hanami.templates :as ht]
@@ -19,28 +19,27 @@
 ;; mostly did not find food.  The saved seed is for one case in which it
 ;; finally did.)
 
-(def seed (inc (r/make-seed)))
-;(def seed 1645858441039) ; THIS SEED ALLOWS LEVY PATH TO FIND FOOD
-(println "SEED:" seed)
-(def rng (r/make-well19937 seed))
-
 ;; NOTE display-radius is much larger than actual perc-radius, so paths
 ;; appear to see foodspots, but they don't.  (But if food-distance is set to
 ;; 100, many paths succeed.)
 (def perc-radius 1)  ; distance that an animal can "see" in searching for food
-(def display-radius 50) ; if want foodspots to be displayed larger
-(def food-distance 200)
+(def display-radius 100) ; if want foodspots to be displayed larger
+(def food-distance 1000)
 (def env-size 20000) ; full width of env
 (def half-size (/ env-size 2))
 (def powerlaw-scale 1) ; scale parameter of distribution
 (def powerlaw-exponent 2) ; must be > 1; 2 supposed to be optimal sparse targets
-(def maxpathlen half-size) ; max length of a path (sequence of line segments)
-(def trunclen half-size)   ; max length of any line segment
+(def maxpathlen 50000) ; max length of a path (sequence of line segments)
+(def trunclen 50000)   ; max length of any line segment
 (def intra-seg-epsilon 0.1) ; increment within line segments for food check
 
 ;; For Hanami/vega-lite plots, size of plot display:
 (def plot-dim 700)
 
+;(def seed (inc (r/make-seed)))
+(def seed 1645858441039) ; THIS SEED ALLOWS LEVY PATH TO FIND FOOD
+(println "SEED:" seed)
+(def rng (r/make-well19937 seed))
 (def dist (r/make-powerlaw rng powerlaw-scale powerlaw-exponent))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -55,7 +54,7 @@
 ;; STRAIGHT PATHS
 
 ;; FIXME Can't go to the vertical, i.e. pi/2, until fix forage.walks to handle it
-(def step-walks (map (fn [t] [[(* (/ t 80) m/pi) maxpathlen]]) (range 41)))
+(def step-walks (map (fn [t] [[(* (/ t 80) m/pi) half-size]]) (range 40)))
 
 ;; Corresponding path of coordinate pairs:
 (def stop-walks (map (fn [step-walk] 
