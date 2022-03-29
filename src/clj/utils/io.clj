@@ -1,4 +1,4 @@
-(ns utils.fileio
+(ns utils.io
   (:require [clojure.data.csv :as csv]
             [clojure.java.io :as io]))
 
