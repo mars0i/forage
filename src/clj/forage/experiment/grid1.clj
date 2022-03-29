@@ -10,24 +10,26 @@
 ;(def seed 1649988521705)
 (println "SEED:" seed)
 
-(def perc-radius 1)  ; distance that an animal can "see" in searching for food
-(def food-distance 200)
-(def env-size 20000) ; full width of env
-(def half-size (/ env-size 2))
-(def init-loc [half-size half-size])
-(def init-dir 0)
-(def maxpathlen half-size) ; for straight walk should be <= env-size/2 because will start at (env-size, env-size)
-(def trunclen maxpathlen)   ; max length of any line segment
-(def default-direction 0)
-(def powerlaw-scale 1) ; scale parameter of distribution
-(def powerlaw-exponent 2) ; must be > 1; 2 supposed to be optimal sparse targets
-(def look-eps 0.1) ; increment within line segments for food check
-(def env (mf/make-env food-distance env-size
-                      (f/centerless-rectangular-grid food-distance
-                                                     env-size
-                                                     env-size)))
-(def rng (r/make-well19937 seed))
+(def params (sorted-map
+              :perc-radius 1  ; distance that an animal can "see" in searching for food
+              :food-distance 200
+              :env-size 20000 ; full width of env
+              :half-size (/ env-size 2)
+              :init-loc [half-size half-size]
+              :init-dir 0
+              :maxpathlen half-size ; for straight walk should be <= env-size/2 because will start at (env-size, env-size)
+              :trunclen maxpathlen   ; max length of any line segment
+              :default-direction 0
+              :look-eps 0.1 ; increment within line segments for food check
+             )
+;:powerlaw-scale 1 ; scale parameter of distribution
+;:powerlaw-exponent 2 ; must be > 1; 2 supposed to be optimal sparse targets
 
+(def exponents [1.01 1.5 2 2.5 3])
+(def scales [1 2 4 8])
+
+
+;; FIXME REMOVE THIS WHEN READY
 (defn levy-fw 
   "Generates Levy foodwalk data from a Levy walk using uniformly distributed
   directions and power-law-distributed step lengths with given scale and
@@ -42,9 +44,39 @@
                    look-eps init-loc maxpathlen init-dir trunclen      ; also defined above
                    rng scale exponent)) ; parameters to this function
 
+
+;; FIXME REMOVE THIS WHEN READY
 (defn levy-fws
   [rng scale exponent]
   (repeatedly #(levy-fw rng scale exponent)))
+
+
+(defn levy-experiments
+  [num-walks seed params scales exponents]
+  (let [rng (r/make-well19937 seed)
+        env (mf/make-env (params :food-distance)
+                         (params :env-size)
+                         (f/centerless-rectangular-grid (params :food-distance)
+                                                        (params :env-size)
+                                                        (params :env-size)))
+        look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius))
+        data 'fixme] ;; initialize with header row here
+    (doseq [scale scales
+            exponent exponents]
+      (let [sim-fn #(w/levy-foodwalk look-fn (params :look-eps) (params :init-loc)
+                                     (params :maxpathlen) (params :init-dir)
+                                     (params :trunclen) rng
+                                     scale exponent)
+            foodwalks+ (doall (repeatedly num-walks sim-fn))
+            found (w/count-found-foodspots foodwalks+)
+            segments (reduce + (map #(dec (count %))
+                                    (third foodwalks+)))]
+        ; append data row to data
+        ))
+  ; write data to file
+  ))
+
+
 
 ;; Could be defined with partial, but this way there's a docstring ; parameter to *this* function
 (defn straight-fw 
