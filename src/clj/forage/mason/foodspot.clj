@@ -113,3 +113,12 @@
   (f/perc-foodspot-coords-in-coll (all-foodspot-coords env)
                                   perc-radius coords))
 
+(defn foodspot-coords-if-found
+  "Given a triple returned by walks/levy-foodwalk or walks/straight-foodwalk,
+  returns the coordinates of the first found foodspot, or nil if there are none.
+  Note that this uses foodspot/foodspot-coords* , which shouldn't be used in
+  production code."
+  [found-foodspot-seq]
+  (if found-foodspot-seq
+    (foodspot-coords (first found-foodspot-seq))
+    nil))
