@@ -2,6 +2,7 @@
   (:require
    [forage.walks :as w]
    [forage.food :as f]
+   [forage.io :as io]
    [forage.mason.foodspot :as mf]
    [utils.math :as m]
    [utils.random :as r]))
@@ -38,6 +39,7 @@
 
 
 (defn levy-experiments
+
   [num-walks seed parms scales exponents]
   (let [rng (r/make-well19937 seed)
         env (mf/make-env (parms :food-distance)
@@ -46,7 +48,8 @@
                                                         (parms :env-size)
                                                         (parms :env-size)))
         look-fn (partial mf/perc-foodspots-exactly env (parms :perc-radius))
-        data 'fixme] ;; initialize with header row here
+        data$ (atom (io/append-labels
+                      (concat ["found" "segments" "seed"] (keys parms))))]
     (doseq [scale scales
             exponent exponents]
       (let [sim-fn #(w/levy-foodwalk look-fn (parms :look-eps) (parms :init-loc)
@@ -56,8 +59,9 @@
             foodwalks+ (doall (repeatedly num-walks sim-fn))
             found (w/count-found-foodspots foodwalks+)
             segments (w/count-segments 2 foodwalks+)]
-        ; append data row to datap
-        ))
+        (swap! data$ (concat [found segments seed]
+                             (vals (update parms :init-loc str)))))) ; repeated since it's a flat file ¯\_(ツ)_/¯
+    @data$ ; temporary
   ; write data to file
   ))
 
