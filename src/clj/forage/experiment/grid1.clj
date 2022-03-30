@@ -11,11 +11,14 @@
 (println "SEED:" seed)
 
 
+(def exponents [1.01 1.5 2 2.5 3])
+(def scales [1 2 4 8])
+
+
 (def env-size 20000) ; full width of env
 (def half-size (/ env-size 2))
 
-;; For straight walk should be <= env-size/2 because
-;; will start at (env-size, env-size):
+;; For straight walk s/b <= env-size/2: starts at (env-size, env-size):
 (def maxpathlen half-size)
 
 (def params (sorted-map
@@ -32,11 +35,6 @@
              ))
 ;:powerlaw-scale 1 ; scale parameter of distribution
 ;:powerlaw-exponent 2 ; must be > 1; 2 supposed to be optimal sparse targets
-
-(def exponents [1.01 1.5 2 2.5 3])
-(def scales [1 2 4 8])
-
-
 
 
 (defn levy-experiments
