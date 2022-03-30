@@ -345,3 +345,11 @@
   (reduce (fn [tot walk]
             (+ tot (count (first walk))))
           0 foodwalks))
+
+(defn count-segments
+  "idx should be either 1 for the walk until food found, or 2 for 
+  the full walks including after where food might be fond."
+  [idx foodwalks+]
+  (reduce + (fn [tot fw]
+              (+ tot (dec (count (nth fw idx))))) ; dec since endpoints = segments + 1
+          foodwalks+))
