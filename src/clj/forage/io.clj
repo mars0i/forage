@@ -33,15 +33,17 @@
   collection, appends a new row to existing rows and returns the result.
   Apart from params being a sequence, there are no restrictions on content,
   so this can be used to write a row of labels as well."
-  ([seed params found-count total-segment-count]
-   (append-row-from-runs [] seed params found-count total-segment-count))
-  ([prev-rows seed params found-count total-segment-count]
-   (conj prev-rows (concat [seed] params [found-count total-segment-count]))))
+  ([values]
+   (append-row-from-runs [] values))
+  ([prev-rows values]
+   (conj prev-rows values)))
+
 
 (defn append-labels
-  "Appends a new row with standard labels in addition to param-names.  Uses 
-  append-row-from-runs."
+  "Appends a new row of labels.  param-names is a sequence containing
+  strings, keywords, or symbols, which will be converted to strings as
+  needed."
   ([param-names]
-   (append-row-from-runs "seed" param-names "found" "segments"))
+   (append-row-from-runs (map name param-names)))
   ([prev-rows param-names] 
-   (append-row-from-runs prev-rows "seed" param-names "found" "segments")))
+   (append-row-from-runs prev-rows (map name param-names))))
