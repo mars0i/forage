@@ -12,35 +12,31 @@
 (println "SEED:" seed)
 
 
+;; Alternative parameters for powerlaw distribution:
 (def exponents [1.01 1.5 2 2.5 3])
 (def scales [1 2 4 8])
 
-
-(def env-size 20000) ; full width of env
-(def half-size (/ env-size 2))
-
 ;; For straight walk s/b <= env-size/2: starts at (env-size, env-size):
-(def maxpathlen half-size)
 
-(def params (sorted-map
-              :perc-radius 1  ; distance that an animal can "see" in searching for food
-              :food-distance 200
-              :env-size env-size
-              :half-size half-size
-              :init-loc [half-size half-size]
-              :init-dir 0
-              :maxpathlen maxpathlen
-              :trunclen maxpathlen   ; max length of any line segment
-              :default-direction 0
-              :look-eps 0.1 ; increment within line segments for food check
+(def half-size 10000) ; half the full width of the env
+(def params (sorted-map ; sort so labels match values
+              :perc-radius       1  ; distance that an animal can "see" in searching for food
+              :food-distance     200
+              :env-size          (* 2 half-size)
+              :init-loc          [half-size half-size] ; i.e. center of env
+              :init-dir          0 ; initial direction in radians
+              :maxpathlen        half-size  ; for straight walks, don't go too far
+              :trunclen          half-size  ; max length of any line segment
+              :look-eps          0.1 ; increment within segments for food check
              ))
-;:powerlaw-scale 1 ; scale parameter of distribution
-;:powerlaw-exponent 2 ; must be > 1; 2 supposed to be optimal sparse targets
-
 
 (defn levy-experiments
-
-  [num-walks seed parms scales exponents]
+  "Uses seed to seed a PRNG. Uses combined parameters in map parms.  Then
+  for each scale in scales and exponent in exponents, creates a powerlaw
+  (Pareto) distribution using that scale and exponent.  Then runs 
+  walks-per-combo Levy-walk-style food searches using that combination of
+  parameters.  The results are written to a file."
+  [seed parms walks-per-combo scales exponents]
   (let [rng (r/make-well19937 seed)
         env (mf/make-env (parms :food-distance)
                          (parms :env-size)
@@ -56,7 +52,7 @@
                                      (parms :maxpathlen) (parms :init-dir)
                                      (parms :trunclen) rng
                                      scale exponent)
-            foodwalks+ (doall (repeatedly num-walks sim-fn))
+            foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
             found (w/count-found-foodspots foodwalks+)
             segments (w/count-segments 2 foodwalks+)]
         (swap! data$ (concat [found segments seed]
