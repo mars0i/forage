@@ -16,7 +16,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANAMI SPACE PARAMETERS:
 
-(def env-size 1600)
+(def env-size 5000)
 (def half-size (/ env-size 2))
 (def plot-dim 700)
 
@@ -26,10 +26,15 @@
 ;; $\mu \approx 1$ is is a "ballistic" Levy walk.
 ;; $\mu = 2$ is the theoretical optimum for searches.
 ;; $\mu = 3$ is a Brownian walk.
-(def mus [1.000001 2 2.2 3])  ; mu near 1: decimal digits have big effect on speed
-; (def mus [2])
+;(def mus [1.000001 2 2.2 3])  ; mu near 1: decimal digits have big effect on speed
+;(def mus [1.000001 2 3])  ; mu near 1: decimal digits have big effect on speed
+(def mus [2])  ; mu near 1: decimal digits have big effect on speed
+;(def scales [1 8])
+;(def scales [1 10 100])
+(def scales [1 100 1000])
+(def scale-mus (for [scale scales, mu mus] [scale mu]))
 
-(def maxpathlen 2000)
+(def maxpathlen 5000)
 (def trunclen 2005)
 (def perceptual-radius 20) 
 (def food-distance 200)
@@ -45,7 +50,10 @@
 (def seed (inc (r/make-seed)))
 (def rng (r/make-well19937 seed))
 
-(def dists (map (partial r/make-powerlaw rng powerlaw-scale) mus))
+;(def dists (map (partial r/make-powerlaw rng powerlaw-scale) mus))
+(def dists (map (fn [[scale mu]] (r/make-powerlaw rng scale mu))
+                scale-mus))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -68,10 +76,11 @@
                       (w/walk-stops [half-size half-size] step-seq))
                     step-seqs))
 
-;; Infinite sequences of stopes labeled for Hanami/Vega-Lite:
-(def vl-stop-seqs (map (fn [mu stop-seq]
-                           (h/add-walk-labels (str "mu=" mu) stop-seq))
-                       mus stop-seqs))
+;; Infinite sequences of stops labeled for Hanami/Vega-Lite:
+(def vl-stop-seqs (map (fn [[scale mu] stop-seq]
+                           (h/add-walk-labels (str "mu=" mu ",scale=" scale)
+                                            stop-seq))
+                       scale-mus stop-seqs))
 
 ;; Number of steps in each path:
 (def n-steps (map count step-seqs))
