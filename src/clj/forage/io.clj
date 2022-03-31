@@ -26,7 +26,7 @@
    (with-open [w (apply io/writer filename options)]
      (csv/write-csv w rows)))
 
-(defn append-row-from-runs
+(defn append-row
   "Given a value for seed, a sequence of parameters, a count of found
   foodspots in a collection of runs, and the total number of segments in
   all of the full walks (before truncation due to finding food) in the
@@ -34,9 +34,9 @@
   Apart from params being a sequence, there are no restrictions on content,
   so this can be used to write a row of labels as well."
   ([values]
-   (append-row-from-runs [] values))
+   (append-row [] values))
   ([prev-rows values]
-   (conj prev-rows values)))
+   (conj (vec prev-rows) values)))
 
 
 (defn append-labels
@@ -44,6 +44,7 @@
   strings, keywords, or symbols, which will be converted to strings as
   needed."
   ([param-names]
-   (append-row-from-runs (map name param-names)))
+   (append-row (map name param-names)))
   ([prev-rows param-names] 
-   (append-row-from-runs prev-rows (map name param-names))))
+   (append-row prev-rows (map name param-names))))
+
