@@ -15,10 +15,14 @@
 ;; Alternative parameters for powerlaw distribution:
 (def exponents [1.01 1.5 2 2.5 3])
 (def scales [1 2 4 8])
-
-;; For straight walk s/b <= env-size/2: starts at (env-size, env-size):
-
 (def half-size 10000) ; half the full width of the env
+
+
+(comment
+  (def exponents [2 3]) ; TESTING/DEBUG
+  (def scales [1 2])    ; TESTING/DEBUG
+)
+
 (def params (sorted-map ; sort so labels match values
               :perc-radius       1  ; distance that an animal can "see" in searching for food
               :food-distance     200
@@ -37,15 +41,24 @@
   walks-per-combo Levy-walk-style food searches using that combination of
   parameters.  The results are written to a file."
   [seed parms walks-per-combo scales exponents]
-  (let [rng (r/make-well19937 seed)
+  (let [param-filename (str "parameters" seed ".csv")
+        data-filename (str "data" seed ".csv")
+        rng (r/make-well19937 seed)
         env (mf/make-env (parms :food-distance)
                          (parms :env-size)
                          (f/centerless-rectangular-grid (parms :food-distance)
                                                         (parms :env-size)
                                                         (parms :env-size)))
         look-fn (partial mf/perc-foodspots-exactly env (parms :perc-radius))
-        data$ (atom (io/append-labels
-                      (concat ["found" "segments" "seed"] (keys parms))))]
+        data$ (atom (io/append-labels ["scale" "exponent" "found" "segments"]))
+        param-labels (io/append-labels (cons "seed" (keys parms)))
+        param-data (io/append-row param-labels
+                                  (cons seed  ; need to replace coord pair with string:
+                                        (vals (update parms :init-loc str))))]
+    (io/spit-csv param-filename param-data)
+    
+    ;(def fw$ (atom [])) ; DEBUG
+
     (doseq [scale scales
             exponent exponents]
       (let [sim-fn #(w/levy-foodwalk look-fn (parms :look-eps) (parms :init-loc)
@@ -55,45 +68,24 @@
             foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
             found (w/count-found-foodspots foodwalks+)
             segments (w/count-segments 2 foodwalks+)]
-        (swap! data$ (concat [found segments seed]
-                             (vals (update parms :init-loc str)))))) ; repeated since it's a flat file ¯\_(ツ)_/¯
-    @data$ ; temporary
-  ; write data to file
+        ;(swap! fw$ conj foodwalks+) ; DEBUG
+        (swap! data$ conj [scale exponent found segments])))
+
+    (io/spit-csv data-filename @data$)
+    ;@data$ ; DEBUG
   ))
 
 
-;      (let [sim-fn #(w/levy-foodwalk look-fn (parms :look-eps) (parms :init-loc)
-;                                     (parms :maxpathlen) (parms :init-dir)
-;                                     (parms :trunclen) rng
-;                                     scale exponent)
-;            foodwalks+ (doall (repeatedly num-walks sim-fn))
-
+(comment
+  (use 'clojure.pprint)
+  (:perc-radius params)
+  (def data (levy-experiments seed params 2 scales exponents))
+  (pprint data)
+  (pprint fw+)
+)
 
 ;;;;;;;;;;;;;;;;;;;
 ;; OLD STUFF
-
-(comment
-;; FIXME REMOVE THIS WHEN READY
-(defn levy-fw 
-  "Generates Levy foodwalk data from a Levy walk using uniformly distributed
-  directions and power-law-distributed step lengths with given scale and
-  exponent using PRNG rng, and other parameters defined globally.  Returns
-  a vector triple containing (a) a sequence of found foodspots or nil if
-  none found, (b) the generated sequence from start until the point from
-  which the foodspots were found, and (c) the entire generated sequence
-  including the stops after the foodspots were found.  See
-  forage.walks/levy-foodwalk for further details."
-  [rng scale exponent]
-  (w/levy-foodwalk (partial mf/perc-foodspots-exactly env perc-radius) ; env, perc-radius defined above
-                   look-eps init-loc maxpathlen init-dir trunclen      ; also defined above
-                   rng scale exponent)) ; parameters to this function
-
-
-;; FIXME REMOVE THIS WHEN READY
-(defn levy-fws
-  [rng scale exponent]
-  (repeatedly #(levy-fw rng scale exponent)))
-)
 
 
 (comment
