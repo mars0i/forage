@@ -16,7 +16,7 @@
 
 ;; Alternative parameters for variation in runs:
 (def exponents [1.01 1.5 2 2.5 3])
-(comment (def exponents [1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2]))
+(comment (def exponents [1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.3]))
 (def half-size 10000) ; half the full width of the env
 (def walks-per-combo 1000) ; only for levy-experiments (straight-experiments isn't random)
 
