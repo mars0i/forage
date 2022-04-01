@@ -26,15 +26,12 @@
               :food-distance     200
               :env-size          (* 2 half-size)
               :init-loc          [half-size half-size] ; i.e. center of env
-              ;:init-dir          0 ; initial direction in radians
               :maxpathlen        half-size  ; for straight walks, don't go too far
               :trunclen          half-size  ; max length of any line segment
               :look-eps          0.1 ; increment within segments for food check
-              :num-dirs          100
+              :dir-range         [0 (/ m/pi 2)] ; range of directions, inclusive
+              :num-dirs          100  ; split range this many times + 1 (includes range max)
              ))
-
-(def init-dirs (doall (map #(* (/ % (params :num-dirs)) (/ m/pi 2))
-                           (range (params :num-dirs)))))
 
 (defn levy-experiments
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
@@ -43,30 +40,30 @@
   searches using that combination of parameters for each direction in 
   init-dirs.  Creates two files, one containing the fixed parameters of the
   run, and the other containing the results listed for each varying parameter
-  combination.  Filenames include seed as an id."
-  [seed params exponents init-dirs walks-per-combo]
-  (println "Performing"
-           (* (count exponents) (count init-dirs) walks-per-combo)
-           "runs ...")
-  (let [param-filename (str file-prefix "param" seed ".csv")
-        data-filename  (str file-prefix "data"       seed ".csv")
-        rng (r/make-well19937 seed)
+  combination.  Filenames include seed as an id.  Returns the resulting data."
+  [seed params exponents walks-per-combo]
+  (let [rng (r/make-well19937 seed)
         env (mf/make-env (params :food-distance)
                          (params :env-size)
                          (f/centerless-rectangular-grid (params :food-distance)
                                                         (params :env-size)
                                                         (params :env-size)))
         look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius))
-        data$ (atom (io/append-labels ["initial dir" "exponent" "found" "segments"]))
+        dir-increment(/ (params :dir-range) (params :num-dirs))
+        init-dirs (mapv (partial * dir-increment)
+                        (range (inc (params :num-dirs)))) ; inc to include range max
+        param-filename (str file-prefix "param" seed ".csv")
         param-labels (io/append-labels (cons "seed" (keys params)))
         param-data (io/append-row param-labels
                                   (cons seed    ; replace coord pair with string:
-                                        (vals (update params :init-loc str))))]
-
+                                        (vals (update params :init-loc str))))
+        data-filename  (str file-prefix "data"       seed ".csv")
+        data$ (atom (io/append-labels ["initial dir" "exponent" "found" "segments"]))]
     (io/spit-csv param-filename param-data) ; write out fixed parameters
-    ;(def fw$ (atom [])) ; DEBUG
-
-    (doseq [exponent exponents
+    (println "Performing"
+             (* (count exponents) (count init-dirs) walks-per-combo)
+             "runs ...")
+    (doseq [exponent exponents  ; doseq and swap! rather than for: avoid lazy chunking of PRNG
             init-dir init-dirs]
       (let [sim-fn #(w/levy-foodwalk look-fn (params :look-eps) (params :init-loc)
                                      (params :maxpathlen) init-dir
@@ -75,12 +72,9 @@
             foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
             found (w/count-found-foodspots foodwalks+)
             segments (w/count-segments 2 foodwalks+)]
-        ;(swap! fw$ conj foodwalks+) ; DEBUG
         (swap! data$ conj [init-dir exponent found segments])))
-
     (io/spit-csv data-filename @data$)
-    ;@data$ ; DEBUG
-  ))
+    @data$))
 
 
 (comment
