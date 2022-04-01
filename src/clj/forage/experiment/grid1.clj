@@ -15,7 +15,7 @@
 
 
 ;; Alternative parameters for variation in runs:
-(def scales [1 2 4 8])
+(def powmins [1 2 4 8])
 (def exponents [1.01 1.5 2 2.5 3])
 (def half-size 10000) ; half the full width of the env
 (def walks-per-combo 100)
@@ -38,15 +38,15 @@
 
 (defn levy-experiments
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
-  for each scale in scales and exponent in exponents, creates a powerlaw
-  (Pareto) distribution using that scale, exponent, and initial direction
-  init-dir.  Then runs walks-per-combo Levy-walk-style food searches using
-  that combination of parameters.  Creates two files, one containing the
+  for each min-value powmin in powmins and exponent in exponents, creates a
+  powerlaw (Pareto) distribution using that min-value, exponent, and initial
+  direction init-dir.  Then runs walks-per-combo Levy-walk-style food searches
+  using that combination of parameters.  Creates two files, one containing the
   fixed parameters of the run, and the other containing the results listed
   for each varying parameter combination.  Filenames include seed as an id."
-  [seed params scales exponents init-dirs walks-per-combo]
+  [seed params powmins exponents init-dirs walks-per-combo]
   (println "Performing"
-           (* (count scales) (count exponents)
+           (* (count powmins) (count exponents)
               (count init-dirs) walks-per-combo)
            "runs ...")
   (let [param-filename (str file-prefix "param" seed ".csv")
@@ -58,7 +58,7 @@
                                                         (params :env-size)
                                                         (params :env-size)))
         look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius))
-        data$ (atom (io/append-labels ["initial dir" "scale" "exponent" "found" "segments"]))
+        data$ (atom (io/append-labels ["initial dir" "powmin" "exponent" "found" "segments"]))
         param-labels (io/append-labels (cons "seed" (keys params)))
         param-data (io/append-row param-labels
                                   (cons seed    ; replace coord pair with string:
@@ -67,18 +67,18 @@
     (io/spit-csv param-filename param-data) ; write out fixed parameters
     ;(def fw$ (atom [])) ; DEBUG
 
-    (doseq [scale scales
+    (doseq [powmin powmins
             exponent exponents
             init-dir init-dirs]
       (let [sim-fn #(w/levy-foodwalk look-fn (params :look-eps) (params :init-loc)
                                      (params :maxpathlen) init-dir
                                      (params :trunclen) rng
-                                     scale exponent)
+                                     powmin exponent)
             foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
             found (w/count-found-foodspots foodwalks+)
             segments (w/count-segments 2 foodwalks+)]
         ;(swap! fw$ conj foodwalks+) ; DEBUG
-        (swap! data$ conj [init-dir scale exponent found segments])))
+        (swap! data$ conj [init-dir powmin exponent found segments])))
 
     (io/spit-csv data-filename @data$)
     ;@data$ ; DEBUG
@@ -88,14 +88,14 @@
 (comment
   ;; Parameters for testing:
   (def exponents [2 3])
-  (def scales [1 2])
+  (def powmins [1 2])
   (def params (assoc params :num-dirs 20))
   (def init-dirs (doall (map #(* (/ % (params :num-dirs)) (/ m/pi 2))
                              (range (params :num-dirs)))))
   (def walks-per-combo 1)
 
   (use 'clojure.pprint)
-  (time (def data (levy-experiments seed params scales exponents init-dirs walks-per-combo)))
+  (time (def data (levy-experiments seed params powmins exponents init-dirs walks-per-combo)))
   (pprint data)
   (pprint fw+)
 )

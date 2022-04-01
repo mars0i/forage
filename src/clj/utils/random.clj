@@ -173,9 +173,9 @@
   ([rng mu c] (LevyDistribution. rng mu c)))
 
 (defn make-pareto
-  "Returns an Apache Commons Pareto distribution with scale parameter
-  k and shape parameter alpha.  Without an initial PRNG argument rng,
-  uses Well19937c with an internally generated seed."
+  "Returns an Apache Commons Pareto distribution with min-value (\"scale\")
+  parameter k and shape parameter alpha.  Without an initial PRNG argument
+  rng, uses Well19937c with an internally generated seed."
   ([k alpha] (ParetoDistribution. k alpha))
   ([rng k alpha] (ParetoDistribution. rng k alpha NormalDistribution/DEFAULT_INVERSE_ABSOLUTE_ACCURACY)))
 
@@ -183,11 +183,12 @@
 ;; Note $\alpha + 1 = \mu = 2$ (i.e. (\alpha=1$) is the theoretical
 ;; optimum for searches with sparse targets.
 (defn make-powerlaw
-  "Returns an Apache Commons Pareto distribution with scale parameter
-  k and shape parameter alpha = mu - 1.  (i.e. this is a convenience 
-  wrapper to make it easier to think about and avoid mistakes with contexts
-  where densities are expressed in the mu form.) Without an initial PRNG 
-  argument rng, uses Well19937c with an internally generated seed."
+  "Returns an Apache Commons Pareto distribution with min-value (\"scale\")
+  parameter k and shape parameter alpha = mu - 1.  (i.e. this is a
+  convenience wrapper to make it easier to think about and avoid mistakes
+  with contexts where densities are expressed in the mu form.) Without an
+  initial PRNG argument rng, uses Well19937c with an internally generated
+  seed."
   ([k mu] (make-pareto k (dec mu)))
   ([rng k mu] (make-pareto rng k (dec mu))))
 
