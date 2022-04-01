@@ -33,6 +33,9 @@
               :num-dirs          50; split range this many times + 1 (includes range max)
              ))
 
+;; TODO Add at least to params csv: walks-per-combo, namespace, function name, commit
+;; Note walks-per-combo is crucial, because you divide by that to get the success percentage
+;; in each line of the data output.
 (defn levy-experiments
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
   for each exponent in exponents, creates a powerlaw (Pareto) distribution 
