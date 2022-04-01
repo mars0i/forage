@@ -1,3 +1,5 @@
+;; Grid experments allowing variation in the min value of
+;; the power law.
 (ns forage.experiment.grid1
   (:require
    [forage.walks :as w]
@@ -40,10 +42,11 @@
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
   for each min-value powmin in powmins and exponent in exponents, creates a
   powerlaw (Pareto) distribution using that min-value, exponent, and initial
-  direction init-dir.  Then runs walks-per-combo Levy-walk-style food searches
-  using that combination of parameters.  Creates two files, one containing the
-  fixed parameters of the run, and the other containing the results listed
-  for each varying parameter combination.  Filenames include seed as an id."
+  direction init-dir.  (powmins should usually have the value [1].) Then runs
+  walks-per-combo Levy-walk-style food searches using that combination of
+  parameters.  Creates two files, one containing the fixed parameters of the
+  run, and the other containing the results listed for each varying parameter
+  combination.  Filenames include seed as an id."
   [seed params powmins exponents init-dirs walks-per-combo]
   (println "Performing"
            (* (count powmins) (count exponents)
