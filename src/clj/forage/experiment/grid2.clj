@@ -52,12 +52,12 @@
         dir-increment(/ (params :dir-range) (params :num-dirs))
         init-dirs (mapv (partial * dir-increment)
                         (range (inc (params :num-dirs)))) ; inc to include range max
-        param-filename (str file-prefix "param" seed ".csv")
+        param-filename (str file-prefix "levy_param" seed ".csv")
         param-labels (io/append-labels (cons "seed" (keys params)))
         param-data (io/append-row param-labels
                                   (cons seed    ; replace coord pair with string:
                                         (vals (update params :init-loc str))))
-        data-filename  (str file-prefix "data"       seed ".csv")
+        data-filename  (str file-prefix "levy_data"       seed ".csv")
         data$ (atom (io/append-labels ["initial dir" "exponent" "found" "segments"]))]
     (io/spit-csv param-filename param-data) ; write out fixed parameters
     (println "Performing"
@@ -76,6 +76,42 @@
     (io/spit-csv data-filename @data$)
     @data$))
 
+(def FIXME "FIXME") ; FIXME temporary kludge
+
+(defn straight-experiments
+  ; FIXME
+  [params walks-per-combo]
+  (let [env (mf/make-env (params :food-distance)
+                         (params :env-size)
+                         (f/centerless-rectangular-grid (params :food-distance)
+                                                        (params :env-size)
+                                                        (params :env-size)))
+        look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius))
+        dir-increment (/ (params :dir-range) (params :num-dirs))
+        init-dirs (mapv (partial * dir-increment)
+                        (range (inc (params :num-dirs)))) ; inc to include range max
+        param-filename (str file-prefix "straight_param" FIXME ".csv") ; FIXME
+        param-labels (io/append-labels (keys params))
+        param-data (io/append-row param-labels
+                                  (vals (update params :init-loc str)))
+        data-filename  (str file-prefix "straight_data"       FIXME ".csv") ; FIXME
+        data$ (atom (io/append-labels ["initial dir" "found" "segments"]))]
+    (io/spit-csv param-filename param-data) ; write out fixed parameters
+    (println "Performing"
+             (* (count init-dirs) walks-per-combo)
+             "runs ...")
+    (doseq [init-dir init-dirs]
+      (let [sim-fn #(w/straight-foodwalk look-fn
+                                         (params :look-eps)
+                                         (params :init-loc)
+                                         (params :maxpathlen)
+                                         init-dir)
+            foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
+            found (w/count-found-foodspots foodwalks+)
+            segments (w/count-segments 2 foodwalks+)]
+        (swap! data$ conj [init-dir found segments])))
+    (io/spit-csv data-filename @data$)
+    @data$))
 
 (comment
   ;; Parameters for testing:
