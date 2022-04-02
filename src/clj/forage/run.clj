@@ -89,7 +89,7 @@
         data$ (atom (append-labels ["initial dir" "exponent" "found" "segments"]))]
     (spit-csv param-filename param-data) ; write out fixed parameters
     (println "Performing"
-             (* (count exponents) num-dirs walks-per-combo)
+             (* (count exponents) (inc num-dirs) walks-per-combo)
              "runs ...")
     (doseq [exponent exponents  ; doseq and swap! rather than for: avoid lazy chunking of PRNG
             init-dir init-dirs]
