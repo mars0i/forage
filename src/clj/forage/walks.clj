@@ -318,6 +318,7 @@
         walk-with-food (path-with-food look-fn look-eps stop-walk)]
     (conj walk-with-food stop-walk)))
 
+;; Note nils are converted to empty cells by write-csv.
 (defn length-when-found
   "Given a pair consisting of a possibly empty sequence of found foodspots and a
   path of walk stops until they were found (if they were), returns the length

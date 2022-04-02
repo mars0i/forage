@@ -10,23 +10,6 @@
 
 (def file-prefix "../../data.foraging/forage/") ; must exist
 
-(comment
-  ;; Example parameters map:
-
-  (def half-size 10000) ; half the full width of the env
-
-  {:powerlaw-min      1  ; min value ("scale") for power law
-   :perc-radius       1  ; distance that an animal can "see" in searching for food
-   :food-distance     200
-   :env-size          (* 2 half-size)
-   :init-loc          [half-size half-size] ; i.e. center of env
-   :maxpathlen        half-size  ; for straight walks, don't go too far
-   :trunclen          half-size  ; max length of any line segment
-   :look-eps          0.1  ; increment within segments for food check
-   :max-frac          0.25 ; proportion of pi to use as maximum direction (0 is min)
-   :num-dirs          50}  ; split range this many times + 1 (includes range max)
-)
-
 (defn append-row
   "Given a value for seed, a sequence of parameters, a count of found
   foodspots in a collection of runs, and the total number of segments in
@@ -48,6 +31,7 @@
   ([prev-rows param-names] 
    (append-row prev-rows (map name param-names))))
 
+;; Note nils are converted to empty cells by write-csv.
 (defn spit-csv
   "Given a sequence of sequences of data in rows, opens a file and
   writes to it using write-csv.  options are those that can be passed
@@ -55,6 +39,21 @@
   [filename rows & options]
    (with-open [w (apply io/writer filename options)]
      (csv/write-csv w rows)))
+
+(comment
+  ;; Example parameters map:
+  (def half-size 10000) ; half the full width of the env
+  {:powerlaw-min      1  ; min value ("scale") for power law
+   :perc-radius       1  ; distance that an animal can "see" in searching for food
+   :food-distance     200
+   :env-size          (* 2 half-size)
+   :init-loc          [half-size half-size] ; i.e. center of env
+   :maxpathlen        half-size  ; for straight walks, don't go too far
+   :trunclen          half-size  ; max length of any line segment
+   :look-eps          0.1  ; increment within segments for food check
+   :max-frac          0.25 ; proportion of pi to use as maximum direction (0 is min)
+   :num-dirs          50}  ; split range this many times + 1 (includes range max)
+)
 
 ;; TODO Add at least to params csv: walks-per-combo, namespace, function name, commit
 ;; Note walks-per-combo is crucial, because you divide by that to get the success percentage
