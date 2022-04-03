@@ -55,9 +55,6 @@
    :num-dirs          50}  ; split range this many times + 1 (includes range max)
 )
 
-;; TODO Add at least to params csv: walks-per-combo, namespace, function name, commit
-;; Note walks-per-combo is crucial, because you divide by that to get the success percentage
-;; in each line of the data output.
 (defn levy-experiments
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
   for each exponent in exponents, creates a powerlaw (Pareto) distribution 
@@ -85,21 +82,22 @@
                                   (cons seed    ; replace coord pair with string:
                                         (vals (update sorted-params :init-loc str))))
         data-filename  (str file-prefix "levy_data" seed ".csv")
-        data$ (atom (append-labels ["initial dir" "exponent" "found" "segments"]))]
+        data$ (atom (append-labels ["segments" "initial dir" "exponent" "found" "lengths of paths that found a target"]))]
     (spit-csv param-filename param-data) ; write out fixed parameters
     (println "Performing"
              (* (count exponents) (inc num-dirs) walks-per-combo)
              "runs ...")
-    (doseq [exponent exponents  ; doseq and swap! rather than for: avoid lazy chunking of PRNG
+    (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
             init-dir init-dirs]
       (let [sim-fn #(w/levy-foodwalk look-fn (params :look-eps) (params :init-loc)
                                      (params :maxpathlen) init-dir
                                      (params :trunclen) rng
                                      (params :powerlaw-min) exponent)
             foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
-            found (w/count-found-foodspots foodwalks+)
+            lengths (map w/length-when-found foodwalks+)
+            found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
             segments (w/count-segments 2 foodwalks+)]
-        (swap! data$ conj [init-dir exponent found segments])))
+        (swap! data$ conj (into [segments init-dir exponent found] lengths))))
     (spit-csv data-filename @data$)
     @data$))
 
