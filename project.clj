@@ -1,11 +1,15 @@
-(defproject forage "0.1.0-SNAPSHOT"
+(defproject forage "0.1.0"
   :description "Random foraging models in Clojure with MASON."
   :url "https://github.com/mars0i/forage"
   :license {:name "GPL-3.0"
             :url "https://www.gnu.org/licenses/gpl-3.0.en.html"}
   :dependencies [[org.clojure/clojure "1.11.0"]
                  [org.clojure/math.numeric-tower "0.0.5"]
-                 [org.apache.commons/commons-math3 "3.6.1"]
+                 ;[org.apache.commons/commons-math3 "3.6.1"]
+                 [org.apache.commons/commons-rng-core "1.4"]
+                 [org.apache.commons/commons-rng-simple "1.4"]
+                 [org.apache.commons/commons-rng-client-api "1.4"]
+                 [org.apache.commons/commons-rng-sampling "1.4"]
                  [aerial.hanami "0.17.0"]
                  [techascent/tech.viz "6.00-beta-16-2"]
                  [io.github.nextjournal/clerk "0.5.346"]

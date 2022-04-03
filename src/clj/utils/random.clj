@@ -13,30 +13,25 @@
 ;; apparently.  Some is in a package RNG.  I'm not sure where the rest is.
 ;; So all the more reason to have wrappers.)
 (ns utils.random
-  (:import [ec.util MersenneTwisterFast]    ; https://cs.gmu.edu/~sean/research/mersenne/ec/util/MersenneTwisterFast.html
-           [org.apache.commons.math3.random ; https://commons.apache.org/proper/commons-math
-            MersenneTwister Well1024a Well19937c Well44497b
-            RandomGenerator]
-           [org.apache.commons.math3.distribution
-            LevyDistribution NormalDistribution ParetoDistribution
-            RealDistribution])
+  (:import [org.apache.commons.rng UniformRandomProvider]
+           [org.apache.commons.rng.simple RandomSource])
   (:require [clojure.math.numeric-tower :as nt]))
 
-;; For the Apache commons Math 3.6.1 PRNGs, most of the functions are documented
-;; in AbstractRandomGenerator or RandomGenerator.  Most of the same functions
-;; are also in Sean Luke's MersenneTwisterFast and MersenneTwister, which 
-;; also include a few other signatures for the same names.   For example,
-;; both Luke's MT and the Apache PRNGs include nextInt(), nextLong(), 
-;; nextDouble(), and nextGaussian().  (The whole interface is going to
-;; be turned inside out with Math 4; all or most of the functionality will
-;; be in other packages.)
+           ;[org.apache.commons.math3.random ; https://commons.apache.org/proper/commons-math
+           ; MersenneTwister Well1024a Well19937c Well44497b
+           ; RandomGenerator]
+           ;[org.apache.commons.math3.distribution
+           ; LevyDistribution NormalDistribution ParetoDistribution
+           ; RealDistribution]
 
-;; Note that sample code in the apache.commons.math3 manual page on
-;; random number generation seems to be obsolete and won't compile,
-;; with 404'ed javadoc links.
-
-;; TODO For uniform numbers, use a RandomDataGenerator to normalize to
-;; a range.
+;; NOTES ON WELL GENERATORS
+;; See esp. table II on page 9 in the original article Panneton, L'Ecuyer,
+;; and Matsumoto, "Improved Long-period Generators Based on Linear 
+;; Recurrences Modulo 2", ACM Transactions on Mathematical Software 2006.
+;; The period is 2^{number in name of generator} - 1
+;; The word size and output size is always w = 32 bits.
+;; The size of the internal state is r words:
+;; r = 32 for Well1024a; r = 624 for Well19937's; r = 1391 for Well44497's.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PRNG-CREATION FUNCTIONS
@@ -47,13 +42,18 @@
 ;; array of ints that is the real internal seed.  Luke's MersenneTwisterFast,
 ;; by contrast, will only use the first 32 bits of a long seed, as if
 ;; it was an int.
-(defn make-seed
+(defn my-make-seed
   "Return a long constructed from semi-arbitrary things such as the
   system time and the hash identity of a newly created Java object."
   [] 
   (let [t (System/currentTimeMillis)           ; long
         h (System/identityHashCode (Object.))] ; int
     (+ t h)))
+
+(defn make-seed
+  "Return a long constructed by an Apache Commons method."
+  []
+  (RandomSource/createLong))
 
 (defn set-seed
   "Resets the seed of rng to seed."
@@ -73,7 +73,7 @@
   "Discard the first n numbers from a PRNG in order to flush out internal 
   state that's might not be as random as what the PRNG is capable of.
   cf.  https://listserv.gmu.edu/cgi-bin/wa?A1=ind1609&L=MASON-INTEREST-L#1 ."
-  [n ^RandomGenerator rng] (dotimes [_ n] (.nextInt rng)))
+  [n rng] (dotimes [_ n] (.nextInt rng)))
 
 (def flush1024
   "Flush possible initial low-quality state from a PRNG with a 32-word
@@ -90,60 +90,30 @@
   internal state such as a WELL44497."
   (partial flush-rng 6000))
 
-;; NOTES ON WELL GENERATORS
-;; See esp. table II on page 9 in the original article Panneton, L'Ecuyer,
-;; and Matsumoto, "Improved Long-period Generators Based on Linear 
-;; Recurrences Modulo 2", ACM Transactions on Mathematical Software 2006.
-;; The period is 2^{number in name of generator} - 1
-;; The word size and output size is always w = 32 bits.
-;; The size of the internal state is r words:
-;; r = 32 for Well1024a; r = 624 for Well19937's; r = 1391 for Well44497's.
-
-(defn make-well1024
-  "Make an Apache Commons WELL 1024a generator, flushing any possible 
-  initial lack of entropy."
-  ([] (make-well1024 (make-seed)))
-  ([^long long-seed] 
-   (let [rng (Well1024a. long-seed)]
-     (flush1024 rng)
-     rng))) 
-
 (defn make-well19937
   "Make an Apache Commons WELL 19937c generator, flushing any possible 
   initial lack of entropy.  (Note that this is the default generator in
   Apache Commons used by distribution functions if no generator is passed.)"
   ([] (make-well19937 (make-seed)))
   ([^long long-seed] 
-   (let [rng (Well19937c. long-seed)]
+   (let [;^UniformRandomProvider
+         rng (.create RandomSource/WELL_19937_C)] ; how to use seed?
      (flush19937 rng)
-     rng))) 
+     rng)))
+
+(comment
+  (def rng (.create RandomSource/WELL_19937_C))
+  (.nextDouble rng)
+)
 
 (defn make-well44497
   "Make an Apache Commons WELL 44497b generator, flushing any possible 
   initial lack of entropy."
   ([] (make-well44497 (make-seed)))
   ([^long long-seed] 
-   (let [rng (Well44497b. long-seed)]
+   (let [;^UniformRandomProvider
+         rng (.create RandomSource/WELL_44497_B long-seed)]
      (flush44497 rng)
-     rng))) 
-
-(defn make-twister
-  "Make an instance of Apache Commons MersenneTwister generator, flushing
-  any possible initial lack of entropy."
-  ([] (make-twister (make-seed)))
-  ([^long long-seed] 
-   (let [rng (org.apache.commons.math3.random.MersenneTwister. long-seed)]
-     (flush19937 rng)
-     rng))) 
-
-;; Note this won't work with Apache distribution classes
-(defn make-luke-twister
-  "Make an instance of Sean Luke's MersenneTwisterFast, flushing any possible 
-  initial lack of entropy."
-  ([] (make-luke-twister (make-seed)))
-  ([^long long-seed] 
-   (let [rng (ec.util.MersenneTwisterFast. long-seed)]
-     (flush19937 rng)
      rng))) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -218,12 +188,12 @@
 
 (defn density
   "Return the density at x according to (Apache Commons math) distribution dist."
-  [^RealDistribution dist x]
+  [dist x]
   (.density dist x))
 
 (defn probability
   "Return the probability that a value from dist falls within (low,high]."
-  [^RealDistribution dist low high]
+  [dist low high]
    (.probability dist low high))
 
 ;; Easiest to keep this as a separate definition that can be called
@@ -238,7 +208,7 @@
   be identical? to its previous value, while low and high each must be =
   to their previous values."
   (let [memo$ (atom {})]
-    (fn [^RealDistribution dist low high x]
+    (fn [dist low high x]
       (cond (<= x low) 0.0  ; Or throw exception? Return nil?
             (> x high) 1.0
             :else (let [args [dist low high]
@@ -254,8 +224,8 @@
   returns the the cumulative probability for the truncated distribution 
   corresponding to for x in (low,high] but assigning zero probability to 
   values outside of it."
-  ([^RealDistribution dist x] (.cumulativeProbability dist x))
-  ([^RealDistribution dist low high x] (trunc-cumulative dist low high x)))
+  ([dist x] (.cumulativeProbability dist x))
+  ([dist low high x] (trunc-cumulative dist low high x)))
 
 (defprotocol RandDist
   "Provides a common interface to some functionality shared by PRNG 
