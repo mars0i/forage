@@ -82,7 +82,7 @@
                                   (cons seed    ; replace coord pair with string:
                                         (vals (update sorted-params :init-loc str))))
         data-filename  (str file-prefix "levy_data" seed ".csv")
-        data$ (atom (append-labels ["segments" "initial dir" "exponent" "found" "lengths of paths that found a target"]))]
+        data$ (atom (append-labels ["segments" "initial dir" "exponent" "found" "path lengths if found:"]))]
     (spit-csv param-filename param-data) ; write out fixed parameters
     (println "Performing"
              (* (count exponents) (inc num-dirs) walks-per-combo)
@@ -99,6 +99,7 @@
             segments (w/count-segments 2 foodwalks+)]
         (swap! data$ conj (into [segments init-dir exponent found] lengths))))
     (spit-csv data-filename @data$)
+    (println "done.")
     @data$))
 
 (defn straight-experiments
@@ -122,20 +123,22 @@
         id (r/make-seed)
         sorted-params (into (sorted-map) params) ; for writing param file
         param-filename (str file-prefix "straight_param" id ".csv")
-        param-labels (append-labels (keys params))
-        param-data (append-row param-labels (vals (update params :init-loc str)))
-        _ (println "Performing" (inc num-dirs) "runs with id" id "... ")
+        param-labels (append-labels (keys sorted-params))
+        param-data (append-row param-labels (vals (update sorted-params :init-loc str)))
+        _ (println "Performing" (inc num-dirs) "runs with id" id "... ") ; no point in starting another let
         foodwalks+ (mapv (partial w/straight-foodwalk look-fn
                                   (params :look-eps)
                                   (params :init-loc)
                                   (params :maxpathlen))
                          init-dirs)
-        dir-found-pairs (mapv (fn [dir fw]
-                                [dir (if (first fw) 1 0)])
-                              init-dirs
-                              foodwalks+)
+        dir-found-lengths (mapv (fn [dir fw]
+                                  [dir
+                                   (if (first fw) 1 0)
+                                   (w/length-when-found fw)])
+                                init-dirs
+                                foodwalks+)
         data-filename  (str file-prefix "straight_data"  id ".csv")
-        data (cons ["initial dir" "found"] dir-found-pairs)]
+        data (cons ["initial dir" "found" "path length if found"] dir-found-lengths)]
     (spit-csv param-filename param-data) ; write out fixed parameters
     (spit-csv data-filename data)
     (println "done.")
