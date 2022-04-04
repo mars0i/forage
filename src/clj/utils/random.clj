@@ -12,9 +12,14 @@
 (ns utils.random
   (:import [org.apache.commons.rng UniformRandomProvider]
            [org.apache.commons.rng.simple RandomSource]
+           [org.apache.commons.rng.core RandomProviderDefaultState]
            [org.apache.commons.rng.core.source32 AbstractWell Well19937c Well44497b]
-           [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler]) ; ContinuousSampler
-   (:require [clojure.math.numeric-tower :as nt]))
+           [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler]
+           [java.io
+            ByteArrayOutputStream ObjectOutputStream FileOutputStream
+            ByteArrayInputStream  ObjectInputStream  FileInputStream])
+   (:require [clojure.math.numeric-tower :as nt]
+             [clojure.java.io :as io]))
 
 (comment
   (def rng (make-well19937 42))
@@ -128,61 +133,47 @@
      (flush44497 rng)
      rng))) 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; FUNCTIONS FOR SAVING/RESTORING PRNG STATE
 
-;; NOTES ON HOW TO SAVE PRNG STATE in Apache Commons RNG 1.4
+(defn get-state
+  [rng]
+  (.saveState rng))
+
+(defn set-state
+  [rng state]
+  (.restoreState rng state))
+
+;; The Java i/o voodoo below is based on an example at:
+;; https://commons.apache.org/proper/commons-rng/userguide/rng.html#a2._Usage_overview
+;; It's buried in the "Usage overview" section.  Search for "Serializable".
+;; I tried to do something more straightforward using more Clojure primitives,
+;; but it didn't work.  Perhaps there are ways to simplify, but this works.
+
+(defn write-state
+  [filename state]
+  (let [byte-stream (ByteArrayOutputStream.)]
+    (.writeObject (ObjectOutputStream. byte-stream)
+                  (.getState state))
+    (with-open [w (FileOutputStream. filename)]
+      (.write w (.toByteArray byte-stream)))))
+
+(defn read-state
+  [filename]
+  (with-open [r (FileInputStream. filename)]
+    (RandomProviderDefaultState.
+      (.readObject (ObjectInputStream. r)))))
+
 (comment
-  ;; This works
-  (def rng (make-well19937 42))
-  (def state (.saveState rng))
-  (.nextDouble rng)
-  (.restoreState rng state)
-  (.nextDouble rng)
-
-  ;; This works.  But doesn't actually write a file.  It's an illustration.
-  ;; Based on
-  ;; https://commons.apache.org/proper/commons-rng/userguide/rng.html#a2._Usage_overview
-  (def byte-output-stream (java.io.ByteArrayOutputStream.))
-  (def object-output-stream (java.io.ObjectOutputStream. byte-output-stream))
-  (.writeObject object-output-stream (.getState state))
-  (def byte-input-stream (java.io.ByteArrayInputStream. (.toByteArray byte-output-stream)))
-  (class byte-input-stream)
-  (def object-input-stream (java.io.ObjectInputStream. byte-input-stream))
-  (def new-state (org.apache.commons.rng.core.RandomProviderDefaultState.
-                   (.readObject object-input-stream)))
-  (def new-rng (make-well19937 42))
-  (.restoreState new-rng new-state)
-  (.nextDouble rng)
-
-  ;; WRITE AND READ STATE FROM FILE:
-  ;; This works.
-  (def old-rng (make-well19937 12345))
-  (def old-state (.saveState old-rng))
-  ;; probably best to avoid repeatedly:
-  (def old-nums [(.nextDouble old-rng) (.nextDouble old-rng) (.nextDouble old-rng)])
-  (.restoreState old-rng old-state)
-  (def newish-nums [(.nextDouble old-rng) (.nextDouble old-rng) (.nextDouble old-rng)])
-  (= old-nums newish-nums)
-
-  ;; Write to a file (is all of this needed?):
-  (def byte-output-stream (java.io.ByteArrayOutputStream.))
-  (def object-output-stream (java.io.ObjectOutputStream. byte-output-stream))
-  (.writeObject object-output-stream (.getState old-state))
-  (def out-file-stream (java.io.FileOutputStream. "yo.bin"))
-  (.write out-file-stream (.toByteArray byte-output-stream))
-  (.close out-file-stream)
-
-  ;; Read from a file:
-  (def in-file-stream (java.io.FileInputStream. "yo.bin"))
-  (def object-input-stream (java.io.ObjectInputStream. in-file-stream))
-  (def new-state (org.apache.commons.rng.core.RandomProviderDefaultState.
-                   (.readObject object-input-stream)))
-  (.close in-file-stream)
-  (def new-rng (make-well19937 42))
-  (.restoreState new-rng new-state)
-  (def new-nums [(.nextDouble old-rng) (.nextDouble old-rng) (.nextDouble old-rng)])
-  (= old-nums new-nums)
+  ;; Test:
+  (def oldrng (make-well19937 123456789))
+  (write-state "yo.bin" (get-state oldrng))
+  (def oldnums [(.nextDouble oldrng) (.nextDouble oldrng) (.nextDouble oldrng)])
+  (def newrng (make-well19937)) ; seed is irrelevant. Wastefully flushing initial state.
+  (set-state newrng (read-state "yo.bin"))
+  (def newnums [(.nextDouble newrng) (.nextDouble newrng) (.nextDouble newrng)])
+  (= oldnums newnums)
 )
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DISTRIBUTION FUNCTIONS
