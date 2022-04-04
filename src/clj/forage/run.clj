@@ -123,7 +123,7 @@
                                      (params :trunclen) rng
                                      (params :powerlaw-min) exponent)
             foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
-            lengths (map w/length-when-found foodwalks+)
+            lengths (doall (map #(if-not % "NA" %) (map w/length-when-found foodwalks+))) ; the "NA" is convenient in Excel
             found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
             segments (w/count-segments 2 foodwalks+)]
         (swap! data$ conj (into [segments init-dir exponent found] lengths))))
