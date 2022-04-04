@@ -90,31 +90,35 @@
   internal state such as a WELL44497."
   (partial flush-rng 6000))
 
+;; Re the additional nil argument to .create below, see 
+;; https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/RandomSource.html#create(java.lang.Object,java.lang.Object...)
 (defn make-well19937
   "Make an Apache Commons WELL 19937c generator, flushing any possible 
   initial lack of entropy.  (Note that this is the default generator in
   Apache Commons used by distribution functions if no generator is passed.)"
   ([] (make-well19937 (make-seed)))
   ([^long long-seed] 
-   (let [;^UniformRandomProvider
-         rng (.create RandomSource/WELL_19937_C)] ; how to use seed?
+   (let [^UniformRandomProvider rng
+         (.create RandomSource/WELL_19937_C long-seed nil)]
      (flush19937 rng)
      rng)))
-
-(comment
-  (def rng (.create RandomSource/WELL_19937_C))
-  (.nextDouble rng)
-)
 
 (defn make-well44497
   "Make an Apache Commons WELL 44497b generator, flushing any possible 
   initial lack of entropy."
   ([] (make-well44497 (make-seed)))
   ([^long long-seed] 
-   (let [;^UniformRandomProvider
-         rng (.create RandomSource/WELL_44497_B long-seed)]
+   (let [^UniformRandomProvider rng
+         (.create RandomSource/WELL_44497_B long-seed nil)]
      (flush44497 rng)
      rng))) 
+
+(comment
+  (def rng (make-well19937 42))
+  (def rng (make-well44497 42))
+  (.nextDouble rng)
+)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DISTRIBUTION FUNCTIONS
