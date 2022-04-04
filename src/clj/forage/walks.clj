@@ -318,8 +318,16 @@
         walk-with-food (path-with-food look-fn look-eps stop-walk)]
     (conj walk-with-food stop-walk)))
 
+(defn path-until-found-length
+  "Given a pair consisting of a possibly empty sequence of found foodspots and a
+  path of walk stops until they were found (if they were), returns the length
+  of the path.  If the argument is a sequence with more than two elements, its
+  remaining elements are silently ignored."
+  [[found-foodspots path-until-found]]
+  (stops-path-len path-until-found))
+
 ;; Note nils are converted to empty cells by write-csv.
-(defn length-when-found
+(defn path-if-found-length
   "Given a pair consisting of a possibly empty sequence of found foodspots and a
   path of walk stops until they were found (if they were), returns the length
   of the path, or nil if no foodspots were found.  If the argument is a sequence 

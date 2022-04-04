@@ -8,7 +8,8 @@
 (println "SEED:" seed)
 
 (def exponents [1.001 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.4 2.5  3])
-(def walks-per-combo 1000) ; only for levy-experiments (straight-experiments isn't random)
+(def walks-per-combo 5000) ; only for levy-experiments (straight-experiments isn't random)
+;; Note Excel might have a 16K columns max
 
 ;(/ (/ (* (* 16 5000) 0.1) 60) 60)
 

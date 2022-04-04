@@ -77,8 +77,10 @@
   parameter combination.  Filenames include seed as an id.  Also creates one
   PRNG state file per combination of exponent (mu) and direction. (This allows
   recreating (by hand) the runs with the runs with that combination using the
-  same PRNG state.  Use utils.random/read-state and set-state.)  mReturns the
-  resulting data."
+  same PRNG state.  Use utils.random/read-state and set-state.)  Returns the
+  resulting data. (NOTE: If you want to load the data into Excel, there will
+  be more than walks-per-combo columns in the csv files, and Excel might 
+  limit the number of columns to 16K.)"
   [file-prefix seed params exponents walks-per-combo]
   (let [num-dirs (params :num-dirs)
         init-dirs (if num-dirs
@@ -123,7 +125,8 @@
                                      (params :trunclen) rng
                                      (params :powerlaw-min) exponent)
             foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
-            lengths (doall (map #(if-not % "NA" %) (map w/length-when-found foodwalks+))) ; the "NA" is convenient in Excel
+            ;lengths (doall (map #(if-not % "NA" %) (map w/path-if-found-length foodwalks+))) ; the "NA" is convenient in Excel
+            lengths (doall (map w/path-until-found-length foodwalks+)) ; Paths in which nothing is found are included
             found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
             segments (w/count-segments 2 foodwalks+)]
         (swap! data$ conj (into [segments init-dir exponent found] lengths))))
@@ -163,7 +166,7 @@
         dir-found-lengths (mapv (fn [dir fw]
                                   [dir
                                    (if (first fw) 1 0)
-                                   (w/length-when-found fw)])
+                                   (w/path-until-found-length fw)])
                                 init-dirs
                                 foodwalks+)
         data-filename  (str file-prefix "straight_data"  id ".csv")
