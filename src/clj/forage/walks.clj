@@ -273,27 +273,27 @@
             (recur (inc i) (inc j))
             [nil stopsv])))))) ; no food in any segment; return entire input
 
-;; NOTE: CURRENTLY ADDING doall AROUND walk-stops TO MAKE SURE THAT THE
-;; PRNG IS CALLED EXACTLY THE SAME NUMBER OF TIMES IF I RERUN THIS.
 (defn levy-foodwalk
   "Generates a random foodwalk starting from point init-loc in direction
   init-dir, and returns a vector triple containing (a) a sequence of found
   foodspots or nil if none found, (b) the generated sequence from start until
   the point from which the foodspots were found, and (c) the entire generated
-  sequence including the stops after the foodspots were found.  More 
-  specifically, the generated foodwalk consists of a series of line segments
-  and ends where a foodspot is first found, or when the sum of segment
-  lengths is equal to maxpathlen.  Food search uses look-fn to repeatedly
-  check for food at points that are look-eps apart, beginning from init-loc.
+  sequence including the stops after the foodspots were found.  If init-dir
+  is falsey, the initial direction will be random.  More specifically, the 
+  generated foodwalk consists of a series of line segments and ends where 
+  a foodspot is first found, or when the sum of segment lengths is equal to 
+  maxpathlen.  Food search uses look-fn to repeatedly check for food at
+  points that are look-eps apart, beginning from init-loc.
   (The environment is to be wrapped up in look-fn and carried with it.)"
   ([look-fn look-eps init-loc maxpathlen init-dir trunclen rng scale exponent]
    (let [len-dist (r/make-powerlaw rng scale exponent)]
      (levy-foodwalk look-fn look-eps init-loc maxpathlen init-dir trunclen rng len-dist)))
   ([look-fn look-eps init-loc maxpathlen init-dir trunclen dir-dist len-dist]
-   (let [inf-step-walk (subst-init-dir  ; lazy
-                         init-dir
-                         (repeatedly
-                           (step-vector-fn dir-dist len-dist 1 trunclen)))
+   (let [raw-inf-step-walk (repeatedly
+                             (step-vector-fn dir-dist len-dist 1 trunclen))
+         inf-step-walk (if init-dir
+                         (subst-init-dir init-dir raw-inf-step-walk)
+                         raw-inf-step-walk)
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
          stop-walk (walk-stops init-loc step-walk) ; lazy if no vec wrapper , at least after first cons
          walk-with-food (path-with-food look-fn look-eps stop-walk)] ; it's a vec, but second element is lazy if food was not found; else it's a vec

@@ -38,8 +38,8 @@
   (def walks-per-combo 1)
 
   (use 'clojure.pprint)
-  (time (def data (fr/levy-experiments seed params exponents walks-per-combo)))
-  (time (def data (fr/straight-experiments params)))
+  (time (def data (fr/levy-experiments fr/default-file-prefix seed params exponents walks-per-combo)))
+  (time (def data (fr/straight-experiments fr/default-file-prefix params)))
   (pprint data)
   (pprint fw+)
 )
