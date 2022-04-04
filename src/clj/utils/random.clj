@@ -128,10 +128,59 @@
      (flush44497 rng)
      rng))) 
 
+
+;; NOTES ON HOW TO SAVE PRNG STATE in Apache Commons RNG 1.4
 (comment
+  ;; This works
   (def rng (make-well19937 42))
-  (def rng (make-well44497 42))
+  (def state (.saveState rng))
   (.nextDouble rng)
+  (.restoreState rng state)
+  (.nextDouble rng)
+
+  ;; This works.  But doesn't actually write a file.  It's an illustration.
+  ;; Based on
+  ;; https://commons.apache.org/proper/commons-rng/userguide/rng.html#a2._Usage_overview
+  (def byte-output-stream (java.io.ByteArrayOutputStream.))
+  (def object-output-stream (java.io.ObjectOutputStream. byte-output-stream))
+  (.writeObject object-output-stream (.getState state))
+  (def byte-input-stream (java.io.ByteArrayInputStream. (.toByteArray byte-output-stream)))
+  (class byte-input-stream)
+  (def object-input-stream (java.io.ObjectInputStream. byte-input-stream))
+  (def new-state (org.apache.commons.rng.core.RandomProviderDefaultState.
+                   (.readObject object-input-stream)))
+  (def new-rng (make-well19937 42))
+  (.restoreState new-rng new-state)
+  (.nextDouble rng)
+
+  ;; WRITE AND READ STATE FROM FILE:
+  ;; This works.
+  (def old-rng (make-well19937 12345))
+  (def old-state (.saveState old-rng))
+  ;; probably best to avoid repeatedly:
+  (def old-nums [(.nextDouble old-rng) (.nextDouble old-rng) (.nextDouble old-rng)])
+  (.restoreState old-rng old-state)
+  (def newish-nums [(.nextDouble old-rng) (.nextDouble old-rng) (.nextDouble old-rng)])
+  (= old-nums newish-nums)
+
+  ;; Write to a file (is all of this needed?):
+  (def byte-output-stream (java.io.ByteArrayOutputStream.))
+  (def object-output-stream (java.io.ObjectOutputStream. byte-output-stream))
+  (.writeObject object-output-stream (.getState old-state))
+  (def out-file-stream (java.io.FileOutputStream. "yo.bin"))
+  (.write out-file-stream (.toByteArray byte-output-stream))
+  (.close out-file-stream)
+
+  ;; Read from a file:
+  (def in-file-stream (java.io.FileInputStream. "yo.bin"))
+  (def object-input-stream (java.io.ObjectInputStream. in-file-stream))
+  (def new-state (org.apache.commons.rng.core.RandomProviderDefaultState.
+                   (.readObject object-input-stream)))
+  (.close in-file-stream)
+  (def new-rng (make-well19937 42))
+  (.restoreState new-rng new-state)
+  (def new-nums [(.nextDouble old-rng) (.nextDouble old-rng) (.nextDouble old-rng)])
+  (= old-nums new-nums)
 )
 
 
