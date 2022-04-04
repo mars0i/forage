@@ -1,8 +1,34 @@
-;; This software is copyright 2016 by Marshall Abrams, and is distributed
+;; This software is copyright 2021 by Marshall Abrams, and is distributed
 ;; under the Gnu General Public License version 3.0 as specified in the
 ;; the file LICENSE.
 
+;; TODO check to see if there's reflection happening
+;; TODO check if it's doing what it's supposed to
+;; 
+
 ;; Functions for generating and using random numbers.
+;; See e.g.
+;; https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/RandomSource.html
+(ns utils.random
+  (:import [org.apache.commons.rng UniformRandomProvider]
+           [org.apache.commons.rng.simple RandomSource]
+           [org.apache.commons.rng.core.source32 AbstractWell Well19937c Well44497b]
+           [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler]) ; ContinuousSampler
+   (:require [clojure.math.numeric-tower :as nt]))
+
+(comment
+  (def rng (make-well19937 42))
+  (class rng)
+  (isa? Well19937c AbstractWell)
+  (isa? Well19937c UniformRandomProvider)
+  (isa? Well19937c org.apache.commons.rng.core.BaseProvider)
+  (isa? Well19937c org.apache.commons.rng.core.source32.IntProvider)
+  (def state (.getStateInternal rng)) ; fails
+  (class state)
+  (.setStateInternal rng state)
+  (.nextDouble rng)
+)
+
 ;; (These are mostly wrappers for Java library stuff, and in some cases
 ;; one could just as easily use the Java methods directly with
 ;; (.javaMethod instance arguments)
@@ -12,17 +38,6 @@
 ;; randon number and distribution functionality is being moved elsewhere,
 ;; apparently.  Some is in a package RNG.  I'm not sure where the rest is.
 ;; So all the more reason to have wrappers.)
-(ns utils.random
-  (:import [org.apache.commons.rng UniformRandomProvider]
-           [org.apache.commons.rng.simple RandomSource])
-  (:require [clojure.math.numeric-tower :as nt]))
-
-           ;[org.apache.commons.math3.random ; https://commons.apache.org/proper/commons-math
-           ; MersenneTwister Well1024a Well19937c Well44497b
-           ; RandomGenerator]
-           ;[org.apache.commons.math3.distribution
-           ; LevyDistribution NormalDistribution ParetoDistribution
-           ; RealDistribution]
 
 ;; NOTES ON WELL GENERATORS
 ;; See esp. table II on page 9 in the original article Panneton, L'Ecuyer,
@@ -126,33 +141,16 @@
 ;; Note some of the methods are only described in interface RealDistribution.
 ;; https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/distribution/AbstractRealDistribution.html
 
-(defn make-gaussian
-  "Returns an Apache Commons normal distribution with shift parameter mean
-  and shape parameter sd (standard deviation).  Without mean and sd arguments,
-  these are set to 0 an 1, respectively.  Without an initial PRNG argument,
-  uses Well19937c with an internally generated seed."
-  ([] (NormalDistribution.))
-  ([mean sd] (NormalDistribution. mean sd))
-  ([rng mean sd] (NormalDistribution. rng mean sd NormalDistribution/DEFAULT_INVERSE_ABSOLUTE_ACCURACY)))
-  ;; Last arg above is inverse cumulative probability accuracy.
-  ;; There's supposed to be a constructor just with rng, mean, and sd, but
-  ;; it inexplicably doesn't seem to exist, despite javadoc and source code.
-
-(defn make-levy
-  "Returns an Apache Commons Lévy distribution with shift parameter mu and
-  shape parameter c.  Without an initial PRNG argument, uses Well19937c with
-  an internally generated seed.  (Note that this is just a specific
-  version of the general Lévy distribution.)"
-  ([mu c] (LevyDistribution. mu c))
-  ([rng mu c] (LevyDistribution. rng mu c)))
-
 (defn make-pareto
   "Returns an Apache Commons Pareto distribution with min-value (\"scale\")
-  parameter k and shape parameter alpha.  Without an initial PRNG argument
-  rng, uses Well19937c with an internally generated seed."
-  ([k alpha] (ParetoDistribution. k alpha))
-  ([rng k alpha] (ParetoDistribution. rng k alpha NormalDistribution/DEFAULT_INVERSE_ABSOLUTE_ACCURACY)))
+  parameter k and shape parameter alpha."
+  [rng k alpha]
+  (InverseTransformParetoSampler/of rng k alpha))
 
+(comment
+  (def dist (InverseTransformParetoSampler/of rng 1 2))
+  (.sample dist)
+)
 
 ;; Note $\alpha + 1 = \mu = 2$ (i.e. (\alpha=1$) is the theoretical
 ;; optimum for searches with sparse targets.
@@ -163,8 +161,7 @@
   with contexts where densities are expressed in the mu form.) Without an
   initial PRNG argument rng, uses Well19937c with an internally generated
   seed."
-  ([k mu] (make-pareto k (dec mu)))
-  ([rng k mu] (make-pareto rng k (dec mu))))
+  [rng k mu] (make-pareto rng k (dec mu)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATOR AND DISTRIBUTION ACCESS FUNCTIONS
@@ -245,21 +242,7 @@
 ;; and since 'and' short-circuits.)
 (extend-protocol RandDist
   ; DISTRIBUTIONS:
-  ParetoDistribution 
-    (next-double
-      ([this] (.sample this))
-      ([this low high] (loop [x (.sample this)]
-                             (if (and (<= x high) (>= x low))
-                               x
-                               (recur (.sample this))))))
-  NormalDistribution 
-    (next-double
-      ([this] (.sample this))
-      ([this low high] (loop [x (.sample this)]
-                             (if (and (<= x high) (>= x low))
-                               x
-                               (recur (.sample this))))))
-  LevyDistribution
+  InverseTransformParetoSampler
     (next-double
       ([this] (.sample this))
       ([this low high] (loop [x (.sample this)]
@@ -267,13 +250,6 @@
                                x
                                (recur (.sample this))))))
   ; PRNGS:
-  Well1024a 
-    (next-double
-      ([this] (.nextDouble this))
-      ([this low high] (loop [x (.nextDouble this)]
-                             (if (and (<= x high) (>= x low))
-                               x
-                               (recur (.nextDouble this))))))
   Well19937c
     (next-double
       ([this] (.nextDouble this))
@@ -287,22 +263,7 @@
       ([this low high] (loop [x (.nextDouble this)]
                              (if (and (<= x high) (>= x low))
                                x
-                               (recur (.nextDouble this))))))
-  org.apache.commons.math3.random.MersenneTwister 
-    (next-double
-      ([this] (.nextDouble this))
-      ([this low high] (loop [x (.nextDouble this)]
-                             (if (and (<= x high) (>= x low))
-                               x
-                               (recur (.nextDouble this))))))
-  ec.util.MersenneTwisterFast
-    (next-double
-      ([this] (.nextDouble this))
-      ([this low high] (loop [x (.nextDouble this)]
-                             (if (and (<= x high) (>= x low))
-                               x
-                               (recur (.nextDouble this))))))
-    )
+                               (recur (.nextDouble this)))))))
 
 (defn next-double-fn
   "Rather than returning the result of '(next-double dist)' or 
