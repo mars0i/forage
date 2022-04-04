@@ -144,7 +144,7 @@
   [rng state]
   (.restoreState rng state))
 
-;; The Java i/o voodoo below is based on an example at:
+;; Java i/o voodoo below is based on an example at:
 ;; https://commons.apache.org/proper/commons-rng/userguide/rng.html#a2._Usage_overview
 ;; It's buried in the "Usage overview" section.  Search for "Serializable".
 ;; I tried to do something more straightforward using more Clojure primitives,
