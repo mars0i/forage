@@ -137,10 +137,13 @@
 ;; FUNCTIONS FOR SAVING/RESTORING PRNG STATE
 
 (defn get-state
+  "Returns the internal state of a PRNG."
   [rng]
   (.saveState rng))
 
 (defn set-state
+  "Sets the internal state of a PRNG to a state derived from a PRNG
+  of the same kind."
   [rng state]
   (.restoreState rng state))
 
@@ -150,7 +153,9 @@
 ;; I tried to do something more straightforward using more Clojure primitives,
 ;; but it didn't work.  Perhaps there are ways to simplify, but this works.
 
+;; File size should be 2535 for Well19937, and 5603 for Well44497.
 (defn write-state
+  "Write state from a single PRNG to a file."
   [filename state]
   (let [byte-stream (ByteArrayOutputStream.)]
     (.writeObject (ObjectOutputStream. byte-stream)
@@ -159,6 +164,7 @@
       (.write w (.toByteArray byte-stream)))))
 
 (defn read-state
+  "Read state for a single PRNG from a file."
   [filename]
   (with-open [r (FileInputStream. filename)]
     (RandomProviderDefaultState.
