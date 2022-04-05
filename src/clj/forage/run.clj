@@ -52,10 +52,10 @@
 
 (comment
   ;; Example parameters map:
-  (def half-size 10000) ; half the full width of the env
+  (def half-size 100000) ; half the full width of the env
   {:powerlaw-min      1  ; min value ("scale") for power law
    :perc-radius       1  ; distance that an animal can "see" in searching for food
-   :food-distance     200
+   :food-distance     500
    :env-size          (* 2 half-size)
    :init-loc          [half-size half-size] ; i.e. center of env
    :maxpathlen        half-size  ; for straight walks, don't go too far
@@ -129,7 +129,8 @@
             lengths (doall (map w/path-until-found-length foodwalks+)) ; Paths in which nothing is found are included
             found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
             segments (w/count-segments 2 foodwalks+)]
-        (swap! data$ conj (into [segments init-dir exponent found] lengths))))
+        (swap! data$ conj (into [segments init-dir exponent found] lengths)))
+      (print "."))
     (spit-csv data-filename @data$)
     (println "done.")
     @data$))
