@@ -148,17 +148,12 @@
   of the run, and the other containing the results listed for each direction
   specified by :max-frac and :num-dirs.  Filenames include an id constructed
   from arbitrary data.  Returns the resulting data."
-  [file-prefix params]
+  [file-prefix env params]
   (flush)
   (let [num-dirs (params :num-dirs)
         dir-increment (/ (* m/pi (params :max-frac)) num-dirs)
         init-dirs (mapv (partial * dir-increment)
                         (range (inc num-dirs))) ; inc to include range max
-        env (mf/make-env (params :food-distance)
-                         (params :env-size)
-                         (f/centerless-rectangular-grid (params :food-distance)
-                                                        (params :env-size)
-                                                        (params :env-size)))
         look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius))
         id (r/make-seed)
         sorted-params (into (sorted-map) params) ; for writing param file
