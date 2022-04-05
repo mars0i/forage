@@ -131,7 +131,8 @@
             found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
             segments (w/count-segments 2 foodwalks+)]
         (swap! data$ conj (into [segments init-dir exponent found] lengths)))
-      (print "" (swap! iter-num$ inc)))
+      (print "" (swap! iter-num$ inc))
+      (flush))
     (spit-csv data-filename @data$)
     (println "done.")
     @data$))
