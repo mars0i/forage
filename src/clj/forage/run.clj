@@ -114,6 +114,8 @@
              "runs ...")
     (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
             init-dir init-dirs]
+      (print "" (swap! iter-num$ inc) "...")
+      (flush)
       (r/write-state (str file-prefix
                           "prngstate_mu" (double-to-dotless exponent) 
                           "_dir" (if init-dir
@@ -130,12 +132,9 @@
             lengths (doall (map w/path-until-found-length foodwalks+)) ; Paths in which nothing is found are included
             found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
             segments (w/count-segments 2 foodwalks+)]
-        (swap! data$ conj (into [segments init-dir exponent found] lengths)))
-      (print "" (swap! iter-num$ inc))
-      (flush))
+        (swap! data$ conj (into [segments init-dir exponent found] lengths))))
     (spit-csv data-filename @data$)
-    (println "done.")
-    @data$))
+    (println "done.")))  ;@data$
 
 (defn straight-experiments
   "Runs straight-segment food searches using parameters in params for each
