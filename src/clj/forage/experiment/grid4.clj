@@ -1,3 +1,4 @@
+;; LARGE ENVIRONMENT, SPARSER FOODSPOTS
 (ns forage.experiment.grid4
   (:require
    [forage.run :as fr]
@@ -7,7 +8,8 @@
 (def seed (inc (r/make-seed)))
 (println "SEED:" seed)
 
-(def exponents [1.001 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2 2.4 2.5  3])
+(def exponents [1.001 1.2   1.4 1.5 1.6 1.7 1.8 1.9 2 2.1 2.2  3])
+(comment (count exponents) )
 (def walks-per-combo 5000) ; only for levy-experiments (straight-experiments isn't random)
 ;; Note Excel might have a 16K columns max
 
@@ -20,7 +22,7 @@
 ;(def walks-per-combo 2)
 
 ;; NOTE LARGE ENVIRONMENT, SPARSER FOODSPOTS
-(def half-size 100000) ; half the full width of the env
+(def half-size 50000) ; half the full width of the env
 (def params (sorted-map ; sort so labels match values
               :food-distance     400
               :perc-radius       1  ; distance that an animal can "see" in searching for food
