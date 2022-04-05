@@ -104,7 +104,8 @@
         data$ (atom (append-labels (into
                                      ["segments" "initial dir" "exponent" "found"]
                                      (map #(str "path " %)
-                                          (range 1 (inc walks-per-combo))))))]
+                                          (range 1 (inc walks-per-combo))))))
+        run-num$ (atom 0)]
     (spit-csv param-filename param-data) ; write out fixed parameters
     (println "Performing"
              (* (count exponents)
@@ -130,7 +131,7 @@
             found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
             segments (w/count-segments 2 foodwalks+)]
         (swap! data$ conj (into [segments init-dir exponent found] lengths)))
-      (print "."))
+      (print "" (swap! run-num$ inc)))
     (spit-csv data-filename @data$)
     (println "done.")
     @data$))
