@@ -1,5 +1,4 @@
-
-(ns forage.experiment.grid3
+(ns forage.experiment.grid4
   (:require
    [forage.run :as fr]
    [utils.random :as r]
