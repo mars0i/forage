@@ -94,13 +94,15 @@
                                                         (params :env-size)
                                                         (params :env-size)))
         look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius))
+        base-filename (str file-prefix seed "levy_")
+        param-filename (str base-filename "params.csv")
+        data-filename (str base-filename "data.csv")
+        base-state-filename (str base-filename "state") ; for PRNG state files
         sorted-params (into (sorted-map) params) ; for writing param file
-        param-filename (str file-prefix "levy_param" seed ".csv")
         param-labels (append-labels (cons "seed" (keys sorted-params)))
         param-data (append-row param-labels
                                   (cons seed    ; replace coord pair with string:
                                         (vals (update sorted-params :init-loc str))))
-        data-filename  (str file-prefix "levy_data" seed ".csv")
         data$ (atom (append-labels (into
                                      ["segments" "initial dir" "exponent" "found"]
                                      (map #(str "path " %)
@@ -116,8 +118,8 @@
             init-dir init-dirs]
       (print "" (swap! iter-num$ inc) "...")
       (flush)
-      (r/write-state (str file-prefix
-                          "prngstate_mu" (double-to-dotless exponent) 
+      (r/write-state (str base-state-filename
+                          "_mu" (double-to-dotless exponent) 
                           "_dir" (if init-dir
                                    (double-to-dotless init-dir)
                                    "Rand")
@@ -134,7 +136,7 @@
             segments (w/count-segments 2 foodwalks+)]
         (swap! data$ conj (into [segments init-dir exponent found] lengths))))
     (spit-csv data-filename @data$)
-    (println "done.")))  ;@data$
+    (println " done.")))  ;@data$
 
 (defn straight-experiments
   "Runs straight-segment food searches using parameters in params for each
