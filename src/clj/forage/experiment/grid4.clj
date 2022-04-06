@@ -15,9 +15,12 @@
 (def exponents1 (vec (take 5 all-exponents)))
 (def exponents2 (vec (take 6 (drop 5 all-exponents))))
 (def exponents3 (vec (take 5 (drop 11 all-exponents))))
-(def exponents4 (vec (take 5 (drop 16 all-exponents))))
+(def exponents4 (vec (take 4 (drop 16 all-exponents))))
+;; Run mu=3 separately.  Seems difficult for GC, perhaps because most walks run the full length:
+(def exponents5 [3])
 
 (def walks-per-combo 5000)
+
 ;; Note Excel might have a 16K columns max
 
 ;(/ (/ (* (* 16 5000) 0.1) 60) 60)
