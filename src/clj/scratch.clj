@@ -1,6 +1,5 @@
 ;; File for misc experiments.  Think of it as a repl.
 (ns scratch
-  (:use [forage.experims.manywalks1])
   (:require [forage.viz.hanami :as h]
             [forage.walks :as w]
             [forage.food :as f]
@@ -9,8 +8,19 @@
             [utils.random :as r]))
 
 
-;; Should work since we `used`d manywalks1 above:
-(r/next-double dist)
+
+(* 0.05 0.05 0.05)
+0.000125
+
+(def d 10000)
+(* d 0.05)
+(* d 0.0025)
+(* d 0.000125)
+
+(* d 0.01)
+
+(* m/pi 0.5)
+(* m/pi 0.25)
 
 (comment 
   (def lws (repeatedly levy-fn))
