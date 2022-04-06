@@ -16,9 +16,9 @@
 ;(def exponent 2)
 (def walks-per-combo 1)
 ;(def half-size 50000) ; half the full width of the env
-(def half-size 10000) ; half the full width of the env
+(def half-size 20000) ; half the full width of the env
 ;(def food-distance 500)
-(def food-distance 2000)
+(def food-distance 5000)
 (def params (sorted-map ; sort so labels match values
               :food-distance     food-distance
               :perc-radius       1  ; distance that an animal can "see" in searching for food
@@ -44,9 +44,26 @@
 (def fourn-env (mf/make-env (params :env-discretization)
                             (params :env-size)
                             (f/fournierize (mf/all-foodspot-coords grid-env)
-                                           1000 0.2 3)))
+                                           1000 0.2 4)))
 
 (def fourn-look-fn (partial mf/perc-foodspots-exactly fourn-env (params :perc-radius)))
+
+
+(def grid-env-with-center (mf/make-env (params :env-discretization)
+                                       (params :env-size)
+                                       (f/rectangular-grid (params :food-distance)
+                                                           (params :env-size)
+                                                           (params :env-size))))
+
+(def fourn-env-with-center (mf/make-env (params :env-discretization)
+                            (params :env-size)
+                            (f/fournierize (mf/all-foodspot-coords grid-env-with-center)
+                                           1000 0.2 4)))
+
+(def fourn-with-center-look-fn
+  (partial mf/perc-foodspots-exactly fourn-env (params :perc-radius)))
+
+
 
 (comment
   (do
@@ -56,8 +73,12 @@
     (oz/view! (h/vega-envwalk-plot fourn-env 1100 20 [ffw+]))
    )
 
-  (def ffw+ (fr/levy-run (r/make-well19937) fourn-look-fn nil params 3))
-  (oz/view! (h/vega-envwalk-plot fourn-env 1100 20 [ffw+]))
+  (def ffw+ (fr/levy-run (r/make-well19937) fourn-look-fn nil params 2))
+  (oz/view! (h/vega-envwalk-plot fourn-env 1100 50 [ffw+]))
+
+  (def cfw+ (fr/levy-run (r/make-well19937) fourn-with-center-look-fn nil params 2))
+  (oz/view! (h/vega-envwalk-plot fourn-env-with-center 1100 50 [cfw+]))
+
 
   (def gfw+ (fr/levy-run rng grid-look-fn nil params 2))
   (def gfw+ (fr/levy-run (r/make-well19937) grid-look-fn nil params 2))
