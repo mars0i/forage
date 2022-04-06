@@ -1,6 +1,10 @@
 ;; SPARSE FOURNIER ENVIRONMENT WITHOUT CENTER
 ;; Large env, large food distance, small Fournier multiplier.
 ;; Both Levy and straight walks defined.
+;; Two envs available:
+;;   - no center cluster
+;;   - center cluster without center foodspot
+;;
 (ns forage.experiment.fournier3
   (:require [forage.run :as fr]
             [forage.food :as f]
@@ -76,7 +80,7 @@
   (require '[forage.run :as fr])
   (require '[utils.random :as r])
 
-  ;; test params
+  ;; TESTING PARAMS
   (def all-exponents [2.0])
   (def walks-per-combo 1)
 
