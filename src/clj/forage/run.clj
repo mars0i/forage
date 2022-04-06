@@ -75,6 +75,15 @@
                                                        (params :env-size))))
 )
 
+(defn levy-run
+  "Perform one Levy run using walks/levy-foodwalk using the given rng, look-fn,
+  init-dir, and exponent, and other arguments taken from params."
+  [rng look-fn init-dir params exponent]
+  (w/levy-foodwalk look-fn
+                   (params :look-eps) (params :init-loc)
+                   (params :maxpathlen) init-dir
+                   (params :trunclen) rng
+                   (params :powerlaw-min) exponent))
 
 (defn levy-experiments
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
@@ -129,10 +138,7 @@
                                    "Rand")
                           ".bin")
                      (r/get-state rng))
-      (let [sim-fn #(w/levy-foodwalk look-fn (params :look-eps) (params :init-loc)
-                                     (params :maxpathlen) init-dir
-                                     (params :trunclen) rng
-                                     (params :powerlaw-min) exponent)
+      (let [sim-fn #(levy-run rng look-fn init-dir params exponent)
             foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
             ;lengths (doall (map #(if-not % "NA" %) (map w/path-if-found-length foodwalks+))) ; the "NA" is convenient in Excel
             lengths (doall (map w/path-until-found-length foodwalks+)) ; Paths in which nothing is found are included
