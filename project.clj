@@ -40,7 +40,7 @@
 ;; Usage tip: lein with-profile +production
              :production {;:dependencies [[generateme/fastmath "2.1.8"]
                           :jvm-opts ["-Xms4g"  ; initial heap
-                                     "-Xmx12g" ; max heap
+                                     "-Xmx16g" ; max heap
                                      "-XX:TieredStopAtLevel=4"]} ; 3X improvement
 
              ;; Usage tip: lein with-profile +production,profiling
