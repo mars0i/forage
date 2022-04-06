@@ -80,10 +80,10 @@
   init-dir, and exponent, and other arguments taken from params."
   [rng look-fn init-dir params exponent]
   (w/levy-foodwalk look-fn
-                   (params :look-eps) (params :init-loc)
-                   (params :maxpathlen) init-dir
-                   (params :trunclen) rng
-                   (params :powerlaw-min) exponent))
+                 (params :look-eps) (params :init-loc)
+                 (params :maxpathlen) init-dir
+                 (params :trunclen) rng
+                 (params :powerlaw-min) exponent))
 
 (defn levy-experiments
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
