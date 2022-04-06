@@ -56,16 +56,17 @@
                (f/rectangular-grid (params :food-distance)
                                    (params :env-size)
                                    (params :env-size))))
-(def env-with-cluster
+(def env
   (mf/make-env (params :env-discretization) (params :env-size)
                (f/remove-center
                  (params :env-size)
                  (params :env-size)
-                 (f/fournierize (mf/all-foodspot-coords grid-env)
+                 (f/fournierize (mf/all-foodspot-coords grid-env-with-center)
                                 food-distance
                                 (params :fournier-multiplier)
                                 (params :fournier-levels)))))
 
+;; NOTE TOROIDAL LOOK-FN:
 (def look-fn (partial mf/perc-foodspots-exactly-toroidal env (params :perc-radius)))
 
 (comment
@@ -74,8 +75,8 @@
 
   ;; REAL EXPERIMENTS
   ;; center cluster without center point:
-  (time (fr/levy-experiments fr/default-file-prefix env-with-cluster (r/make-seed) params most-exponents walks-per-combo look-fn))
-  (time (fr/levy-experiments fr/default-file-prefix env-with-cluster (r/make-seed) params addl-exponents walks-per-combo look-fn))
+  (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params most-exponents walks-per-combo look-fn))
+  (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params addl-exponents walks-per-combo look-fn))
 
   ;; REAL EXPERIMENTS
   ;; no cluster in center:
@@ -85,6 +86,7 @@
   ;; straight:
   (time (def data (fr/straight-experiments fr/default-file-prefix env straight-params)))
 
+  ;; Note lookups are toroidal above, so plots might not be accurate.
   ;; display straight walk:
   (require '[forage.mason.foodspot :as mf])
   (require '[utils.math :as m])
