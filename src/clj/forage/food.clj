@@ -69,12 +69,11 @@
   "Given a sequence of coordinate pairs (points), returns a sequence containing
   those points and \"fournier children\", i.e. points that are (* sep multiplier)
   up, down, left, and to the right of each original point.  Then iterates,
-  performing the same operation on all of the points at a smaller scale, until
-  iterations = 0.  multiplier should be < 1.  (Note that the number of points is
-  increased exponentially, multiplying by 5 each time.)"
-  [points sep multiplier iterations]
-  (loop [pts points, offset sep, iters iterations]
-    ;(println "iters =" iters) ; DEBUG
+  performing the same operation on all of the points at a smaller scale, levels
+  times.  multiplier should be < 1.  (Note that the number of points is increased
+  exponentially, multiplying by 5 each time.)"
+  [points sep multiplier levels]
+  (loop [pts points, offset sep, iters levels]
     (if (<= iters 0)
       pts
       (let [new-offset (* offset multiplier)
