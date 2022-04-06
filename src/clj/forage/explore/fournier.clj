@@ -69,7 +69,7 @@
                                            food-distance fournier-multiplier 4)))
 
 (def fourn-with-center-look-fn
-  (partial mf/perc-foodspots-exactly fourn-env (params :perc-radius)))
+  (partial mf/perc-foodspots-exactly fourn-env-with-center (params :perc-radius)))
 
 
 
@@ -82,6 +82,7 @@
   (time (def cfw+ (fr/levy-run (r/make-well19937) fourn-with-center-look-fn nil params 3)))
   (oz/view! (h/vega-envwalk-plot fourn-env-with-center 1100 50 [cfw+]))
   (first cfw+)
+  (mf/foodspot-coords (first (first cfw+)))
 
   ;; centerless grid:
   (time (def gfw+ (fr/levy-run (r/make-well19937) grid-look-fn nil params 2)))
