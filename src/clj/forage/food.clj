@@ -74,7 +74,7 @@
   increased exponentially, multiplying by 5 each time.)"
   [points sep multiplier iterations]
   (loop [pts points, offset sep, iters iterations]
-    (println "iters =" iters) ; DEBUG
+    ;(println "iters =" iters) ; DEBUG
     (if (<= iters 0)
       pts
       (let [new-offset (* offset multiplier)
