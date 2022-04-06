@@ -13,10 +13,12 @@
             [utils.random :as r]
             [utils.math :as m]))
 
-(def all-exponents [1.001 1.5 2.0 2.5])
+(def all-exponents [1.001 1.5 2.0 2.5 3.0])
 (comment (count all-exponents) )
+(def most-exponents [1.001 1.5 2.0 2.5])
+(def another-exponent [3.0])
 
-(def walks-per-combo 500)
+(def walks-per-combo 1000)
 
 (def half-size 50000) ; half the full width of the env
 (def food-distance 10000)
@@ -29,8 +31,8 @@
              :env-size          (* 2 half-size)
              :env-discretization food-distance
              :init-loc          [half-size half-size] ; i.e. center of env
-             :maxpathlen        (* 8 half-size)  ; for straight walks, don't go too far
-             :trunclen          (* 8 half-size) ; max length of any line segment
+             :maxpathlen        (* 5 half-size)  ; for straight walks, don't go too far
+             :trunclen          (* 5 half-size) ; max length of any line segment
              :look-eps          0.1    ; increment within segments for food check
              :num-dirs          nil    ; split range this many times + 1 (includes range max); nil for random
              :max-frac          0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
@@ -81,13 +83,10 @@
   (require '[forage.run :as fr])
   (require '[utils.random :as r])
 
-  ;; TESTING PARAMS
-  (def all-exponents [2.0])
-  (def walks-per-combo 1)
-
   ;; REAL EXPERIMENTS
   ;; center cluster without center point:
-  (time (fr/levy-experiments fr/default-file-prefix env-with-cluster (r/make-seed) params all-exponents walks-per-combo))
+  (time (fr/levy-experiments fr/default-file-prefix env-with-cluster (r/make-seed) params most-exponents walks-per-combo))
+  (time (fr/levy-experiments fr/default-file-prefix env-with-cluster (r/make-seed) params another-exponent walks-per-combo))
 
   ;; REAL EXPERIMENTS
   ;; no cluster in center:
@@ -110,6 +109,5 @@
                              (range (inc (params :num-dirs)))))))
 
   (oz/view! (h/vega-envwalk-plot env 1100 50 raw))
-
 )
 
