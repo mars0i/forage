@@ -41,10 +41,18 @@
 
 (def grid-look-fn (partial mf/perc-foodspots-exactly grid-env (params :perc-radius)))
 
+(def fournier-multiplier 0.2)
+;; example:
+;; with food-distance = 5000, multiplier = 0.1, four levels means adding
+;; points at these distances from the points that are 5000 apart:
+;; 500, 50, and 5, 0.5
+;; With multiplier = 0.2, the additional distances are:
+;; 1000, 200, 40, 8
+
 (def fourn-env (mf/make-env (params :env-discretization)
                             (params :env-size)
                             (f/fournierize (mf/all-foodspot-coords grid-env)
-                                           1000 0.2 4)))
+                                           food-distance fournier-multiplier 3)))
 
 (def fourn-look-fn (partial mf/perc-foodspots-exactly fourn-env (params :perc-radius)))
 
@@ -58,7 +66,7 @@
 (def fourn-env-with-center (mf/make-env (params :env-discretization)
                             (params :env-size)
                             (f/fournierize (mf/all-foodspot-coords grid-env-with-center)
-                                           1000 0.2 4)))
+                                           food-distance fournier-multiplier 3)))
 
 (def fourn-with-center-look-fn
   (partial mf/perc-foodspots-exactly fourn-env (params :perc-radius)))
@@ -66,7 +74,7 @@
 
 
 (comment
-  ;; centerles Fournier:
+  ;; centerless Fournier:
   (time (def ffw+ (fr/levy-run (r/make-well19937) fourn-look-fn nil params 2)))
   (oz/view! (h/vega-envwalk-plot fourn-env 1100 50 [ffw+]))
 
