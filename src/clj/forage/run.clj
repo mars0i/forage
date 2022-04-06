@@ -95,10 +95,8 @@
   parameter combination.  Filenames include seed as an id.  Also creates one
   PRNG state file per combination of exponent (mu) and direction. (This allows
   recreating (by hand) the runs with the runs with that combination using the
-  same PRNG state.  Use utils.random/read-state and set-state.)  Returns the
-  resulting data. (NOTE: If you want to load the data into Excel, there will
-  be more than walks-per-combo columns in the csv files, and Excel might 
-  limit the number of columns to 16K.)"
+  same PRNG state.  Use utils.random/read-state and set-state.)  Does not
+  returns the resulting data--should normally output nil."
   [file-prefix env seed params exponents walks-per-combo]
   (let [num-dirs (params :num-dirs)
         init-dirs (if num-dirs
