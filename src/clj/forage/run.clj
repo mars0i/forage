@@ -146,6 +146,14 @@
     (spit-csv data-filename @data$)
     (println " done.")))  ;@data$
 
+(defn straight-run
+  "Perform one straight run using walks/straight-foodwalk using the given
+  look-fn init-dir, and exponent, and other arguments taken from params."
+  [look-fn params init-dir]
+  (w/straight-foodwalk look-fn
+                   (params :look-eps) (params :init-loc)
+                   (params :maxpathlen) init-dir))
+
 (defn straight-experiments
   "Runs straight-segment food searches using parameters in params for each
   specified there. Creates two files, one containing the fixed parameters
@@ -165,10 +173,7 @@
         param-labels (append-labels (keys sorted-params))
         param-data (append-row param-labels (vals (update sorted-params :init-loc str)))
         _ (println "Performing" (inc num-dirs) "runs with id" id "... ") ; no point in starting another let
-        foodwalks+ (mapv (partial w/straight-foodwalk look-fn
-                                  (params :look-eps)
-                                  (params :init-loc)
-                                  (params :maxpathlen))
+        foodwalks+ (mapv (partial straight-run look-fn params)
                          init-dirs)
         dir-found-lengths (mapv (fn [dir fw]
                                   [dir
