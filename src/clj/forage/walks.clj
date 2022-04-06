@@ -176,23 +176,23 @@
 ;; FIXME
 ;; The problem is that if I do it this way, there will appear additional segments
 ;; connecting the old and the new segments.  Ugh.
-(defn toroidalize-stops
-  "If one end or the other of a segment goes outside the environmental bounds,
-  it's copied to the other side and inserted into the new stops list.
-  THIS MAKES LENGTH COUNTS INACCURATE, BUT the additional outside portions of
-  segments won't find any food.
-  We assume that min values of x and y are zero.  There should be no
-  foodspots at coordinates at coordinates below zero or above max-x
-  and max-y."
-  [stops max-x max-y]
-    (loop [new-stops []
-           old-stops
-           shift-stops (rest stops)]
-      (let [[x1 y1] (first old-stops)
-            [x2 y2] (first shift-stops)]
-        (if (or (negative? x1) (negative y1) (negative x2) (negative y2)
-                (> x1 max-x) (> y1 max-y) (> x2 max-x) (> y2 max-y))
-))))
+;(defn toroidalize-stops
+;  "If one end or the other of a segment goes outside the environmental bounds,
+;  it's copied to the other side and inserted into the new stops list.
+;  THIS MAKES LENGTH COUNTS INACCURATE, BUT the additional outside portions of
+;  segments won't find any food.
+;  We assume that min values of x and y are zero.  There should be no
+;  foodspots at coordinates at coordinates below zero or above max-x
+;  and max-y."
+;  [stops max-x max-y]
+;    (loop [new-stops []
+;           old-stops
+;           shift-stops (rest stops)]
+;      (let [[x1 y1] (first old-stops)
+;            [x2 y2] (first shift-stops)]
+;        (if (or (negative? x1) (negative y1) (negative x2) (negative y2)
+;                (> x1 max-x) (> y1 max-y) (> x2 max-x) (> y2 max-y))
+;))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
