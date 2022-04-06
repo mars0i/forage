@@ -53,19 +53,28 @@
 (comment
   ;; Example parameters map:
   (def half-size 100000) ; half the full width of the env
-  {:powerlaw-min      1  ; min value ("scale") for power law
-   :perc-radius       1  ; distance that an animal can "see" in searching for food
-   :food-distance     500
-   :env-size          (* 2 half-size)
-   :init-loc          [half-size half-size] ; i.e. center of env
-   :maxpathlen        half-size  ; for straight walks, don't go too far
-   :trunclen          half-size  ; max length of any line segment
-   :look-eps          0.1  ; increment within segments for food check
-   :max-frac          0.25 ; proportion of pi to use as maximum direction (0 is min)
-   :num-dirs          50}  ; split range this many times + 1 (includes range max)
-   ; If num-dirs is falsey, nil will be passed to w/levy-walks to indicate that
-   ; the initial direction should be random.
+  (def food-distance 500)
+
+  (def params
+    {:powerlaw-min      1  ; min value ("scale") for power law
+     :perc-radius       1  ; distance that an animal can "see" in searching for food
+     :food-distance     food-distance
+     :env-size          (* 2 half-size)
+     :env-discretization food-distance ; for MASON's Continuous2D
+     :init-loc          [half-size half-size] ; i.e. center of env
+     :maxpathlen        half-size  ; for straight walks, don't go too far
+     :trunclen          half-size  ; max length of any line segment
+     :look-eps          0.1  ; increment within segments for food check
+     :max-frac          0.25 ; proportion of pi to use as maximum direction (0 is min)
+     :num-dirs          50})  ; split range num-dir times + 1, or nil for random dir
+
+  (def env (mf/make-env (params :env-discretization)
+                        (params :env-size)
+                        (f/centerless-rectangular-grid (params :food-distance)
+                                                       (params :env-size)
+                                                       (params :env-size))))
 )
+
 
 (defn levy-experiments
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
@@ -81,18 +90,13 @@
   resulting data. (NOTE: If you want to load the data into Excel, there will
   be more than walks-per-combo columns in the csv files, and Excel might 
   limit the number of columns to 16K.)"
-  [file-prefix seed params exponents walks-per-combo]
+  [file-prefix env seed params exponents walks-per-combo]
   (let [num-dirs (params :num-dirs)
         init-dirs (if num-dirs
                     (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
                           (range (inc num-dirs))) ; inc to include range max
                     [nil]) ; tell w/levy-walks to leave initial dir random
         rng (r/make-well19937 seed)
-        env (mf/make-env (params :food-distance)
-                         (params :env-size)
-                         (f/centerless-rectangular-grid (params :food-distance)
-                                                        (params :env-size)
-                                                        (params :env-size)))
         look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius))
         base-filename (str file-prefix seed "levy_")
         param-filename (str base-filename "params.csv")
@@ -144,17 +148,12 @@
   of the run, and the other containing the results listed for each direction
   specified by :max-frac and :num-dirs.  Filenames include an id constructed
   from arbitrary data.  Returns the resulting data."
-  [file-prefix params]
+  [file-prefix env params]
   (flush)
   (let [num-dirs (params :num-dirs)
         dir-increment (/ (* m/pi (params :max-frac)) num-dirs)
         init-dirs (mapv (partial * dir-increment)
                         (range (inc num-dirs))) ; inc to include range max
-        env (mf/make-env (params :food-distance)
-                         (params :env-size)
-                         (f/centerless-rectangular-grid (params :food-distance)
-                                                        (params :env-size)
-                                                        (params :env-size)))
         look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius))
         id (r/make-seed)
         sorted-params (into (sorted-map) params) ; for writing param file
