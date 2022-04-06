@@ -85,6 +85,14 @@
   (fournierize points 100 0.1 2)
 )
 
+(defn remove-center
+  "Remove the center point of a grid of size env-width x env-height.
+  Dimensions must be even numbers."
+  [env-width env-height grid]
+  (remove (fn [[x y]] (and (= x (/ env-width 2))    ; assumes width, height 
+                           (= y (/ env-height 2)))) ; are even
+          grid))
+
 (defn centerless-rectangular-grid
   "Make a sequence of coordinate pairs spaced out every sep integers,
   from -quandrant-width to quadrant-width, and from -quadrant-height
@@ -92,9 +100,9 @@
   ([env-width env-height]
    (centerless-rectangular-grid 1 env-width env-height))
   ([sep env-width env-height]
-   (remove (fn [[x y]] (and (= x (/ env-width 2))    ; assumes width, height 
-                            (= y (/ env-height 2)))) ; are even
-           (rectangular-grid sep env-width env-height))))
+   (remove-center env-width
+                  env-height
+                  (rectangular-grid sep env-width env-height))))
 
 (defn perc-foodspot-coords-in-coll
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
