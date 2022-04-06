@@ -94,6 +94,15 @@
                                                           perc-radius)]
     (if (.isEmpty foodspots-bag) nil foodspots-bag)))
 
+(defn perc-foodspots-exactly-toroidal
+  "Returns a MASON Bag of foodspots within perc-radius of (x,y), or 
+  nil if there are none.  Uses Continuous2D's local toroidal cell lookup."
+  [^Continuous2D env perc-radius x y]
+  (let [foodspots-bag (.getNeighborsExactlyWithinDistance env
+                                                          (Double2D. x y)
+                                                          perc-radius true)]
+    (if (.isEmpty foodspots-bag) nil foodspots-bag)))
+
 ;; TODO ? Don't call seq?
 (defn perc-foodspot-coords-exactly
   "Returns a sequence of foodspot coordinates within perc-radius of (x,y),

@@ -1,5 +1,6 @@
 ;; SPARSE FOURNIER ENVIRONMENT WITHOUT CENTER
 ;; LARGER env, large food distance, small Fournier multiplier,
+;; WITH TOROIDAL SEARCH!
 ;; more walks per combo.
 ;; Both Levy and straight walks defined.
 ;; Two envs available:
@@ -15,8 +16,8 @@
 
 (def all-exponents [1.001 1.5 2.0 2.5 3.0])
 (comment (count all-exponents) )
-(def most-exponents [1.001 1.5 2.0 2.5])
-(def another-exponent [3.0])
+(def most-exponents (vec (take 3 all-exponents)))
+(def addl-exponents (vec (drop 3 all-exponents)))
 
 (def walks-per-combo 1000)
 
@@ -47,20 +48,6 @@
 ;; FOR STRAIGHT-WALKS
 (def straight-params (assoc params :num-dirs 100))
 
-;; Fournier env without center cluster:
-(def grid-env
-  (mf/make-env (params :env-discretization) (params :env-size)
-               (f/centerless-rectangular-grid (params :food-distance)
-                                              (params :env-size)
-                                              (params :env-size))))
-(def env
-  (mf/make-env (params :env-discretization)
-               (params :env-size)
-               (f/fournierize (mf/all-foodspot-coords grid-env)
-                              food-distance
-                              (params :fournier-multiplier)
-                              (params :fournier-levels))))
-
 ;; Fournier env with center cluster but no center foodspot:
 
 (def grid-env-with-center
@@ -79,14 +66,16 @@
                                 (params :fournier-multiplier)
                                 (params :fournier-levels)))))
 
+(def look-fn (partial mf/perc-foodspots-exactly-toroidal env (params :perc-radius)))
+
 (comment
   (require '[forage.run :as fr])
   (require '[utils.random :as r])
 
   ;; REAL EXPERIMENTS
   ;; center cluster without center point:
-  (time (fr/levy-experiments fr/default-file-prefix env-with-cluster (r/make-seed) params most-exponents walks-per-combo))
-  (time (fr/levy-experiments fr/default-file-prefix env-with-cluster (r/make-seed) params another-exponent walks-per-combo))
+  (time (fr/levy-experiments fr/default-file-prefix env-with-cluster (r/make-seed) params most-exponents walks-per-combo look-fn))
+  (time (fr/levy-experiments fr/default-file-prefix env-with-cluster (r/make-seed) params addl-exponents walks-per-combo look-fn))
 
   ;; REAL EXPERIMENTS
   ;; no cluster in center:
@@ -111,3 +100,19 @@
   (oz/view! (h/vega-envwalk-plot env 1100 50 raw))
 )
 
+
+(comment ; CURRENTLY UNUSED:
+;; Fournier env without center cluster:
+(def grid-env
+  (mf/make-env (params :env-discretization) (params :env-size)
+               (f/centerless-rectangular-grid (params :food-distance)
+                                              (params :env-size)
+                                              (params :env-size))))
+(def env
+  (mf/make-env (params :env-discretization)
+               (params :env-size)
+               (f/fournierize (mf/all-foodspot-coords grid-env)
+                              food-distance
+                              (params :fournier-multiplier)
+                              (params :fournier-levels))))
+)

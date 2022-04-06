@@ -97,54 +97,57 @@
   recreating (by hand) the runs with the runs with that combination using the
   same PRNG state.  Use utils.random/read-state and set-state.)  Does not
   returns the resulting data--should normally output nil."
-  [file-prefix env seed params exponents walks-per-combo]
-  (let [num-dirs (params :num-dirs)
-        init-dirs (if num-dirs
-                    (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
-                          (range (inc num-dirs))) ; inc to include range max
-                    [nil]) ; tell w/levy-walks to leave initial dir random
-        rng (r/make-well19937 seed)
-        look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius))
-        base-filename (str file-prefix "levy" seed)
-        param-filename (str base-filename "params.csv")
-        data-filename (str base-filename "data.csv")
-        base-state-filename (str base-filename "state") ; for PRNG state files
-        sorted-params (into (sorted-map) params) ; for writing param file
-        param-labels (append-labels (cons "seed" (keys sorted-params)))
-        param-data (append-row param-labels
-                                  (cons seed    ; replace coord pair with string:
-                                        (vals (update sorted-params :init-loc str))))
-        data$ (atom (append-labels (into
+  ([file-prefix env seed params exponents walks-per-combo]
+   (levy-experiments file-prefix env seed params exponents walks-per-combo
+                     (partial mf/perc-foodspots-exactly
+                              env (params :perc-radius))))
+  ([file-prefix env seed params exponents walks-per-combo look-fn]
+   (let [num-dirs (params :num-dirs)
+         init-dirs (if num-dirs
+                     (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
+                           (range (inc num-dirs))) ; inc to include range max
+                     [nil]) ; tell w/levy-walks to leave initial dir random
+         rng (r/make-well19937 seed)
+         base-filename (str file-prefix "levy" seed)
+         param-filename (str base-filename "params.csv")
+         data-filename (str base-filename "data.csv")
+         base-state-filename (str base-filename "state") ; for PRNG state files
+         sorted-params (into (sorted-map) params) ; for writing param file
+         param-labels (append-labels (cons "seed" (keys sorted-params)))
+         param-data (append-row param-labels
+                                (cons seed    ; replace coord pair with string:
+                                      (vals (update sorted-params :init-loc str))))
+         data$ (atom (append-labels (into
                                      ["segments" "initial dir" "exponent" "found"]
                                      (map #(str "path " %)
                                           (range 1 (inc walks-per-combo))))))
-        iter-num$ (atom 0)]
-    (spit-csv param-filename param-data) ; write out fixed parameters
-    (println "Performing"
-             (* (count exponents)
-                (if num-dirs (inc num-dirs) 1)
-                walks-per-combo)
-             "runs ...")
-    (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
-            init-dir init-dirs]
-      (print "" (swap! iter-num$ inc) "...")
-      (flush)
-      (r/write-state (str base-state-filename
-                          "_mu" (double-to-dotless exponent) 
-                          "_dir" (if init-dir
-                                   (double-to-dotless init-dir)
-                                   "Rand")
-                          ".bin")
-                     (r/get-state rng))
-      (let [sim-fn #(levy-run rng look-fn init-dir params exponent)
-            foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
-            ;lengths (doall (map #(if-not % "NA" %) (map w/path-if-found-length foodwalks+))) ; the "NA" is convenient in Excel
-            lengths (doall (map w/path-until-found-length foodwalks+)) ; Paths in which nothing is found are included
-            found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
-            segments (w/count-segments 2 foodwalks+)]
-        (swap! data$ conj (into [segments init-dir exponent found] lengths))))
-    (spit-csv data-filename @data$)
-    (println " done.")))  ;@data$
+         iter-num$ (atom 0)]
+     (spit-csv param-filename param-data) ; write out fixed parameters
+     (println "Performing"
+              (* (count exponents)
+                 (if num-dirs (inc num-dirs) 1)
+                 walks-per-combo)
+              "runs ...")
+     (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
+             init-dir init-dirs]
+       (print "" (swap! iter-num$ inc) "...")
+       (flush)
+       (r/write-state (str base-state-filename
+                           "_mu" (double-to-dotless exponent) 
+                           "_dir" (if init-dir
+                                    (double-to-dotless init-dir)
+                                    "Rand")
+                           ".bin")
+                      (r/get-state rng))
+       (let [sim-fn #(levy-run rng look-fn init-dir params exponent)
+             foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
+             ;lengths (doall (map #(if-not % "NA" %) (map w/path-if-found-length foodwalks+))) ; the "NA" is convenient in Excel
+             lengths (doall (map w/path-until-found-length foodwalks+)) ; Paths in which nothing is found are included
+             found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
+             segments (w/count-segments 2 foodwalks+)]
+         (swap! data$ conj (into [segments init-dir exponent found] lengths))))
+     (spit-csv data-filename @data$)
+     (println " done."))))  ;@data$
 
 (defn straight-run
   "Perform one straight run using walks/straight-foodwalk using the given
