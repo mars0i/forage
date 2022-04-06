@@ -182,7 +182,7 @@
                                 init-dirs
                                 foodwalks+)
         data-filename  (str file-prefix "straight_data"  id ".csv")
-        data (cons ["initial dir" "found" "path length if found"] dir-found-lengths)]
+        data (cons ["initial dir" "found" "path length"] dir-found-lengths)]
     (spit-csv param-filename param-data) ; write out fixed parameters
     (spit-csv data-filename data)
     (println "done.")
