@@ -1,4 +1,4 @@
-(ns forage.explore.grid5
+(ns forage.explore.fournier1
   (:require [forage.run :as fr]
             [forage.food :as f]
             [forage.mason.foodspot :as mf]
@@ -66,26 +66,28 @@
 
 
 (comment
+  ;; centerles Fournier:
+  (time (def ffw+ (fr/levy-run (r/make-well19937) fourn-look-fn nil params 2)))
+  (oz/view! (h/vega-envwalk-plot fourn-env 1100 50 [ffw+]))
+
+  ;; Fournier with center:
+  (time (def cfw+ (fr/levy-run (r/make-well19937) fourn-with-center-look-fn nil params 2)))
+  (oz/view! (h/vega-envwalk-plot fourn-env-with-center 1100 50 [cfw+]))
+
+  ;; centerless grid:
+  (time (def gfw+ (fr/levy-run (r/make-well19937) grid-look-fn nil params 2)))
+  (oz/view! (h/vega-envwalk-plot grid-env 1100 50 [gfw+]))
+
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+
   (do
+    ;; centerles Fournier
     (def seed (r/make-seed))
     (def rng (r/make-well19937 seed))
     (def ffw+ (fr/levy-run rng fourn-look-fn nil params 2))
     (oz/view! (h/vega-envwalk-plot fourn-env 1100 20 [ffw+]))
    )
-
-  (def ffw+ (fr/levy-run (r/make-well19937) fourn-look-fn nil params 2))
-  (oz/view! (h/vega-envwalk-plot fourn-env 1100 50 [ffw+]))
-
-  (def cfw+ (fr/levy-run (r/make-well19937) fourn-with-center-look-fn nil params 2))
-  (oz/view! (h/vega-envwalk-plot fourn-env-with-center 1100 50 [cfw+]))
-
-
-  (def gfw+ (fr/levy-run rng grid-look-fn nil params 2))
-  (def gfw+ (fr/levy-run (r/make-well19937) grid-look-fn nil params 2))
-  (oz/view! (h/vega-envwalk-plot grid-env 1100 50 [gfw+]))
-
-  (require '[oz.core :as oz])
-  (oz/start-server!)
 
   (time (fr/levy-experiments fr/default-file-prefix grid-env (r/make-seed) params exponents walks-per-combo))
 )
