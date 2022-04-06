@@ -1,4 +1,4 @@
-;; FOURNIER ENVIRONMENT WITH CENTER
+;; FOURNIER ENVIRONMENT WITHOUT CENTER
 ;; Odd thing: ballistic searches go outside env, but then
 ;; I restart them in center.
 (ns forage.experiment.fournier1
@@ -43,22 +43,25 @@
 ;; 1000, 200, 40, 8
 
 ;; 
-(def grid-env-with-center (mf/make-env (params :env-discretization)
+(def grid-env (mf/make-env (params :env-discretization)
                                        (params :env-size)
-                                       (f/rectangular-grid (params :food-distance)
+                                       (f/centerless-rectangular-grid (params :food-distance)
                                                            (params :env-size)
                                                            (params :env-size))))
 
-;; Fournier env with center:
+;; Fournier env without center:
 (def env
   (mf/make-env (params :env-discretization)
                (params :env-size)
-               (f/fournierize (mf/all-foodspot-coords grid-env-with-center)
+               (f/fournierize (mf/all-foodspot-coords grid-env)
                               food-distance fournier-multiplier fournier-levels)))
 
 (comment
   (require '[forage.run :as fr])
   (require '[utils.random :as r])
+
+  (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params all-exponents walks-per-combo))
+
   (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params exponents1 walks-per-combo))
   (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params exponents2 walks-per-combo))
   (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params exponents3 walks-per-combo))
