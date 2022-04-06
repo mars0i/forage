@@ -17,7 +17,7 @@
 (def food-distance 10000)
 
 ;; FOR LEVY WALKS
-(def levy-params (sorted-map ; sort so labels match values
+(def params (sorted-map ; sort so labels match values
              :food-distance     food-distance
              :perc-radius       1  ; distance that an animal can "see" in searching for food
              :powerlaw-min      1
@@ -38,7 +38,7 @@
 ;; The last is not OK--so don't use 3 levels with that distance and multiplier.
 
 ;; FOR STRAIGHT-WALKS
-(def straight-params (assoc levy-params :num-dirs 100))
+(def straight-params (assoc params :num-dirs 100))
 
 ;; Fournier env without center cluster:
 (def grid-env
@@ -76,14 +76,19 @@
   (require '[forage.run :as fr])
   (require '[utils.random :as r])
 
+  ;; test params
   (def all-exponents [2.0])
   (def walks-per-combo 1)
-  ;; no cluster in center:
-  (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) levy-params all-exponents walks-per-combo))
 
+  ;; REAL EXPERIMENTS
   ;; center cluster without center point:
-  (time (fr/levy-experiments fr/default-file-prefix env-with-cluster (r/make-seed) levy-params all-exponents walks-per-combo))
+  (time (fr/levy-experiments fr/default-file-prefix env-with-cluster (r/make-seed) params all-exponents walks-per-combo))
+
+  ;; REAL EXPERIMENTS
+  ;; no cluster in center:
+  (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params all-exponents walks-per-combo))
   
+  ;; REAL EXPERIMENTS
   ;; straight:
   (time (def data (fr/straight-experiments fr/default-file-prefix env straight-params)))
 
