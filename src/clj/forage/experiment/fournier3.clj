@@ -1,3 +1,4 @@
+;; BUG was using wrong grid-env in second fournier env
 ;; SPARSE FOURNIER ENVIRONMENT WITHOUT CENTER
 ;; Large env, large food distance, small Fournier multiplier.
 ;; Both Levy and straight walks defined.
@@ -71,7 +72,7 @@
                (f/remove-center
                  (params :env-size)
                  (params :env-size)
-                 (f/fournierize (mf/all-foodspot-coords grid-env)
+                 (f/fournierize (mf/all-foodspot-coords grid-env) ;; FIXME
                                 food-distance
                                 (params :fournier-multiplier)
                                 (params :fournier-levels)))))
