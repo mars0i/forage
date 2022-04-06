@@ -107,7 +107,7 @@
                     [nil]) ; tell w/levy-walks to leave initial dir random
         rng (r/make-well19937 seed)
         look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius))
-        base-filename (str file-prefix seed "levy_")
+        base-filename (str file-prefix "levy" seed)
         param-filename (str base-filename "params.csv")
         data-filename (str base-filename "data.csv")
         base-state-filename (str base-filename "state") ; for PRNG state files
