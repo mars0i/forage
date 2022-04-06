@@ -1,4 +1,4 @@
-(ns forage.explore.fournier1
+(ns forage.explore.fournier
   (:require [forage.run :as fr]
             [forage.food :as f]
             [forage.mason.foodspot :as mf]
@@ -52,7 +52,7 @@
 (def fourn-env (mf/make-env (params :env-discretization)
                             (params :env-size)
                             (f/fournierize (mf/all-foodspot-coords grid-env)
-                                           food-distance fournier-multiplier 3)))
+                                           food-distance fournier-multiplier 4)))
 
 (def fourn-look-fn (partial mf/perc-foodspots-exactly fourn-env (params :perc-radius)))
 
@@ -66,7 +66,7 @@
 (def fourn-env-with-center (mf/make-env (params :env-discretization)
                             (params :env-size)
                             (f/fournierize (mf/all-foodspot-coords grid-env-with-center)
-                                           food-distance fournier-multiplier 3)))
+                                           food-distance fournier-multiplier 4)))
 
 (def fourn-with-center-look-fn
   (partial mf/perc-foodspots-exactly fourn-env (params :perc-radius)))
@@ -79,8 +79,9 @@
   (oz/view! (h/vega-envwalk-plot fourn-env 1100 50 [ffw+]))
 
   ;; Fournier with center:
-  (time (def cfw+ (fr/levy-run (r/make-well19937) fourn-with-center-look-fn nil params 2)))
+  (time (def cfw+ (fr/levy-run (r/make-well19937) fourn-with-center-look-fn nil params 3)))
   (oz/view! (h/vega-envwalk-plot fourn-env-with-center 1100 50 [cfw+]))
+  (first cfw+)
 
   ;; centerless grid:
   (time (def gfw+ (fr/levy-run (r/make-well19937) grid-look-fn nil params 2)))
