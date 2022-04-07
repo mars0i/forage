@@ -169,6 +169,13 @@
   (vega-food-plot (make-foodgrid food-distance env-sz env-sz) 
                   env-sz plot-dim display-radius))
 
+;; TODO: Do this right.  It's a kludge based on ignorance of Vega-Light.
+(defn vega-linegrid-plot
+  "Plots a grid of lines without foodspots."
+  [env-sz plot-dim food-distance]
+  (vega-food-plot (make-linegrid "" food-distance env-sz env-sz) 
+                  env-sz plot-dim 0))
+
 (defn vega-env-plot
   "Plot foodspot display radii on where foodspots from env are."
   [env plot-dim display-radius]
