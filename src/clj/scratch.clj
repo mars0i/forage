@@ -3,24 +3,11 @@
   (:require [forage.viz.hanami :as h]
             [forage.walks :as w]
             [forage.food :as f]
+            [forage.run :as fr]
             [forage.mason.foodspot :as mf]
             [utils.math :as m]
             [utils.random :as r]))
 
-
-
-(* 0.05 0.05 0.05)
-0.000125
-
-(def d 10000)
-(* d 0.05)
-(* d 0.0025)
-(* d 0.000125)
-
-(* d 0.01)
-
-(* m/pi 0.5)
-(* m/pi 0.25)
 
 (comment 
   (def lws (repeatedly levy-fn))
@@ -37,6 +24,14 @@
 (comment
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (def splot (make-gridwalk-plot env-size plot-dim food-distance display-radius sws))
-  (oz/view! splot)
+  ;(def splot (make-gridwalk-plot env-size plot-dim food-distance display-radius sws))
+  ;(oz/view! splot)
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+  (def rng (r/make-19937))
+  (defn ignore-food [x y] nil)
+
+
 )
+
+
