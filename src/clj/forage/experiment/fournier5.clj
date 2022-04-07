@@ -14,10 +14,11 @@
 (def walks-per-combo 1000)
 
 (def half-size 100000) ; half the full width of the env
-(def init-food 50000)
-(def -init-food (- 50000))
-(def fournier-mult 0.2) ; SEE NOTEs AT END RE DIFFERENT MULTIPLIERS
-(def fournier-lvls 4)   ; AND LEVELS
+(def init-food-distance 50000)
+(def init-food  (+ half-size init-food-distance))
+(def -init-food (- half-size init-food-distance))
+(def fournier-mult 0.15) ; SEE NOTEs AT END RE DIFFERENT MULTIPLIERS
+(def fournier-lvls 3)   ; AND LEVELS
 
 ;; FOR LEVY WALKS
 (def params (sorted-map ; sort so labels match values
@@ -48,15 +49,19 @@
 (def base-env
   (mf/make-env (params :env-discretization)
                (params :env-size)
-               [[init-food  init-food]  [-init-food init-food]
+               [[half-size half-size]
+                [init-food  init-food]  [-init-food init-food]
                 [init-food -init-food] [-init-food -init-food]]))
 
 (def env 
   (mf/make-env (params :env-discretization) (params :env-size)
-               (f/fournierize (mf/all-foodspot-coords base-env)
-                              init-food
-                              (params :fournier-multiplier)
-                              (params :fournier-levels))))
+               (f/remove-center
+                 (params :env-size)
+                 (params :env-size)
+                 (f/fournierize (mf/all-foodspot-coords base-env)
+                                init-food
+                                (params :fournier-multiplier)
+                                (params :fournier-levels)))))
 
 ;; NOTE TOROIDAL LOOK-FN:
 (def look-fn (partial mf/perc-foodspots-exactly-toroidal env (params :perc-radius)))
@@ -109,6 +114,12 @@
   (* init-food 0.1 0.1)
   (* init-food 0.1 0.1 0.1)
   (* init-food 0.1 0.1 0.1 0.1)
+
+  ;; 4 levels
+  (* init-food 0.15)
+  (* init-food 0.15 0.15)
+  (* init-food 0.15 0.15 0.15)
+  (* init-food 0.15 0.15 0.15 0.15)
 
   ;; 4 levels
   (* init-food 0.2)
