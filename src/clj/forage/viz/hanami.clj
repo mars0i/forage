@@ -32,21 +32,19 @@
   over the range (2*quadrant-sz x 2*quandrant-sz), with physical size 
   plot-dim x plot-dim.  If there are additional Vega-Lite specs
   to add, they can be entered in a map as an additional argument."
-  [plot-dim data & addl-kvs-map]
-  (merge
-     (-> (hc/xform ht/line-chart
+  [plot-dim data-dim data & colorscheme-seq]
+  (-> (hc/xform ht/line-chart
                 :DATA data
-                ; Let the food plot choose domain implicitly
-                ;:XSCALE {"domain" [(- quadrant-sz) quadrant-sz]}
-                ;:YSCALE {"domain" [(- quadrant-sz) quadrant-sz]}
-                :COLOR "label"
+                :XSCALE {"domain" [0 data-dim]}
+                :YSCALE {"domain" [0 data-dim]}
+                :COLOR (if colorscheme-seq
+                         {:field "label" :type "nominal"
+                          :scale {:scheme (first colorscheme-seq)}}
+                         "label")
                 :WIDTH  plot-dim
                 :HEIGHT plot-dim)
-         (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
-         (assoc-in [:mark :strokeWidth] 1.0)
-         ;   (assoc-in [:autosize :type] "none") ; ignored
-      ) 
-    (first addl-kvs-map)))
+      (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
+      (assoc-in [:mark :strokeWidth] 1.0))) 
 
 (defn add-point-labels
   "Given a sequence of pairs representing x,y coordinates, returns a
@@ -151,13 +149,18 @@
        (f/centerless-rectangular-grid sep env-width env-height))))
 
 (defn vega-food-plot
-  "Plot foodspot display radii where foodspots are."
-  [foodspots env-sz plot-dim display-radius]
+  "Plot foodspot display radii where foodspots are.  If a fifth argument
+  is passed, it will be interpreted as a colorscheme name string from 
+  https://vega.github.io/vega/docs/schemes ."
+  [foodspots env-sz plot-dim display-radius & colorscheme-seq]
   (hc/xform ht/point-chart 
             :DATA foodspots
             :X "x"
             :Y "y"
-            :COLOR "label"
+            :COLOR (if colorscheme-seq
+                     {:field "label" :type "nominal"
+                      :scale {:scheme (first colorscheme-seq)}}
+                     "label")
             :MSIZE (foodspot-mark-size env-sz plot-dim display-radius)
             :OPACITY 0.5  ; default is 0.7
             :WIDTH  plot-dim  ; sets dim for plot only, label area not included
