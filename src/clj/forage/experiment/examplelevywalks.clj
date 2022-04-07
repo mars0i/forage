@@ -17,7 +17,8 @@
 ;; $\mu = 2$ is the theoretical optimum for searches.
 ;; $\mu = 3$ is a Brownian walk.
 ;(def mus [1.000001 2 2.2 3])  ; mu near 1: decimal digits have big effect on speed
-(def mus [1.01 2 3])  ; mu near 1: decimal digits have big effect on speed
+;(def mus [1.01 2 3])  ; mu near 1: decimal digits have big effect on speed
+(def mus [1.3 2 3])  ; mu near 1: decimal digits have big effect on speed
 ;(def mus [2])
 ;(def scales [1])
 ;(def scales [1 8])
@@ -73,13 +74,15 @@
 (def n-steps (map count step-seqs))
 
 ;; Construct walk data for Hanami/Vega-Lite:
-(def walks (doall (apply concat (map take n-steps vl-stop-seqs))))
+(def each-walk (doall (map take n-steps vl-stop-seqs))) ; three seqs, one for each mu
+(def all-walks (apply concat each-walk)) ; all mus together in one seq
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANAMI/VEGA-LITE
 
-(def gridwalk-plot 
+(defn gridwalk-plot 
+  [walks]
   (-> (h/vega-gridwalk-plot
        perceptual-radius maxpathlen powerlaw-scale n-steps
        (h/vega-linegrid-plot env-size plot-dim food-distance) ; kludge to force uniform scaling and dims
@@ -91,5 +94,6 @@
 (comment
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (oz/view! gridwalk-plot)
+  (oz/view! (gridwalk-plot all-walks))
+  (oz/view! (gridwalk-plot (nth each-walk 1)))
 )
