@@ -42,7 +42,7 @@
 ;; The last is not OK--so don't use 3 levels with that distance and multiplier.
 
 ;; FOR STRAIGHT-WALKS
-(def straight-params (assoc params :num-dirs 100))
+(def straight-params (assoc params :num-dirs 50))
 
 ;; Fournier env with center cluster but no center foodspot:
 
