@@ -1,6 +1,7 @@
 (ns forage.experiment.examplelevywalks
   (:require [forage.walks :as w]
             [utils.random :as r]
+            [aerial.hanami.templates :as ht]
             [forage.viz.hanami :as h]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -18,7 +19,8 @@
 ;; $\mu = 3$ is a Brownian walk.
 ;(def mus [1.000001 2 2.2 3])  ; mu near 1: decimal digits have big effect on speed
 ;(def mus [1.01 2 3])  ; mu near 1: decimal digits have big effect on speed
-(def mus [1.3 2 3])  ; mu near 1: decimal digits have big effect on speed
+;(def mus [1.3 2 3])  ; mu near 1: decimal digits have big effect on speed
+(def mus [2 3])  ; mu near 1: decimal digits have big effect on speed
 ;(def mus [2])
 ;(def scales [1])
 ;(def scales [1 8])
@@ -26,21 +28,23 @@
 ;(def scales [1 100 1000])
 ;(def scale-mus (for [scale scales, mu mus] [scale mu]))
 
-(def maxpathlen 5000)
-(def trunclen 5000)
+;(def maxpathlen half-size)
+;(def maxpathlen env-size)
+(def maxpathlen (* 4 env-size)) ; good for larger mus
+(def trunclen maxpathlen)
 (def perceptual-radius 20) 
 (def food-distance 200)
 
 (def powerlaw-scale 1)
 
-;(def mu-str "mu")
-(def mu-str "μ")
-;(def mu-str "$\mu$")
+(def mu-str "mu")
+;(def mu-str "μ")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PRNGS and DISTS:
 
 (def seed (inc (r/make-seed)))
+;(def seed -2925834069415719830)
 (def rng (r/make-well19937 seed))
 
 (def dists (map (fn [mu] (r/make-powerlaw rng 1 mu)) mus))
@@ -85,8 +89,8 @@
   [walks]
   (-> (h/vega-gridwalk-plot
        perceptual-radius maxpathlen powerlaw-scale n-steps
-       (h/vega-linegrid-plot env-size plot-dim food-distance) ; kludge to force uniform scaling and dims
-       (h/vega-walk-plot plot-dim walks))
+       ;(h/vega-foodgrid-plot env-size plot-dim food-distance 0) ; kludge to force uniform scaling and dims
+       (h/vega-walk-plot plot-dim env-size walks "category20")) ; category20
       (assoc :background "white")))
 
 
@@ -95,5 +99,7 @@
   (require '[oz.core :as oz])
   (oz/start-server!)
   (oz/view! (gridwalk-plot all-walks))
+  (oz/view! (gridwalk-plot (nth each-walk 0)))
   (oz/view! (gridwalk-plot (nth each-walk 1)))
+  (oz/view! (gridwalk-plot (nth each-walk 2)))
 )
