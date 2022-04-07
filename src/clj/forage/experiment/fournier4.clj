@@ -103,18 +103,18 @@
 )
 
 
-(comment ; CURRENTLY UNUSED:
+;; EXTRA CODE:
+
 ;; Fournier env without center cluster:
-(def grid-env
+(def grid-env-without-center-cluster
   (mf/make-env (params :env-discretization) (params :env-size)
                (f/centerless-rectangular-grid (params :food-distance)
                                               (params :env-size)
                                               (params :env-size))))
-(def env
+(def env-without-center-cluster
   (mf/make-env (params :env-discretization)
                (params :env-size)
-               (f/fournierize (mf/all-foodspot-coords grid-env)
+               (f/fournierize (mf/all-foodspot-coords grid-env-without-center-cluster)
                               food-distance
                               (params :fournier-multiplier)
                               (params :fournier-levels))))
-)
