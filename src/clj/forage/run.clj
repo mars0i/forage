@@ -11,6 +11,11 @@
 
 (def default-file-prefix "../../data.foraging/forage/")
 
+(defn ignore-food
+  "A look-fn that does nothing--it never finds food."
+  [x y]
+  nil)
+
 (defn append-row
   "Given a value for seed, a sequence of parameters, a count of found
   foodspots in a collection of runs, and the total number of segments in
