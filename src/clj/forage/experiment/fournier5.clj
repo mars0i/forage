@@ -92,6 +92,21 @@
                              (range (inc (straight-params :num-dirs)))))))
 
   (oz/view! (h/vega-envwalk-plot env 1100 500 raw))
+
+
+  (require '[forage.run :as fr])
+  (require '[utils.random :as r])
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+  (def rng (r/make-well19937))
+  (defn ignore-food [x y] nil)
+  (def fw+ (fr/levy-run rng ignore-food nil params 2))
+  (map count fw+)
+  (def plot (h/did-couldve-walk-plot 800 fw+))
+  (oz/view! plot)
+
+
 )
 
 
