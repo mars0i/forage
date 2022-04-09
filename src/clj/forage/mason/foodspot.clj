@@ -68,18 +68,23 @@
 ;; if the result is empty.
 
 ;; TODO ? Don't call seq?
-(defn all-foodspots
+(defn env-foodspots
   "Returns a sequence of all foodspots in environment env, or nil
   if there are none."
   [^Continuous2D env]
   (seq (.getAllObjects env)))
 
-;; TODO ? Don't call seq?
-(defn all-foodspot-coords
+;; alias for older code
+(def all-foodspots env-foodspots)
+
+(defn env-foodspot-coords
   "Returns coordinate pairs of all foodspots in environment env, or nil
   if there are none."
   [^Continuous2D env]
   (seq (map foodspot-coords (.getAllObjects env))))
+
+;; alias for older code
+(def all-foodspot-coords env-foodspot-coords)
 
 ;; Testing for emptiness of a MASON Bag and possibly returning it
 ;; as is faster than calling seq to convert it into a Clojure sequence.
