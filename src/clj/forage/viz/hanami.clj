@@ -192,10 +192,10 @@
   a walk--a sequence of coordinates until the point at which food was 
   found--and a sequence of coordinates for the entire possible walk,
   creates a vega-lite plot of size plot-dim x plot-dim."
-  [plot-dim foodwalk]
+  [plot-dim data-dim foodwalk]
   (let [[food walk stops] foodwalk]
-    [(vega-walk-plot plot-dim (add-walk-labels "could've" stops))
-     (vega-walk-plot plot-dim (add-walk-labels "walk" walk))]))
+    [(vega-walk-plot plot-dim data-dim (add-walk-labels "could've" stops))
+     (vega-walk-plot plot-dim data-dim (add-walk-labels "walk" walk))]))
 
 ;; TODO add a nice header
 (defn vega-envwalk-plot
@@ -203,7 +203,10 @@
   plots foodwalks and their hypothetical extensions."
   [env plot-dim display-radius foodwalks]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
-        did-couldve-plots (mapcat (partial did-couldve-walk-plot plot-dim) foodwalks)]
+        data-dim (mf/env-size env)
+        did-couldve-plots (mapcat
+                            (partial did-couldve-walk-plot plot-dim data-dim)
+                           foodwalks)]
     (hc/xform
      ht/layer-chart
      :LAYER (cons env-plot did-couldve-plots))))
