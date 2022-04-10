@@ -117,7 +117,7 @@
                              (range (inc (straight-params :num-dirs)))))))
 
   ;; plot foodspots and straight walks:
-  (oz/view! (h/vega-envwalk-plot env 1100 500 raw))
+  (oz/view! (h/vega-envwalk-plot env 1100 1000 raw))
 
   (require '[forage.run :as fr])
   (require '[utils.random :as r])
