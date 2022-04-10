@@ -62,6 +62,10 @@
   [[(+ x offset) y] [x (+ y offset)]
    [(- x offset) y] [x (- y offset)]])
 
+;; FIXME ?  I'm using huge values for sep.  Maybe this is the wrong
+;; approach.  cf. Mandelbrot's way of constructing Cantor dusts, including
+;; the infinitely large ones.
+;;
 ;; Inspired by Mandelbrot's description of Fournier d'Albe's model universe.
 ;; See Mandelbrot's _The Fractal Geometry of Nature_ pp. 86-87 and 95-96,
 ;; or one of its predecessor books.
