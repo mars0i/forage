@@ -17,6 +17,10 @@
 (defn sin [theta] (Math/sin theta))
 (defn tan [theta] (Math/tan theta))
 
+(defn ln [x] (Math/log x))
+(defn log [base x] (/ (ln x) (ln base)))
+
+
 (defn bool-to-bin
   "Returns 1 if x is truthy, 0 if it's falsey."
   [x]
