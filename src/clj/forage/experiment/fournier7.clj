@@ -57,7 +57,7 @@
              :fournier-multiplier fournier-mult ; how much to shrink distance for each Fournier level
             ))
 ;; with food-distance = 10000, multiplier = 0.05, threer levels means
-;; adding ;; points at these distances from the points that are 10000 apart:
+;; adding points at these distances from the points that are 10000 apart:
 ;; 500, 25, and 1.25.  
 ;; The last is not OK--so don't use 3 levels with that distance and multiplier.
 
@@ -69,7 +69,7 @@
 (def base-env
   (mf/make-env (params :env-discretization)
                (params :env-size)
-               [[half-size half-size]
+               [[half-size half-size]  ; center
                 [half-size -init-food] [half-size init-food] ; vertical
                 [-init-food half-size] [init-food half-size] ; horizontal
                 [-init-food -init-food] [-init-food init-food] ; corners
@@ -109,7 +109,8 @@
   (oz/start-server!)
 
   ;; plot the foodspots alone:
-  (oz/view! (h/vega-env-plot env 1100 1000))
+  (oz/view! (h/vega-env-plot env 1100 370))
+  (oz/view! (h/vega-env-plot base-env 1100 5000))
 
   (time (def raw (mapv (partial fr/straight-run look-fn straight-params)
                        (mapv (partial * (/ (* m/pi (straight-params :max-frac))
