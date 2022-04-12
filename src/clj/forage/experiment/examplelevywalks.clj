@@ -2,6 +2,7 @@
   (:require [forage.walks :as w]
             [utils.random :as r]
             [aerial.hanami.templates :as ht]
+            [aerial.hanami.common :as hc]
             [forage.viz.hanami :as h]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -86,20 +87,36 @@
 ;; HANAMI/VEGA-LITE
 
 (defn gridwalk-plot 
-  [walks]
+  [plot-dim walks]
   (-> (h/vega-gridwalk-plot
        perceptual-radius maxpathlen powerlaw-scale n-steps
-       ;(h/vega-foodgrid-plot env-size plot-dim food-distance 0) ; kludge to force uniform scaling and dims
-       (h/vega-walk-plot plot-dim env-size walks "category20")) ; category20
+       (h/vega-walk-plot plot-dim env-size walks)) ; "category20"
       (assoc :background "white")))
+
+
+;; FIXME Doesn't work
+(defn multiplot
+  [plot-dim walks]
+  (hc/xform
+    ht/hconcat-chart
+      :TITLE "Two walks"
+      :TOFFSET 10 ; Space between overall title and the individual plot regions
+      :DATA walks
+      :HCONCAT [(hc/xform (gridwalk-plot plot-dim [first walks]))
+                (hc/xform (gridwalk-plot plot-dim [second walks]))]))
 
 
 ;; Now view gridwalk as vega-lite, e.g. with
 (comment
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (oz/view! (gridwalk-plot all-walks))
-  (oz/view! (gridwalk-plot (nth each-walk 0)))
-  (oz/view! (gridwalk-plot (nth each-walk 1)))
-  (oz/view! (gridwalk-plot (nth each-walk 2)))
+  (oz/view! (gridwalk-plot plot-dim all-walks))
+  (oz/view! (gridwalk-plot plot-dim (nth each-walk 0)))
+  (oz/view! (gridwalk-plot plot-dim (nth each-walk 1)))
+  (oz/view! (gridwalk-plot plot-dim (nth each-walk 2)))
+
+  (oz/view! (multiplot 500 each-walk))
+
+
+
 )
