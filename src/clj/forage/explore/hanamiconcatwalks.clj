@@ -1,4 +1,4 @@
-(ns forage.experiment.hanamiconcatwalks
+(ns forage.explore.hanamiconcatwalks
   (:require [forage.viz.hanami :as h]
             [aerial.hanami.common :as hc]
             [aerial.hanami.templates :as ht]
