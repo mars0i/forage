@@ -1,8 +1,8 @@
 (ns utils.math
-    (:require [clojure.math.numeric-tower :as nt]))
+    (:require [clojure.math.numeric-tower :as nt]
+              [generateme/fastmath.core :as fast]))
 
-; [fastmath.core :as fm]
-; (use-primitive-operators)
+(fast/use-primitive-operators)
 ; (unuse-primitive-operators)
 
 

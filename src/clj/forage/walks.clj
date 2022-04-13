@@ -3,7 +3,10 @@
 (ns forage.walks
     (:require [utils.math :as m]
               [utils.random :as r]
-              [clojure.math.numeric-tower :as nt]))
+              [clojure.math.numeric-tower :as nt])
+              [generateme/fastmath.core :as fast]))
+
+(fast/use-primitive-operators)
 
 ;; Try this?
 ; [fastmath.core :as fm]

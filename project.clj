@@ -37,15 +37,14 @@
                                forage.mason.GUI
                                forage.mason.core]}
 
-;; Usage tip: lein with-profile +production
-             :production {;:dependencies [[generateme/fastmath "2.1.8"]
+             ;; USAGE TIP: lein with-profile +production
+             :production {:dependencies [[generateme/fastmath "2.1.8"]
                           :jvm-opts ["-Xms4g"  ; initial heap
                                      "-Xmx16g" ; max heap
                                      "-XX:TieredStopAtLevel=4"]} ; 3X improvement
 
-             ;; Usage tip: lein with-profile +production,profiling
-             :profiling  {:dependencies [;[generateme/fastmath "2.1.8"]
-                                         [criterium "0.4.6"]
+             ;; USAGE TIP: lein with-profile +production,profiling
+             :profiling  {:dependencies [[criterium "0.4.6"]
                                          ;[com.clojure-goes-fast/jvm-hiccup-meter "0.1.1"]
                                          [com.clojure-goes-fast/clj-async-profiler "0.5.1"]]
                           :jvm-opts ["-Djdk.attach.allowAttachSelf"   ; for clj-async-profile: needed for JDK9+
