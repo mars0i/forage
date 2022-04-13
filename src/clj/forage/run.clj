@@ -5,7 +5,6 @@
     [forage.walks :as w]
     [forage.food :as f]
     [forage.mason.foodspot :as mf]
-    [clojure.math.numeric-tower :as nt]
     [clojure.data.csv :as csv]
     [clojure.java.io :as io]))
 
