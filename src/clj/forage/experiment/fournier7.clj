@@ -93,12 +93,15 @@
   (require '[utils.random :as r])
 
   ;; REAL EXPERIMENTS
+
+  ;; random walk:
   (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params most-exponents walks-per-combo look-fn))
   (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params addl-exponents walks-per-combo look-fn))
   
-  ;; REAL EXPERIMENTS
   ;; straight:
   (time (def data (fr/straight-experiments fr/default-file-prefix env straight-params)))
+
+  ;; PLOTS
 
   ;; Note lookups are toroidal above, so plots might not be accurate.
   ;; display straight walk:
