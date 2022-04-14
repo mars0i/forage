@@ -38,7 +38,7 @@
                                forage.mason.core]}
 
              ;; USAGE TIP: lein with-profile +production
-             :production {:dependencies [[generateme/fastmath "2.1.8"]
+             :production {:dependencies [[generateme/fastmath "2.1.8"]]
                           :jvm-opts ["-Xms4g"  ; initial heap
                                      "-Xmx16g" ; max heap
                                      "-XX:TieredStopAtLevel=4"]} ; 3X improvement
