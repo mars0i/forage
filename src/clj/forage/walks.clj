@@ -3,8 +3,8 @@
 (ns forage.walks
     (:require [utils.math :as m]
               [utils.random :as r]
-              [clojure.math.numeric-tower :as nt])
-              [generateme/fastmath.core :as fast]))
+              [clojure.math.numeric-tower :as nt]
+              [fastmath.core :as fast]))
 
 (fast/use-primitive-operators)
 
@@ -153,28 +153,28 @@
   "Calculate the length of a path specified by a sequence of vector representations
   in the form of [direction, length] pairs."
   [step-vectors]
-  (reduce + (map second step-vectors)))
+  (reduce fast/fast+ (map second step-vectors)))  ; NOTE explicit fastmath use
 
 (defn stops-path-len
   "Calculate the length of a path specified by a sequence of stops, i.e. [x y] 
   coordinate pairs representing endpoints of connected line segments."
   [stops]
-  (reduce +
-          (map m/distance-2D stops (rest stops))))
+  (reduce fast/fast+
+          (map m/distance-2D stops (rest stops))))  ; NOTE explicit fastmath use
 
 
 (defn vecs-path-len
   "Calculate the length of a path specified by a sequence of vector representations
   in the form of [direction, length] pairs."
   [step-vectors]
-  (reduce + (map second step-vectors)))
+  (reduce fast/fast+ (map second step-vectors)))  ; NOTE explicit fastmath use
 
 (defn stops-path-len
   "Calculate the length of a path specified by a sequence of stops, i.e. [x y] 
   coordinate pairs representing endpoints of connected line segments."
   [stops]
-  (reduce +
-          (map m/distance-2D stops (rest stops))))
+  (reduce fast/fast+
+          (map m/distance-2D stops (rest stops))))  ; NOTE explicit fastmath use
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -237,9 +237,9 @@
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
         y-shift (if y-pos-dir? y-eps (- y-eps))
-        x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
-        y-comp (if y-pos-dir? > <)]  ;  gone too far
-    (loop [x x1, y y1]
+        x-comp (if x-pos-dir? clojure.core/> clojure.core/<)  ; and choose tests for when we've 
+        y-comp (if y-pos-dir? clojure.core/> clojure.core/<)] ;  gone too far
+    (loop [x x1, y y1]         ; NOTE prev lines: > < qualified for use with fastmath
       (let [food (look-fn x y)]
         (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
               (and (= x x2) (= y y2))  nil ; last point. check both: horizontal or vertical lines

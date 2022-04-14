@@ -1,6 +1,6 @@
 (ns utils.math
-    (:require [clojure.math.numeric-tower :as nt]
-              [generateme/fastmath.core :as fast]))
+  (:require [clojure.math.numeric-tower :as nt]
+            [fastmath.core :as fast]))
 
 (fast/use-primitive-operators)
 ; (unuse-primitive-operators)
@@ -113,7 +113,7 @@
   takes the mean of xs."
   ([xs]
    (let [n (count xs)]
-     (/ (reduce + xs) n)))
+     (/ (reduce fast/fast+ xs) n)))  ; NOTE explicit fastmath use
   ([n xs] (mean (take n xs)))) ; don't divide by n explicitly: xs may be short
 
 
