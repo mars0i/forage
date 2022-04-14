@@ -354,9 +354,13 @@
   "Returns the number of foodspots found by the foodwalks.  If it's
   possible for a foodwalk to find multiple foodspots, they'll be counted."
   [foodwalks]
-  (reduce (fn [tot walk]
+  (reduce (fn [^long tot, walk]
             (+ tot (count (first walk))))
           0 foodwalks))
+;; Without long wrapper or type hint on tot or 0, the fastmath + macro is producing:
+;; Execution error (IllegalArgumentException) at forage.walks/count-found-foodspots$fn (walks.clj:358).
+;; No matching method add found taking 2 args
+;; Why? It doesn't work with BigInts, but it works with longs and ints, even mixed.
 
 (defn count-segments
   "idx should be either 1 for the walk until food found, or 2 for 
