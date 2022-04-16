@@ -34,10 +34,21 @@
   [chart]
   (assoc-in chart [:encoding :order :field] "ord"))
 
+(def concat-chart
+  {:usermeta :USERDATA
+   :title  :TITLE
+   :height :HEIGHT
+   :width :WIDTH
+   :background :BACKGROUND
+   :concat :CONCAT    ;; FIXME For this I need to add to the Hanami globals or local globals
+   :resolve :RESOLVE
+   :data ht/data-options
+   :config ht/default-config})
+
 (def plot
   (->
    (hc/xform
-    ht/vconcat-chart
+    concat-chart
     :TITLE "Yow, yeah!"
     :TOFFSET "10" ; space between meta-title and plots
     :VCONCAT [(hc/xform
@@ -49,5 +60,32 @@
                ht/line-chart
                :TITLE "Yeah plot"
                :DATA (select-by-label data "yeah")
-               :MSIZE 2)])
+               :MSIZE 2)
+              (hc/xform
+               ht/line-chart
+               :TITLE "plot 3"
+               :DATA (select-by-label data "yeah")
+               :MSIZE 2)
+              (hc/xform
+               ht/line-chart
+               :TITLE "plot 4"
+               :DATA (select-by-label data "yeah")
+               :MSIZE 2)
+              (hc/xform
+               ht/line-chart
+               :TITLE "plot 5"
+               :DATA (select-by-label data "yeah")
+               :MSIZE 2)
+              (hc/xform
+               ht/line-chart
+               :TITLE "plot 6"
+               :DATA (select-by-label data "yeah")
+               :MSIZE 2)
+              ])
    (update :vconcat #(map add-ord %))))
+
+(comment
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+  (oz/view! plot)
+)
