@@ -27,6 +27,10 @@
   (filter #(= (get % "label") label) 
           data))
 
+(defn select-by
+  [maps k v]
+  (filter #(= (% k) v) maps))
+
 (select-by data "ord" 4)
 
 (defn add-ord
@@ -59,13 +63,16 @@
     :TOFFSET "10" ; space between meta-title and plots
     :VCONCAT [(hc/xform
                ht/line-chart
-               :TITLE "Yow plot"
-               :DATA (select-by-label data "yow")
+               :TITLE "plot 1"
+               :DATA data
+               :TRANSFORM [{:filter {:field "label" :equal "plot 1"}}]
+               ;:DATA (select-by-label data "yow")
                :MSIZE 2)
               (hc/xform
                ht/line-chart
-               :TITLE "Yeah plot"
-               :DATA (select-by-label data "yeah")
+               :TITLE "plot 2"
+               :DATA data
+               :TRANSFORM [{:filter {:field "label" :equal "plot 2"}}]
                :MSIZE 2)])
    (update :vconcat #(map add-ord %))))
 
@@ -76,21 +83,7 @@
    :UDATA "https://vega.github.io/vega-lite/data/cars.json"
    :X "Horsepower" :Y "Miles_per_Gallon" :COLOR "Origin"))
 
-(defn select-by
-  [maps k v]
-  (filter #(= (% k) v) maps))
 
-(def concat-chart
-  {:usermeta :USERDATA
-   :title  :TITLE
-   :height :HEIGHT
-   :width :WIDTH
-   :background :BACKGROUND
-   :concat :CONCAT    ;; FIXME For this I need to add to the Hanami globals or local globals
-   :columns :COLUMNS
-   :resolve :RESOLVE
-   :data ht/data-options
-   :config ht/default-config})
 
 (def cplot
   (->
@@ -132,9 +125,22 @@
               ])
    (update :concat #(map add-ord %))))
 
+(def carcat-chart
+  (hc/xform
+   concat-chart
+   :UDATA "https://vega.github.io/vega-lite/data/cars.json"
+   :TITLE "MPG by horsepower for each number of cylinders"
+   :COLUMNS 3
+   :CONCAT (mapv #(hc/xform
+                   ht/point-chart
+                   :TITLE (str "cylinders: " %)
+                   :X "Horsepower"
+                   :Y "Miles_per_Gallon"
+                   :TRANSFORM [{:filter {:field "Cylinders" :equal %}}])
+                 [3, 4, 5, 6, 8])))
 
 (comment
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (oz/view! cars-chart)
+  (oz/view! carcat-plots)
 )
