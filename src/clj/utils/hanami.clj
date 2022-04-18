@@ -28,12 +28,12 @@
      :COLUMNS 3
      :CONCAT 
      (mapv #(hc/xform
-                     ht/point-chart
-                     :TITLE (str "cylinders: " %)
-                     :X "Horsepower"
-                     :Y "Miles_per_Gallon"
-                     :TRANSFORM [{:filter {:field "Cylinders" :equal %}}])
-                   [3, 4, 5, 6, 8])))
+              ht/point-chart
+              :TITLE (str "cylinders: " %)
+              :X "Horsepower"
+              :Y "Miles_per_Gallon"
+              :TRANSFORM [{:filter {:field "Cylinders" :equal %}}])
+           [3, 4, 5, 6, 8])))
 
   (require '[oz.core :as oz])
   (oz/start-server!)
