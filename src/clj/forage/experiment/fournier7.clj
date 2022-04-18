@@ -89,10 +89,16 @@
 (def look-fn (partial mf/perc-foodspots-exactly-toroidal env (params :perc-radius)))
 
 (comment
-  (require '[forage.run :as fr])
-  (require '[utils.random :as r])
+  ;; Note lookups are toroidal above, so plots might not be accurate.
+  ;; display straight walk:
+  (require '[forage.viz.hanami :as h])
+  (require '[utils.hanami :as uh])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
 
-  ;; REAL EXPERIMENTS
+
+  ;;;;;;;;;;;;;;;;;;;;
+  ;; REAL EXPERIMENTS:
 
   ;; random walk:
   (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params most-exponents walks-per-combo look-fn))
@@ -101,33 +107,32 @@
   ;; straight:
   (time (def data (fr/straight-experiments fr/default-file-prefix env straight-params)))
 
-  ;; PLOTS
 
-  ;; Note lookups are toroidal above, so plots might not be accurate.
-  ;; display straight walk:
-  (require '[forage.mason.foodspot :as mf])
-  (require '[utils.math :as m])
-  (require '[forage.viz.hanami :as h])
-  (require '[oz.core :as oz])
-  (oz/start-server!)
+  ;;;;;;;;;;;;;;;;;;;;
+  ;; EXPLORATORY:
 
   ;; plot the foodspots alone:
   (oz/view! (h/vega-env-plot env 1100 370))
   (oz/view! (h/vega-env-plot base-env 1100 5000))
 
+  ;; plot walks:
+
+
+  ;; straight
   (time (def raw (mapv (partial fr/straight-run look-fn straight-params)
                        (mapv (partial * (/ (* m/pi (straight-params :max-frac))
                                            (straight-params :num-dirs)))
                              (range (inc (straight-params :num-dirs)))))))
-
-  ;; plot foodspots and straight walks:
   (oz/view! (h/vega-envwalk-plot env 1100 1000 raw))
 
-  (require '[forage.run :as fr])
-  (require '[utils.random :as r])
-  (require '[forage.viz.hanami :as h])
-  (require '[oz.core :as oz])
-  (oz/start-server!)
+  ;; Levy
+  (def seed (r/make-seed))
+  (def rng (r/make-well19937 seed))
+  (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil params 2))))
+  (count fws)
+
+
+  ;; foodless Levy
   (def rng (r/make-well19937))
   (defn ignore-food [x y] nil)
   (def fw+ (fr/levy-run rng ignore-food nil params 2))
