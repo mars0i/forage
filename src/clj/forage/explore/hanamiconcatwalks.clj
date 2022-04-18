@@ -19,8 +19,24 @@
            {"x" 200, "y" -200, "ord" 5, "label" "plot 2"}
            ])
 
-(keep identity [1 2 3 nil 4 false 5])
-(filter identity [1 2 3 nil 4 false 5])
+;; Based on https://github.com/jsa-aerial/hanami/blob/master/README.md
+(def cars-chart
+  (hc/xform
+   ht/point-chart
+   :UDATA "https://vega.github.io/vega-lite/data/cars.json"
+   :X "Horsepower" :Y "Miles_per_Gallon" :COLOR "Origin"))
+
+(def concat-chart
+  {:usermeta :USERDATA
+   :title  :TITLE
+   :height :HEIGHT
+   :width :WIDTH
+   :background :BACKGROUND
+   :concat :CONCAT
+   :columns :COLUMNS
+   :resolve :RESOLVE
+   :data ht/data-options
+   :config ht/default-config})
 
 (defn select-by-label
   [data label]
@@ -46,12 +62,12 @@
     :HCONCAT [(hc/xform
                ht/line-chart
                :TITLE "Yow plot"
-               :DATA (select-by-label data "yow")
+               :DATA (select-by-label data "plot 1")
                :MSIZE 2)
               (hc/xform
                ht/line-chart
                :TITLE "Yeah plot"
-               :DATA (select-by-label data "yeah")
+               :DATA (select-by-label data "plot 2")
                :MSIZE 2)])
    (update :hconcat #(map add-ord %))))
 
@@ -66,7 +82,6 @@
                :TITLE "plot 1"
                :DATA data
                :TRANSFORM [{:filter {:field "label" :equal "plot 1"}}]
-               ;:DATA (select-by-label data "yow")
                :MSIZE 2)
               (hc/xform
                ht/line-chart
@@ -76,83 +91,26 @@
                :MSIZE 2)])
    (update :vconcat #(map add-ord %))))
 
-;; Based on https://github.com/jsa-aerial/hanami/blob/master/README.md
-(def cars-chart
-  (hc/xform
-   ht/point-chart
-   :UDATA "https://vega.github.io/vega-lite/data/cars.json"
-   :X "Horsepower" :Y "Miles_per_Gallon" :COLOR "Origin"))
-
-(def concat-chart
-  {:usermeta :USERDATA
-   :title  :TITLE
-   :height :HEIGHT
-   :width :WIDTH
-   :background :BACKGROUND
-   :concat :CONCAT    ;; FIXME For this I need to add to the Hanami globals or local globals
-   :columns :COLUMNS
-   :resolve :RESOLVE
-   :data ht/data-options
-   :config ht/default-config})
-
-
-(def cplot
-  (->
-   (hc/xform
-    concat-chart
-    :TITLE "Yow, yeah!"
-    :TOFFSET "10" ; space between meta-title and plots
-    :COLUMNS 3
-    :CONCAT [(hc/xform
-               ht/line-chart
-               :TITLE "Yow plot"
-               :DATA (select-by-label data "yow")
-               :MSIZE 2)
-              (hc/xform
-               ht/line-chart
-               :TITLE "Yeah plot"
-               :DATA (select-by-label data "yeah")
-               :MSIZE 2)
-              (hc/xform
-               ht/line-chart
-               :TITLE "plot 3"
-               :DATA (select-by-label data "yeah")
-               :MSIZE 2)
-              (hc/xform
-               ht/line-chart
-               :TITLE "plot 4"
-               :DATA (select-by-label data "yeah")
-               :MSIZE 2)
-              (hc/xform
-               ht/line-chart
-               :TITLE "plot 5"
-               :DATA (select-by-label data "yeah")
-               :MSIZE 2)
-              (hc/xform
-               ht/line-chart
-               :TITLE "plot 6"
-               :DATA (select-by-label data "yeah")
-               :MSIZE 2)
-              ])
-   (update :concat #(map add-ord %))))
 
 (def concat-example
   (hc/xform
    concat-chart
    :UDATA "https://vega.github.io/vega-lite/data/cars.json"
-   :TITLE "MPG by horsepower for each number of cylinders"
+   :TITLE "MPG by horsepower for numbers of cylinders"
    :COLUMNS 3
    :CONCAT (mapv #(hc/xform
                    ht/point-chart
                    :TITLE (str "cylinders: " %)
                    :X "Horsepower"
-                   :Y "MPG"
-                   :TRANSFORM [{:filter {:field "Cylinders" :equal %}}])
+                   :Y "Miles_per_Gallon"
+                   :TRANSFORM [{:filter {:field "Cylinders" :equal 8}}])
                  [3, 4, 5, 6, 8])))
 
 (comment
   (require '[oz.core :as oz])
   (oz/start-server!)
   (oz/view! concat-example)
+  (oz/view! vplot)
   (oz/view! hplot)
+  (oz/view! cars-chart)
 )
