@@ -83,6 +83,17 @@
    :UDATA "https://vega.github.io/vega-lite/data/cars.json"
    :X "Horsepower" :Y "Miles_per_Gallon" :COLOR "Origin"))
 
+(def concat-chart
+  {:usermeta :USERDATA
+   :title  :TITLE
+   :height :HEIGHT
+   :width :WIDTH
+   :background :BACKGROUND
+   :concat :CONCAT    ;; FIXME For this I need to add to the Hanami globals or local globals
+   :columns :COLUMNS
+   :resolve :RESOLVE
+   :data ht/data-options
+   :config ht/default-config})
 
 
 (def cplot
@@ -125,7 +136,7 @@
               ])
    (update :concat #(map add-ord %))))
 
-(def carcat-chart
+(def concat-example
   (hc/xform
    concat-chart
    :UDATA "https://vega.github.io/vega-lite/data/cars.json"
@@ -135,12 +146,13 @@
                    ht/point-chart
                    :TITLE (str "cylinders: " %)
                    :X "Horsepower"
-                   :Y "Miles_per_Gallon"
+                   :Y "MPG"
                    :TRANSFORM [{:filter {:field "Cylinders" :equal %}}])
                  [3, 4, 5, 6, 8])))
 
 (comment
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (oz/view! carcat-plots)
+  (oz/view! concat-example)
+  (oz/view! hplot)
 )
