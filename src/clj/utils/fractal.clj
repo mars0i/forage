@@ -30,3 +30,37 @@
             new-pts (mapcat (partial fournier-children new-offset) pts)]
         (recur (into pts new-pts) new-offset (dec iters))))))
 
+
+;; It's not enough to recursively apply the functions to the points,
+;; because the functions themselves must be recursively transformed.
+;; e.g. additions as well as multiplications have to be scaled recursively.
+;; TODO ?:
+;; In theory the recursion could be moved to a macro body that simply
+;; contructed a for expression with the appropriate number of variables.
+(defn ifs-iterate
+  "Given a set of points, recursively (n times) applies each 
+  transformation in fns to all of the points."
+  [n fns points]
+  (loop [k n, fs fns] ; recursively construct the lattice of functions
+    (if (pos? k)
+      (recur (dec k)
+             (for [f fs, g fs] (comp f g)))
+      ((apply juxt fs) points)))) ; then apply them to points
+
+
+
+(defn cantor-set
+  "Given a pair of endpoints, returns a sequence of endpoints representing
+  alternating endpoints of the corresponding middle-third Cantor set.
+  Does not indicate which are left or right endpoints."
+  [n endpoints]
+  (letfn [(f1 [endpts] (map #(/ % 3) endpts))
+          (f2 [endpts] (map (partial + 2/3) (f1 endpts)))]
+    (ifs-iterate n [f1 f2] endpoints)))
+
+(comment
+  (cantorize1d 2 [0 1])
+
+  (+ 1/27 2/3)
+  
+)
