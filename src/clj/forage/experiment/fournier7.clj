@@ -91,6 +91,8 @@
 (comment
   ;; Note lookups are toroidal above, so plots might not be accurate.
   ;; display straight walk:
+  (require '[aerial.hanami.common :as hc])
+  (require '[aerial.hanami.templates :as ht])
   (require '[forage.viz.hanami :as h])
   (require '[utils.hanami :as uh])
   (require '[oz.core :as oz])
@@ -130,6 +132,18 @@
   (def rng (r/make-well19937 seed))
   (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil params 2))))
   (count fws)
+  (map class fws)
+  (map #(class (second %)) fws)
+
+  (def multiplot
+    (hc/xform
+      uh/concat-chart
+      :TITLE (str "mu=2, seed=" seed)
+      :COLUMNS 3
+      :CONCAT (mapv (partial h/vega-envwalk-plot env 800 1000) 
+                   (map vector (take 2 fws)))))
+
+  (oz/view! (h/vega-envwalk-plot env 800 500 fws))
 
 
   ;; foodless Levy
