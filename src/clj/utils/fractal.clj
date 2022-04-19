@@ -34,22 +34,25 @@
 ;; It's not enough to recursively apply the functions to the points,
 ;; because the functions themselves must be recursively transformed.
 ;; e.g. additions as well as multiplications have to be scaled recursively.
-;; TODO ?:
-;; In theory the recursion could be moved to a macro body that simply
-;; contructed a for expression with the appropriate number of variables.
+;; (In theory the recursion could be moved to a macro body that simply
+;; contructed a for expression with the appropriate number of variables.)
 (defn ifs-iterate
-  "Given a set of points, recursively (n times) applies each 
-  transformation in fns to all of the points."
+  "Given a set of points, recursively (n times) applies each transformation
+  in fns to all of the points.  Note that the number of functions that
+  are internally applied internally grows exponentially."
   [n fns points]
-  (loop [k n, fs fns] ; recursively construct the lattice of functions
-    (if (pos? k)
-      (recur (dec k)
-             (for [f fs, g fs] (comp f g)))
-      ((apply juxt fs) points)))) ; then apply them to points
+  (if (zero? n)
+    points
+    (let [newfns (loop [k n, fs fns] ; recursively construct the lattice of functions
+                   (if (> k 1)
+                     (recur (dec k)
+                            (for [f fs, g fs] (comp f g)))
+                     fs))]
+      ((apply juxt newfns) points))))
 
 
-
-(defn cantor-set
+;; Illustration and test
+(defn middle-third-cantor
   "Given a pair of endpoints, returns a sequence of endpoints representing
   alternating endpoints of the corresponding middle-third Cantor set.
   Does not indicate which are left or right endpoints."
@@ -59,8 +62,6 @@
     (ifs-iterate n [f1 f2] endpoints)))
 
 (comment
-  (cantorize1d 2 [0 1])
-
-  (+ 1/27 2/3)
-  
+  (middle-third-cantor 3 [0 1])
+  (middle-third-cantor 2 [0.0 1.0])
 )
