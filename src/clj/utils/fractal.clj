@@ -31,15 +31,19 @@
         (recur (into pts new-pts) new-offset (dec iters))))))
 
 
-;; It's not enough to recursively apply the functions to the points,
+;; note it's not enough to recursively apply the functions to the points,
 ;; because the functions themselves must be recursively transformed.
 ;; e.g. additions as well as multiplications have to be scaled recursively.
 ;; (In theory the recursion could be moved to a macro body that simply
-;; contructed a for expression with the appropriate number of variables.)
+;; contructed a for expression with the appropriate number of variables.
+;; Though maybe having a for comprehension that big would be problematic?
+;; Or I bet it's handled in a similar way internally.)
 (defn ifs-iterate
   "Given a set of points, recursively (n times) applies each transformation
-  in fns to all of the points.  Note that the number of functions that
-  are internally applied internally grows exponentially."
+  function found in fns to all of the points together (not to each 
+  individually).  So the functions should be appropriate for whatever is
+  in points, be numbers, pairs, triples, etc. (Be aware that the number of 
+  functions that are internally applied internally grows exponentially.)"
   [n fns points]
   (if (zero? n)
     points
@@ -48,11 +52,28 @@
                      (recur (dec k)
                             (for [f fs, g fs] (comp f g)))
                      fs))]
-      ((apply juxt newfns) points))))
+      ((apply juxt newfns) points)))) ; now apply them to points
 
 
-;; Illustration and test
+;; Illustration of use of ifs-iterate with numbers
+(defn middle-third-cantor-tran1
+  [endpts]
+  (map #(/ % 3) endpts))
+
+(defn middle-third-cantor-tran2
+  [endpts]
+  (map #(+ 2/3 (/ % 3)) endpts))
+
 (defn middle-third-cantor
+  "Given a pair of endpoints, returns a sequence of endpoints representing
+  alternating endpoints of the corresponding middle-third Cantor set.
+  Does not indicate which are left or right endpoints."
+  [n endpoints]
+  (ifs-iterate n 
+               [middle-third-cantor-tran1 middle-third-cantor-tran2]
+               endpoints))
+
+(defn old-middle-third-cantor
   "Given a pair of endpoints, returns a sequence of endpoints representing
   alternating endpoints of the corresponding middle-third Cantor set.
   Does not indicate which are left or right endpoints."
@@ -63,5 +84,7 @@
 
 (comment
   (middle-third-cantor 3 [0 1])
+  (old-middle-third-cantor 3 [0 1])
+  (= (middle-third-cantor 3 [0 1]) (old-middle-third-cantor 3 [0 1]))
   (middle-third-cantor 2 [0.0 1.0])
 )
