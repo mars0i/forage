@@ -73,18 +73,7 @@
                [middle-third-cantor-tran1 middle-third-cantor-tran2]
                endpoints))
 
-(defn old-middle-third-cantor
-  "Given a pair of endpoints, returns a sequence of endpoints representing
-  alternating endpoints of the corresponding middle-third Cantor set.
-  Does not indicate which are left or right endpoints."
-  [n endpoints]
-  (letfn [(f1 [endpts] (map #(/ % 3) endpts))
-          (f2 [endpts] (map (partial + 2/3) (f1 endpts)))]
-    (ifs-iterate n [f1 f2] endpoints)))
-
 (comment
   (middle-third-cantor 3 [0 1])
-  (old-middle-third-cantor 3 [0 1])
-  (= (middle-third-cantor 3 [0 1]) (old-middle-third-cantor 3 [0 1]))
   (middle-third-cantor 2 [0.0 1.0])
 )
