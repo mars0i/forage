@@ -19,6 +19,7 @@
             [forage.food :as f]
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
+            [utils.fractal :as uf]
             [utils.math :as m]))
 
 (def all-exponents [1.001 1.5 2.0 2.5 3.0])
@@ -80,7 +81,7 @@
                (f/remove-center
                  (params :env-size)
                  (params :env-size)
-                 (f/fournierize (mf/env-foodspot-coords base-env)
+                 (uf/fournierize (mf/env-foodspot-coords base-env)
                                 init-food
                                 (params :fournier-multiplier)
                                 (params :fournier-levels)))))
@@ -95,6 +96,7 @@
   (require '[aerial.hanami.templates :as ht])
   (require '[forage.viz.hanami :as h])
   (require '[utils.hanami :as uh])
+  (require '[utils.fractal :as uf])
   (require '[oz.core :as oz])
   (oz/start-server!)
 
@@ -130,20 +132,24 @@
   ;; Levy
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
+  (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil (assoc params :maxpathlen 100000) 2))))
   (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil params 2))))
   (count fws)
   (map class fws)
   (map #(class (second %)) fws)
 
-  (def multiplot
-    (hc/xform
-      uh/concat-chart
-      :TITLE (str "mu=2, seed=" seed)
-      :COLUMNS 3
-      :CONCAT (mapv (partial h/vega-envwalk-plot env 800 1000) 
-                   (map vector (take 2 fws)))))
 
-  (oz/view! (h/vega-envwalk-plot env 800 500 fws))
+  (oz/view! (hc/xform
+             uh/grid-chart
+             :TITLE (str "mu=2, seed=" seed)
+             :TOFFSET 10
+             :COLUMNS 3
+             :CONCAT (mapv (partial h/vega-envwalk-plot env 800 1000) 
+                           (map vector fws))))
+
+  (oz/view! multiplot)
+
+  ;(oz/view! (h/vega-envwalk-plot env 800 500 fws))
 
 
   ;; foodless Levy

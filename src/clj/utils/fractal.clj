@@ -68,8 +68,9 @@
 ;; Inspired by Mandelbrot's description of Fournier d'Albe's model universe.
 ;; See Mandelbrot's _The Fractal Geometry of Nature_ pp. 86-87 and 95-96,
 ;; or one of its predecessor books.
-(defn old-fournierize
-  "Given a sequence of coordinate pairs (points), returns a sequence containing
+(defn fournierize
+  "DEPRECATED: Use fournierize2d.
+  Given a sequence of coordinate pairs (points), returns a sequence containing
   those points and \"fournier children\", i.e. points that are (* sep multiplier)
   up, down, left, and to the right of each original point.  Then iterates,
   performing the same operation on all of the points at a smaller scale, levels
