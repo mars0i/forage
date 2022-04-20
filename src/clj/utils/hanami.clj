@@ -36,5 +36,5 @@
 
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (oz/view! concat-example)
+  (oz/view! grid-example)
 )
