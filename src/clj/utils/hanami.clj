@@ -3,25 +3,23 @@
    [aerial.hanami.common :as hc]
    [aerial.hanami.templates :as ht]))
 
-(def concat-chart
+
+;; For more info, see discussion at:
+;; https://clojurians.zulipchat.com/#narrow/stream/210075-saite-dev/topic/concat.20template/near/279290717
+(def grid-chart
   "Template for Vega-Lite \"concat\": multi-view charts.  Lays out
   a series of plots in rows and columns from left to right and top 
   to bottom.  The value of :COLUMNS specifies the number of columns."
-  {:usermeta :USERDATA
-   :title  :TITLE
-   :height :HEIGHT
-   :width :WIDTH
-   :background :BACKGROUND
-   :concat :CONCAT
-   :columns :COLUMNS
-   :resolve :RESOLVE
-   :data ht/data-options
-   :config ht/default-config})
+  (-> ht/view-base
+      (dissoc :encoding)
+      (assoc :concat :CONCAT 
+             :columns :COLUMNS 
+             :resolve :RESOLVE)))
 
 (comment
-  (def concat-example
+  (def grid-example
     (hc/xform
-     concat-chart
+     grid-chart
      :UDATA "https://vega.github.io/vega-lite/data/cars.json"
      :TITLE "MPG by horsepower for each number of cylinders"
      :TOFFSET "10"
