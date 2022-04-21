@@ -143,13 +143,9 @@
              uh/grid-chart
              :TITLE (str "mu=2, seed=" seed)
              :TOFFSET 10
-             :COLUMNS 4
-             :CONCAT (mapv (partial h/vega-envwalk-plot env 800 1000) 
-                           (map vector fws))))
-
-  (oz/view! multiplot)
-
-  ;(oz/view! (h/vega-envwalk-plot env 800 500 fws))
+             :COLUMNS 3
+             :CONCAT (mapv (partial h/vega-envwalk-plot env 800 1000)
+                           (map vector fws)))) ; map vector: vega-envwalk-plot expects a sequence of foodwalk triples
 
 
   ;; foodless Levy
