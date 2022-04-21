@@ -81,14 +81,17 @@
   [^Continuous2D env]
   (seq (map foodspot-coords (.getAllObjects env))))
 
-;; alias for older code
+;; Alias, used in older code:
 (def all-foodspot-coords env-foodspot-coords)
 
 ;; Testing for emptiness of a MASON Bag and possibly returning it
 ;; as is faster than calling seq to convert it into a Clojure sequence.
 ;; Note that Bags are still truthy, and they can be converted into seqs--
 ;; usually transparently--at any time.
-(defn perc-foodspots-exactly
+;; Note: passing in a Bag will *not* allow one to add foodspots to an existing
+;; Bag containing them: getNeighborsExactlyWithinDistance() clears any Bag
+;; that you pass in.
+(defn perc-foodspots
   "Returns a MASON Bag of foodspots within perc-radius of (x,y),
   or nil if there are none.  Uses Continuous2D's local cell lookup."
   [^Continuous2D env perc-radius x y]
@@ -97,7 +100,11 @@
                                                           perc-radius)]
     (if (.isEmpty foodspots-bag) nil foodspots-bag)))
 
-(defn perc-foodspots-exactly-toroidal
+;; Alias, used in older code:
+(def perc-foodspots-exactly perc-foodspots)
+
+;; See notes on perc-foodspots for notes about code decisions.
+(defn perc-foodspots-toroidal
   "Returns a MASON Bag of foodspots within perc-radius of (x,y), or 
   nil if there are none.  Uses Continuous2D's local toroidal cell lookup."
   [^Continuous2D env perc-radius x y]
@@ -105,3 +112,6 @@
                                                           (Double2D. x y)
                                                           perc-radius true)]
     (if (.isEmpty foodspots-bag) nil foodspots-bag)))
+
+;; Alias, used in older code:
+(def perc-foodspots-exactly-toroidal perc-foodspots-toroidal)
