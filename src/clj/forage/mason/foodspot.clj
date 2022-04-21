@@ -84,11 +84,11 @@
 ;; Alias, used in older code:
 (def all-foodspot-coords env-foodspot-coords)
 
-;; Testing for emptiness of a MASON Bag and possibly returning it
+;; NOTE: Testing for emptiness of a MASON Bag and possibly returning it
 ;; as is faster than calling seq to convert it into a Clojure sequence.
 ;; Note that Bags are still truthy, and they can be converted into seqs--
 ;; usually transparently--at any time.
-;; Note: passing in a Bag will *not* allow one to add foodspots to an existing
+;; NOTE: passing in a Bag will *not* allow one to add foodspots to an existing
 ;; Bag containing them: getNeighborsExactlyWithinDistance() clears any Bag
 ;; that you pass in.
 (defn perc-foodspots
