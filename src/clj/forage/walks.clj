@@ -143,8 +143,8 @@
   (cons base-pt 
         (when-let [next-step-vec (first step-vectors)] ; nil if no more step-vecs
           (lazy-seq 
-            (walk-stops (next-walk-stop base-pt next-step-vec)
-                        (rest step-vectors))))))
+            (lazy-walk-stops (next-walk-stop base-pt next-step-vec)
+                             (rest step-vectors))))))
 
 (defn vecs-path-len
   "Calculate the length of a path specified by a sequence of vector representations
@@ -295,7 +295,7 @@
                          (subst-init-dir init-dir raw-inf-step-walk)
                          raw-inf-step-walk)
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
-         stop-walk (walk-stops init-loc step-walk) ; lazy if no vec wrapper , at least after first cons
+         stop-walk (doall (walk-stops init-loc step-walk)) ; lazy if no vec wrapper , at least after first cons
          walk-with-food (path-with-food look-fn look-eps stop-walk)] ; it's a vec, but second element is lazy if food was not found; else it's a vec
      (conj walk-with-food stop-walk))))
 
