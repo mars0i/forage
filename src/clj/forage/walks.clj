@@ -295,8 +295,8 @@
                          (subst-init-dir init-dir raw-inf-step-walk)
                          raw-inf-step-walk)
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
-         stop-walk (doall (walk-stops init-loc step-walk)) ; lazy if no vec wrapper , at least after first cons
-         walk-with-food (path-with-food look-fn look-eps stop-walk)] ; it's a vec, but second element is lazy if food was not found; else it's a vec
+         stop-walk (walk-stops init-loc step-walk) ; walk-stops is no longer lazy btw
+         walk-with-food (path-with-food look-fn look-eps stop-walk)] ; a vec
      (conj walk-with-food stop-walk))))
 
 ;; NOTE: CURRENTLY ADDING vec AROUND walk-stops TO MAKE SURE THAT THE
