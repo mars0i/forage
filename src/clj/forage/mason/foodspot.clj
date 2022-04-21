@@ -13,8 +13,6 @@
 ;; NOTE DON'T USE .getNeighborsWithinDistance .
 ;; It can return foodspots that are too far away.
 
-;; Possible TODO: Add toroidal foodspot perception
-
 (deftype Foodspot [x y nutrition])
 
 (defn make-foodspot
@@ -107,32 +105,3 @@
                                                           (Double2D. x y)
                                                           perc-radius true)]
     (if (.isEmpty foodspots-bag) nil foodspots-bag)))
-
-;; TODO ? Don't call seq?
-(defn perc-foodspot-coords-exactly
-  "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
-  or nil if there are none.  Uses Continuous2D's local cell lookup."
-  [env perc-radius x y]
-  (seq (map foodspot-coords
-            (perc-foodspots-exactly env perc-radius x y))))
-
-;; Once we have all possible foodspot coordinates, we don't need to
-;; use MASON lookup for a linear search.   This is probably slower
-;; than using MASON's cell-based search.
-(defn perc-foodspot-coords-linear
-  "Returns a sequence of foodspot coordinates within perc-radius of (x,y),
-  with possible additional ones, or nil if there are none.  Performs a linear 
-  search through all foodspots in env."
-  [env perc-radius coords]
-  (f/perc-foodspot-coords-in-coll (all-foodspot-coords env)
-                                  perc-radius coords))
-
-(defn foodspot-coords-if-found
-  "Given a triple returned by walks/levy-foodwalk or walks/straight-foodwalk,
-  returns the coordinates of the first found foodspot, or nil if there are none.
-  Note that this uses foodspot/foodspot-coords* , which shouldn't be used in
-  production code."
-  [found-foodspot-seq]
-  (if found-foodspot-seq
-    (foodspot-coords (first found-foodspot-seq))
-    nil))
