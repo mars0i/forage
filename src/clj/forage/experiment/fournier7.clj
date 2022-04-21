@@ -139,13 +139,14 @@
   (map #(class (second %)) fws)
 
 
-  (oz/view! (hc/xform
+  (time
+    (oz/view! (hc/xform
              uh/grid-chart
              :TITLE (str "mu=2, seed=" seed)
              :TOFFSET 10
              :COLUMNS 3
              :CONCAT (mapv (partial h/vega-envwalk-plot env 800 1000)
-                           (map vector fws)))) ; map vector: vega-envwalk-plot expects a sequence of foodwalk triples
+                           (map vector fws))))) ; map vector: vega-envwalk-plot expects a sequence of foodwalk triples
 
 
   ;; foodless Levy
