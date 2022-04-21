@@ -299,6 +299,22 @@
          walk-with-food (path-with-food look-fn look-eps stop-walk)] ; a vec
      (conj walk-with-food stop-walk))))
 
+;; DRAFT function
+;; TODO need to do the same thing for straight walks.
+;; Maybe a better solution is to:
+;; (a) Give levy-foodwalk and straight-foodwalk new names with init-loc last, and
+;;     aliases to run with old names and init-loc as a middle parameter.
+;; (b) Then I can use partial to wrap either kind of walk function with
+;;     init-loc as the one left out.  Then write a single fn that pulls the
+;;     last loc and iteratively passes it to the partialed walk function.
+(defn restart-levy-foodwalk
+  ([prevwalk look-fn look-eps maxpathlen init-dir trunclen rng scale exponent]
+   (let [last-loc (last (second prevwalk))]
+     (levy-foodwalk look-fn look-eps last-loc maxpathlen init-dir trunclen rng scale exponent)))
+  ([prevwalk look-fn look-eps maxpathlen init-dir trunclen dir-dist len-dist]
+   (let [last-loc (last (second prevwalk))]
+     (levy-foodwalk look-fn look-eps last-loc maxpathlen init-dir trunclen dir-dist len-dist))))
+
 ;; NOTE: CURRENTLY ADDING vec AROUND walk-stops TO MAKE SURE THAT THE
 ;; PRNG IS CALLED EXACTLY THE SAME NUMBER OF TIMES IF I RERUN THIS.
 ;; (Probably completely irrelevant since only two points.)
