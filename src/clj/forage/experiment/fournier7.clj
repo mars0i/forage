@@ -134,21 +134,18 @@
   ;; Levy
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
-  (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil (assoc params :maxpathlen 100000) 2))))
+  (time (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil (assoc params :maxpathlen 100000) 2)))))
   (time (def fws54 (doall (repeatedly 54 #(fr/levy-run rng look-fn nil params 2)))))
-  (count fws)
-  (map class fws)
-  (map #(class (second %)) fws)
 
 
   (time
     (oz/view! (hc/xform
-             uh/grid-chart
-             :TITLE (str "mu=2, seed=" seed)
-             :TOFFSET 10
-             :COLUMNS 3
-             :CONCAT (mapv (partial h/vega-envwalk-plot env 800 1000)
-                           (map vector fws))))) ; map vector: vega-envwalk-plot expects a sequence of foodwalk triples
+                uh/grid-chart
+                :TITLE (str "mu=2, seed=" seed)
+                :TOFFSET 10
+                :COLUMNS 3
+                :CONCAT (mapv (partial h/vega-envwalk-plot env 800 1000)
+                              (map vector fws))))) ; map vector: vega-envwalk-plot expects a sequence of foodwalk triples
 
 
   ;; foodless Levy
