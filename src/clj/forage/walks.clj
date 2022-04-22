@@ -273,6 +273,38 @@
             (recur (inc i) (inc j))
             [nil stopsv])))))) ; no food in any segment; return entire input
 
+
+(defn trim-full-walk
+  "Gvien a foodwalk triple of the kind returned by levy-foodwalk
+  or straight-foodwalk, returns a similar triple in which the third
+  element, full-walk, has been truncated at the front to include only
+  those line segments not included in walk-until-food. Specifically:
+  If no food was found, full-walk is replaced by nil since 
+  walk-until-food is identical to full-walk.
+  If food was found, let n be the number of points in walk-until-food;
+  Then the first n-2 points are dropped from full-walk in the return 
+  triple.  (The last point in walk-until-food is the point from which
+  food was found, which is usually not included in full-walk.  Backing
+  up by two means that full-walk includes full line segment from within 
+  which the food was found, partially, or possibly fully overlapping
+  with the last segment in walk-until-food.)
+  The original full-walk can be reconstructed e.g. by removing the last
+  element from walk-until-food, and the first element from full-walk,
+  and then concatenating the results."
+  [[found walk-until-food full-walk]]
+  (if-not found
+    [found walk-until-food nil]
+    [found walk-until-food (drop (- (count walk-until-food) 2)
+                                 full-walk)]))
+
+(comment
+  ;; testing
+  (def full [[0 0] [0 1] [2 1] [2 4] [-4 4] [-4 2]])
+  (def wuf [[0 0] [0 1] [2 1] [2 3]])
+  (trim-full-walk [nil wuf full])
+  (trim-full-walk [["food"] wuf full])
+)
+
 (defn levy-foodwalk
   "Generates a random foodwalk starting from point init-loc in direction
   init-dir, and returns a vector triple containing (a) a sequence of found
@@ -297,11 +329,8 @@
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
          stop-walk (walk-stops init-loc step-walk) ; walk-stops is no longer lazy btw
          walk-with-food (path-with-food look-fn look-eps stop-walk)] ; a vec
-     (conj walk-with-food stop-walk))))
+     (trim-full-walk (conj walk-with-food stop-walk)))))
 
-;; NOTE: CURRENTLY ADDING vec AROUND walk-stops TO MAKE SURE THAT THE
-;; PRNG IS CALLED EXACTLY THE SAME NUMBER OF TIMES IF I RERUN THIS.
-;; (Probably completely irrelevant since only two points.)
 (defn straight-foodwalk
   "Generates a straight foodwalk starting from point init-loc in direction
   init-dir, and returns a vector triple containing (a) a sequence of found
@@ -316,7 +345,7 @@
   (let [step-walk [[init-dir maxpathlen]] ; a single step of the whole length
         stop-walk (walk-stops init-loc step-walk) ; contains exacty 2 points
         walk-with-food (path-with-food look-fn look-eps stop-walk)]
-    (conj walk-with-food stop-walk)))
+    (trim-full-walk (conj walk-with-food stop-walk))))
 
 (defn path-until-found-length
   "Given a pair consisting of a possibly empty sequence of found foodspots and a
