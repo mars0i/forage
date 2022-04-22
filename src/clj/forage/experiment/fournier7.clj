@@ -134,8 +134,9 @@
   ;; Levy
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
-  (time (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil (assoc params :maxpathlen 100000) 2)))))
+  ;(time (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil (assoc params :maxpathlen 100000) 2)))))
   (time (def fws54 (doall (repeatedly 54 #(fr/levy-run rng look-fn nil params 2)))))
+  (def fws (take 9 fws54))
 
 
   (time
@@ -146,6 +147,11 @@
                 :COLUMNS 3
                 :CONCAT (mapv (partial h/vega-envwalk-plot env 800 1000)
                               (map vector fws))))) ; map vector: vega-envwalk-plot expects a sequence of foodwalk triples
+
+  ;; Or replace 
+  ;; (oz/view! ...)
+  ;; with
+  ;; (oz/export! ... "filename.png")
 
 
   ;; foodless Levy
