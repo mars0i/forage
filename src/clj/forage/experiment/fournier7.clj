@@ -142,7 +142,7 @@
   (time
     (oz/view! (hc/xform
                 uh/grid-chart
-                :TITLE (str "mu=2, seed=" seed)
+                :TITLE (str "mu=2, seed=" seed ", maxpathlen=" (params :maxpathlen) " (trunclen=maxpathlen)")
                 :TOFFSET 10
                 :COLUMNS 3
                 :CONCAT (mapv (partial h/vega-envwalk-plot env 800 1000)
