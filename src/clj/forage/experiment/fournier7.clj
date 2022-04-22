@@ -130,9 +130,11 @@
                                            (straight-params :num-dirs)))
                              (range (inc (straight-params :num-dirs)))))))
   (oz/view! (h/vega-envwalk-plot env 1100 1000 raw))
+  (oz/export! (h/vega-envwalk-plot env 1100 1000 raw) "yo.svg") ; png's in theory, but buggy
 
   ;; Levy
   (def seed (r/make-seed))
+  (def seed 838021049275087552)
   (def rng (r/make-well19937 seed))
   ;(time (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil (assoc params :maxpathlen 100000) 2)))))
   (time (def fws54 (doall (repeatedly 54 #(fr/levy-run rng look-fn nil params 2)))))
