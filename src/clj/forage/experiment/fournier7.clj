@@ -92,11 +92,13 @@
 (comment
   ;; Note lookups are toroidal above, so plots might not be accurate.
   ;; display straight walk:
-  (require '[aerial.hanami.common :as hc])
-  (require '[aerial.hanami.templates :as ht])
+  (require '[utils.random :as r])
+  (require '[utils.fractal :as uf])
+  (require '[forage.run :as fr])
   (require '[forage.viz.hanami :as h])
   (require '[utils.hanami :as uh])
-  (require '[utils.fractal :as uf])
+  (require '[aerial.hanami.common :as hc])
+  (require '[aerial.hanami.templates :as ht])
   (require '[oz.core :as oz])
   (oz/start-server!)
 
@@ -133,7 +135,7 @@
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
   (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil (assoc params :maxpathlen 100000) 2))))
-  (def fws (doall (repeatedly 16 #(fr/levy-run rng look-fn nil params 2))))
+  (time (def fws54 (doall (repeatedly 54 #(fr/levy-run rng look-fn nil params 2)))))
   (count fws)
   (map class fws)
   (map #(class (second %)) fws)
