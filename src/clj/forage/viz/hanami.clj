@@ -1,12 +1,13 @@
 ;; Functions for plotting things in 2D spatial coordinates using Hanami
 ;; and Vega-Lite.
 (ns forage.viz.hanami
-    (:require [clojure.math.numeric-tower :as nt]
-              [aerial.hanami.common :as hc]
-              [aerial.hanami.templates :as ht]
-              [forage.mason.foodspot :as mf]
-              [forage.food :as f]
-              [utils.math :as m]))
+  (:require [clojure.math.numeric-tower :as nt]
+            [aerial.hanami.common :as hc]
+            [aerial.hanami.templates :as ht]
+            [oz.core :as oz]
+            [forage.mason.foodspot :as mf]
+            [forage.food :as f]
+            [utils.math :as m]))
 
 ;; Note field names have to be strings, not keywords, in order
 ;; for vega-lite to make full use of them.
@@ -210,4 +211,27 @@
     (hc/xform
      ht/layer-chart
      :LAYER (cons env-plot did-couldve-plots))))
+
+
+
+(defn write-foodwalk-plots
+  [suffix stubname seed plot-size columns display-radius env params mu foodwalks walks-per-plot n-plots]
+  (let [basename (str stubname "seed" seed)
+        basetitle (str "mu=2, seed=" seed ", maxpathlen=" (params :maxpathlen))]
+    (doseq [plot-num (range 0 n-plots walks-per-plot)]
+      (let [first-run (* plot-num walks-per-plot)
+            pre-run (dec first-run)
+            last-run (+ first-run walks-per-plot -1)
+            filename (str basename "runs" first-run "thru" last-run "." suffix)
+            title (str basetitle "runs " first-run " through " last-run)]
+        (oz/export! (hc/xform
+                     uh/grid-chart
+                     :TITLE title
+                     :TOFFSET 10
+                     :COLUMNS columns
+                     :CONCAT (mapv (partial vega-envwalk-plot env plot-size display-radius)
+                                   (map vector 
+                                        (take walks-per-plot
+                                              (drop pre-run foodwalks)))))
+                    filename)))))
 
