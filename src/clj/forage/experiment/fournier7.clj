@@ -40,12 +40,13 @@
 )
 (def fournier-mult 0.10)
 (def fournier-lvls 3)
+(def perc-radius 1)
 
 ;; FOR LEVY WALKS
 (def params (sorted-map ; sort so labels match values
              :food-distance       init-food ; ignored??
-             :perc-radius         1  ; distance that an animal can "see" in searching for food
-             :powerlaw-min        1  ; s/b >= per-radius (Viswanathan et al typically make them equal)
+             :perc-radius         perc-radius ; distance that an animal can "see" in searching for food
+             :powerlaw-min        perc-radius ; s/b >= per-radius (Viswanathan et al typically make them equal)
              :env-size            (* 2 half-size)
              :env-discretization  (* init-food (reduce * (repeat fournier-lvls fournier-mult)))
              :init-loc            [half-size half-size] ; i.e. center of env
