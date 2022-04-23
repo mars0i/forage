@@ -1,12 +1,16 @@
 (ns forage.run
   (:require 
-    [utils.math :as m]
-    [utils.random :as r]
-    [forage.walks :as w]
-    [forage.food :as f]
-    [forage.mason.foodspot :as mf]
-    [clojure.data.csv :as csv]
-    [clojure.java.io :as io]))
+   [utils.math :as m]
+   [utils.random :as r]
+   [utils.hanami :as uh] ; replace if grid-chart becomes non-local
+   [forage.viz.hanami :as h]
+   [forage.walks :as w]
+   [forage.food :as f]
+   [forage.mason.foodspot :as mf]
+   [aerial.hanami.common :as hc]
+   [oz.core :as oz] ; TODO remove if I switch to another plot-rendering lib
+   [clojure.data.csv :as csv]
+   [clojure.java.io :as io]))
 
 (def default-file-prefix "../../data.foraging/forage/")
 
@@ -196,25 +200,27 @@
     data))
 
 
-
+;; Maybe ought to be merged with other looping functions above.
 (defn write-foodwalk-plots
-  [suffix stubname seed plot-size columns display-radius env params mu foodwalks walks-per-plot n-plots]
+  [stubname suffix seed                       ; filename parameters
+   env plot-size grid-columns display-radius  ; plot display parameters
+   mu params                                  ; plot header label info
+   foodwalks runs-per-grid total-runs]        ; data parameters
   (let [basename (str stubname "seed" seed)
-        basetitle (str "mu=2, seed=" seed ", maxpathlen=" (params :maxpathlen))]
-    (doseq [plot-num (range 0 n-plots walks-per-plot)]
-      (let [first-run (* plot-num walks-per-plot)
-            pre-run (dec first-run)
-            last-run (+ first-run walks-per-plot -1)
-            filename (str basename "runs" first-run "thru" last-run "." suffix)
-            title (str basetitle "runs " first-run " through " last-run)]
-        (oz/export! (hc/xform
-                     uh/grid-chart
-                     :TITLE title
-                     :TOFFSET 10
-                     :COLUMNS columns
-                     :CONCAT (mapv (partial vega-envwalk-plot env plot-size display-radius)
-                                   (map vector 
-                                        (take walks-per-plot
-                                              (drop pre-run foodwalks)))))
-                    filename)))))
+        basetitle (str "mu=2, seed=" seed ", maxpathlen=trunclen=" (params :maxpathlen))]
+    (doseq [plot-index (range 0 total-runs runs-per-grid)]
+      (let [first-run-id (inc plot-index)
+            last-run-id  (+ plot-index runs-per-grid)
+            filename (str basename "runs" first-run-id "thru" last-run-id "." suffix)
+            title (str basetitle ", runs " first-run-id " through " last-run-id)]
+        (-> (hc/xform
+             uh/grid-chart
+             :TITLE title
+             :TOFFSET 10
+             :COLUMNS grid-columns
+             :CONCAT (mapv (partial h/vega-envwalk-plot env plot-size display-radius)
+                           (map vector 
+                                (take runs-per-grid
+                                      (drop plot-index foodwalks)))))
+            (oz/export! filename))))))
 

@@ -93,7 +93,6 @@
 (comment
   ;; Note lookups are toroidal above, so plots might not be accurate.
   ;; display straight walk:
-  (require '[utils.random :as r])
   (require '[utils.fractal :as uf])
   (require '[forage.run :as fr])
   (require '[forage.viz.hanami :as h])
@@ -137,7 +136,7 @@
   (def seed (r/make-seed))
   (def seed 838021049275087552)
   (def rng (r/make-well19937 seed))
-  ;(time (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil (assoc params :maxpathlen 100000) 2)))))
+  (time (def fws (doall (repeatedly 6 #(fr/levy-run rng look-fn nil (assoc params :maxpathlen 100000) 2)))))
   (time (def fws54 (doall (repeatedly 54 #(fr/levy-run rng look-fn nil params 2)))))
   (def fws (take 9 fws54))
 
@@ -150,11 +149,11 @@
                 :COLUMNS 3
                 :CONCAT (mapv (partial h/vega-envwalk-plot env 800 1000)
                               (map vector fws))))) ; map vector: vega-envwalk-plot expects a sequence of foodwalk triples
-
-  ;; Or replace 
-  ;; (oz/view! ...)
-  ;; with
-  ;; (oz/export! ... "filename.png")
+  (time
+   (fr/write-foodwalk-plots "/Users/marshall/docs/src/data.foraging/forage/yo" "svg" seed
+                            env 800 2 1000
+                            2 params
+                            fws 3 6))
 
 
   ;; foodless Levy
