@@ -5,7 +5,7 @@ More documentation in the future.
 
 ---
 
-Because there are now several standard build tools for Clojure, note
+Because there are now multiple standard build tools for Clojure, note
 that this project uses Leiningen: To start a REPL in a terminal so that you
 can play with the code here, install [Leiningen](https://leiningen.org). Then 
 *cd* into the forage directory and run *lein repl* (or use one of the scripts
