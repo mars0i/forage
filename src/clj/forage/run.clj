@@ -201,7 +201,7 @@
 
 ;; Maybe ought to be merged with other looping functions above.
 ;; But maybe not: levy-experiments and straight-experiments are designed to
-;; automate generation of a lot of data in a systematic way.  
+;; automate generation of a lot of data in a systematic way, while
 ;; write-foodwalk-plots is designed for exploratory work to understand how
 ;; things would or did work when produced systematically, and should allow
 ;; a variety of ways of generating the walk data (e.g. by using the same
