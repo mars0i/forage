@@ -199,10 +199,24 @@
     (println "done.")
     data))
 
-
 ;; Maybe ought to be merged with other looping functions above.
+;; But maybe not: levy-experiments and straight-experiments are designed to
+;; automate generation of a lot of data in a systematic way.  
+;; write-foodwalk-plots is designed for exploratory work to understand how
+;; things would or did work when produced systematically, and should allow
+;; a variety of ways of generating the walk data (e.g. by using the same
+;; walk in different envs, which is not usually what I'd want when generating
+;; a lot of data).
 (defn write-foodwalk-plots
-  [stubname suffix seed                       ; filename parameters
+  "Given a sequence of foodwalk triples (foodwalks), generates a series
+  of graphic files containing grids/lattices of plots, one plot for each 
+  foodwalk.  Filenames are composed of stubname, the seed (could be an 
+  arbitrary string), and info about which walks (runs) from foodwalks are
+  included in a particular graphics file.  mu and params are used only for
+  labels or filename info. env is needed to generate foodspot representations.  
+  total-runs specifies how many runs to plot.  Currently uses oz/export! to
+  plot, and file-type should be :svg or :png (but png generation is broken)."
+  [stubname file-type seed                    ; filename parameters
    env plot-size grid-columns display-radius  ; plot display parameters
    mu params                                  ; plot header label info
    foodwalks runs-per-grid total-runs]        ; data parameters
@@ -211,6 +225,7 @@
     (doseq [plot-index (range 0 total-runs runs-per-grid)]
       (let [first-run-id (inc plot-index)
             last-run-id  (+ plot-index runs-per-grid)
+            suffix (name file-type)
             filename (str basename "runs" first-run-id "thru" last-run-id "." suffix)
             title (str basetitle ", runs " first-run-id " through " last-run-id)]
         (-> (hc/xform
