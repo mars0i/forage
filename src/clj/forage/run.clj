@@ -216,10 +216,10 @@
   labels or filename info. env is needed to generate foodspot representations.  
   total-runs specifies how many runs to plot.  Currently uses oz/export! to
   plot, and file-type should be :svg or :png (but png generation is broken)."
-  [stubname file-type seed                    ; filename parameters
-   env plot-size grid-columns display-radius  ; plot display parameters
-   mu params                                  ; plot header label info
-   foodwalks runs-per-grid total-runs]        ; data parameters
+  [stubname file-type seed                                 ; filename parameters
+   env plot-size grid-columns runs-per-grid display-radius ; plot display parameters
+   mu params                                               ; plot header label info
+   foodwalks total-runs]                                   ; data parameters
   (let [basename (str stubname "seed" seed)
         basetitle (str "mu=2, seed=" seed ", maxpathlen=trunclen=" (params :maxpathlen))]
     (doseq [plot-index (range 0 total-runs runs-per-grid)]
@@ -228,6 +228,7 @@
             suffix (name file-type)
             filename (str basename "runs" first-run-id "thru" last-run-id "." suffix)
             title (str basetitle ", runs " first-run-id " through " last-run-id)]
+        (print "Constructing" filename "... ")
         (-> (hc/xform
              uh/grid-chart
              :TITLE title
@@ -237,5 +238,6 @@
                            (map vector 
                                 (take runs-per-grid
                                       (drop plot-index foodwalks)))))
-            (oz/export! filename))))))
+            (oz/export! filename))
+        (println "written.")))))
 

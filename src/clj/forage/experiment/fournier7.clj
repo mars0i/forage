@@ -94,6 +94,7 @@
   ;; Note lookups are toroidal above, so plots might not be accurate.
   ;; display straight walk:
   (require '[utils.fractal :as uf])
+  (require '[utils.random :as r])
   (require '[forage.run :as fr])
   (require '[forage.viz.hanami :as h])
   (require '[utils.hanami :as uh])
