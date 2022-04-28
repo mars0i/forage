@@ -40,8 +40,8 @@
 
 (def levy-walk (fn [] (w/levy-foodwalk 
                       (partial mf/perc-foodspots-exactly env perc-radius)
-                      look-eps [half-size half-size] maxpathlen 
-                      trunclen initial-direction rng dist)))
+                      look-eps maxpathlen 
+                      initial-direction trunclen rng dist [half-size half-size])))
 
 (def straight-walk (fn [init-dir]
                      (w/straight-foodwalk

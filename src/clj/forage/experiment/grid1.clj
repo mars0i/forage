@@ -73,10 +73,10 @@
     (doseq [powmin powmins
             exponent exponents
             init-dir init-dirs]
-      (let [sim-fn #(w/levy-foodwalk look-fn (params :look-eps) (params :init-loc)
+      (let [sim-fn #(w/levy-foodwalk look-fn (params :look-eps)
                                      (params :maxpathlen) init-dir
                                      (params :trunclen) rng
-                                     powmin exponent)
+                                     powmin exponent (params :init-loc))
             foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
             found (w/count-found-foodspots foodwalks+)
             segments (w/count-segments 2 foodwalks+)]
