@@ -149,7 +149,6 @@
                       (r/get-state rng))
        (let [sim-fn #(levy-run rng look-fn init-dir params exponent)
              foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
-             ;lengths (doall (map #(if-not % "NA" %) (map w/path-if-found-length foodwalks+))) ; the "NA" is convenient in Excel
              lengths (doall (map w/path-until-found-length foodwalks+)) ; Paths in which nothing is found are included
              found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
              segments (w/count-segments 2 foodwalks+)]
