@@ -3,7 +3,7 @@
   :url "https://github.com/mars0i/forage"
   :license {:name "GPL-3.0"
             :url "https://www.gnu.org/licenses/gpl-3.0.en.html"}
-  :dependencies [[org.clojure/clojure "1.11.0"]
+  :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/math.numeric-tower "0.0.5"]
                  ;[org.apache.commons/commons-math3 "3.6.1"]
                  [org.apache.commons/commons-rng-core "1.4"]
@@ -16,6 +16,7 @@
                  [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
 		;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
                  [metasoarous/oz "2.0.0-alpha5"]
+                 [metasoarous/darkstar "0.1.0"] ; fork of original applied-science/darkstar, which isn't on Clojars
                  [mason "20"]] ; just for Continuous2D
 
   :source-paths ["src/clj"]
