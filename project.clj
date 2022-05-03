@@ -14,9 +14,9 @@
                  [techascent/tech.viz "6.00-beta-16-2"]
                  [io.github.nextjournal/clerk "0.5.346"]
                  [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
-		;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
+		;; NOTE oz MUST BE LISTED *AFTER* clerre k (if clerk is present):
                  [metasoarous/oz "2.0.0-alpha5"]
-                 [metasoarous/darkstar "0.1.0"] ; fork of original applied-science/darkstar, which isn't on Clojars
+                 ;[metasoarous/darkstar "0.1.0"] ; require as applied-science.darkstar (fork of original applied-science/darkstar, which isn't on Clojars)
                  [mason "20"]] ; just for Continuous2D
 
   :source-paths ["src/clj"]
