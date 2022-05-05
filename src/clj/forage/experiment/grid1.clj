@@ -123,8 +123,9 @@
   forage.walks/straight-foodwalk for further details."
   [init-dir]
   (w/straight-foodwalk (partial mf/perc-foodspots-exactly env perc-radius) ; env, perc-radius above
-                   look-eps init-loc maxpathlen                            ; also above
-                   init-dir))
+                       look-eps maxpathlen                                 ; also above
+                       init-loc 
+                       init-dir))
 
 (defn straight-fws
   [init-dirs]

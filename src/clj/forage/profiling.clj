@@ -41,11 +41,8 @@
 
 (def straight-walk (fn [rng dist init-dir]
                      (w/straight-foodwalk
-                       (partial mf/perc-foodspots-exactly env perc-radius)
-                       look-eps
-                       [half-size half-size]
-                       maxpathlen
-                       init-dir)))
+                      (partial mf/perc-foodspots-exactly env perc-radius)
+                      look-eps maxpathlen [half-size half-size] init-dir)))
 
 (def default-directions (repeat default-direction))
 ;; Divide quadrant into n directions in radians:

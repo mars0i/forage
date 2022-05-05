@@ -341,7 +341,7 @@
   where a foodspot is found or when maxpathlen is reached.  Food search uses
   look-fn to repeatedly check for food at points that are look-eps apart,
   beginning from init-loc."
-  [look-fn look-eps init-loc maxpathlen init-dir]
+  [look-fn look-eps maxpathlen init-loc init-dir]
   (let [step-walk [[init-dir maxpathlen]] ; a single step of the whole length
         stop-walk (walk-stops init-loc step-walk) ; contains exacty 2 points
         walk-with-food (path-with-food look-fn look-eps stop-walk)]
