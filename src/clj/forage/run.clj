@@ -211,14 +211,16 @@
   foodwalk.  Filenames are composed of stubname, the seed (could be an 
   arbitrary string), and info about which walks (runs) from foodwalks are
   included in a particular graphics file.  mu and params are used only for
-  labels or filename info. env is needed to generate foodspot representations.  
-  total-runs specifies how many runs to plot.  Currently uses oz/export! to
-  plot, and file-type should be :svg or :png (but png generation is broken)."
+  labels or filename info. env is only needed to generate foodspot 
+  representations. total-runs specifies how many runs to plot.  Currently
+  uses oz/export! to plot, and file-type should be :svg or :png (but oz's
+  png generation is broken--so file-type should be :svg)."
   [stubname file-type seed                                 ; filename parameters
-   env plot-size grid-columns runs-per-grid display-radius ; plot display parameters
+   env plot-size runs-per-grid grid-columns display-radius ; plot display parameters
    mu params                                               ; plot header label info
-   foodwalks total-runs]                                   ; data parameters
-  (let [basename (str stubname "seed" seed)
+   foodwalks]                                              ; data 
+  (let [total-runs (count foodwalks)
+        basename (str stubname "seed" seed)
         basetitle (str "mu=2, seed=" seed ", maxpathlen=trunclen=" (params :maxpathlen))]
     (doseq [plot-index (range 0 total-runs runs-per-grid)]
       (let [first-run-id (inc plot-index)

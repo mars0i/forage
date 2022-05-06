@@ -152,9 +152,9 @@
                               (map vector fws))))) ; map vector: vega-envwalk-plot expects a sequence of foodwalk triples
   (time
    (fr/write-foodwalk-plots "/Users/marshall/docs/src/data.foraging/forage/yo" "svg" seed
-                            env 800 3 1000
+                            env 800 9 3 1000
                             2 params
-                            fws 3 6))
+                            fws))
 
 
   ;; foodless Levy

@@ -78,6 +78,9 @@
   ;; straight:
   (time (def data (fr/straight-experiments fr/default-file-prefix env straight-params)))
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; PLOT SOME STUFF BY HAND:
+
   ;; Note lookups are toroidal above, so plots might not be accurate.
   ;; display straight walk:
   (require '[forage.mason.foodspot :as mf])
@@ -93,7 +96,6 @@
 
   (oz/view! (h/vega-envwalk-plot env 1100 500 raw))
 
-
   (require '[forage.run :as fr])
   (require '[utils.random :as r])
   (require '[forage.viz.hanami :as h])
@@ -105,6 +107,21 @@
   (map count fw+)
   (def plot (h/did-couldve-walk-plot 800 fw+))
   (oz/view! plot)
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Create plot files of example runs using run/write-foodwalk-plots
+
+  (def seed (r/make-seed))
+  ;(def seed 838021049275087552)
+  (def rng (r/make-well19937 seed))
+  (time (def fws (doall (repeatedly 18 #(fr/levy-run rng look-fn nil params 2)))))
+
+  (time
+   (fr/write-foodwalk-plots "/Users/marshall/docs/src/data.foraging/forage/yo" "svg" seed
+                            env 800 9 3 1000
+                            2 params
+                            fws))
+
 
 
 )
