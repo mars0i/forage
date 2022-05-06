@@ -85,13 +85,17 @@
 
 (defn levy-run
   "Perform one Levy run using walks/levy-foodwalk using the given rng, look-fn,
-  init-dir, and exponent, and other arguments taken from params."
+  init-dir, and exponent, and other arguments including init-loc taken from params."
   [rng look-fn init-dir params exponent]
   (w/levy-foodwalk look-fn
-                   (params :look-eps) (params :init-loc)
-                   (params :maxpathlen) (params :trunclen)
-                   rng (params :powerlaw-min) 
-                   exponent init-dir))
+                   (params :look-eps) 
+                   (params :maxpathlen) 
+                   init-dir
+                   (params :trunclen)
+                   rng 
+                   (params :powerlaw-min) 
+                   exponent
+                   (params :init-loc)))
 
 (defn levy-experiments
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
