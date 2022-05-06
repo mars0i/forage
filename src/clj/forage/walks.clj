@@ -319,7 +319,7 @@
   (The environment is to be wrapped up in look-fn and carried with it.)"
   ([look-fn look-eps maxpathlen init-dir trunclen rng scale exponent init-loc]
    (let [len-dist (r/make-powerlaw rng scale exponent)]
-     (levy-foodwalk look-fn look-eps init-loc maxpathlen init-dir trunclen rng len-dist)))
+     (levy-foodwalk look-fn look-eps maxpathlen init-dir trunclen rng len-dist init-loc)))
   ([look-fn look-eps maxpathlen init-dir trunclen dir-dist len-dist init-loc]
    (let [raw-inf-step-walk (repeatedly
                              (step-vector-fn dir-dist len-dist 1 trunclen))
