@@ -116,12 +116,7 @@
   (def rng (r/make-well19937 seed))
   (time (def fws (doall (repeatedly 18 #(fr/levy-run rng look-fn nil params 2)))))
 
-  (time
-   (fr/write-foodwalk-plots "/Users/marshall/docs/src/data.foraging/forage/yo" "svg" seed
-                            env 800 9 3 1000
-                            2 params
-                            fws))
-
+  (time (fr/write-foodwalk-plots (str (System/getenv "HOME") "/src/data.foraging/forage/yo") "svg" seed env 800 9 3 1000 2 params fws))
 
 
 )
