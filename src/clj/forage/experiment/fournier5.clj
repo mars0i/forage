@@ -112,11 +112,14 @@
   ;; Create plot files of example runs using run/write-foodwalk-plots
 
   (def seed (r/make-seed))
-  ;(def seed 838021049275087552)
+  (def seed 9178237170000800769) ; Used for sims for PSA paper, I think
   (def rng (r/make-well19937 seed))
-  (time (def fws (doall (repeatedly 18 #(fr/levy-run rng look-fn nil params 2)))))
+  (time (def fws (doall (repeatedly 360 #(fr/levy-run rng look-fn nil params 2)))))
 
-  (time (fr/write-foodwalk-plots (str (System/getenv "HOME") "/src/data.foraging/forage/yo") "svg" seed env 800 9 3 1000 2 params fws))
+  (time (fr/write-foodwalk-plots 
+          (str (System/getenv "HOME")
+               "/src/data.foraging/forage/fournier5may2022/mu2successes13")
+          :svg seed env 800 9 3 1000 2 params fws))
 
 
 )
