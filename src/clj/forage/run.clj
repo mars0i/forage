@@ -232,7 +232,7 @@
             suffix (name file-type)
             filename (str basename "runs" first-run-id "thru" last-run-id "." suffix)
             title (str basetitle ", runs " first-run-id " through " last-run-id)]
-        (print "Constructing" filename "... ")
+        (print "Constructing" filename "... ") (flush)
         (-> (hc/xform
              uh/grid-chart
              :TITLE title
@@ -243,5 +243,5 @@
                                 (take runs-per-grid
                                       (drop plot-index foodwalks)))))
             (oz/export! filename))
-        (println "written.")))))
+        (println "written.") (flush)))))
 
