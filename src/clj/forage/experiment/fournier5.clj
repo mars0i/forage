@@ -113,6 +113,7 @@
 
   (require '[forage.run :as fr])
   (require '[utils.random :as r])
+  (require '[forage.walks :as w])
   (def seed (r/make-seed))
   (def seed 9178237170000800769) ; Used for sims for PSA paper, I think
   (def rng (r/make-well19937 seed))
@@ -121,10 +122,12 @@
   ;; place runs with found foodspots first:
   (def sorted-fws (sort-by #(if (first %) 0 1) fws))
 
+  (def trimmed-fws (w/trim-full-walk sorted-foodwalk)) ; FIXME don't use: BUGGY
+
   (time (fr/write-foodwalk-plots
           (str (System/getenv "HOME")
                "/docs/src/data.foraging/forage/fournier5may2022/mu15plots/mu15successes11")
-          :svg seed env 800 9 3 1000 2 params sorted-fws))
+          :svg seed env 800 9 3 1000 1.5 params sorted-fws)) ; 2
 
   "/src/data.foraging/forage/fournier5may2022/mu2successes13"
 
