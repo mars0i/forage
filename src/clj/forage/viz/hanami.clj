@@ -196,8 +196,8 @@
   found--and a sequence of coordinates for the entire possible walk,
   creates a vega-lite plot of size plot-dim x plot-dim."
   [plot-dim data-dim foodwalk]
-  (let [[food walk stops] (w/trim-full-walk foodwalk)]
-    (if stops
+  (let [[food walk stops] foodwalk]; (w/trim-full-walk foodwalk)]
+    (if food
       [(vega-walk-plot plot-dim data-dim (add-walk-labels "could've" stops))
        (vega-walk-plot plot-dim data-dim (add-walk-labels "walk" walk))]
       [(vega-walk-plot plot-dim data-dim (add-walk-labels "walk" walk))]))) ; no need to plot couldve
