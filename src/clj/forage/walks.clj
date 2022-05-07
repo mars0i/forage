@@ -274,6 +274,7 @@
             [nil stopsv])))))) ; no food in any segment; return entire input
 
 
+;; FIXME buggy: plots are not turning out correctly.
 (defn trim-full-walk
   "Gvien a foodwalk triple of the kind returned by levy-foodwalk
   or straight-foodwalk, returns a similar triple in which the third
@@ -293,7 +294,7 @@
   and then concatenating the results."
   [[found walk-until-food full-walk]]
   (if-not found
-    [found walk-until-food nil]
+    [found walk-until-food nil] ; the two walks are identical, so we can ingore the full-walk
     [found walk-until-food (drop (- (count walk-until-food) 2)
                                  full-walk)]))
 
