@@ -73,7 +73,7 @@
   ;; REAL EXPERIMENTS
   (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params most-exponents walks-per-combo look-fn))
   (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params addl-exponents walks-per-combo look-fn))
-  
+
   ;; REAL EXPERIMENTS
   ;; straight:
   (time (def data (fr/straight-experiments fr/default-file-prefix env straight-params)))
@@ -111,18 +111,21 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Create plot files of example runs using run/write-foodwalk-plots
 
+  (require '[forage.run :as fr])
+  (require '[utils.random :as r])
   (def seed (r/make-seed))
   (def seed 9178237170000800769) ; Used for sims for PSA paper, I think
   (def rng (r/make-well19937 seed))
-  (time (def fws (doall (repeatedly 360 #(fr/levy-run rng look-fn nil params 2)))))
+  (time (def fws (doall (repeatedly 360 #(fr/levy-run rng look-fn nil params 1.5))))) ; 2
 
   (time (fr/write-foodwalk-plots 
           (str (System/getenv "HOME")
-               "/src/data.foraging/forage/fournier5may2022/mu2successes13")
+               "docs/src/data.foraging/forage/fournier5may2022/mu1_5plots")
           :svg seed env 800 9 3 1000 2 params fws))
 
+  "/src/data.foraging/forage/fournier5may2022/mu2successes13"
 
-)
+  )
 
 
 (comment
