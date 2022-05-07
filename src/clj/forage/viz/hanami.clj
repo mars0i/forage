@@ -7,6 +7,7 @@
             [oz.core :as oz]
             [forage.mason.foodspot :as mf]
             [forage.food :as f]
+            [forage.walks :as w]
             [utils.math :as m]))
 
 ;; Note field names have to be strings, not keywords, in order
@@ -45,6 +46,7 @@
                 :WIDTH  plot-dim
                 :HEIGHT plot-dim)
       (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
+      (assoc-in [:encoding :order :type] "ordinal") ; gets rid of warning on :order
       (assoc-in [:mark :strokeWidth] 1.0))) 
 
 (defn add-point-labels
@@ -194,9 +196,11 @@
   found--and a sequence of coordinates for the entire possible walk,
   creates a vega-lite plot of size plot-dim x plot-dim."
   [plot-dim data-dim foodwalk]
-  (let [[food walk stops] foodwalk]
-    [(vega-walk-plot plot-dim data-dim (add-walk-labels "could've" stops))
-     (vega-walk-plot plot-dim data-dim (add-walk-labels "walk" walk))]))
+  (let [[food walk stops] (w/trim-full-walk foodwalk)]
+    (if stops
+      [(vega-walk-plot plot-dim data-dim (add-walk-labels "could've" stops))
+       (vega-walk-plot plot-dim data-dim (add-walk-labels "walk" walk))]
+      [(vega-walk-plot plot-dim data-dim (add-walk-labels "walk" walk))]))) ; no need to plot couldve
 
 ;; TODO add a nice header
 (defn vega-envwalk-plot
