@@ -118,10 +118,13 @@
   (def rng (r/make-well19937 seed))
   (time (def fws (doall (repeatedly 360 #(fr/levy-run rng look-fn nil params 1.5))))) ; 2
 
-  (time (fr/write-foodwalk-plots 
+  ;; place runs with found foodspots first:
+  (def sorted-fws (sort-by #(if (first %) 0 1) fws))
+
+  (time (fr/write-foodwalk-plots
           (str (System/getenv "HOME")
-               "docs/src/data.foraging/forage/fournier5may2022/mu1_5plots")
-          :svg seed env 800 9 3 1000 2 params fws))
+               "/docs/src/data.foraging/forage/fournier5may2022/mu15plots/mu15successes11")
+          :svg seed env 800 9 3 1000 2 params sorted-fws))
 
   "/src/data.foraging/forage/fournier5may2022/mu2successes13"
 
