@@ -122,7 +122,7 @@
   ;; place runs with found foodspots first:
   (def sorted-fws (sort-by #(if (first %) 0 1) fws))
 
-  (def trimmed-fws (w/trim-full-walk sorted-foodwalk)) ; FIXME don't use: BUGGY
+  ;; NOTE: Don't use trim-full-walk here: IT'S ALREADY CALLED in levy-foodwalk
 
   (time (fr/write-foodwalk-plots
           (str (System/getenv "HOME")
