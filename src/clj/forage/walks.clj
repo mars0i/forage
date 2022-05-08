@@ -283,15 +283,13 @@
   If no food was found, full-walk is replaced by nil since 
   walk-until-food is identical to full-walk.
   If food was found, let n be the number of points in walk-until-food;
-  Then the first n-2 points are dropped from full-walk in the return 
-  triple.  (The last point in walk-until-food is the point from which
+  Then the first n-1 points are dropped from full-walk in the return 
+  triple.  The last point in walk-until-food is the point from which
   food was found, which is usually not included in full-walk.  Backing
-  up by two means that full-walk includes full line segment from within 
-  which the food was found, partially, or possibly fully overlapping
-  with the last segment in walk-until-food.)
-  The original full-walk can be reconstructed e.g. by removing the last
-  element from walk-until-food, and the first element from full-walk,
-  and then concatenating the results."
+  up by one means that full-walk includes full line segment from within 
+  which the food was found, partially.  The original full-walk can be
+  reconstructed e.g. by removing the last element from walk-until-food
+  and then concatenating the two sequences."
   [[found walk-until-food full-walk]]
   (if-not found
     [found walk-until-food nil] ; the two walks are identical; don't waste time/space by dup'ing
