@@ -13,8 +13,18 @@
 
 
 (comment
+
+  (def rng (r/make-well19937))
+  (def env (mf/make-env 10 1000))
+  (def look-fn (partial mf/perc-foodspots-exactly-toroidal env 1))
+  (def fw (w/levy-foodwalk look-fn 0.1 10000 false 10000 rng 1 2 [0 0]))
+
+  (map count fw)
+  (= (nth fw 1) (nth fw 2))
+
+
+
   (defn ignore-food [x y] nil)
-  (def rng (r/make-19937))
 
   (require '[oz.core :as oz])
   (oz/start-server!)
