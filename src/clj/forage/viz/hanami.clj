@@ -192,15 +192,14 @@
 
 (defn did-couldve-walk-plot
   "Given a single foodwalk consisting of a sequence of found foodspots,
-  a walk--a sequence of coordinates until the point at which food was 
-  found--and a sequence of coordinates for the entire possible walk,
-  creates a vega-lite plot of size plot-dim x plot-dim."
+  a food walk (a sequence of coordinates until the point at which food was 
+  found), and a sequence of coordinates for the entire possible walk,
+  creates a pair of vega-lite plots of size plot-dim x plot-dim for the
+  foodwalk and its extension walk beyond the found food."
   [plot-dim data-dim foodwalk]
-  (let [[food walk stops] foodwalk]; (w/trim-full-walk foodwalk)]
-    (if food
-      [(vega-walk-plot plot-dim data-dim (add-walk-labels "could've" stops))
-       (vega-walk-plot plot-dim data-dim (add-walk-labels "walk" walk))]
-      [(vega-walk-plot plot-dim data-dim (add-walk-labels "walk" walk))]))) ; no need to plot couldve
+  (let [[food walk stops] foodwalk]
+      [(vega-walk-plot plot-dim data-dim (add-walk-labels "could've" stops)) ; may be empty if didn't find food
+       (vega-walk-plot plot-dim data-dim (add-walk-labels "walk" walk))]))
 
 ;; TODO add a nice header
 (defn vega-envwalk-plot
