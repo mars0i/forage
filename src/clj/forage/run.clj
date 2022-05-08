@@ -217,8 +217,8 @@
   included in a particular graphics file.  mu and params are used only for
   labels or filename info. env is only needed to generate foodspot 
   representations. total-runs specifies how many runs to plot.  Currently
-  uses oz/export! to plot, and file-type should be :svg or :png (but oz's
-  png generation is broken--so file-type should be :svg)."
+  uses oz/export! to plot, and file-type should be :svg (or :png, but that's
+  currently broken in oz/export!)."
   [stubname file-type seed                                 ; filename parameters
    env plot-size runs-per-grid grid-columns display-radius ; plot display parameters
    mu params                                               ; plot header label info
