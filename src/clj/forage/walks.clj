@@ -294,30 +294,34 @@
   and then concatenating the results."
   [[found walk-until-food full-walk]]
   (if-not found
-    [found walk-until-food nil] ; the two walks are identical, so we can ingore the full-walk
-    [found walk-until-food (drop (- (count walk-until-food) 2)
+    [found walk-until-food nil] ; the two walks are identical; don't waste time/space by dup'ing
+    [found walk-until-food (drop (- (count walk-until-food) 1)
                                  full-walk)]))
 
 (comment
   ;; testing
   (def full [[0 0] [0 1] [2 1] [2 4] [-4 4] [-4 2]])
-  (def wuf [[0 0] [0 1] [2 1] [2 3]])
-  (trim-full-walk [nil wuf full])
-  (trim-full-walk [["food"] wuf full])
+  (def wuf1  [[0 0] [0 1] [2 1] [2 3]])
+  (trim-full-walk [nil wuf1 full])
+  (trim-full-walk [["food"] wuf1 full])
+  (def wuf2  [[0 0] [0 1] [2 1] [2 4]]) ; finds foodspot from an endpoint
+  (trim-full-walk [nil wuf2 full])
+  (trim-full-walk [["food"] wuf2 full])
 )
 
 (defn levy-foodwalk
   "Generates a random foodwalk starting from point init-loc in direction
   init-dir, and returns a vector triple containing (a) a sequence of found
   foodspots or nil if none found, (b) the generated sequence from start until
-  the point from which the foodspots were found, and (c) the entire generated
-  sequence including the stops after the foodspots were found.  If init-dir
-  is falsey, the initial direction will be random.  More specifically, the 
-  generated foodwalk consists of a series of line segments and ends where 
-  a foodspot is first found, or when the sum of segment lengths is equal to 
-  maxpathlen.  Food search uses look-fn to repeatedly check for food at
-  points that are look-eps apart, beginning from init-loc.
-  (The environment is to be wrapped up in look-fn and carried with it.)"
+  the point from which the foodspots were found or the entire sequence if
+  no foodspots were found, and (c) a subsequence containing the remaining
+  stops, if any, after the foodspots were found.  If init-dir is falsey, 
+  the initial direction will be random.  More specifically, the generated 
+  foodwalk consists of a series of line segments and ends where a foodspot
+  is first found, or when the sum of segment lengths is equal to maxpathlen.
+  Food search uses look-fn to repeatedly check for food at points that are
+  look-eps apart, beginning from init-loc. (The environment is to be wrapped
+  up in look-fn and carried with it.)"
   ([look-fn look-eps maxpathlen init-dir trunclen rng scale exponent init-loc]
    (let [len-dist (r/make-powerlaw rng scale exponent)]
      (levy-foodwalk look-fn look-eps maxpathlen init-dir trunclen rng len-dist init-loc)))
