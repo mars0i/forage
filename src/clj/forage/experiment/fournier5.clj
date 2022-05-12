@@ -66,6 +66,39 @@
 ;; NOTE TOROIDAL LOOK-FN:
 (def look-fn (partial mf/perc-foodspots-exactly-toroidal env (params :perc-radius)))
 
+(def f5plots-size 800)
+(def f5plots-plots-per-file 9)
+(def f5plots-columns 3)
+(def f5plots-display-radius 1000)
+
+(defn f5plots
+  "Plot n-runs foodwalks with given mu and a new WELL 19937 PRNG using seed,
+  and using other values defined in its namespace.  Foodwalks are sorted so 
+  that successful searches appear first.  Plots will appear in SVG files with 
+  parameters size=800, plots-per-file=9, columns=3, display-radius=1000."
+  [seed n-runs mu]
+  (print "Running walks ... ")
+  (let [rng (r/make-well19937 seed)
+        sorted-fws (time
+                    (sort-by #(if (first %) 0 1)
+                             (doall (repeatedly n-runs #(fr/levy-run rng look-fn nil params mu)))))
+        success-count (count (filter first sorted-fws))]
+    (println success-count "successful out of" n-runs "runs with mu =" mu "using seed" seed)
+    (println "Creating svg files ...")
+    (time (fr/write-foodwalk-plots
+           (str (System/getenv "HOME") "/docs/src/data.foraging/forage/fournier5mu" mu)
+           :svg seed env 800 9 3 1000 mu params sorted-fws))))
+
+(comment
+  (def seed (r/make-seed))
+  (def seed 9178237170000800769) ; Used for sims for PSA paper, I think
+  (f5plots seed 18 3.0)
+  (f5plots seed 360 1.001)
+  (f5plots seed 360 1.5)
+  (f5plots seed 360 2.0)
+  (f5plots seed 360 2.5)
+)
+
 (comment
   (require '[forage.run :as fr])
   (require '[utils.random :as r])
