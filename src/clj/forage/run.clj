@@ -225,7 +225,7 @@
    foodwalks]                                              ; data 
   (let [total-runs (count foodwalks)
         basename (str stubname "seed" seed)
-        basetitle (str "mu=2, seed=" seed ", maxpathlen=trunclen=" (params :maxpathlen))]
+        basetitle (str "mu=" mu ", seed=" seed ", maxpathlen=trunclen=" (params :maxpathlen))]
     (doseq [plot-index (range 0 total-runs runs-per-grid)]
       (let [first-run-id (inc plot-index)
             last-run-id  (+ plot-index runs-per-grid)
