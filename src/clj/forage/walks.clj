@@ -293,7 +293,7 @@
   [[found walk-until-food full-walk]]
   (if-not found
     [found walk-until-food nil] ; the two walks are identical; don't waste time/space by dup'ing
-    [found walk-until-food (drop (- (count walk-until-food) 1)
+    [found walk-until-food (drop (- (count walk-until-food) 2)
                                  full-walk)]))
 
 (comment
