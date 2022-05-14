@@ -396,3 +396,10 @@
           0
           foodwalks+))
 
+
+(defn sort-foodwalks
+  "Sorts a sequence of foodwalks so that walks in which food 
+  is found are first."
+  [fws]
+  (sort-by #(if (first %) 0 1)
+           fws))
