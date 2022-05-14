@@ -85,7 +85,10 @@
 
 (defn levy-run
   "Perform one Levy run using walks/levy-foodwalk using the given rng, look-fn,
-  init-dir, and exponent, and other arguments including init-loc taken from params."
+  init-dir, and exponent, and other arguments including init-loc taken from params.
+  Returns a triple containing found food (if any), the walk until where food was 
+  found, and the remaining steps (if any) that would have occurred after food was
+  found."
   [rng look-fn init-dir params exponent]
   (w/levy-foodwalk look-fn
                    (params :look-eps) 
