@@ -28,11 +28,12 @@
    ; mu=1.5: 81/360
    ; mu=1.5: 89/360
    ;---
-   ; mu=1.001: 84/360
-   ; mu=1.001: 81/360
+   ; mu=1.001: 84/360  ; note this success rate is comparable to straight walks,
+   ; mu=1.001: 81/360  ; but straight walks are not in random dirs
+
 
 (def half-size 5000) ; half the full width of the env
-(def init-food 1000)
+(def init-food 1000) ; preliminary shows 1.5 still beating 2.0
 
 (def params (sorted-map ; sort so labels match values
              :food-distance       init-food ; ignored??
