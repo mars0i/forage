@@ -26,6 +26,7 @@
              :fournier-multiplier nil
             ))
 
+(def straight-params (assoc params :num-dirs 100))
 
 (def env (mf/make-env (params :env-discretization)
                       (params :env-size)
@@ -48,5 +49,9 @@
   (fr/write-foodwalk-plots 
            (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
            :svg seed env 800 9 3 50 mu params sorted-fws)
+
+  (fr/straight-experiments 
+           (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yostraight")
+           env straight-params)
 
 )
