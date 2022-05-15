@@ -1,3 +1,4 @@
+;; Experiments with foodspots on grids with various dimensions
 (ns forage.experiment.grid5
   (:require [forage.run :as fr]
             [forage.food :as f]
@@ -12,25 +13,7 @@
 (def init-food 200) ; about 18% success straight, 30% success mu=2, 75% success mu=1.5 since food so dense and regular
 
 (def half-size 5000) ; half the full width of the env
-(def init-food 400)
-   ; straight: 6/101
-   ;---
-   ; mu=3.0: 21/360
-   ; mu=3.0: 30/360
-   ; mu=3.0: 26/360
-   ;---
-   ; mu=2.5: 49/360
-   ; mu=2.5: 44/360
-   ;---
-   ; mu=2.0: 69/360
-   ; mu=2.0: 77/360
-   ;---
-   ; mu=1.5: 81/360
-   ; mu=1.5: 89/360
-   ;---
-   ; mu=1.001: 84/360  ; note this success rate is comparable to straight walks,
-   ; mu=1.001: 81/360  ; but straight walks are not in random dirs
-
+(def init-food 400) ; see notes.forage/misc/grid5results.nts for results
 
 (def half-size 5000) ; half the full width of the env
 (def init-food 1000) ; preliminary shows 1.5 still beating 2.0
@@ -51,6 +34,8 @@
              :fournier-multiplier nil
             ))
 
+;; For Levy walks, :num-dirs is set to nil to ensure random initial directions.
+;; So this has to be overridden for normal straight walks.
 (def straight-params (assoc params :num-dirs 100))
 
 (def env (mf/make-env (params :env-discretization)
@@ -72,15 +57,27 @@
   (def mu 1.5)
   (def mu 1.1001)
   ;(def fw (fr/levy-run rng look-fn nil params mu))
-  ;(time (def fws (doall (repeatedly 18 #(fr/levy-run rng look-fn nil params mu)))))
-  ;(time (def fws (doall (repeatedly 24 #(fr/levy-run rng look-fn nil params mu)))))
-  (time (def fws (doall (repeatedly 360 #(fr/levy-run rng look-fn nil params mu)))))
-  (count (filter first fws))
-  (def sorted-fws (w/sort-foodwalks fws))
+
+  ;; perform multiple runs:
+  (def results {})
+  (def results {1.001 fws1001 1.5 fws15 2.0 fws20 2.5 fws25 3.0 fws30})
+  (assoc results 1.001 (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 1.001)))))
+  (assoc results  1.5  (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 1.5)))))
+  (assoc results  2.0  (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 2.0)))))
+  (assoc results  2.5  (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 2.5)))))
+  (assoc results  3.0  (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 3.0)))))
+
+  ;; count successes:
+  (count (filter first fws1001))
+  (count (filter first fws15))
+  (count (filter first fws20))
+  (count (filter first fws25))
+  (count (filter first fws30))
   (fr/write-foodwalk-plots 
            (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
-           :svg seed env 800 12 3 50 mu params sorted-fws)
-           ;:svg seed env 800 9 3 50 mu params sorted-fws)
+           :svg seed env 800 12 3 50 1.001 params (take 96 (w/sort-foodwalks fws1001)))
+
+  (def sorted-fws (w/sort-foodwalks fws))
 
   (fr/straight-experiments 
            (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yostraight")
