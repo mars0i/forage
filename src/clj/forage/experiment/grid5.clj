@@ -67,6 +67,7 @@
 
   (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30})
 
+  ;; count successes:
   (count (filter first (fws 1.001)))
   (count (filter first (fws 1.5)))
   (count (filter first (fws 2.0)))
@@ -74,7 +75,7 @@
   (count (filter first (fws 3.0)))
 
   (let [mu 2.0
-        n-to-plot 360]
+        n-to-plot 48]
             (fr/write-foodwalk-plots 
               (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
               :svg seed env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
