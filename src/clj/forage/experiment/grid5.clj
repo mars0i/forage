@@ -38,40 +38,47 @@
 ;; So this has to be overridden for normal straight walks.
 (def straight-params (assoc params :num-dirs 100))
 
-(def env (mf/make-env (params :env-discretization)
+(def nocenter-env (mf/make-env (params :env-discretization)
                       (params :env-size)
                       (f/centerless-rectangular-grid (params :food-distance)
                                                      (params :env-size)
                                                      (params :env-size))))
 
-(def look-fn (partial mf/perc-foodspots-exactly-toroidal env (params :perc-radius)))
+(def centered-env (mf/make-env (params :env-discretization)
+                      (params :env-size)
+                      (f/rectangular-grid (params :food-distance)
+                                                     (params :env-size)
+                                                     (params :env-size))))
+
+(def nocenter-look-fn (partial mf/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
 
 (comment
 
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
 
-  ;; perform multiple runs:
-  (def fws-straight (time (doall (repeatedly 2004 #(fr/straight-run look-fn params nil rng)))))
-  (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 1.001)))))
-  (def fws15   (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 1.5)))))
-  (def fws20   (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 2.0)))))
-  (def fws25   (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 2.5)))))
-  (def fws30   (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 3.0)))))
+  ;; Perform multiple "destructive" runs (i.e. no center) in random directions
+  ;; Straight:
+  (def fws-st (time (doall (repeatedly 2004 #(fr/straight-run nocenter-look-fn params nil rng)))))
+  ;; Levy:
+  (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 1.001)))))
+  (def fws15   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 1.5)))))
+  (def fws20   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 2.0)))))
+  (def fws25   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 2.5)))))
+  (def fws30   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 3.0)))))
 
+  (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
 
   ;; count successes:
-  (count (filter first fws-straight))
+  (count (filter first fws-st))
   (count (filter first fws1001))
   (count (filter first fws15))
   (count (filter first fws20))
   (count (filter first fws25))
   (count (filter first fws30))
 
-  (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30})
-  (def fws {"straight" fws-straight})
-
   ;; count successes:
+  (count (filter first (fws "straight")))
   (count (filter first (fws 1.001)))
   (count (filter first (fws 1.5)))
   (count (filter first (fws 2.0)))
@@ -82,11 +89,12 @@
         n-to-plot 1008]
             (fr/write-foodwalk-plots 
               (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
-              :svg seed env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
+              :svg seed nocenter-env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
 
 
+  ;; Straight walks in a non-random range of directions:
   (fr/straight-experiments 
            (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yostraight")
-           env straight-params)
+           nocenter-env straight-params)
 
 )
