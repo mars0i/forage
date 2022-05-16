@@ -25,6 +25,7 @@
              :env-size            (* 2 half-size)
              :env-discretization  init-food
              :init-loc            [half-size half-size] ; i.e. center of env
+             :init-loc-pad        nil ; if truthy, initial loc is off init-loc by this+perc-radius
              :maxpathlen          (* 4 half-size)  ; for straight walks, don't go too far
              :trunclen            (* 4 half-size) ; max length of any line segment
              :look-eps            0.1    ; increment within segments for food check
@@ -51,13 +52,26 @@
                                                      (params :env-size))))
 
 (def nocenter-look-fn (partial mf/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
+(def centered-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
 
 (comment
 
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
 
-  ;; Perform multiple "destructive" runs (i.e. no center) in random directions
+  ;; Multiple "DESTRUCTIVE" RUNS (i.e. NO foodspot in CENTER) in random directions
+  ;; Straight:
+  (def fws-st (time (doall (repeatedly 2004 #(fr/straight-run nocenter-look-fn params nil rng)))))
+  ;; Levy:
+  (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 1.001)))))
+  (def fws15   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 1.5)))))
+  (def fws20   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 2.0)))))
+  (def fws25   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 2.5)))))
+  (def fws30   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 3.0)))))
+
+
+  ;; TODO: NEED TO HACK INITIAL LOCATION PROCEDURE
+  ;; Multiple "NONDESTRUCTIVE" RUNS (i.e. foodspot in CENTER) in random directions
   ;; Straight:
   (def fws-st (time (doall (repeatedly 2004 #(fr/straight-run nocenter-look-fn params nil rng)))))
   ;; Levy:
