@@ -51,21 +51,12 @@
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
 
-  (def mu 3.0)
-  (def mu 2.5)
-  (def mu 2.0)
-  (def mu 1.5)
-  (def mu 1.1001)
-  ;(def fw (fr/levy-run rng look-fn nil params mu))
-
   ;; perform multiple runs:
-  (def results {})
-  (def results {1.001 fws1001 1.5 fws15 2.0 fws20 2.5 fws25 3.0 fws30})
-  (assoc results 1.001 (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 1.001)))))
-  (assoc results  1.5  (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 1.5)))))
-  (assoc results  2.0  (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 2.0)))))
-  (assoc results  2.5  (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 2.5)))))
-  (assoc results  3.0  (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 3.0)))))
+  (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 1.001)))))
+  (def fws15   (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 1.5)))))
+  (def fws20   (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 2.0)))))
+  (def fws25   (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 2.5)))))
+  (def fws30   (time (doall (repeatedly 2004 #(fr/levy-run rng look-fn nil params 3.0)))))
 
   ;; count successes:
   (count (filter first fws1001))
@@ -73,11 +64,21 @@
   (count (filter first fws20))
   (count (filter first fws25))
   (count (filter first fws30))
-  (fr/write-foodwalk-plots 
-           (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
-           :svg seed env 800 12 3 50 1.001 params (take 96 (w/sort-foodwalks fws1001)))
 
-  (def sorted-fws (w/sort-foodwalks fws))
+  (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30})
+
+  (count (filter first (fws 1.001)))
+  (count (filter first (fws 1.5)))
+  (count (filter first (fws 2.0)))
+  (count (filter first (fws 2.5)))
+  (count (filter first (fws 3.0)))
+
+  (let [mu 2.0
+        n-to-plot 360]
+            (fr/write-foodwalk-plots 
+              (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
+              :svg seed env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
+
 
   (fr/straight-experiments 
            (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yostraight")
