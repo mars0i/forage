@@ -344,11 +344,15 @@
   where a foodspot is found or when maxpathlen is reached.  Food search uses
   look-fn to repeatedly check for food at points that are look-eps apart,
   beginning from init-loc."
-  [look-fn look-eps maxpathlen init-loc init-dir]
-  (let [step-walk [[init-dir maxpathlen]] ; a single step of the whole length
-        stop-walk (walk-stops init-loc step-walk) ; contains exacty 2 points
-        walk-with-food (path-with-food look-fn look-eps stop-walk)]
-    (trim-full-walk (conj walk-with-food stop-walk))))
+  ([look-fn look-eps maxpathlen init-loc init-dir dir-dist]
+   (if init-dir
+     (straight-foodwalk look-fn look-eps maxpathlen init-loc init-dir)
+     (straight-foodwalk look-fn look-eps maxpathlen init-loc (r/next-radian dir-dist))))
+  ([look-fn look-eps maxpathlen init-loc init-dir]
+   (let [step-walk [[init-dir maxpathlen]] ; a single step of the whole length
+         stop-walk (walk-stops init-loc step-walk) ; contains exacty 2 points
+         walk-with-food (path-with-food look-fn look-eps stop-walk)]
+     (trim-full-walk (conj walk-with-food stop-walk)))))
 
 (defn path-until-found-length
   "Given a pair consisting of a possibly empty sequence of found foodspots and a
