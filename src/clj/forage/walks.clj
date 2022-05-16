@@ -354,6 +354,14 @@
          walk-with-food (path-with-food look-fn look-eps stop-walk)]
      (trim-full-walk (conj walk-with-food stop-walk)))))
 
+(defn shift-beyond-radius
+  "Given a pair of coordinates from a foodspot, center, starting point, etc.,
+  moves pad-dist away from in it a random direction using dir-dist as the 
+  random direction generator."
+  [dir-dist pad-dist coords]
+  (let [dir (r/next-radian dir-dist)]
+    (next-walk-stop coords [dir pad-dist])))
+
 (defn path-until-found-length
   "Given a pair consisting of a possibly empty sequence of found foodspots and a
   path of walk stops until they were found (if they were), returns the length
@@ -399,7 +407,6 @@
               (+ tot (dec (count (nth fw idx))))) ; dec since endpoints = segments + 1
           0
           foodwalks+))
-
 
 (defn sort-foodwalks
   "Sorts a sequence of foodwalks so that walks in which food 
