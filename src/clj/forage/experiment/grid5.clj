@@ -25,7 +25,7 @@
              :env-size            (* 2 half-size)
              :env-discretization  init-food
              :init-loc            [half-size half-size] ; i.e. center of env
-             :init-loc-pad        nil ; if truthy, initial loc is off init-loc by this+perc-radius
+             :init-loc-pad        nil ; if truthy, initial loc offset by this + perc-radius randomly
              :maxpathlen          (* 4 half-size)  ; for straight walks, don't go too far
              :trunclen            (* 4 half-size) ; max length of any line segment
              :look-eps            0.1    ; increment within segments for food check
