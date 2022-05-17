@@ -82,6 +82,9 @@
 
   ;; TODO: NEED TO HACK INITIAL LOCATION PROCEDURE
   ;; Multiple "NONDESTRUCTIVE" RUNS (i.e. foodspot in CENTER) in random directions
+  ;; test:
+  (def yo (time (doall (repeatedly 1 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))))
+  (mf/foodspot-coords* (first (first (first yo))))
   ;; Straight:
   (def fws-st  (time (doall (repeatedly 2004 #(fr/straight-run ctrd-look-fn params nil rng)))))
   ;; Levy:
@@ -91,12 +94,6 @@
   (def fws25 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.5)))))
   (def fws30 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 3.0)))))
 
-  ;; test:
-  (def yo (time (doall (repeatedly 1 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))))
-  (mf/foodspot-coords* (first (first (first yo))))
-
-  (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
-
   ;; count successes:
   (count (filter first fws-st))
   (count (filter first fws1001))
@@ -104,6 +101,18 @@
   (count (filter first fws20))
   (count (filter first fws25))
   (count (filter first fws30))
+
+  (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
+
+  (defn update-all
+    [f]
+    (-> fws
+        (update fws1001 f)
+        (update fws15 f)
+        (update fws20 f)
+        (update fws25 f)
+        (update fws30 f)
+        (update "straight" f)))
 
   ;; count successes:
   (count (filter first (fws "straight")))
