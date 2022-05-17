@@ -63,18 +63,22 @@
   (def half-size 100000) ; half the full width of the env
   (def food-distance 500)
 
-  (def params
-    {:powerlaw-min      1  ; min value ("scale") for power law
-     :perc-radius       1  ; distance that an animal can "see" in searching for food
-     :food-distance     food-distance
-     :env-size          (* 2 half-size)
-     :env-discretization food-distance ; for MASON's Continuous2D
-     :init-loc          [half-size half-size] ; i.e. center of env
-     :maxpathlen        half-size  ; for straight walks, don't go too far
-     :trunclen          half-size  ; max length of any line segment
-     :look-eps          0.1  ; increment within segments for food check
-     :max-frac          0.25 ; proportion of pi to use as maximum direction (0 is min)
-     :num-dirs          50})  ; split range num-dir times + 1, or nil for random dir
+  (def params (sorted-map ; sort so labels match values
+               :food-distance       init-food ; ignored??
+               :perc-radius         1  ; distance that an animal can "see" in searching for food
+               :powerlaw-min        1
+               :env-size            (* 2 half-size)
+               :env-discretization  init-food
+               :init-loc            [half-size half-size] ; i.e. center of env
+               :init-pad            nil ; if truthy, initial loc offset by this in rand dir
+               :maxpathlen          (* 4 half-size)  ; for straight walks, don't go too far
+               :trunclen            (* 4 half-size) ; max length of any line segment
+               :look-eps            0.1    ; increment within segments for food check
+               :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
+               :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
+               :fournier-levels     nil
+               :fournier-multiplier nil
+               ))
 
   (def env (mf/make-env (params :env-discretization)
                         (params :env-size)
@@ -98,6 +102,7 @@
                    rng 
                    (params :powerlaw-min) 
                    exponent
+                   (params :init-pad)
                    (params :init-loc)))
 
 (defn levy-experiments

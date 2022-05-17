@@ -320,17 +320,20 @@
   Food search uses look-fn to repeatedly check for food at points that are
   look-eps apart, beginning from init-loc. (The environment is to be wrapped
   up in look-fn and carried with it.)"
-  ([look-fn look-eps maxpathlen init-dir trunclen rng scale exponent init-loc]
+  ([look-fn look-eps maxpathlen init-dir trunclen rng scale exponent init-pad init-loc]
    (let [len-dist (r/make-powerlaw rng scale exponent)]
-     (levy-foodwalk look-fn look-eps maxpathlen init-dir trunclen rng len-dist init-loc)))
-  ([look-fn look-eps maxpathlen init-dir trunclen dir-dist len-dist init-loc]
+     (levy-foodwalk look-fn look-eps maxpathlen init-dir trunclen rng len-dist init-pad init-loc)))
+  ([look-fn look-eps maxpathlen init-dir trunclen dir-dist len-dist init-pad init-loc]
    (let [raw-inf-step-walk (repeatedly
                              (step-vector-fn dir-dist len-dist 1 trunclen))
          inf-step-walk (if init-dir
                          (subst-init-dir init-dir raw-inf-step-walk)
                          raw-inf-step-walk)
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
-         stop-walk (walk-stops init-loc step-walk) ; walk-stops is no longer lazy btw
+         first-loc (if init-pad  ; if truthy, shift start in a random dir this much from init-loc
+                     (next-walk-stop init-loc [(r/next-radian dir-dist) init-pad])
+                     init-loc)
+         stop-walk (walk-stops first-loc step-walk) ; walk-stops is no longer lazy btw
          walk-with-food (path-with-food look-fn look-eps stop-walk)] ; a vec
      (trim-full-walk (conj walk-with-food stop-walk)))))
 
