@@ -18,6 +18,9 @@
 (def half-size 5000) ; half the full width of the env
 (def init-food 1000) ; preliminary shows 1.5 still beating 2.0
 
+;; Initial default params, with:
+;; (a) Search starts in a random initial direction
+;; (b) Search starts exactly from :init-loc (e.g. for destructive search)
 (def params (sorted-map ; sort so labels match values
              :food-distance       init-food ; ignored??
              :perc-radius         1  ; distance that an animal can "see" in searching for food
@@ -36,8 +39,12 @@
             ))
 
 ;; For Levy walks, :num-dirs is set to nil to ensure random initial directions.
-;; So this has to be overridden for normal straight walks.
+;; So this has to be overridden for a pre-specified spread of straight walks:
 (def straight-params (assoc params :num-dirs 100))
+
+; (def nondestructive-params (assoc params :init-pad (* 2 (params :perc-radius))))
+(def nondestructive-params (assoc params :init-pad (+ (* 2 (params :look-eps))
+                                                      (params :perc-radius))))
 
 (def nocenter-env (mf/make-env (params :env-discretization)
                       (params :env-size)
