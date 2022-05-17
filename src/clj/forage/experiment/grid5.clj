@@ -66,8 +66,26 @@
 
 (comment
 
+  (defn update-all
+    [f]
+    (-> fws
+        (update fws1001 f)
+        (update fws15 f)
+        (update fws20 f)
+        (update fws25 f)
+        (update fws30 f)
+        (update "straight" f)))
+
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
+
+  (def fws1001 nil)
+  (def fws1001 nil)
+  (def fws15 nil)
+  (def fws20 nil)
+  (def fws25 nil)
+  (def fws30 nil)
+  (def fws-st nil))
 
   ;; Multiple "DESTRUCTIVE" RUNS (i.e. NO foodspot in CENTER) in random directions
   ;; Straight:
@@ -102,17 +120,13 @@
   (count (filter first fws25))
   (count (filter first fws30))
 
-  (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
+  (def lens (map w/path-if-found-length (take 267 (w/sort-foodwalks fws20))))
+  (count (filter #(< (w/path-if-found-length %) 1000) (take 267 (w/sort-foodwalks fws20))))
 
-  (defn update-all
-    [f]
-    (-> fws
-        (update fws1001 f)
-        (update fws15 f)
-        (update fws20 f)
-        (update fws25 f)
-        (update fws30 f)
-        (update "straight" f)))
+
+
+
+  (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
 
   ;; count successes:
   (count (filter first (fws "straight")))
@@ -122,8 +136,8 @@
   (count (filter first (fws 2.5)))
   (count (filter first (fws 3.0)))
 
-  (let [mu "straight"
-        n-to-plot 1008]
+  (let [mu 2.0
+        n-to-plot 312]
             (fr/write-foodwalk-plots 
               (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
               :svg seed nocenter-env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
