@@ -44,9 +44,9 @@
 (def straight-params (assoc params :num-dirs 100))
 
 ;; PARAMS FOR NON-DESTRUCTIVE SEARCH
-; (def nondestructive-params (assoc params :init-pad (* 2 (params :perc-radius))))
-(def nondestr-params (assoc params :init-pad (+ (* 2 (params :look-eps))
-                                                      (params :perc-radius))))
+;(def nondestr-params (assoc params :init-pad (+ (* 2 (params :look-eps)) (params :perc-radius))))
+;(def nondestr-params (assoc params :init-pad (* 2 (params :perc-radius))))
+(def nondestr-params (assoc params :init-pad (* 10 (params :perc-radius))))
 
 (def nocenter-env (mf/make-env (params :env-discretization)
                       (params :env-size)
@@ -90,6 +90,10 @@
   (def fws20 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))))
   (def fws25 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.5)))))
   (def fws30 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 3.0)))))
+
+  ;; test:
+  (def yo (time (doall (repeatedly 1 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))))
+  (mf/foodspot-coords* (first (first (first yo))))
 
   (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
 
