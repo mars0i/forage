@@ -38,12 +38,14 @@
              :fournier-multiplier nil
             ))
 
+;; PARAMS FOR NON-RANDOM STRAIGHT RUNS that systematically try a series of directions:
 ;; For Levy walks, :num-dirs is set to nil to ensure random initial directions.
 ;; So this has to be overridden for a pre-specified spread of straight walks:
 (def straight-params (assoc params :num-dirs 100))
 
+;; PARAMS FOR NON-DESTRUCTIVE SEARCH
 ; (def nondestructive-params (assoc params :init-pad (* 2 (params :perc-radius))))
-(def nondestructive-params (assoc params :init-pad (+ (* 2 (params :look-eps))
+(def nondestr-params (assoc params :init-pad (+ (* 2 (params :look-eps))
                                                       (params :perc-radius))))
 
 (def nocenter-env (mf/make-env (params :env-discretization)
@@ -58,8 +60,9 @@
                                                      (params :env-size)
                                                      (params :env-size))))
 
-(def nocenter-look-fn (partial mf/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
-(def centered-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
+(def noctr-look-fn (partial mf/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
+(def ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
+
 
 (comment
 
@@ -68,25 +71,25 @@
 
   ;; Multiple "DESTRUCTIVE" RUNS (i.e. NO foodspot in CENTER) in random directions
   ;; Straight:
-  (def fws-st (time (doall (repeatedly 2004 #(fr/straight-run nocenter-look-fn params nil rng)))))
+  (def fws-st (time (doall (repeatedly 2004 #(fr/straight-run noctr-look-fn params nil rng)))))
   ;; Levy:
-  (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 1.001)))))
-  (def fws15   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 1.5)))))
-  (def fws20   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 2.0)))))
-  (def fws25   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 2.5)))))
-  (def fws30   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 3.0)))))
+  (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 1.001)))))
+  (def fws15   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 1.5)))))
+  (def fws20   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 2.0)))))
+  (def fws25   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 2.5)))))
+  (def fws30   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 3.0)))))
 
 
   ;; TODO: NEED TO HACK INITIAL LOCATION PROCEDURE
   ;; Multiple "NONDESTRUCTIVE" RUNS (i.e. foodspot in CENTER) in random directions
   ;; Straight:
-  (def fws-st (time (doall (repeatedly 2004 #(fr/straight-run nocenter-look-fn params nil rng)))))
+  (def fws-st  (time (doall (repeatedly 2004 #(fr/straight-run ctrd-look-fn params nil rng)))))
   ;; Levy:
-  (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 1.001)))))
-  (def fws15   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 1.5)))))
-  (def fws20   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 2.0)))))
-  (def fws25   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 2.5)))))
-  (def fws30   (time (doall (repeatedly 2004 #(fr/levy-run rng nocenter-look-fn nil params 3.0)))))
+  (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 1.001)))))
+  (def fws15 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 1.5)))))
+  (def fws20 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))))
+  (def fws25 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.5)))))
+  (def fws30 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 3.0)))))
 
   (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
 
