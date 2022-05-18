@@ -76,19 +76,6 @@
   (mf/foodspot-coords (first (mf/perc-foodspots-exactly centered-env 10 half-size half-size)))
   (mf/perc-foodspots-exactly nocenter-env 10 half-size half-size)
 
-  (defn update-all
-    [fws f]
-    (-> fws
-        (update fws1001 f)
-        (update fws15 f)
-        (update fws20 f)
-        (update fws25 f)
-        (update fws30 f)
-        (update "straight" f)))
-
-  (def seed (r/make-seed))
-  (def rng (r/make-well19937 seed))
-
   (do
     (def fws-st nil)
     (def fws1001 nil)
@@ -97,6 +84,9 @@
     (def fws25 nil)
     (def fws30 nil)
    )
+
+  (def seed (r/make-seed))
+  (def rng (r/make-well19937 seed))
 
   ;; Multiple "DESTRUCTIVE" RUNS (i.e. NO foodspot in CENTER) in random directions
   (do
@@ -126,7 +116,25 @@
     (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
    ))
 
+  ;; FIXME Something wrong with this. Claimed to clog up vim-iced, etc.
+  (defn update-all
+    [fws f]
+    (-> fws
+        (update fws1001 f)
+        (update fws15 f)
+        (update fws20 f)
+        (update fws25 f)
+        (update fws30 f)
+        (update "straight" f)))
   (def fws-counts (update-all fws (fn [fs] (count (filter first fs)))))
+
+  ;; count successes:
+  (def fws-counts {"straight" (count (filter first (fws "straight")))
+                   1.001 (count (filter first (fws 1.001)))
+                   1.5 (count (filter first (fws 1.5)))
+                   2.0 (count (filter first (fws 2.0)))
+                   2.5 (count (filter first (fws 2.5)))
+                   3.0 (count (filter first (fws 3.0)))}
 
   ;; count successes:
   (count (filter first fws-st))
@@ -136,18 +144,8 @@
   (count (filter first fws25))
   (count (filter first fws30))
 
-  (nth (w/sort-foodwalks fws-st) 167)
-
   ;(def lens (map w/path-if-found-length (take 267 (w/sort-foodwalks fws20))))
   ;(count (filter #(< (w/path-if-found-length %) 100) (take 267 (w/sort-foodwalks fws20))))
-
-  ;; count successes:
-  (count (filter first (fws "straight")))
-  (count (filter first (fws 1.001)))
-  (count (filter first (fws 1.5)))
-  (count (filter first (fws 2.0)))
-  (count (filter first (fws 2.5)))
-  (count (filter first (fws 3.0)))
 
   ;; FIXME something's wrong. it's plotting couldves when there was not success
   (let [env centered-env ; nocenter-env
