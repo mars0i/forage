@@ -124,7 +124,7 @@
   with possible additional ones, or nil if there are none.  Performs a linear 
   search through all foodspots in env."
   [env perc-radius coords]
-  (f/perc-foodspot-coords-in-coll (all-foodspot-coords env)
+  (f/perc-foodspot-coords-in-coll (env-foodspot-coords env)
                                   perc-radius coords))
 
 (defn foodspot-coords-if-found
