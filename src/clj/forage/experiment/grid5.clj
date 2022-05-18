@@ -46,7 +46,8 @@
 ;; PARAMS FOR NON-DESTRUCTIVE SEARCH
 ;(def nondestr-params (assoc params :init-pad (+ (* 2 (params :look-eps)) (params :perc-radius))))
 ;(def nondestr-params (assoc params :init-pad (* 2 (params :perc-radius))))
-(def nondestr-params (assoc params :init-pad (* 10 (params :perc-radius))))
+;(def nondestr-params (assoc params :init-pad (* 10 (params :perc-radius))))
+(def nondestr-params (assoc params :init-pad (* 50 (params :perc-radius))))
 
 (def nocenter-env (mf/make-env (params :env-discretization)
                       (params :env-size)
@@ -66,11 +67,17 @@
 
 (comment
 
+  ;; If you're reading this on github, yeah I know it's considered bad form
+  ;; to put defs inside other things such as a do--in fact, *I* consider it
+  ;; bad form most of the time--but in this case it's convenient for the sake of
+  ;; the kind of experimentation I'm doing.  And I understand that there may be
+  ;; complaints about my code lodged with the Clojure Style Board! :-)
+
   (mf/foodspot-coords (first (mf/perc-foodspots-exactly centered-env 10 half-size half-size)))
   (mf/perc-foodspots-exactly nocenter-env 10 half-size half-size)
 
   (defn update-all
-    [f]
+    [fws f]
     (-> fws
         (update fws1001 f)
         (update fws15 f)
@@ -106,7 +113,7 @@
 
 
   ;; Multiple "NONDESTRUCTIVE" RUNS (i.e. foodspot in CENTER) in random directions
-  (do
+  (time (do
     ;; Straight:
     (def fws-st (time (doall (repeatedly 2004 #(fr/straight-run ctrd-look-fn nondestr-params nil rng)))))
     ;; Levy:
@@ -117,7 +124,9 @@
     (def fws30 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 3.0)))))
 
     (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
-   )
+   ))
+
+  (def fws-counts (update-all fws (fn [fs] (count (filter first fs)))))
 
   ;; count successes:
   (count (filter first fws-st))
