@@ -128,13 +128,20 @@
         (update "straight" f)))
   (def fws-counts (update-all fws (fn [fs] (count (filter first fs)))))
 
-  ;; count successes:
+  ;; Same thing, the inelegant way:
   (def fws-counts {"straight" (count (filter first (fws "straight")))
-                   1.001 (count (filter first (fws 1.001)))
-                   1.5 (count (filter first (fws 1.5)))
-                   2.0 (count (filter first (fws 2.0)))
-                   2.5 (count (filter first (fws 2.5)))
-                   3.0 (count (filter first (fws 3.0)))}
+                      1.001 (count (filter first (fws 1.001)))
+                      1.5 (count (filter first (fws 1.5)))
+                      2.0 (count (filter first (fws 2.0)))
+                      2.5 (count (filter first (fws 2.5)))
+                      3.0 (count (filter first (fws 3.0)))})
+
+  (def fws-lengths {"straight" (w/stops-path-len (second (fws "straight")))
+                    1.001 (w/stops-path-len (second (fws 1.001)))
+                    1.5 (w/stops-path-len (second (fws 1.5)))
+                    2.0 (w/stops-path-len (second (fws 2.0)))
+                    2.5 (w/stops-path-len (second (fws 2.5)))
+                    3.0 (w/stops-path-len (second (fws 3.0)))})
 
   ;; count successes:
   (count (filter first fws-st))
