@@ -66,6 +66,9 @@
 
 (comment
 
+  (mf/foodspot-coords (first (mf/perc-foodspots-exactly centered-env 10 half-size half-size)))
+  (mf/perc-foodspots-exactly nocenter-env 10 half-size half-size)
+
   (defn update-all
     [f]
     (-> fws
@@ -79,38 +82,42 @@
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
 
-  (def fws1001 nil)
-  (def fws1001 nil)
-  (def fws15 nil)
-  (def fws20 nil)
-  (def fws25 nil)
-  (def fws30 nil)
-  (def fws-st nil))
+  (do
+    (def fws-st nil)
+    (def fws1001 nil)
+    (def fws15 nil)
+    (def fws20 nil)
+    (def fws25 nil)
+    (def fws30 nil)
+   )
 
   ;; Multiple "DESTRUCTIVE" RUNS (i.e. NO foodspot in CENTER) in random directions
-  ;; Straight:
-  (def fws-st (time (doall (repeatedly 2004 #(fr/straight-run noctr-look-fn params nil rng)))))
-  ;; Levy:
-  (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 1.001)))))
-  (def fws15   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 1.5)))))
-  (def fws20   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 2.0)))))
-  (def fws25   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 2.5)))))
-  (def fws30   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 3.0)))))
+  (do
+    ;; Straight:
+    (def fws-st (time (doall (repeatedly 2004 #(fr/straight-run noctr-look-fn params nil rng)))))
+    ;; Levy:
+    (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 1.001)))))
+    (def fws15   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 1.5)))))
+    (def fws20   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 2.0)))))
+    (def fws25   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 2.5)))))
+    (def fws30   (time (doall (repeatedly 2004 #(fr/levy-run rng noctr-look-fn nil params 3.0)))))
+    (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
+   )
 
 
-  ;; TODO: NEED TO HACK INITIAL LOCATION PROCEDURE
   ;; Multiple "NONDESTRUCTIVE" RUNS (i.e. foodspot in CENTER) in random directions
-  ;; test:
-  (def yo (time (doall (repeatedly 1 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))))
-  (mf/foodspot-coords* (first (first (first yo))))
-  ;; Straight:
-  (def fws-st  (time (doall (repeatedly 2004 #(fr/straight-run ctrd-look-fn params nil rng)))))
-  ;; Levy:
-  (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 1.001)))))
-  (def fws15 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 1.5)))))
-  (def fws20 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))))
-  (def fws25 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.5)))))
-  (def fws30 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 3.0)))))
+  (do
+    ;; Straight:
+    (def fws-st (time (doall (repeatedly 2004 #(fr/straight-run ctrd-look-fn nondestr-params nil rng)))))
+    ;; Levy:
+    (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 1.001)))))
+    (def fws15 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 1.5)))))
+    (def fws20 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))))
+    (def fws25 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.5)))))
+    (def fws30 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 3.0)))))
+
+    (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
+   )
 
   ;; count successes:
   (count (filter first fws-st))
@@ -120,13 +127,10 @@
   (count (filter first fws25))
   (count (filter first fws30))
 
-  (def lens (map w/path-if-found-length (take 267 (w/sort-foodwalks fws20))))
-  (count (filter #(< (w/path-if-found-length %) 1000) (take 267 (w/sort-foodwalks fws20))))
+  (nth (w/sort-foodwalks fws-st) 167)
 
-
-
-
-  (def fws {1.001 fws1001, 1.5 fws15, 2.0 fws20, 2.5 fws25, 3.0 fws30, "straight" fws-st})
+  ;(def lens (map w/path-if-found-length (take 267 (w/sort-foodwalks fws20))))
+  ;(count (filter #(< (w/path-if-found-length %) 100) (take 267 (w/sort-foodwalks fws20))))
 
   ;; count successes:
   (count (filter first (fws "straight")))
@@ -136,16 +140,18 @@
   (count (filter first (fws 2.5)))
   (count (filter first (fws 3.0)))
 
-  (let [mu 2.0
-        n-to-plot 312]
-            (fr/write-foodwalk-plots 
-              (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
-              :svg seed nocenter-env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
+  ;; FIXME something's wrong. it's plotting couldves when there was not success
+  (let [env centered-env ; nocenter-env
+        mu 2.0
+        n-to-plot 200]
+    (fr/write-foodwalk-plots 
+     (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
+     :svg seed env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
 
 
   ;; Straight walks in a non-random range of directions:
   (fr/straight-experiments 
-           (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yostraight")
-           nocenter-env straight-params)
+   (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yostraight")
+   nocenter-env straight-params)
 
-)
+  )

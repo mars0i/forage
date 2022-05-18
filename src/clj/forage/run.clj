@@ -173,10 +173,12 @@
   look-fn init-dir, and exponent, and other arguments taken from params."
   ([look-fn params init-dir dir-dist]
    (w/straight-foodwalk 
-    look-fn (params :look-eps) (params :maxpathlen) (params :init-loc) init-dir dir-dist))
+     look-fn (params :look-eps) (params :maxpathlen) dir-dist 
+     (params :init-pad) (params :init-loc) init-dir))
   ([look-fn params init-dir]
    (w/straight-foodwalk
-    look-fn (params :look-eps) (params :maxpathlen) (params :init-loc) init-dir)))
+     look-fn (params :look-eps) (params :maxpathlen)
+     (params :init-loc) init-dir)))
 
 (defn straight-experiments
   "Runs straight-segment food searches using parameters in params for each
