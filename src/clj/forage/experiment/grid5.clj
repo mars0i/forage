@@ -71,7 +71,7 @@
   ;; to put defs inside other things such as a do--in fact, *I* consider it
   ;; bad form most of the time--but in this case it's convenient for the sake of
   ;; the kind of experimentation I'm doing.  And I understand that there may be
-  ;; complaints about my code lodged with the Clojure Style Board! :-)
+  ;; complaints about my code lodged with the Clojure Style Board! 
 
   (mf/foodspot-coords (first (mf/perc-foodspots-exactly centered-env 10 half-size half-size)))
   (mf/perc-foodspots-exactly nocenter-env 10 half-size half-size)
@@ -136,12 +136,15 @@
                       2.5 (count (filter first (fws 2.5)))
                       3.0 (count (filter first (fws 3.0)))})
 
-  (def fws-lengths {"straight" (w/stops-path-len (second (fws "straight")))
-                    1.001 (w/stops-path-len (second (fws 1.001)))
-                    1.5 (w/stops-path-len (second (fws 1.5)))
-                    2.0 (w/stops-path-len (second (fws 2.0)))
-                    2.5 (w/stops-path-len (second (fws 2.5)))
-                    3.0 (w/stops-path-len (second (fws 3.0)))})
+  (def fws-lengths {"straight" (reduce + (map (comp w/stops-path-len second) (fws "straight")))
+                    1.001 (reduce + (map (comp w/stops-path-len second) (fws 1.001)))
+                    1.5 (reduce + (map (comp w/stops-path-len second) (fws 1.5)))
+                    2.0 (reduce + (map (comp w/stops-path-len second) (fws 2.0)))
+                    2.5 (reduce + (map (comp w/stops-path-len second) (fws 2.5)))
+                    3.0 (reduce + (map (comp w/stops-path-len second) (fws 3.0)))})
+
+  ;w/stops-path-len 
+    (reduce + (map (comp w/stops-path-len second) (fws 2.0)))
 
   ;; count successes:
   (count (filter first fws-st))
@@ -168,4 +171,8 @@
    (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yostraight")
    nocenter-env straight-params)
 
-  )
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Data-file-generating exeriment: nondestructive forating
+  (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn))
+
+)
