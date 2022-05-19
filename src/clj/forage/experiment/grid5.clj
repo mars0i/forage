@@ -132,12 +132,20 @@
   (def fws-yo-1 (update-all-1 fws (fn [fs] (count (filter first fs)))))
   (map #(class (second %)) fws-yo-1)
 
+  (defn update-all-2
+    [m f]
+    (reduce (fn [new-map k] (update m k f)) {} (keys m)))
+
   (defn update-all
     [m f]
-    (reduce (fn [new-map k] (println k) (update m k f)) {} (keys m)))
-
-  (def yo {1.001 fws1001, 1.5 fws15, 2.0 fws20})
+    (let [sm (sorted-map m)
+          ks (keys sm)]
+      (zipmap (keys sm) (map f (vals sm)))))
+    
+  (def yo {1.001 fws1001}) ;, 1.5 fws15, 2.0 fws20})
+  (map #(class (second %)) yo)
   (def fws-yo (update-all yo (fn [fs] (let [c (count (filter first fs))] (println c) c))))
+
   (map #(class (second %)) fws-yo)
 
 ;; Same thing, the inelegant way: (def fws-counts {"straight" (count
