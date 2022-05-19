@@ -116,7 +116,7 @@
   PRNG state file per combination of exponent (mu) and direction. (This allows
   recreating (by hand) the runs with the runs with that combination using the
   same PRNG state.  Use utils.random/read-state and set-state.)  Does not
-  returns the resulting data--should normally output nil."
+  return the resulting data--should normally output nil."
   ([file-prefix env seed params exponents walks-per-combo]
    (levy-experiments file-prefix env seed params exponents walks-per-combo
                      (partial mf/perc-foodspots-exactly
