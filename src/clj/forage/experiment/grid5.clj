@@ -18,6 +18,9 @@
 (def half-size 5000) ; half the full width of the env
 (def init-food 1000) ; preliminary shows 1.5 still beating 2.0
 
+(def half-size 5000) ; half the full width of the env
+(def init-food 100) ; preliminary shows 1.5 still beating 2.0
+
 ;; Initial default params, with:
 ;; (a) Search starts in a random initial direction
 ;; (b) Search starts exactly from :init-loc (e.g. for destructive search)
@@ -117,24 +120,28 @@
    ))
 
   ;; FIXME Something wrong with this. Claimed to clog up vim-iced, etc.
-  (defn update-all
+  (defn update-all-1
     [fws f]
     (-> fws
-        (update fws1001 f)
-        (update fws15 f)
-        (update fws20 f)
-        (update fws25 f)
-        (update fws30 f)
+        (update 1.001 f)
+        (update 1.5 f)
+        (update 2.0 f)
+        (update 2.5 f)
+        (update 3.0 f)
         (update "straight" f)))
-  (def fws-counts (update-all fws (fn [fs] (count (filter first fs)))))
+  (def fws-yo (update-all-1 fws (fn [fs] (count (filter first fs)))))
 
-  ;; Same thing, the inelegant way:
-  (def fws-counts {"straight" (count (filter first (fws "straight")))
-                      1.001 (count (filter first (fws 1.001)))
-                      1.5 (count (filter first (fws 1.5)))
-                      2.0 (count (filter first (fws 2.0)))
-                      2.5 (count (filter first (fws 2.5)))
-                      3.0 (count (filter first (fws 3.0)))})
+  (defn update-all
+    [m f]
+    (reduce (fn [new-map k] (update m k f)) {} (keys m)))
+
+  (def fws-yo (update-all fws (fn [fs] (count (filter first fs)))))
+
+;; Same thing, the inelegant way: (def fws-counts {"straight" (count
+(filter first (fws "straight"))) 1.001 (count (filter first (fws
+1.001))) 1.5 (count (filter first (fws 1.5))) 2.0 (count (filter first
+(fws 2.0))) 2.5 (count (filter first (fws 2.5))) 3.0 (count (filter
+first (fws 3.0)))})
 
   (def fws-lengths {"straight" (reduce + (map (comp w/stops-path-len second) (fws "straight")))
                     1.001 (reduce + (map (comp w/stops-path-len second) (fws 1.001)))
@@ -142,6 +149,11 @@
                     2.0 (reduce + (map (comp w/stops-path-len second) (fws 2.0)))
                     2.5 (reduce + (map (comp w/stops-path-len second) (fws 2.5)))
                     3.0 (reduce + (map (comp w/stops-path-len second) (fws 3.0)))})
+
+  (def fws-efficiencies
+    (let [ks (keys fws-counts)]
+      (zipmap ks (map (fn [k] (/ (fws-counts k) (fws-lengths k))) ks))))
+
 
   ;w/stops-path-len 
     (reduce + (map (comp w/stops-path-len second) (fws 2.0)))
