@@ -23,8 +23,8 @@
              :env-discretization  init-food
              :init-loc            [half-size half-size] ; i.e. center of env
              :init-pad            nil ; if truthy, initial loc offset by this in rand dir
-             :maxpathlen          (* 50 half-size)  ; for straight walks, don't go too far
-             :trunclen            (* 50 half-size) ; max length of any line segment
+             :maxpathlen          (* 100 half-size) ; for straight walks, don't go too far
+             :trunclen            (* 100 half-size) ; max length of any line segment
              :look-eps            0.1    ; increment within segments for food check
              :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
              :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
@@ -189,7 +189,7 @@
    nocenter-env straight-params)
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Data-file-generating exeriment: nondestructive forating
+  ;; Data-file-generating exeriment: nondestructive foraging
   (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn))
 
 )
