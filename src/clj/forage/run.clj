@@ -111,7 +111,7 @@
   of lengths of paths until foodspots were found.  n-walks must be >= 0."
   [sim-fn n-walks]
   (loop [n n-walks, segments 0, found 0, lengths nil]
-    (if (zero? 0)
+    (if (zero? n)
       [segments found lengths]
       (let [fw (sim-fn)]
         (recur (dec n)
@@ -161,10 +161,11 @@
               (* (count exponents)
                  (if num-dirs (inc num-dirs) 1)
                  walks-per-combo)
-              "runs ...")
+              "runs in groups of"
+              walks-per-combo "...")
      (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
-       (print "" (swap! iter-num$ inc) "...")
+       (print " group" (swap! iter-num$ inc) "...")
        (flush)
        (r/write-state (str base-state-filename
                            "_mu" (double-to-dotless exponent) 
@@ -179,26 +180,12 @@
      (spit-csv data-filename @data$)
      (println " done."))))  ;@data$
 
-             ;; OLD VERSION THAT COLLECTED WALKS-PER-COMBO FOODWALKS BEFORE EXTRACTING STATS:
+             ;; OLD VERSION THAT COLLECTED WALKS-PER-COMBO FOODWALKS BEFORE EXTRACTING STATS
+             ;; REPLACED above by run-and-collect
              ;foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
              ;lengths (doall (map w/path-until-found-length foodwalks+)) ; Paths in which nothing is found are included
              ;found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
              ;segments (w/count-segments-until-found-in-foodwalks foodwalks+)
-
-
-(comment
-
-  (loop [n walks-per-combo, segs 0, nfound 0, lens nil]
-    (if (pos? n)
-      (let [fw (sim-fn)]
-        (recur (dec n)
-               (+ segs (w/count-segs-until-nfound fw))
-               nfound (count (first fw)) ; TODO s/b first first? 
-               (cons (w/path-until-nfound-length fw) lens))))
-      [nfound segs lens])
-
-)
-
 
 
 (defn straight-run
