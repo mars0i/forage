@@ -105,6 +105,20 @@
                    (params :init-pad)
                    (params :init-loc)))
 
+(defn run-and-collect
+  "Generates n-walks foodwalks using sim-fn and returns statistics from them:
+  total number of segments, total number of foodspots found, and a sequence
+  of lengths of paths until foodspots were found.  n-walks must be >= 0."
+  [sim-fn n-walks]
+  (loop [n n-walks, segments 0, found 0, lengths nil]
+    (if (zero? 0)
+      [segments found lengths]
+      (let [fw (sim-fn)]
+        (recur (dec n)
+               (+ segments (w/count-segments-until-found fw))
+               (count (first fw))
+               (cons (w/path-until-found-length fw) lengths))))))
+
 (defn levy-experiments
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
   for each exponent in exponents, creates a powerlaw (Pareto) distribution 
@@ -160,25 +174,28 @@
                            ".bin")
                       (r/get-state rng))
        (let [sim-fn #(levy-run rng look-fn init-dir params exponent)
-             foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
-             lengths (doall (map w/path-until-found-length foodwalks+)) ; Paths in which nothing is found are included
-             found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
-             segments (w/count-segments-until-found-in-foodwalks foodwalks+)]
+             [segments found lengths] (run-and-collect sim-fn walks-per-combo)]
          (swap! data$ conj (into [segments init-dir exponent found] lengths))))
      (spit-csv data-filename @data$)
      (println " done."))))  ;@data$
 
+             ;; OLD VERSION THAT COLLECTED WALKS-PER-COMBO FOODWALKS BEFORE EXTRACTING STATS:
+             ;foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
+             ;lengths (doall (map w/path-until-found-length foodwalks+)) ; Paths in which nothing is found are included
+             ;found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
+             ;segments (w/count-segments-until-found-in-foodwalks foodwalks+)
+
 
 (comment
 
-  (loop [n walks-per-combo, segments 0, found 0, lengths nil]
+  (loop [n walks-per-combo, segs 0, nfound 0, lens nil]
     (if (pos? n)
-      (let [foodwalk+ (sim-fn)]
-        (recur (dec walks-per-combo)
-               (+ segments (w/count-segments 2 foodwalks+))
-               found (count (first foodwalk+))
-               (cons (w/path-until-found-length foodwalk+) lengths))))
-      [found segments lengths])
+      (let [fw (sim-fn)]
+        (recur (dec n)
+               (+ segs (w/count-segs-until-nfound fw))
+               nfound (count (first fw)) ; TODO s/b first first? 
+               (cons (w/path-until-nfound-length fw) lens))))
+      [nfound segs lens])
 
 )
 
