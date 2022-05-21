@@ -116,7 +116,7 @@
       (let [fw (sim-fn)]
         (recur (dec n)
                (+ segments (w/count-segments-until-found fw))
-               (count (first fw))
+               (+ found (count (first fw)))
                (cons (w/path-until-found-length fw) lengths))))))
 
 (defn levy-experiments
