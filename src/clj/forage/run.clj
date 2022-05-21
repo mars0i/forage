@@ -168,6 +168,23 @@
      (spit-csv data-filename @data$)
      (println " done."))))  ;@data$
 
+
+(comment
+
+  (loop [n walks-per-combo, segments 0, found 0, lengths nil]
+    (if (pos? n)
+      [found segments lengths]
+      (let [foodwalk+ (sim-fn)]
+        (recur (dec walks-per-combo)
+               (+ segments (w/count-segments 2 foodwalks+))
+               found (if (first foodwalk+) 1 0)
+               (cons (w/path-until-found-length foodwalk+) lengths)))))
+
+
+)
+
+
+
 (defn straight-run
   "Perform one straight run using walks/straight-foodwalk using the given
   look-fn init-dir, and exponent, and other arguments taken from params."
