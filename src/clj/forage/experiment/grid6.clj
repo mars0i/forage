@@ -23,7 +23,7 @@
              :env-discretization  init-food
              :init-loc            [half-size half-size] ; i.e. center of env
              :init-pad            nil ; if truthy, initial loc offset by this in rand dir
-             :maxpathlen          (* 100 half-size) ; for straight walks, don't go too far
+             :maxpathlen          (* 100 half-size) ; max total length of search path
              :trunclen            (* 100 half-size) ; max length of any line segment
              :look-eps            0.1    ; increment within segments for food check
              :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
