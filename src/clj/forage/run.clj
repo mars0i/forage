@@ -163,7 +163,7 @@
              foodwalks+ (doall (repeatedly walks-per-combo sim-fn))
              lengths (doall (map w/path-until-found-length foodwalks+)) ; Paths in which nothing is found are included
              found (w/count-found-foodspots foodwalks+) ; redundant given lengths, but convenient
-             segments (w/count-segments 2 foodwalks+)]
+             segments (w/count-segments-until-found-in-foodwalks foodwalks+)]
          (swap! data$ conj (into [segments init-dir exponent found] lengths))))
      (spit-csv data-filename @data$)
      (println " done."))))  ;@data$
@@ -173,13 +173,12 @@
 
   (loop [n walks-per-combo, segments 0, found 0, lengths nil]
     (if (pos? n)
-      [found segments lengths]
       (let [foodwalk+ (sim-fn)]
         (recur (dec walks-per-combo)
                (+ segments (w/count-segments 2 foodwalks+))
-               found (if (first foodwalk+) 1 0)
-               (cons (w/path-until-found-length foodwalk+) lengths)))))
-
+               found (count (first foodwalk+))
+               (cons (w/path-until-found-length foodwalk+) lengths))))
+      [found segments lengths])
 
 )
 

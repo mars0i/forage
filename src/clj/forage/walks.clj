@@ -404,14 +404,30 @@
             (+ tot (count (first walk))))
           0 foodwalks))
 
-(defn count-segments
-  "idx should be either 1 for the walk until food found, or 2 for 
-  the full walks including after where food might be found."
-  [idx foodwalks+]
-  (reduce (fn [tot fw]
-              (+ tot (dec (count (nth fw idx))))) ; dec since endpoints = segments + 1
-          0
-          foodwalks+))
+(defn count-segments-until-found
+  "Count segments in a foodwalk until food is found."
+  [fw]
+  (dec (count (nth fw 1)))) ; dec since endpoints = segments + 1
+
+(defn count-segments-until-found-in-foodwalks
+  "Sums results of count-segments-until-found in multiple foodwalks fws."
+  [fws]
+  (reduce (fn [tot fw] (+ tot (count-segments-until-found fw)))
+          0 fws))
+
+(defn count-all-segments
+  "Count all segments in a foodwalk, including the couldve segments after 
+  found foodspots."
+  [fw]
+  (+ (count (nth fw 1))
+     (count (nth fw 2))
+     -3)) ; -3 since there is one more point than segments in each, and they overlap
+
+(defn count-all-segments-in-foodwalks
+  "Sums results of count-all-segments in multiple foodwalks fws."
+  [fws]
+  (reduce (fn [tot fw] (+ tot (count-all-segments fw)))
+          0 fws))
 
 (defn sort-foodwalks
   "Sorts a sequence of foodwalks so that walks in which food 
