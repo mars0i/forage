@@ -9,7 +9,9 @@
             [utils.math :as m]))
 
 
-(def half-size 5000) ; half the full width of the env
+;; TIP: FOR TOROIDAL ENVS, DON'T MAKE 2*HALF-SIZE DIVISIBLE BY FOOD-DISTANCE.
+;; That way there won't be double foodspots at the wrap border.
+(def half-size 5250) ; half the full width of the env
 (def init-food 1000)
 
 ;; Initial default params, with:
@@ -99,7 +101,7 @@
     ;; Levy:
     (def fws1001 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 1.001)))))
     (def fws15 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 1.5)))))
-    ;(def fws20 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))))
+    (def fws20 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))))
     (def fws25 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.5)))))
     (def fws30 (time (doall (repeatedly 2004 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 3.0)))))
 
@@ -177,10 +179,11 @@
   ;; FIXME something's wrong. it's plotting couldves when there was not success
   (let [env centered-env ; nocenter-env
         mu 2.0
-        n-to-plot 200]
+        n-to-plot 1]
     (fr/write-foodwalk-plots 
      (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
      :svg seed env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
+     ;:svg seed env 800 1 1 50 mu params (take n-to-plot fws20)))
 
 
   ;; Straight walks in a non-random range of directions:
@@ -190,6 +193,14 @@
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Data-file-generating exeriment: nondestructive foraging
-  (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn))
 
+  seed
+
+  (def data-eps1 (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn)))
+
+  (def nondestr-params-eps2 (assoc nondestr-params :look-eps 0.5))
+  (def data-eps5 (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params-eps5 [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn)))
+
+  (def nondestr-params-eps2 (assoc nondestr-params :look-eps 0.2))
+  (def data-eps2 (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params-eps2 [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn)))
 )
