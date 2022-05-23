@@ -194,11 +194,13 @@
 
 
   (def data-eps1 (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn)))
-  (/ 6583509.347427 1000 60) ; 109 minutes  to run the preceding line
+  (/ 6583509.347427 1000 60) ; 110 minutes  to run the preceding line
 
   (def nondestr-params-eps5 (assoc nondestr-params :look-eps 0.5))
   (def data-eps5 (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params-eps5 [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn)))
+  (/ 2400899.367429 1000 60) ; 40 minutes to run the preceding line
 
   (def nondestr-params-eps2 (assoc nondestr-params :look-eps 0.2))
   (def data-eps2 (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params-eps2 [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn)))
+  (/ 3924046.311852 1000 60) ; 65 minutes to run the preceding line
 )
