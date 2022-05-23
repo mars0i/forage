@@ -18,9 +18,7 @@
 (def half-size 5000) ; half the full width of the env
 (def init-food 100) ; preliminary shows 1.5 still beating 2.0
 
-;; TIP: FOR TOROIDAL ENVS, DON'T MAKE 2*HALF-SIZE DIVISIBLE BY FOOD-DISTANCE.
-;; That way there won't be double foodspots at the wrap border.
-(def half-size 5250) ; half the full width of the env
+(def half-size 5000) ; half the full width of the env
 (def init-food 1000) ; preliminary shows 1.5 still beating 2.0
 
 ;; Initial default params, with:
