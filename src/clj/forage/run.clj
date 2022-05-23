@@ -184,7 +184,8 @@
              [segments found lengths] (run-and-collect sim-fn walks-per-combo)]
          (swap! data$ conj (into [init-dir exponent segments found] lengths))))
      (spit-csv data-filename @data$)
-     (println " done."))))  ;@data$
+     (println " done.")
+     @data$)))
 
 (defn straight-run
   "Perform one straight run using walks/straight-foodwalk using the given
