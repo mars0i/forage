@@ -16,10 +16,12 @@
 (def init-food 400) ; see notes.forage/misc/grid5results.nts for results
 
 (def half-size 5000) ; half the full width of the env
-(def init-food 1000) ; preliminary shows 1.5 still beating 2.0
-
-(def half-size 5000) ; half the full width of the env
 (def init-food 100) ; preliminary shows 1.5 still beating 2.0
+
+;; TIP: FOR TOROIDAL ENVS, DON'T MAKE 2*HALF-SIZE DIVISIBLE BY FOOD-DISTANCE.
+;; That way there won't be double foodspots at the wrap border.
+(def half-size 5250) ; half the full width of the env
+(def init-food 1000) ; preliminary shows 1.5 still beating 2.0
 
 ;; Initial default params, with:
 ;; (a) Search starts in a random initial direction
@@ -141,18 +143,6 @@
     (let [sm (sorted-map m)
           ks (keys sm)]
       (zipmap (keys sm) (map f (vals sm)))))
-    
-  (def yo {1.001 fws1001}) ;, 1.5 fws15, 2.0 fws20})
-  (map #(class (second %)) yo)
-  (def fws-yo (update-all yo (fn [fs] (let [c (count (filter first fs))] (println c) c))))
-
-  (map #(class (second %)) fws-yo)
-
-;; Same thing, the inelegant way: (def fws-counts {"straight" (count
-(filter first (fws "straight"))) 1.001 (count (filter first (fws
-1.001))) 1.5 (count (filter first (fws 1.5))) 2.0 (count (filter first
-(fws 2.0))) 2.5 (count (filter first (fws 2.5))) 3.0 (count (filter
-first (fws 3.0)))})
 
   (def fws-lengths {"straight" (reduce + (map (comp w/stops-path-len second) (fws "straight")))
                     1.001 (reduce + (map (comp w/stops-path-len second) (fws 1.001)))
@@ -180,13 +170,13 @@ first (fws 3.0)))})
   ;(def lens (map w/path-if-found-length (take 267 (w/sort-foodwalks fws20))))
   ;(count (filter #(< (w/path-if-found-length %) 100) (take 267 (w/sort-foodwalks fws20))))
 
-  ;; FIXME something's wrong. it's plotting couldves when there was not success
   (let [env centered-env ; nocenter-env
         mu 2.0
-        n-to-plot 200]
+        n-to-plot 1]
     (fr/write-foodwalk-plots 
      (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
-     :svg seed env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
+     :svg seed env 800 12 3 50 mu params (take n-to-plot fws20)))
+     ;:svg seed env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
 
 
   ;; Straight walks in a non-random range of directions:
