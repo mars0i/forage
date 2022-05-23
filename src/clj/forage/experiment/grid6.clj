@@ -16,7 +16,7 @@
 ;; (a) Search starts in a random initial direction
 ;; (b) Search starts exactly from :init-loc (e.g. for destructive search)
 (def params (sorted-map ; sort so labels match values
-             :food-distance       init-food ; ignored??
+             :food-distance       init-food
              :perc-radius         1  ; distance that an animal can "see" in searching for food
              :powerlaw-min        1
              :env-size            (* 2 half-size)
@@ -194,7 +194,7 @@
 
 
   (def data-eps1 (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn)))
-  (/ 6583509.347427 1000 60) ; minutes
+  (/ 6583509.347427 1000 60) ; 109 minutes  to run the preceding line
 
   (def nondestr-params-eps5 (assoc nondestr-params :look-eps 0.5))
   (def data-eps5 (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params-eps5 [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn)))
