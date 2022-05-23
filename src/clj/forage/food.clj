@@ -34,8 +34,8 @@
   ([sep env-width env-height]
    (rectangular-grid sep 0 0 env-width env-height)) ; origin at lower left
   ([sep left-offset bottom-offset env-width env-height]
-   (let [xmax (inc (- env-width left-offset))  ; inc: range should go all the way to env-width 
-         ymax (inc (- env-height bottom-offset)) ;  and env-height
+   (let [xmax (- env-width left-offset)    ; range doesn't go to env-width, env-height
+         ymax (- env-height bottom-offset) ; so toroidal wrap won't double foodspots
          neg-xmax (- left-offset)
          neg-ymax (- bottom-offset)
          neg-sep (- sep)
