@@ -277,3 +277,37 @@
             (oz/export! filename))
         (println "written.") (flush)))))
 
+(comment
+  ;; Possible future utility functions ....
+
+  (def fws-efficiencies
+    (let [ks (keys fws-counts)]
+      (zipmap ks (map (fn [k] (/ (fws-counts k) (fws-lengths k))) ks))))
+
+  (count (filter first (fws 2.0)))
+  (reduce + (map (comp w/stops-path-len second) (fws 2.0)))
+  (def fws-efficiencies
+    (let [ks (keys fws-counts)]
+      (zipmap ks (map (fn [k] (/ (fws-counts k) (fws-lengths k))) ks))))
+
+  ;; FIXME Something wrong with this. Claimed to clog up vim-iced, etc.
+  (defn update-all-1
+    [fws f]
+    (-> fws
+        (update 1.001 f)
+        (update 1.5 f)
+        (update 2.0 f)
+        (update 2.5 f)
+        (update 3.0 f)
+        (update "straight" f)))
+
+  (defn update-all-2
+    [m f]
+    (reduce (fn [new-map k] (update m k f)) {} (keys m)))
+
+  (defn update-all-3
+    [m f]
+    (let [sm (sorted-map m)
+          ks (keys sm)]
+      (zipmap (keys sm) (map f (vals sm)))))
+)
