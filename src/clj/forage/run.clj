@@ -252,7 +252,7 @@
   uses oz/export! to plot, and file-type should be :svg (or :png, but that's
   currently broken in oz/export!)."
   [stubname file-type seed                                 ; filename parameters
-   env plot-size runs-per-grid grid-columns display-radius ; plot display parameters
+   env plot-size runs-per-grid grid-columns stroke-width display-radius ; plot display parameters
    mu params                                               ; plot header label info
    foodwalks]                                              ; data 
   (let [total-runs (count foodwalks)
@@ -270,12 +270,13 @@
              :TITLE title
              :TOFFSET 10
              :COLUMNS grid-columns
-             :CONCAT (mapv (partial h/vega-envwalk-plot env plot-size display-radius)
+             :CONCAT (mapv (partial h/vega-envwalk-plot env plot-size stroke-width display-radius)
                            (map vector 
                                 (take runs-per-grid
                                       (drop plot-index foodwalks)))))
             (oz/export! filename))
         (println "written.") (flush)))))
+
 
 (comment
   ;; Possible future utility functions ....

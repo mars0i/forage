@@ -180,8 +180,8 @@
         n-to-plot 1]
     (fr/write-foodwalk-plots 
      (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
-     :svg seed env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
-     ;:svg seed env 800 1 1 50 mu params (take n-to-plot fws20)))
+     :svg seed env 800 12 3 nil 50 mu params (take n-to-plot (w/sort-foodwalks (fws mu)))))
+     ;:svg seed env 800 1 1 nil 50 mu params (take n-to-plot fws20)))
 
 
   ;; Straight walks in a non-random range of directions:

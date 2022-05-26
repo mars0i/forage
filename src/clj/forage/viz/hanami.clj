@@ -32,9 +32,10 @@
 (defn vega-walk-plot
   "Constructs a Vega-Lite random walk plot from (vega-lite-ified) data
   over the range (2*quadrant-sz x 2*quandrant-sz), with physical size 
-  plot-dim x plot-dim.  If there are additional Vega-Lite specs
+  plot-dim x plot-dim.  Lines will be plotted with thickness stroke-width,
+  or 1.0 if stroke-width is falsey.  If there are additional Vega-Lite specs
   to add, they can be entered in a map as an additional argument."
-  [plot-dim data-dim data & colorscheme-seq]
+  [plot-dim data-dim stroke-width data & colorscheme-seq]
   (-> (hc/xform ht/line-chart
                 :DATA data
                 :XSCALE {"domain" [0 data-dim]}
@@ -47,7 +48,7 @@
                 :HEIGHT plot-dim)
       (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
       (assoc-in [:encoding :order :type] "ordinal") ; gets rid of warning on :order
-      (assoc-in [:mark :strokeWidth] 1.0))) 
+      (assoc-in [:mark :strokeWidth] (or stroke-width 1.0)))) 
 
 (defn add-point-labels
   "Given a sequence of pairs representing x,y coordinates, returns a
@@ -196,20 +197,20 @@
   found), and a sequence of coordinates for the entire possible walk,
   creates a pair of vega-lite plots of size plot-dim x plot-dim for the
   foodwalk and its extension walk beyond the found food."
-  [plot-dim data-dim foodwalk]
+  [plot-dim data-dim stroke-width foodwalk]
   (let [[food walk stops] foodwalk]
-      [(vega-walk-plot plot-dim data-dim (add-walk-labels "could've" stops)) ; may be empty if didn't find food
-       (vega-walk-plot plot-dim data-dim (add-walk-labels "walk" walk))]))
+      [(vega-walk-plot plot-dim data-dim stroke-width (add-walk-labels "could've" stops)) ; may be empty if didn't find food
+       (vega-walk-plot plot-dim data-dim stroke-width (add-walk-labels "walk" walk))]))
 
 ;; TODO add a nice header
 (defn vega-envwalk-plot
   "Simple plot that plots whatever foodspots are in env and then
   plots foodwalks and their hypothetical extensions."
-  [env plot-dim display-radius foodwalks]
+  [env plot-dim stroke-width display-radius foodwalks]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
         data-dim (mf/env-size env)
         did-couldve-plots (mapcat
-                            (partial did-couldve-walk-plot plot-dim data-dim)
+                            (partial did-couldve-walk-plot plot-dim data-dim stroke-width)
                            foodwalks)]
     (hc/xform
      ht/layer-chart

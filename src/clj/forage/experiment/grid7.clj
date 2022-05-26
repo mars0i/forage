@@ -88,8 +88,8 @@
     (time
      (fr/write-foodwalk-plots 
       (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
-      :svg seed env 800 1 1 500 mu params (take n-to-plot (w/sort-foodwalks fws)))))
-  ;:svg seed env 800 12 3 50 mu params (take n-to-plot (w/sort-foodwalks fws)))
+      :svg seed env 800 1 1 100 500 mu params (take n-to-plot (w/sort-foodwalks fws)))))
+  ;:svg seed env 800 12 3 nil 50 mu params (take n-to-plot (w/sort-foodwalks fws)))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Data-file-generating exeriment: nondestructive foraging
