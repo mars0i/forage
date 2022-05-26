@@ -233,6 +233,9 @@
     (println "done.")
     data))
 
+;; FIXME IS THERE A LEAK IN THIS?  I don't think there shout be,
+;; but seems like maybe.
+;; 
 ;; Maybe ought to be merged with other looping functions above.
 ;; But maybe not: levy-experiments and straight-experiments are designed to
 ;; automate generation of a lot of data in a systematic way, while
