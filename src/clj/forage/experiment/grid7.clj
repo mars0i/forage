@@ -1,4 +1,5 @@
-;; Even longer maxpathlen and sparser food.
+;; Extra-long maxpathlen so more attempts succeed.  Otherwise similar
+;; to grid6 and grid5.
 (ns forage.experiment.grid7
   (:require [forage.run :as fr]
             [forage.food :as f]
@@ -8,8 +9,8 @@
             [utils.math :as m]))
 
 
-(def half-size 50000) ; half the full width of the env
-(def init-food 5000)
+(def half-size 5000) ; half the full width of the env
+(def init-food 1000)
 
 ;; Initial default params, with:
 ;; (a) Search starts in a random initial direction
@@ -77,6 +78,9 @@
 
   (def fws (time (doall (repeatedly 1 #(fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))))
 
+  (mf/foodspot-coords
+    (first (first (first fws)))
+  )
 
   (count (second (first fws)))
 
