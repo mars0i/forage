@@ -33,7 +33,7 @@
 (defn step-vector-fn
   "Returns a function of no arguments that returns a random mathematical 
   vector in the form of pair containing a direction dir, in radians, and a
-  length len.  dir is uniformly distributed in [0,2pi] using PRNG instance 
+  length len.  dir is uniformly distributed in [0,2pi) using PRNG instance 
   or distribution instance dir-dist, and length is distributed according to
   distribution instance len-dist.  If low and high arguments are given, the
   distribution is truncated so that lengths fall within [low, high].  (These
@@ -62,8 +62,8 @@
 ;; reduced is just confusing.
 (defn vecs-upto-len
   "Given a desired total path length, and a sequence of step vectors, returns 
-  a sequence of vectors, from the front of the sequence, whose lengths sum to 
-  at least desired-total.  By default, the lengths are made to sum to exactly
+  a sequence of step vectors from the front of the sequence, whose lengths sum
+  to at least desired-total.  By default, the lengths are made to sum to exactly
   desired-total by reducing the length in the last step vector.  Add 
   ':trim false' or ':trim nil' to return a sequence with the last vector as it
   was in the input vecs sequence."
@@ -307,6 +307,7 @@
   (trim-full-walk [["food"] wuf2 full])
 )
 
+
 (defn levy-foodwalk
   "Generates a random foodwalk starting from point init-loc in direction
   init-dir, and returns a vector triple containing (a) a sequence of found
@@ -324,12 +325,21 @@
    (let [len-dist (r/make-powerlaw rng scale exponent)]
      (levy-foodwalk look-fn look-eps maxpathlen init-dir trunclen rng len-dist init-pad init-loc)))
   ([look-fn look-eps maxpathlen init-dir trunclen dir-dist len-dist init-pad init-loc]
+   ;(println "entering levy-foodwalk")(flush) ; DEBUG
    (let [raw-inf-step-walk (repeatedly
                              (step-vector-fn dir-dist len-dist 1 trunclen))
+         ;_ (println "Created raw-inf-step-walk") ; DEBUG
+         ;_ (flush) ; DEBUG
          inf-step-walk (if init-dir
                          (subst-init-dir init-dir raw-inf-step-walk)
                          raw-inf-step-walk)
+         ;_ (println "Created inf-step-walk") ; DEBUG
+         ;_ (flush) ; DEBUG
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
+         ;_ (def global-step-walk (doall (map (fn [step-vec i] [i (second step-vec)]) step-walk (range)))) ; DEBUG
+         ;_ (println global-step-walk) ; DEBUG
+         _ (println (apply max (map second step-walk))) ; DEBUG
+         _ (flush) ; DEBUG
          first-loc (if init-pad  ; if truthy, shift start in a random dir this much from init-loc
                      (next-walk-stop init-loc [(r/next-radian dir-dist) init-pad])
                      init-loc)

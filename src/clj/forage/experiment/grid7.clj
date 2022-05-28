@@ -99,10 +99,13 @@
   ;; Data-file-generating exeriment: nondestructive foraging
 
   (def seed (r/make-seed))
-  (def seed  6532174732216981119)
+  (def seed 6532174732216981119)
 
   ;; 1000 at mu=2.0 with look-eps=0.1:
   (def data (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params [2.0] 1000 ctrd-look-fn)))
+  ;; This hangs on walk 674 (zero-based), which does not have an excessive max step length (one of my
+  ;; suspicions); it's 638476.1899286363.  There are others 4X that.
+
   ;; 1000 at mu=2.0 with look-eps=0.2 (29 minutes):
   (def nondestr-params-eps2 (assoc nondestr-params :look-eps 0.2))
   (def data (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params-eps2 [2.0] 1000 ctrd-look-fn)))
