@@ -98,6 +98,15 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Data-file-generating exeriment: nondestructive foraging
 
+  (def seed (r/make-seed))
+  (def seed  6532174732216981119)
+
+  ;; 1000 at mu=2.0 with look-eps=0.1:
+  (def data (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params [2.0] 1000 ctrd-look-fn)))
+  ;; 1000 at mu=2.0 with look-eps=0.2 (29 minutes):
+  (def nondestr-params-eps2 (assoc nondestr-params :look-eps 0.2))
+  (def data (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params-eps2 [2.0] 1000 ctrd-look-fn)))
+
   (def data (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn)))
 
 )
