@@ -105,6 +105,11 @@
   (def data (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params [2.0] 1000 ctrd-look-fn)))
   ;; This hangs on walk 674 (zero-based), which does not have an excessive max step length (one of my
   ;; suspicions); it's 638476.1899286363.  There are others 4X that.
+  ;; Attempt to start at that point (doesn't seem to work):
+  (def rng (r/make-well19937 seed))
+  (dotimes [i 674] (w/levy-foodwalk-flush-state rng (nondestr-params :trunclen) (nondestr-params :powerlaw-min) 2.0))
+  (def yo (time (fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))
+  
 
   ;; 1000 at mu=2.0 with look-eps=0.2 (29 minutes):
   (def nondestr-params-eps2 (assoc nondestr-params :look-eps 0.2))
