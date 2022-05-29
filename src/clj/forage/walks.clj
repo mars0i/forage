@@ -263,7 +263,7 @@
   (let [stopsv (vec stops)
         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
     (loop [i 0, j 1]
-      (def last-endpts [(stopsv i) (stopsv j)]) ; DEBUG
+      (println i (stopsv i) ";" j (stopsv j))(flush) ; DEBUG
       (let [from+foodspots (find-in-seg look-fn eps (stopsv i) (stopsv j))]
         (if from+foodspots               ; all done--found food
           [(first from+foodspots)        ; the found food
@@ -346,6 +346,24 @@
          stop-walk (walk-stops first-loc step-walk) ; walk-stops is no longer lazy btw
          walk-with-food (path-with-food look-fn look-eps stop-walk)] ; a vec
      (trim-full-walk (conj walk-with-food stop-walk)))))
+
+(defn levy-foodwalk-flush-state
+  "Uses up PRNG state like levy-foodwalk would, but without going through 
+  the steps needed to find food.  The only required arguments are dir-dist,
+  len-dist, and trunclen; or rng, trunclen, scale, and exponent. Returns nil.
+  See levy-foodwalk for the meaning of parameters."
+  ([look-fn look-eps maxpathlen init-dir trunclen rng scale exponent init-pad init-loc]
+   (let [len-dist (r/make-powerlaw rng scale exponent)]
+     (levy-foodwalk-flush-state look-fn look-eps maxpathlen init-dir trunclen rng len-dist init-pad init-loc)))
+  ([look-fn look-eps maxpathlen init-dir trunclen dir-dist len-dist init-pad init-loc]
+   (levy-foodwalk-flush-state dir-dist len-dist trunclen))
+  ([rng trunclen scale exponent]
+   (let [len-dist (r/make-powerlaw rng scale exponent)]
+     (levy-foodwalk-flush-state rng len-dist trunclen)))
+  ([dir-dist len-dist trunclen]
+   (let [_ (repeatedly (step-vector-fn dir-dist len-dist 1 trunclen))]
+     nil)))
+
 
 (defn straight-foodwalk
   "Generates a straight foodwalk starting from point init-loc in direction
