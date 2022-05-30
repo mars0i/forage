@@ -214,6 +214,7 @@
 ;; only for x = x2, we avoid this problem, and since lines are not
 ;; vertical or even close to vertical, there are no cases in which
 ;; x stops changing before reaching the end of the segment.
+;; SEE smallSlopeBugNotes052022.txt for more details.
 ;; 
 (defn find-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
