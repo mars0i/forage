@@ -184,6 +184,6 @@
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Data-file-generating exeriment: nondestructive forating
-  (time (fr/levy-experiments fr/default-file-prefix centered-env seed nondestr-params [1.001 1.5 2.0 2.5 3.0] 2000 ctrd-look-fn))
+  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params [1.001 1.5 2.0 2.5 3.0] 2000 seed ctrd-look-fn))
 
 )

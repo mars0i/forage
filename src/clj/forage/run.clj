@@ -146,10 +146,10 @@
   ([file-prefix env params exponents walks-per-combo seed]
    (levy-experiments file-prefix env params exponents walks-per-combo seed 
                      (partial mf/perc-foodspots-exactly env (params :perc-radius))))
-  ([file-prefix env params exponents walks-per-combo look-fn seed]
+  ([file-prefix env params exponents walks-per-combo seed look-fn]
    (levy-experiments file-prefix env params exponents walks-per-combo seed 
                      look-fn (r/make-well19937 seed)))
-  ([file-prefix env params exponents walks-per-combo look-fn seed rng]
+  ([file-prefix env params exponents walks-per-combo seed look-fn rng]
    (let [num-dirs (params :num-dirs)
          init-dirs (if num-dirs
                      (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
