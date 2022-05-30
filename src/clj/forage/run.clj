@@ -129,28 +129,32 @@
                (cons (w/path-until-found-length fw) lengths))))))
 
 (defn levy-experiments
-  "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
-  for each exponent in exponents, creates a powerlaw (Pareto) distribution 
-  using that exponent.  Then runs walks-per-combo Levy-walk-style food 
-  searches using that combination of parameters for each direction in 
-  init-dirs.  Creates two data files, one containing the fixed parameters of
-  the run, and the other containing the results listed for each varying
-  parameter combination.  Filenames include seed as an id.  Also creates one
-  PRNG state file per combination of exponent (mu) and direction. (This allows
-  recreating (by hand) the runs with the runs with that combination using the
-  same PRNG state.  Use utils.random/read-state and set-state.)  Does not
-  return the resulting data--should normally output nil."
-  ([file-prefix env seed params exponents walks-per-combo]
-   (levy-experiments file-prefix env seed params exponents walks-per-combo
-                     (partial mf/perc-foodspots-exactly
-                              env (params :perc-radius))))
-  ([file-prefix env seed params exponents walks-per-combo look-fn]
+  "Uses seed to seed a PRNG unless rng is provided, in which case seed 
+  is only used for informational purposes in file output.  Uses parameters
+  in the params map.  Then for each exponent in exponents, creates a 
+  powerlaw (Pareto) distribution using that exponent.  Then runs 
+  walks-per-combo Levy-walk style food searches using that combination of
+  parameters and look-fn for each direction in init-dirs.  Creates two data
+  files, one containing the fixed parameters of the run, and the other 
+  containing the results listed for each varying parameter combination.  
+  Filenames include seed as an id.  Also creates one PRNG state file per
+  combination of exponent (mu) and direction. (This should allow recreating
+  (by hand) the runs with the runs with that combination using the
+  same PRNG state.  Use utils.random/read-state and set-state.)  Returns
+  a map containing keys :data for the generated summary data, and :rng for
+  the rng with its current state."
+  ([file-prefix env params exponents walks-per-combo seed]
+   (levy-experiments file-prefix env params exponents walks-per-combo seed 
+                     (partial mf/perc-foodspots-exactly env (params :perc-radius))))
+  ([file-prefix env params exponents walks-per-combo look-fn seed]
+   (levy-experiments file-prefix env params exponents walks-per-combo seed 
+                     look-fn (r/make-well19937 seed)))
+  ([file-prefix env params exponents walks-per-combo look-fn seed rng]
    (let [num-dirs (params :num-dirs)
          init-dirs (if num-dirs
                      (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
                            (range (inc num-dirs))) ; inc to include range max
                      [nil]) ; tell w/levy-walks to leave initial dir random
-         rng (r/make-well19937 seed)
          base-filename (str file-prefix "levy" seed)
          param-filename (str base-filename "params.csv")
          data-filename (str base-filename "data.csv")
@@ -188,7 +192,7 @@
          (swap! data$ conj (into [init-dir exponent segments found] lengths))))
      (spit-csv data-filename @data$)
      (println " done.")
-     @data$)))
+     {:data @data$ :rng rng}))) ; data is not very large; should be OK to return it.
 
 (defn straight-run
   "Perform one straight run using walks/straight-foodwalk using the given
