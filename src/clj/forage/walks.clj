@@ -220,7 +220,7 @@
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
   [look-fn eps [x1 y1] [x2 y2]]
-  ;(prn [x1 y1] [x2 y2]) ; DEBUG
+  (prn [x1 y1] [x2 y2]) (flush) ; DEBUG
   (let [slope (m/slope-from-coords [x1 y1] [x2 y2])
         steep (or (infinite? slope)
                   (> (abs slope) steep-slope-inf))
@@ -263,7 +263,7 @@
   (let [stopsv (vec stops)
         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
     (loop [i 0, j 1]
-      ;(println i (stopsv i) ";" j (stopsv j))(flush) ; DEBUG
+      (println [i j] ":") (flush) ; DEBUG
       (let [from+foodspots (find-in-seg look-fn eps (stopsv i) (stopsv j))]
         (if from+foodspots               ; all done--found food
           [(first from+foodspots)        ; the found food
