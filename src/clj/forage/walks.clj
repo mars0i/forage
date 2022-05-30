@@ -214,7 +214,18 @@
 ;; only for x = x2, we avoid this problem, and since lines are not
 ;; vertical or even close to vertical, there are no cases in which
 ;; x stops changing before reaching the end of the segment.
-;; SEE smallSlopeBugNotes052022.txt for more details.
+;; Note WHAT THIS MEANS: That we are treating a y coordinate that is 
+;; not equal to the y endpoint as if it were equal to it.  Once the
+;; x coordinate becomes equal to the x endpoint, we pretend that the
+;; y coords are equal even if they aren't.  But that's OK, because
+;; if y-eps is so small that this matters, then the difference between
+;; the incrementing y coordinate and the y endpoint is so small that
+;; it is much smaller then what matters for searching for foodspots.
+;; Because the tiny y-eps means that the initial starting y coordinate
+;; and the final ending y coordinate are so close that the difference
+;; between them will not matter for finding foodspots (or if it does
+;; matter, that's a difference that I'm willing to accept).
+;; SEE smallSlopeBugNotes052022.txt for further details.
 ;; 
 (defn find-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
