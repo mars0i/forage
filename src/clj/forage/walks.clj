@@ -263,7 +263,7 @@
   (let [stopsv (vec stops)
         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
     (loop [i 0, j 1]
-      (println i (stopsv i) ";" j (stopsv j))(flush) ; DEBUG
+      ;(println i (stopsv i) ";" j (stopsv j))(flush) ; DEBUG
       (let [from+foodspots (find-in-seg look-fn eps (stopsv i) (stopsv j))]
         (if from+foodspots               ; all done--found food
           [(first from+foodspots)        ; the found food
@@ -338,8 +338,8 @@
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
          ;_ (def global-step-walk (doall (map (fn [step-vec i] [i (second step-vec)]) step-walk (range)))) ; DEBUG
          ;_ (println global-step-walk) ; DEBUG
-         _ (println (apply max (map second step-walk))) ; DEBUG
-         _ (flush) ; DEBUG
+         ;_ (println (apply max (map second step-walk))) ; DEBUG
+         ;_ (flush) ; DEBUG
          first-loc (if init-pad  ; if truthy, shift start in a random dir this much from init-loc
                      (next-walk-stop init-loc [(r/next-radian dir-dist) init-pad])
                      init-loc)
