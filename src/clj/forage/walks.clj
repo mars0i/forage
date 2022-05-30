@@ -1,4 +1,3 @@
-;; Functions for generating random walks.
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
 (ns forage.walks
     (:require [utils.math :as m]
@@ -202,6 +201,20 @@
 ;; See doc/xyshifts.md for notes about this function and xy-shifts.
 ;; Possibly store slope and/or intercept earlier; they were available
 ;; when the line pair was created.
+;; 
+;; WHY ONLY TEST FOR x = endpoint x2, and not the y coords, too?
+;; The code in the function flips coords so that when the test for
+;; the end of the inner loop occurs, the slope cannot be vertical,
+;; and in fact is very far from vertical.  Therefore if y is changing,
+;; x is too.  Note that if the slope is 0, y will always equal the y
+;; endpoint (y2).  The problem is that if the slope is *very* close to
+;; zero, but not zero, it can happen that adding y-eps to y does not
+;; change it.  Then the y coordinate never changes, and as a result
+;; it will never become equal to the y endpoint y2.  By testing
+;; only for x = x2, we avoid this problem, and since lines are not
+;; vertical or even close to vertical, there are no cases in which
+;; x stops changing before reaching the end of the segment.
+;; 
 (defn find-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
@@ -220,37 +233,29 @@
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
   [look-fn eps [x1 y1] [x2 y2]]
-  (println [x1 y1] [x2 y2]) (flush) ; DEBUG
+  ;(println [x1 y1] [x2 y2]) (flush) ; DEBUG
   (let [slope (m/slope-from-coords [x1 y1] [x2 y2])
-        REPORT (and (== x2 249763.2181347223) (== y2 -143919.65209659893))
-        _ (when REPORT (println "slope:" slope)) ; DEBUG
         steep (or (infinite? slope)
                   (> (abs slope) steep-slope-inf))
-        _ (when REPORT (println "steep:" steep)) ; DEBUG
         slope (if steep (/ slope) slope)
-        _ (when REPORT (println "new slope:" slope)) ; DEBUG
         look-fn (if steep (swap-args-fn look-fn) look-fn)
         [[x1 y1] [x2 y2]] (if steep
                             [[y1 x1] [y2 x2]]    ; swap x and y
                             [[x1 y1] [x2 y2]])   ; make no change
-        _ (when REPORT (println "new" [x1 y1] [x2 y2])) ; DEBUG
         x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
-        _ (when REPORT (println "[x-eps y-eps]:" [x-eps y-eps])) ;  DEBUG
-        _ (when REPORT (flush)) ; DEBUG
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
         y-shift (if y-pos-dir? y-eps (- y-eps))
         x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
         y-comp (if y-pos-dir? > <)]  ;  gone too far
     (loop [x x1, y y1]
-      (when REPORT (println x y)) ; DEBUG
       (let [food (look-fn x y)]
         (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
-              (and (== x x2) (== y y2))  nil ; last point. check both: horizontal or vertical lines
+              ;(and (== x x2) (== y y2))  nil ; OLD VERSION: last point. check both: horizontal or vertical lines
+              (== x x2)  nil ; last point: see comment above function def for explanation.
               :else  (let [xsh (+ x x-shift)
                            ysh (+ y y-shift)]
-                       (when (or (== x xsh) (== y ysh)) (Thread/sleep 250)) ; DEBUG (else runs off screen too fast)
                        (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
                               (if (y-comp ysh y2) y2 ysh))))))))
 
@@ -272,7 +277,6 @@
   (let [stopsv (vec stops)
         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
     (loop [i 0, j 1]
-      ;(println [i j] ":") (flush) ; DEBUG
       (let [from+foodspots (find-in-seg look-fn eps (stopsv i) (stopsv j))]
         (if from+foodspots               ; all done--found food
           [(first from+foodspots)        ; the found food
@@ -334,21 +338,12 @@
    (let [len-dist (r/make-powerlaw rng scale exponent)]
      (levy-foodwalk look-fn look-eps maxpathlen init-dir trunclen rng len-dist init-pad init-loc)))
   ([look-fn look-eps maxpathlen init-dir trunclen dir-dist len-dist init-pad init-loc]
-   ;(println "entering levy-foodwalk")(flush) ; DEBUG
    (let [raw-inf-step-walk (repeatedly
                              (step-vector-fn dir-dist len-dist 1 trunclen))
-         ;_ (println "Created raw-inf-step-walk") ; DEBUG
-         ;_ (flush) ; DEBUG
          inf-step-walk (if init-dir
                          (subst-init-dir init-dir raw-inf-step-walk)
                          raw-inf-step-walk)
-         ;_ (println "Created inf-step-walk") ; DEBUG
-         ;_ (flush) ; DEBUG
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
-         ;_ (def global-step-walk (doall (map (fn [step-vec i] [i (second step-vec)]) step-walk (range)))) ; DEBUG
-         ;_ (println global-step-walk) ; DEBUG
-         ;_ (println (apply max (map second step-walk))) ; DEBUG
-         ;_ (flush) ; DEBUG
          first-loc (if init-pad  ; if truthy, shift start in a random dir this much from init-loc
                      (next-walk-stop init-loc [(r/next-radian dir-dist) init-pad])
                      init-loc)
