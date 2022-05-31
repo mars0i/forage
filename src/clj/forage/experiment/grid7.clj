@@ -101,17 +101,15 @@
   (def seed (r/make-seed))
   (def seed 6532174732216981119)
 
-  ;; 1000 at mu=2.0 with look-eps=0.1:
+  ;; 1000 at mu=2.0 with look-eps=0.1 (49 minutes):
   (def data (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params [2.0] 1000 seed ctrd-look-fn)))
-
-  ;; A different attempt to start at that point (doesn't seem to work):
-  ;(dotimes [i 674] (w/levy-foodwalk-flush-state rng (nondestr-params :trunclen) (nondestr-params :powerlaw-min) 2.0))
-  ;(def yo (time (fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0)))
-  
 
   ;; 1000 at mu=2.0 with look-eps=0.2 (29 minutes):
   (def nondestr-params-eps2 (assoc nondestr-params :look-eps 0.2))
-  (def data (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-eps2 [2.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-eps2 [2.0] 1000 seed ctrd-look-fn)))
+  ;; 1000 at other mu's mu=2.0 with look-eps=0.2:
+  (def rng (:rng data-and-rng))
+  (def data-and-rng2 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-eps2 [1.001 1.5 2.5 3.0] 1000 seed ctrd-look-fn rng)))
 
   (def data (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params [1.001 1.5 2.0 2.5 3.0] 2000 seed ctrd-look-fn)))
 
