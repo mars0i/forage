@@ -1,5 +1,6 @@
-;; Extra-long maxpathlen so more attempts succeed.  Otherwise similar
-;; to grid6 and grid5.
+;; Extra-long maxpathlen so more attempts succeed, I hope.  
+;; Otherwise identical to grid6 before the comment section.
+;; (Also similar to grid5.)
 (ns forage.experiment.grid7
   (:require [forage.run :as fr]
             [forage.food :as f]
