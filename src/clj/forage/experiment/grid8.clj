@@ -22,7 +22,7 @@
              :perc-radius         1  ; distance that an animal can "see" in searching for food
              :powerlaw-min        1
              :env-size            (* 2 half-size)
-             :env-discretization  init-food
+             :env-discretization  5 ; for Continuous2D; see foodspot.clj
              :init-loc            [half-size half-size] ; i.e. center of env
              :init-pad            nil ; if truthy, initial loc offset by this in rand dir
              :maxpathlen          (* 1000 half-size) ; max total length of search path
