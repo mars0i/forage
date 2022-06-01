@@ -86,6 +86,9 @@
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 2000))
   (def data-and-rng-2000  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
+  (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 1500))
+  (def data-and-rng-1500  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Plotting
   ;; The mu's here are merely used for informational output.
