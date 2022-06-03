@@ -73,7 +73,7 @@
   ;; nondestructive/assymetric:
   (def data-rng-assym (time (fr/levy-experiments fr/default-file-prefix centered-env assym-params [1.001 1.5 1.8 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
   ;; destructive/symetric:
-  (def data-rng-symm  (time (fr/levy-experiments fr/default-file-prefix nocenter-env params       [1.001 1.5 1.8 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  (def data-rng-symm  (time (fr/levy-experiments fr/default-file-prefix nocenter-env params       [1.001 1.5 1.8 2.0 2.5 3.0] 1000 seed noctr-look-fn)))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Plotting
