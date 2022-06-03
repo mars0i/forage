@@ -162,10 +162,11 @@
          sorted-params (into (sorted-map) params) ; for writing param file
          param-labels (append-labels (cons "seed" (keys sorted-params)))
          param-data (append-row param-labels
-                                (cons seed    ; replace coord pair with string:
-                                      (vals (update sorted-params :init-loc str))))
-         data$ (atom (append-labels (into
-                                     ["initial dir" "exponent" "segments" "found"]
+                                (cons (str "\"" seed "\"") ; keep Excel from making it a float
+                                      (vals (update sorted-params :init-loc str)))) ; replace coord pair with string
+         data$ (atom (append-labels (into       ; header row for data csv
+                                     ["initial dir" "exponent" "segments"
+                                      "found" "efficency" "total path len"]
                                      (map #(str "path " %)
                                           (range 1 (inc walks-per-combo))))))
          iter-num$ (atom 0)]
@@ -188,8 +189,11 @@
                            ".bin")
                       (r/get-state rng))
        (let [sim-fn #(levy-run rng look-fn init-dir params exponent)
-             [segments found lengths] (run-and-collect sim-fn walks-per-combo)]
-         (swap! data$ conj (into [init-dir exponent segments found] lengths))))
+             [segments found lengths] (run-and-collect sim-fn walks-per-combo)
+             total-length (reduce + lengths)
+             efficiency (/ found total-length)] ; lengths start as doubles and remain so--this is double div
+         (swap! data$ conj (into [init-dir exponent segments 
+                                  found efficiency total-length] lengths))))
      (spit-csv data-filename @data$)
      (println " done.")
      {:data @data$ :rng rng}))) ; data is not very large; should be OK to return it.
