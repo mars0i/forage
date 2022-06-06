@@ -87,23 +87,28 @@
                                                        (params :env-size))))
 )
 
+;; We allow passing init-loc separately to allow chains of runs 
+;; representing the foraging behavior of a single individual that
+;; encounters targets multiple times.
 (defn levy-run
-  "Perform one Levy run using walks/levy-foodwalk using the given rng, look-fn,
-  init-dir, and exponent, and other arguments including init-loc taken from params.
-  Returns a triple containing found food (if any), the walk until where food was 
-  found, and the remaining steps (if any) that would have occurred after food was
-  found."
-  [rng look-fn init-dir params exponent]
-  (w/levy-foodwalk look-fn
-                   (params :look-eps) 
-                   (params :maxpathlen) 
-                   init-dir
-                   (params :trunclen)
-                   rng 
-                   (params :powerlaw-min) 
-                   exponent
-                   (params :init-pad)
-                   (params :init-loc)))
+  "Perform one Levy run using walks/levy-foodwalk using the given rng,
+  look-fn, init-dir, and exponent, and other arguments including init-loc
+  taken from params if not provided. Returns a triple containing found
+  food (if any), the walk until where food was found, and the remaining
+  steps (if any) that would have occurred after food was found."
+  ([rng look-fn init-dir params exponent]
+   (levy-run rng look-fn init-dir params exponent (params :init-loc)))
+  ([rng look-fn init-dir params exponent init-loc]
+   (w/levy-foodwalk look-fn
+                    (params :look-eps) 
+                    (params :maxpathlen) 
+                    init-dir
+                    (params :trunclen)
+                    rng 
+                    (params :powerlaw-min) 
+                    exponent
+                    (params :init-pad)
+                    init-loc)))
 
 ;; This function replaced old inner loop in levy-experiments which collected 
 ;; all foodwalk paths before adding statistics to the data$ atom.  That lead 
