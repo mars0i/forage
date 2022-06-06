@@ -363,6 +363,8 @@
          walk-with-food (path-with-food look-fn look-eps stop-walk)] ; a vec
      (trim-full-walk (conj walk-with-food stop-walk)))))
 
+
+;; TODO: DOES THIS WORK: IS THE STATE THE SAME AT THE END?
 (defn levy-foodwalk-flush-state
   "Uses up PRNG state like levy-foodwalk would, but without going through 
   the steps needed to find food.  The only required arguments are dir-dist,
