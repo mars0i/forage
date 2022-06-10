@@ -1,16 +1,17 @@
 (ns forage.run
   (:require 
+   [clojure.data.csv :as csv]
+   [clojure.java.io :as io]
+   [clojure.pprint :refer [cl-format]]
+   [aerial.hanami.common :as hc]
+   [oz.core :as oz] ; REMOVE IF I switch to another plot-rendering lib
    [utils.math :as m]
    [utils.random :as r]
    [utils.hanami :as uh] ; replace if grid-chart becomes non-local
    [forage.viz.hanami :as h]
    [forage.walks :as w]
    [forage.food :as f]
-   [forage.mason.foodspot :as mf]
-   [aerial.hanami.common :as hc]
-   [oz.core :as oz] ; TODO remove if I switch to another plot-rendering lib
-   [clojure.data.csv :as csv]
-   [clojure.java.io :as io]))
+   [forage.mason.foodspot :as mf]))
 
 (def default-file-prefix "../../data.foraging/forage/")
 
@@ -176,15 +177,13 @@
                                           (range 1 (inc walks-per-combo))))))
          iter-num$ (atom 0)]
      (spit-csv param-filename param-data) ; write out fixed parameters
-     (println "Performing"
-              (* (count exponents)
-                 (if num-dirs (inc num-dirs) 1)
-                 walks-per-combo)
-              "runs in groups of"
-              walks-per-combo "...")
+     (cl-format true "Performing ~d runs in groups of ~d ...~%" 
+                (* (count exponents) walks-per-combo (if num-dirs (inc num-dirs) 1))
+                walks-per-combo)
      (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
-       (print " group" (swap! iter-num$ inc) "...")
+       (cl-format true "~{~c~}group ~d [exponent ~f, init-dir ~a] ..."   ; ~{~c~} means stuff all chars (~c) in sequence arg here
+                  (repeat 80 \backspace) (swap! iter-num$ inc) exponent init-dir) ; backspaces over prev version of this line
        (flush)
        (r/write-state (str base-state-filename
                            "_mu" (double-to-dotless exponent) 
