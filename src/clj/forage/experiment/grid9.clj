@@ -1,8 +1,8 @@
 ;; Same as grid8.clj but with a little bit of cleanup and minor mods, 
 ;; e.g. lengthening maxpathlen, 
 ;; moving assoc variants in the comment experiments into the main params map.
-;; Identical to grid7 except for trunclen look-eps, and init-pad.
-;; Identical to grid6 except for trunclen, look-eps, init-pad, and maxpathlen.
+;; Grid8 was identical to grid7 except for trunclen look-eps, and init-pad.
+;; and to grid6 except for trunclen, look-eps, init-pad, and maxpathlen.
 ;; i.e. up to the experiments comment section.
 ;; Similar to grid5.
 (ns forage.experiment.grid9
