@@ -31,7 +31,7 @@
              :maxpathlen          (* 5 half-size)  ; for straight walks, don't go too far
              :trunclen            (* 5 half-size) ; max length of any line segment
              :look-eps            0.1    ; increment within segments for food check
-             :init-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
+             :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
              :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
              :fournier-levels     fournier-lvls   ; levels in addition to the top level
              :fournier-multiplier fournier-mult ; how much to shrink distance for each Fournier level
@@ -42,7 +42,7 @@
 ;; The last is not OK--so don't use 3 levels with that distance and multiplier.
 
 ;; FOR STRAIGHT-WALKS
-(def straight-params (assoc params :init-dirs 50))
+(def straight-params (assoc params :num-dirs 50))
 
 ;; Fournier env with center cluster but no center foodspot:
 
@@ -89,8 +89,8 @@
 
   (time (def raw (mapv (partial fr/straight-run look-fn straight-params)
                        (mapv (partial * (/ (* m/pi (straight-params :max-frac))
-                                           (straight-params :init-dirs)))
-                             (range (inc (straight-params :init-dirs)))))))
+                                           (straight-params :num-dirs)))
+                             (range (inc (straight-params :num-dirs)))))))
 
   (oz/view! (h/vega-envwalk-plot env 1100 500 raw))
 

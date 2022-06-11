@@ -32,11 +32,11 @@
               :maxpathlen        half-size  ; for straight walks, don't go too far
               :trunclen          half-size  ; max length of any line segment
               :look-eps          0.1 ; increment within segments for food check
-              :init-dirs          100
+              :num-dirs          100
              ))
 
-(def init-dirs (doall (map #(* (/ % (params :init-dirs)) (/ m/pi 2))
-                           (range (params :init-dirs)))))
+(def init-dirs (doall (map #(* (/ % (params :num-dirs)) (/ m/pi 2))
+                           (range (params :num-dirs)))))
 
 (defn levy-experiments
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
@@ -92,9 +92,9 @@
   ;; Parameters for testing:
   (def exponents [2 3])
   (def powmins [1 2])
-  (def params (assoc params :init-dirs 20))
-  (def init-dirs (doall (map #(* (/ % (params :init-dirs)) (/ m/pi 2))
-                             (range (params :init-dirs)))))
+  (def params (assoc params :num-dirs 20))
+  (def init-dirs (doall (map #(* (/ % (params :num-dirs)) (/ m/pi 2))
+                             (range (params :num-dirs)))))
   (def walks-per-combo 1)
 
   (use 'clojure.pprint)
