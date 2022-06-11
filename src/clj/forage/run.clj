@@ -15,6 +15,58 @@
 
 (def default-file-prefix "../../data.foraging/forage/")
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EXAMPLE PARAMETERS AND OTHER SETUP CODE NEEDED BY FUNCTIONS BELOW
+(comment
+  ;; defs only for reuse in params map:
+  (def half-size 5000) ; half the full width of the env
+  (def init-food 1000) ; distance between foodspots on a grid
+
+  (def params (sorted-map ; sort so labels match values
+               :food-distance       init-food
+               :perc-radius         1  ; distance that an animal can "see" in searching for food
+               :powerlaw-min        1
+               :env-size            (* 2 half-size)
+               :env-discretization  5 ; for Continuous2D; see foodspot.clj
+               :init-loc            [half-size half-size] ; i.e. center of env
+               :init-pad            nil ; if truthy, initial loc offset by this in rand dir
+               :maxpathlen          (* 2000 half-size) ; max total length of search path
+               :trunclen            1500 ; max length of any line segment
+               :look-eps            0.2    ; increment within segments for food check
+               :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
+               :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
+               :fournier-levels     nil ; Only for Fournier envs.  TODO: Maybe should be removed.
+               :fournier-multiplier nil ; Only for Fournier envs.  TODO: Maybe should be removed.
+               ))
+
+  ;; NON-RANDOM STRAIGHT RUNS that systematically try a series of directions:
+  ;; For Levy walks, :num-dirs is set to nil to ensure random initial directions.
+  ;; So this has to be overridden for a pre-specified spread of straight walks:
+  (def straight-params (assoc params :num-dirs 100))
+
+  ;; NON-DESTRUCTIVE/ASSYMETRIC SEARCH:
+  (def assym-params (assoc params :init-pad (* 2 (params :perc-radius))))
+
+  ;; ENV AND LOOK-FN FOR DESTRUCTIVE/SYMMETRIC SEARCH:
+  (def nocenter-env (mf/make-env (params :env-discretization)
+                                 (params :env-size)
+                                 (f/centerless-rectangular-grid (params :food-distance)
+                                                                (params :env-size)
+                                                                (params :env-size))))
+  (def noctr-look-fn (partial mf/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
+
+  ;; ENV AND LOOK-FN FOR NONDESTRUCTIVE/ASYMMETRIC SEARCH;
+  (def centered-env (mf/make-env (params :env-discretization)
+                                 (params :env-size)
+                                 (f/rectangular-grid (params :food-distance)
+                                                     (params :env-size)
+                                                     (params :env-size))))
+  (def ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
+)
+;; END OF EXAMPLE SETUP PARAMS, ETC.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 (defn ignore-food
   "A look-fn that does nothing--it never finds food."
   [x y]
@@ -59,34 +111,7 @@
   (apply format "%s%s"
          (clojure.string/split (str (double x)) #"\."))) 
 
-(comment
-  ;; Example parameters map:
-  (def half-size 100000) ; half the full width of the env
-  (def food-distance 500)
 
-  (def params (sorted-map ; sort so labels match values
-               :food-distance       init-food ; ignored??
-               :perc-radius         1  ; distance that an animal can "see" in searching for food
-               :powerlaw-min        1
-               :env-size            (* 2 half-size)
-               :env-discretization  init-food
-               :init-loc            [half-size half-size] ; i.e. center of env
-               :init-pad            nil ; if truthy, initial loc offset by this in rand dir
-               :maxpathlen          (* 4 half-size)  ; for straight walks, don't go too far
-               :trunclen            (* 4 half-size) ; max length of any line segment
-               :look-eps            0.1    ; increment within segments for food check
-               :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
-               :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
-               :fournier-levels     nil
-               :fournier-multiplier nil
-               ))
-
-  (def env (mf/make-env (params :env-discretization)
-                        (params :env-size)
-                        (f/centerless-rectangular-grid (params :food-distance)
-                                                       (params :env-size)
-                                                       (params :env-size))))
-)
 
 ;; We allow passing init-loc separately to allow chains of runs 
 ;; representing the foraging behavior of a single individual that
