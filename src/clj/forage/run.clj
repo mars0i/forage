@@ -147,13 +147,10 @@
   total number of segments, total number of foodspots found, and a sequence
   of lengths of paths until foodspots were found.  n-walks must be >= 0."
   [sim-fn n-walks]
-  ;(println) ; DEBUG
   (loop [n n-walks, segments 0, found 0, lengths nil]
     (if (zero? n)
       [segments found lengths]
-      (let [;_ (print (- n-walks n) "") ; DEBUG
-            ;_ (flush) ; DEBUG
-            fw (sim-fn)]
+      (let [fw (sim-fn)]
         (recur (dec n)
                (+ segments (w/count-segments-until-found fw))
                (+ found (count (first fw)))
