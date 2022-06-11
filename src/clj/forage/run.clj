@@ -33,16 +33,16 @@
                :maxpathlen          (* 2000 half-size) ; max total length of search path
                :trunclen            1500 ; max length of any line segment
                :look-eps            0.2    ; increment within segments for food check
-               :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
+               :init-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
                :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
                :fournier-levels     nil ; Only for Fournier envs.  TODO: Maybe should be removed.
                :fournier-multiplier nil ; Only for Fournier envs.  TODO: Maybe should be removed.
                ))
 
   ;; NON-RANDOM STRAIGHT RUNS that systematically try a series of directions:
-  ;; For Levy walks, :num-dirs is set to nil to ensure random initial directions.
+  ;; For Levy walks, :init-dirs is set to nil to ensure random initial directions.
   ;; So this has to be overridden for a pre-specified spread of straight walks:
-  (def straight-params (assoc params :num-dirs 100))
+  (def straight-params (assoc params :init-dirs 100))
 
   ;; NON-DESTRUCTIVE/ASSYMETRIC SEARCH:
   (def assym-params (assoc params :init-pad (* 2 (params :perc-radius))))
@@ -181,7 +181,7 @@
    (levy-experiments file-prefix env params exponents walks-per-combo seed 
                      look-fn (r/make-well19937 seed)))
   ([file-prefix env params exponents walks-per-combo seed look-fn rng]
-   (let [num-dirs (params :num-dirs)
+   (let [num-dirs (params :init-dirs)
          init-dirs (if num-dirs
                      (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
                            (range (inc num-dirs))) ; inc to include range max
@@ -243,11 +243,11 @@
   "Runs straight-segment food searches using parameters in params for each
   specified there. Creates two files, one containing the fixed parameters
   of the run, and the other containing the results listed for each direction
-  specified by :max-frac and :num-dirs.  Filenames include an id constructed
+  specified by :max-frac and :init-dirs.  Filenames include an id constructed
   from arbitrary data.  Returns the resulting data."
   [file-prefix env params]
   (flush)
-  (let [num-dirs (params :num-dirs)
+  (let [num-dirs (params :init-dirs)
         dir-increment (/ (* m/pi (params :max-frac)) num-dirs)
         init-dirs (mapv (partial * dir-increment)
                         (range (inc num-dirs))) ; inc to include range max

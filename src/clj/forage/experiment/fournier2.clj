@@ -19,7 +19,7 @@
              :maxpathlen        (* 4 half-size)  ; for straight walks, don't go too far
              :trunclen          (* 4 half-size) ; max length of any line segment
              :look-eps          0.1  ; increment within segments for food check
-             :num-dirs          200 ; split range this many times + 1 (includes range max); nil for random
+             :init-dirs          200 ; split range this many times + 1 (includes range max); nil for random
              :max-frac          0.5 ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
              :fournier-levels 4
              :fournier-multiplier 0.2 ; how much to shrink distance for each Fournier level
@@ -51,8 +51,8 @@
   (require '[utils.math :as m])
   (def look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius)))
   (time (def raw (mapv (partial fr/straight-run look-fn params)
-                       (mapv (partial * (/ (* m/pi (params :max-frac)) (params :num-dirs)))
-                             (range (inc (params :num-dirs)))))))
+                       (mapv (partial * (/ (* m/pi (params :max-frac)) (params :init-dirs)))
+                             (range (inc (params :init-dirs)))))))
 
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])

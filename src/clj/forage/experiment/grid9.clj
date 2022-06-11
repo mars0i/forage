@@ -31,16 +31,16 @@
              :maxpathlen          (* 2000 half-size) ; max total length of search path
              :trunclen            1500 ; max length of any line segment
              :look-eps            0.2    ; increment within segments for food check
-             :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
+             :init-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
              :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
              :fournier-levels     nil
              :fournier-multiplier nil
             ))
 
 ;; PARAMS FOR NON-RANDOM STRAIGHT RUNS that systematically try a series of directions:
-;; For Levy walks, :num-dirs is set to nil to ensure random initial directions.
+;; For Levy walks, :init-dirs is set to nil to ensure random initial directions.
 ;; So this has to be overridden for a pre-specified spread of straight walks:
-(def straight-params (assoc params :num-dirs 100))
+(def straight-params (assoc params :init-dirs 100))
 
 
 ;; PARAMS FOR NON-DESTRUCTIVE/ASSYMETRIC SEARCH

@@ -32,13 +32,13 @@
               :trunclen          half-size  ; max length of any line segment
               :look-eps          0.1  ; increment within segments for food check
               :max-frac          0.25 ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
-              :num-dirs          nil ; split range this many times + 1 (includes range max); nil for random
+              :init-dirs          nil ; split range this many times + 1 (includes range max); nil for random
              ))
 
 (comment
   ;; Parameters for testing:
   (require '[forage.run :as fr])
-  ;(def params (assoc params :num-dirs 20))
+  ;(def params (assoc params :init-dirs 20))
   (def exponents [1.001 2])
   (def walks-per-combo 2)
 

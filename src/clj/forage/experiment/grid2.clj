@@ -26,15 +26,15 @@
               :trunclen          half-size  ; max length of any line segment
               :look-eps          0.1  ; increment within segments for food check
               :max-frac          0.25 ; proportion of pi to use as maximum direction (0 is min)
-              :num-dirs          50; split range this many times + 1 (includes range max)
+              :init-dirs          50; split range this many times + 1 (includes range max)
              ))
 
 (comment
   ;; Parameters for testing:
   (def exponents [2 3])
-  (def params (assoc params :num-dirs 20))
-  (def init-dirs (doall (map #(* (/ % (params :num-dirs)) (/ m/pi 2))
-                             (range (params :num-dirs)))))
+  (def params (assoc params :init-dirs 20))
+  (def init-dirs (doall (map #(* (/ % (params :init-dirs)) (/ m/pi 2))
+                             (range (params :init-dirs)))))
   (def walks-per-combo 1)
 
   (use 'clojure.pprint)
