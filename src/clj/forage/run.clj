@@ -229,8 +229,8 @@
      (println " done.")
      {:data @data$ :rng rng}))) ; data is not very large; should be OK to return it.
 
-
-;; TODO Modify further for new :init-loc-fn parameter?
+;; TODO Modify further for new :init-loc-fn parameter?  
+;; Currently always ;; passes nil to the init-loc-fn.
 (defn straight-run
   "Perform one straight run using walks/straight-foodwalk using the given
   look-fn init-dir, and exponent, and other arguments taken from params."
@@ -243,7 +243,8 @@
      look-fn (params :look-eps) (params :maxpathlen)
      ((params :init-loc-fn) nil) init-dir)))
 
-;; TODO Modify further for new :init-loc-fn parameter?
+;; TODO Modify further for new :init-loc-fn parameter?  
+;; Currently always ;; passes nil to the init-loc-fn.
 (defn straight-experiments
   "Runs straight-segment food searches using parameters in params for each
   specified there. Creates two files, one containing the fixed parameters
