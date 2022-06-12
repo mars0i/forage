@@ -23,14 +23,14 @@
 
 ;; Initial default params, with:
 ;; (a) Search starts in a random initial direction
-;; (b) Search starts exactly from :init-loc (e.g. for destructive search)
+;; (b) Search starts exactly from init-loc (e.g. for destructive search)
 (def params (sorted-map ; sort so labels match values
              :food-distance       init-food ; ignored??
              :perc-radius         1  ; distance that an animal can "see" in searching for food
              :powerlaw-min        1
              :env-size            (* 2 half-size)
              :env-discretization  init-food
-             :init-loc            [half-size half-size] ; i.e. center of env
+             :init-loc-fn  (constantly [half-size half-size])
              :init-pad            nil ; if truthy, initial loc offset by this in rand dir
              :maxpathlen          (* 4 half-size)  ; for straight walks, don't go too far
              :trunclen            (* 4 half-size) ; max length of any line segment

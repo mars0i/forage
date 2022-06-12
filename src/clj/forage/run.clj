@@ -137,11 +137,11 @@
                     init-loc)))
 
 ;; This function replaced old inner loop in levy-experiments which collected 
-;; all foodwalk paths before adding statistics to the data$ atom.  That lead 
+;; all foodwalk paths before adding statistics to the data$ atom.  That led 
 ;; to excessive memory use, causing a lot of GC and sometimes dying even with 
 ;; a 16GB heap.  The new function instead collects statistics from a single
-;; foodwalk food-and-paths structure at a time, and then throws it out, 
-;; retaining and returning only the summary data from foodwalks.
+;; foodwalk food-and-paths structure at a time, and then throws out the 
+;; foodwalk, retaining and returning only the summary data from foodwalks.
 (defn run-and-collect
   "Generates n-walks foodwalks using sim-fn and init-loc-fn and returns 
   statistics from them: total number of segments, total number of foodspots
@@ -243,6 +243,7 @@
      look-fn (params :look-eps) (params :maxpathlen)
      (params :init-loc) init-dir)))
 
+;; FIXME Need to modify for new :init-loc-fn parameter
 (defn straight-experiments
   "Runs straight-segment food searches using parameters in params for each
   specified there. Creates two files, one containing the fixed parameters

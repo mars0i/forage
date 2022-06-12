@@ -21,7 +21,7 @@
               :perc-radius       1  ; distance that an animal can "see" in searching for food
               :food-distance     200
               :env-size          (* 2 half-size)
-              :init-loc          [half-size half-size] ; i.e. center of env
+              :init-loc-fn  (constantly [half-size half-size])
               :maxpathlen        half-size  ; for straight walks, don't go too far
               :trunclen          half-size  ; max length of any line segment
               :look-eps          0.1  ; increment within segments for food check

@@ -27,7 +27,7 @@
               :perc-radius       1  ; distance that an animal can "see" in searching for food
               :food-distance     200
               :env-size          (* 2 half-size)
-              :init-loc          [half-size half-size] ; i.e. center of env
+              :init-loc          [half-size half-size] ; FIXME obsolete
               ;:init-dir          0 ; initial direction in radians
               :maxpathlen        half-size  ; for straight walks, don't go too far
               :trunclen          half-size  ; max length of any line segment
@@ -38,6 +38,7 @@
 (def init-dirs (doall (map #(* (/ % (params :num-dirs)) (/ m/pi 2))
                            (range (params :num-dirs)))))
 
+;; FIXME obsolete: use version in run.clj
 (defn levy-experiments
   "Uses seed to seed a PRNG.  Uses combined parameters in map params.  Then
   for each min-value powmin in powmins and exponent in exponents, creates a

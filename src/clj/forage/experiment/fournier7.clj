@@ -49,7 +49,7 @@
              :powerlaw-min        perc-radius ; s/b >= per-radius (Viswanathan et al typically make them equal)
              :env-size            (* 2 half-size)
              :env-discretization  (* init-food (reduce * (repeat fournier-lvls fournier-mult)))
-             :init-loc            [half-size half-size] ; i.e. center of env
+             :init-loc-fn  (constantly [half-size half-size])
              :maxpathlen          (* 5 half-size)  ; for straight walks, don't go too far
              :trunclen            (* 5 half-size) ; max length of any line segment
              :look-eps            0.1    ; increment within segments for food check
