@@ -142,16 +142,56 @@
 ;; a 16GB heap.  The new function instead collects statistics from a single
 ;; foodwalk food-and-paths structure at a time, and then throws it out, 
 ;; retaining and returning only the summary data from foodwalks.
+
 (defn run-and-collect
   "Generates n-walks foodwalks using sim-fn and returns statistics from them:
   total number of segments, total number of foodspots found, and a sequence
   of lengths of paths until foodspots were found.  n-walks must be >= 0."
-  [sim-fn n-walks]
-  (loop [n n-walks, segments 0, found 0, lengths nil]
+  [sim-fn init-loc-fn n-walks]
+  (if (<= n-walks 0)
+    [0 0 nil]
+    (loop [n n-walks,
+           init-loc (init-loc-fn nil),
+           segments 0, found 0, lengths nil]
+      (if (pos? n)
+        (let [fw (sim-fn init-loc)]
+          (recur (dec n)
+                 (init-loc-fn fw)
+                 (+ segments (w/count-segments-until-found fw))
+                 (+ found (count (first fw)))
+                 (cons (w/path-until-found-length fw) lengths)))
+        [segments found lengths]))))
+        
+
+
+;; CALLS INIT-LOC-FN EXTRA TIME
+(defn run-and-collect-v1
+  "Generates n-walks foodwalks using sim-fn and returns statistics from them:
+  total number of segments, total number of foodspots found, and a sequence
+  of lengths of paths until foodspots were found.  n-walks must be >= 0."
+  [sim-fn init-loc-fn n-walks]
+  (loop [n n-walks, init-loc (init-loc-fn nil) segments 0, found 0, lengths nil]
     (if (zero? n)
       [segments found lengths]
-      (let [fw (sim-fn)]
+      (let [fw (sim-fn init-loc)]
         (recur (dec n)
+               (init-loc-fn fw)
+               (+ segments (w/count-segments-until-found fw))
+               (+ found (count (first fw)))
+               (cons (w/path-until-found-length fw) lengths))))))
+
+;; KEEPS TWO COPIES OF FOODWALK STRUCTURE AT A TIME
+(defn run-and-collect-v2
+  "Generates n-walks foodwalks using sim-fn and returns statistics from them:
+  total number of segments, total number of foodspots found, and a sequence
+  of lengths of paths until foodspots were found.  n-walks must be >= 0."
+  [sim-fn init-loc-fn n-walks]
+  (loop [n n-walks, prev-fw nil, segments 0, found 0, lengths nil]
+    (if (zero? n)
+      [segments found lengths]
+      (let [fw (sim-fn (init-loc-fn prev-fw))]
+        (recur (dec n)
+               fw
                (+ segments (w/count-segments-until-found fw))
                (+ found (count (first fw)))
                (cons (w/path-until-found-length fw) lengths))))))
