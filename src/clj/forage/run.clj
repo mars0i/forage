@@ -28,7 +28,7 @@
                :powerlaw-min        1
                :env-size            (* 2 half-size)
                :env-discretization  5 ; for Continuous2D; see foodspot.clj
-               :init-loc            [half-size half-size] ; i.e. center of env
+               :init-loc-fn         (constantly [half-size half-size]) ; function to return initial location given nil or prev foodwalk
                :init-pad            nil ; if truthy, initial loc offset by this in rand dir
                :maxpathlen          (* 2000 half-size) ; max total length of search path
                :trunclen            1500 ; max length of any line segment
@@ -122,8 +122,8 @@
   taken from params if not provided. Returns a triple containing found
   food (if any), the walk until where food was found, and the remaining
   steps (if any) that would have occurred after food was found."
-  ([rng look-fn init-dir params exponent]
-   (levy-run rng look-fn init-dir params exponent (params :init-loc)))
+  ([rng look-fn init-dir params exponent] ; deprecated case
+   (levy-run rng look-fn init-dir params exponent ((params :init-loc-fn) nil)))
   ([rng look-fn init-dir params exponent init-loc]
    (w/levy-foodwalk look-fn
                     (params :look-eps) 
@@ -142,49 +142,13 @@
 ;; a 16GB heap.  The new function instead collects statistics from a single
 ;; foodwalk food-and-paths structure at a time, and then throws it out, 
 ;; retaining and returning only the summary data from foodwalks.
-
 (defn run-and-collect
-  "Generates n-walks foodwalks using sim-fn and returns statistics from them:
-  total number of segments, total number of foodspots found, and a sequence
-  of lengths of paths until foodspots were found.  n-walks must be >= 0."
-  [sim-fn init-loc-fn n-walks]
-  (if (<= n-walks 0)
-    [0 0 nil]
-    (loop [n n-walks,
-           init-loc (init-loc-fn nil),
-           segments 0, found 0, lengths nil]
-      (if (pos? n)
-        (let [fw (sim-fn init-loc)]
-          (recur (dec n)
-                 (init-loc-fn fw)
-                 (+ segments (w/count-segments-until-found fw))
-                 (+ found (count (first fw)))
-                 (cons (w/path-until-found-length fw) lengths)))
-        [segments found lengths]))))
-        
-
-
-;; CALLS INIT-LOC-FN EXTRA TIME
-(defn run-and-collect-v1
-  "Generates n-walks foodwalks using sim-fn and returns statistics from them:
-  total number of segments, total number of foodspots found, and a sequence
-  of lengths of paths until foodspots were found.  n-walks must be >= 0."
-  [sim-fn init-loc-fn n-walks]
-  (loop [n n-walks, init-loc (init-loc-fn nil) segments 0, found 0, lengths nil]
-    (if (zero? n)
-      [segments found lengths]
-      (let [fw (sim-fn init-loc)]
-        (recur (dec n)
-               (init-loc-fn fw)
-               (+ segments (w/count-segments-until-found fw))
-               (+ found (count (first fw)))
-               (cons (w/path-until-found-length fw) lengths))))))
-
-;; KEEPS TWO COPIES OF FOODWALK STRUCTURE AT A TIME
-(defn run-and-collect-v2
-  "Generates n-walks foodwalks using sim-fn and returns statistics from them:
-  total number of segments, total number of foodspots found, and a sequence
-  of lengths of paths until foodspots were found.  n-walks must be >= 0."
+  "Generates n-walks foodwalks using sim-fn and init-loc-fn and returns 
+  statistics from them: total number of segments, total number of foodspots
+  found, and a sequence of lengths of paths until foodspots were found.
+  nil or the previous foodwalk result will be passed to init-loc-fn to
+  allow it to determine the initial location--the starting point for
+ the walk--that's passed as sim-fn's only argument.  n-walks must be >= 0."
   [sim-fn init-loc-fn n-walks]
   (loop [n n-walks, prev-fw nil, segments 0, found 0, lengths nil]
     (if (zero? n)
@@ -223,6 +187,7 @@
                      (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
                            (range (inc num-dirs))) ; inc to include range max
                      [nil]) ; tell w/levy-walks to leave initial dir random
+         init-loc-fn (params :init-loc-fn)
          base-filename (str file-prefix "levy" seed)
          param-filename (str base-filename "params.csv")
          data-filename (str base-filename "data.csv")
@@ -231,7 +196,7 @@
          param-labels (append-labels (cons "seed" (keys sorted-params)))
          param-data (append-row param-labels
                                 (cons (str "\"" seed "\"") ; keep Excel from making it a float
-                                      (vals (update sorted-params :init-loc str)))) ; replace coord pair with string
+                                      (vals sorted-params)))
          data$ (atom (append-labels (into       ; header row for data csv
                                      ["initial dir" "exponent" "segments"
                                       "found" "efficency" "total path len"]
@@ -254,8 +219,8 @@
                                     "Rand")
                            ".bin")
                       (r/get-state rng))
-       (let [sim-fn #(levy-run rng look-fn init-dir params exponent)
-             [segments found lengths] (run-and-collect sim-fn walks-per-combo)
+       (let [sim-fn (partial levy-run rng look-fn init-dir params exponent) ; remaining arg is initial location
+             [segments found lengths] (run-and-collect sim-fn init-loc-fn walks-per-combo)
              total-length (reduce + lengths)
              efficiency (/ found total-length)] ; lengths start as doubles and remain so--this is double div
          (swap! data$ conj (into [init-dir exponent segments 
@@ -264,6 +229,8 @@
      (println " done.")
      {:data @data$ :rng rng}))) ; data is not very large; should be OK to return it.
 
+
+;; FIXME Need to modify for new :init-loc-fn parameter
 (defn straight-run
   "Perform one straight run using walks/straight-foodwalk using the given
   look-fn init-dir, and exponent, and other arguments taken from params."

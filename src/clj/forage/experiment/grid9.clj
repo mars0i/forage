@@ -26,7 +26,7 @@
              :powerlaw-min        1
              :env-size            (* 2 half-size)
              :env-discretization  5 ; for Continuous2D; see foodspot.clj
-             :init-loc            [half-size half-size] ; i.e. center of env
+             :init-loc-fn         (constantly [half-size half-size]) ; function to return initial location given nil or prev foodwalk
              :init-pad            nil ; if truthy, initial loc offset by this in rand dir
              :maxpathlen          (* 2000 half-size) ; max total length of search path
              :trunclen            1500 ; max length of any line segment
@@ -35,7 +35,7 @@
              :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
              :fournier-levels     nil
              :fournier-multiplier nil
-            ))
+             ))
 
 ;; PARAMS FOR NON-RANDOM STRAIGHT RUNS that systematically try a series of directions:
 ;; For Levy walks, :num-dirs is set to nil to ensure random initial directions.
@@ -74,6 +74,8 @@
   (def data-rng-assym (time (fr/levy-experiments fr/default-file-prefix centered-env assym-params [1.001 1.5 1.8 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
   ;; destructive/symetric:
   (def data-rng-symm  (time (fr/levy-experiments fr/default-file-prefix nocenter-env params       [1.001 1.5 1.8 2.0 2.5 3.0] 1000 seed noctr-look-fn)))
+
+  (def yo (time (fr/levy-experiments fr/default-file-prefix nocenter-env params [1.5 2.0] 2 seed noctr-look-fn)))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Plotting
