@@ -15,6 +15,9 @@
 
 (def default-file-prefix "../../data.foraging/forage/")
 
+;; small utility functions later:
+(declare ignore-food append-row append-labels spit-csv double-to-dotless)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EXAMPLE PARAMETERS AND OTHER SETUP CODE NEEDED BY FUNCTIONS BELOW
 (comment
@@ -64,53 +67,36 @@
   (def ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
 )
 ;; END OF EXAMPLE SETUP PARAMS, ETC.
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; THE IMPORTANT STUFF ...
 
+(defn end-of-walk
+  "Given a three-element foodwalk, if one or more foodspots were found,
+  returns the coordinates of the first one found, assuming that that is
+  where the forager ended up.  If no foodspot was found, returns the
+  last element in the walk.  Note that if geometry is toroidal/periodic,
+  and the walk went outside of the original boundaries, then with
+  no foodspot found, the coordinates will be the actual, un\"wrapped\"
+  coordinates, while if a foodspot was found, it will have the \"wrapped\"
+  coordinates within the original boundaries."
+  [fw]
+  (let [found (first fw)]
+    (if found
+      (mf/foodspot-coords (first (first found))) ; if two or more found, ignore others
+      (last (second fw))))) ; could also use third
 
-(defn ignore-food
-  "A look-fn that does nothing--it never finds food."
-  [x y]
-  nil)
-
-(defn append-row
-  "Given a value for seed, a sequence of parameters, a count of found
-  foodspots in a collection of runs, and the total number of segments in
-  all of the full walks (before truncation due to finding food) in the
-  collection, appends a new row to existing rows and returns the result.
-  Apart from params being a sequence, there are no restrictions on content,
-  so this can be used to write a row of labels as well."
-  ([values]
-   (append-row [] values))
-  ([prev-rows values]
-   (conj (vec prev-rows) values)))
-
-(defn append-labels
-  "Appends a new row of labels.  param-names is a sequence containing
-  strings, keywords, or symbols, which will be converted to strings as
-  needed."
-  ([param-names]
-   (append-row (map name param-names)))
-  ([prev-rows param-names] 
-   (append-row prev-rows (map name param-names))))
-
-;; Note nils are converted to empty cells by write-csv.
-(defn spit-csv
-  "Given a sequence of sequences of data in rows, opens a file and
-  writes to it using write-csv.  options are those that can be passed
-  to clojure.java.io/writer."
-  [filename rows & options]
-   (with-open [w (apply io/writer filename options)]
-     (csv/write-csv w rows)))
-
-(defn double-to-dotless
-  "Given a number returns a string containing the same digits as its decimal
-  floating-point representation, but with the dot removed.  (For positive doubles
-  < 10, this results in string in which the first digit is the integer part,
-  which will be zero if x < 1."
-  [x]
-  (apply format "%s%s"
-         (clojure.string/split (str (double x)) #"\."))) 
-
+(defn end-of-walk-if-found
+  "Given a three-element foodwalk, if one or more foodspots were found,
+  returns the coordinates of the first one found, assuming that that is
+  where the forager ended up.  If no foodspot was found, returns nil.
+  If geometry is toroidal/periodic, and the walk went outside of
+  the original boundaries, the coordinates returned will have the
+  \"wrapped\" coordinates within the original boundaries."
+  [fw]
+  (if-let [found (first fw)]
+    (mf/foodspot-coords (first (first found))) ; if two or more found, ignore others
+    nil))
 
 
 ;; We allow passing init-loc separately to allow chains of runs 
@@ -136,6 +122,14 @@
                     (params :init-pad)
                     init-loc)))
 
+(comment
+  (def yo (levy-run (r/make-well19937) noctr-look-fn nil params 2 [half-size half-size]))
+  (first yo)
+  (mf/foodspot-coords (first (first yo)))
+  (last (second yo))
+)
+
+
 ;; This function replaced old inner loop in levy-experiments which collected 
 ;; all foodwalk paths before adding statistics to the data$ atom.  That led 
 ;; to excessive memory use, causing a lot of GC and sometimes dying even with 
@@ -159,6 +153,7 @@
                (+ segments (w/count-segments-until-found fw))
                (+ found (count (first fw)))
                (cons (w/path-until-found-length fw) lengths))))))
+
 
 (defn levy-experiments
   "Uses seed to seed a PRNG unless rng is provided, in which case seed 
@@ -229,6 +224,7 @@
      (println " done.")
      {:data @data$ :rng rng}))) ; data is not very large; should be OK to return it.
 
+
 ;; TODO Modify further for new :init-loc-fn parameter?  
 ;; Currently always ;; passes nil to the init-loc-fn.
 (defn straight-run
@@ -242,6 +238,7 @@
    (w/straight-foodwalk
      look-fn (params :look-eps) (params :maxpathlen)
      ((params :init-loc-fn) nil) init-dir)))
+
 
 ;; TODO Modify further for new :init-loc-fn parameter?  
 ;; Currently always ;; passes nil to the init-loc-fn.
@@ -279,7 +276,8 @@
     (println "done.")
     data))
 
-;; FIXME IS THERE A LEAK IN THIS?  I don't think there shout be,
+
+;; FIXME IS THERE A LEAK IN THIS?  I don't think there should be,
 ;; but seems like maybe.
 ;; 
 ;; Maybe ought to be merged with other looping functions above.
@@ -327,8 +325,57 @@
         (println "written.") (flush)))))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; SMALL UTILITY FUNCTIONS
+(defn ignore-food
+  "A look-fn that does nothing--it never finds food."
+  [x y]
+  nil)
+
+(defn append-row
+  "Given a value for seed, a sequence of parameters, a count of found
+  foodspots in a collection of runs, and the total number of segments in
+  all of the full walks (before truncation due to finding food) in the
+  collection, appends a new row to existing rows and returns the result.
+  Apart from params being a sequence, there are no restrictions on content,
+  so this can be used to write a row of labels as well."
+  ([values]
+   (append-row [] values))
+  ([prev-rows values]
+   (conj (vec prev-rows) values)))
+
+(defn append-labels
+  "Appends a new row of labels.  param-names is a sequence containing
+  strings, keywords, or symbols, which will be converted to strings as
+  needed."
+  ([param-names]
+   (append-row (map name param-names)))
+  ([prev-rows param-names] 
+   (append-row prev-rows (map name param-names))))
+
+;; Note nils are converted to empty cells by write-csv.
+(defn spit-csv
+  "Given a sequence of sequences of data in rows, opens a file and
+  writes to it using write-csv.  options are those that can be passed
+  to clojure.java.io/writer."
+  [filename rows & options]
+   (with-open [w (apply io/writer filename options)]
+     (csv/write-csv w rows)))
+
+(defn double-to-dotless
+  "Given a number returns a string containing the same digits as its decimal
+  floating-point representation, but with the dot removed.  (For positive doubles
+  < 10, this results in string in which the first digit is the integer part,
+  which will be zero if x < 1."
+  [x]
+  (apply format "%s%s"
+         (clojure.string/split (str (double x)) #"\."))) 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Possible future utility functions ....
+
 (comment
-  ;; Possible future utility functions ....
 
   (def fws-efficiencies
     (let [ks (keys fws-counts)]
