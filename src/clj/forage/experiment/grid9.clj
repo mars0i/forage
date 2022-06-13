@@ -75,7 +75,12 @@
   ;; destructive/symetric:
   (def data-rng-symm  (time (fr/levy-experiments fr/default-file-prefix nocenter-env params       [1.001 1.5 1.8 2.0 2.5 3.0] 1000 seed noctr-look-fn)))
 
-  (def yo (time (fr/levy-experiments fr/default-file-prefix nocenter-env params [1.5 2.0] 2 seed noctr-look-fn)))
+  (def yo (time (fr/levy-experiments fr/default-file-prefix nocenter-env 
+                                     params [1.5 2.0] 2 seed noctr-look-fn)))
+
+
+  *out*
+  (. System console)
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Plotting
