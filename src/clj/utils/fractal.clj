@@ -1,5 +1,6 @@
 ;; Mathematical operations to create or manipulate fractal structures
-(ns utils.fractal)
+(ns utils.fractal
+  (:require [generateme.complex :as c]))
 
 
 ;; note it's not enough to recursively apply the functions to the points,
@@ -84,9 +85,14 @@
             new-pts (mapcat (partial fournier-children new-offset) pts)]
         (recur (into pts new-pts) new-offset (dec iters))))))
 
-
+(defn make-julia-fn
+  [c]
+  (fn [x] (c/add (c/sq x) c)))
 
 (comment
-  (middle-third-cantor 3 [0 1])
-  (middle-third-cantor 2 [0.0 1.0])
+  (def f (make-julia-fn (complex 0.5 0.2)))
 )
+
+(defn julia-escape
+  [iterations escape-bound f]
+  "blah blah")

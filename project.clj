@@ -10,6 +10,7 @@
                  [org.apache.commons/commons-rng-simple "1.4"]
                  [org.apache.commons/commons-rng-client-api "1.4"]
                  [org.apache.commons/commons-rng-sampling "1.4"]
+                 [generateme/fastmath "2.1.8"]
                  [aerial.hanami "0.17.0"]
                  [techascent/tech.viz "6.00-beta-16-2"]
                  [io.github.nextjournal/clerk "0.5.346"]
