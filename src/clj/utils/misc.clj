@@ -19,3 +19,8 @@
   "Returns the second to last item in a sequence."
   [xs]
   (last (pop (vec xs))))
+
+(defn iced-jackin?
+  "Returns true iff running vim-iced connected to a \"jack in\" nrepl."
+  []
+  (= "dumb" (System/getenv "TERM")))
