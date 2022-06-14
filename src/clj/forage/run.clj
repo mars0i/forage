@@ -5,6 +5,7 @@
    [clojure.pprint :refer [cl-format]]
    [aerial.hanami.common :as hc]
    [oz.core :as oz] ; REMOVE IF I switch to another plot-rendering lib
+   [utils.misc :as misc]
    [utils.math :as m]
    [utils.random :as r]
    [utils.hanami :as uh] ; replace if grid-chart becomes non-local
@@ -205,7 +206,8 @@
      (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
        (cl-format true "~{~c~}group ~d [exponent ~f, init-dir ~a] ..."   ; ~{~c~} means stuff all chars (~c) in sequence arg here
-                  (repeat 80 \backspace) (swap! iter-num$ inc) exponent init-dir) ; backspaces over prev version of this line
+                  (if (misc/iced-jackin?) nil (repeat 80 \backspace)) ; don't use BS in dumb terminal
+                  (swap! iter-num$ inc) exponent init-dir) ; backspaces over prev version of this line
        (flush)
        (r/write-state (str base-state-filename
                            "_mu" (double-to-dotless exponent) 
