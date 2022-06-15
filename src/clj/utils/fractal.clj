@@ -1,6 +1,6 @@
 ;; Mathematical operations to create or manipulate fractal structures
 (ns utils.fractal
-  (:require [generateme.complex :as c]))
+  (:require [fastmath.complex :as c]))
 
 
 ;; note it's not enough to recursively apply the functions to the points,
@@ -85,14 +85,52 @@
             new-pts (mapcat (partial fournier-children new-offset) pts)]
         (recur (into pts new-pts) new-offset (dec iters))))))
 
-(defn make-julia-fn
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; QUADRATIC JULIA FUNCTIONS
+
+(defn quad-fn
+  "Returns an implementation of the quadratic function f(z) = z^2 + c,
+  where z and c are instances of fastmath.complex numbers, i.e. Vec2's."
   [c]
-  (fn [x] (c/add (c/sq x) c)))
+  (fn [z] (c/add (c/sq z) c)))
+
+(defn inv-quad-fn
+  "Returns an implementation of the inverse of the quadratic function
+  f(z) = z^2 + c, i.e. returns f^{-1}(z) = sqrt(z - c), where z and c
+  are instances of fastmath.complex numbers, i.e. Vec2's.  Returns a pair
+  containg the positive and negative values of the square root."
+  [c]
+  (fn [z] 
+    (let [posroot (c/sqrt (c/sub z c))]
+      [posroot (c/neg posroot)])))
 
 (comment
-  (def f (make-julia-fn (complex 0.5 0.2)))
+  (c/sqrt (c/complex 2 2))
+  (def f (quadratic-fn (c/complex 0.5 0.2)))
+  (f (c/complex 1 1))
+  (def zs (iterate f (c/complex 1.5 0.3)))
+  (take 5 zs)
 )
 
-(defn julia-escape
-  [iterations escape-bound f]
-  "blah blah")
+(defn julia-escape-test
+  "Find all points in the box from [x-min, c-min] to [x-max, x-max] at
+  increments of size step that approximate the filled Julia set of f, by
+  finding those points such that results of iterating f on its output up
+  to max-iters times does not exceed escape-bound."
+  [x-min x-max c-min c-max step max-iters escape-bound f]
+  (println "UNIMPLEMENTED"))
+
+(defn julia-corner-test
+  "Algorithm for approximating a (non-filled Julia set sketched in Falconer's
+  _Fractal Geometry_, 3d ed, pp. 255f."
+  [x-min x-max c-min c-max max-iters f]
+  (println "UNIMPLEMENTED"))
+
+(defn julia-inverse-iters
+  "Use iterations of the inverse of a quadratic function f to identify points
+  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255."
+  [initial-val inverse-f]
+  (println "UNIMPLEMENTED"))
+
+
