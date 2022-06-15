@@ -105,29 +105,58 @@
     (let [posroot (c/sqrt (c/sub z c))]
       [posroot (c/neg posroot)])))
 
-(comment
-  (c/sqrt (c/complex 2 2))
-  (def f (quadratic-fn (c/complex 0.5 0.2)))
-  (f (c/complex 1 1))
-  (def zs (iterate f (c/complex 1.5 0.3)))
-  (take 5 zs)
-)
+(defn doesnt-escape?
+  [max-iters esc-bound f init-z]
+  (loop [i 1, z init-z]
+    (cond (> (c/abs z) esc-bound) false
+          (> i max-iters) true
+          :else (recur (inc i) (f z)))))
 
-(defn julia-escape-test
+(defn filled-julia-escape
   "Find all points in the box from [x-min, c-min] to [x-max, x-max] at
   increments of size step that approximate the filled Julia set of f, by
   finding those points such that results of iterating f on its output up
-  to max-iters times does not exceed escape-bound."
-  [x-min x-max c-min c-max step max-iters escape-bound f]
-  (println "UNIMPLEMENTED"))
+  to max-iters times doesn't exceed esc-bound."
+  [x-min x-max c-min c-max step max-iters esc-bound f]
+  (for [x (range x-min x-max step)
+        c (range c-min c-max step)
+        :let [z (c/complex x c)]
+        :when (doesnt-escape? max-iters esc-bound f z)]
+    z))
 
-(defn julia-corner-test
+(comment
+  (def f (quad-fn c/ZERO))
+  (def zs (julia-escape 0 2 -1 1 0.01 100 4 f))
+  (count zs)
+  (take 45 zs)
+  (take 1000 (drop 12000 zs))
+
+  ;; Should be a disconnected Julia set; c is to the right of the middle-sized
+  ;; lower "ear" of the Mandelbrot set.
+  (def f (quad-fn (c/complex 0.06310618062296447 -0.7250300283183553)))
+  (def zs (julia-escape 0 2 -1 1 0.01 100 4 f))
+  (count zs) ;=> 0  UH OH
+
+  ;; c is near center of left "head" of Mandelbrot set:
+  (def f (quad-fn (c/complex -1.025871775288859 -0.0007815313243673128)))
+  (def zs (julia-escape 0 2 -1 1 0.01 100 4 f))
+  (count zs)
+
+  ;; c is outside the Mandelbrot set, nestled in the crevice on the right.
+  (def f (quad-fn (c/complex 0.18815628082336522 -1.2981763209035255)))
+  (def zs (julia-escape 0 2 -1 1 0.001 10 2 f))
+  (count zs)
+  (take 50 zs)
+
+)
+
+(defn julia-corners
   "Algorithm for approximating a (non-filled Julia set sketched in Falconer's
   _Fractal Geometry_, 3d ed, pp. 255f."
   [x-min x-max c-min c-max max-iters f]
   (println "UNIMPLEMENTED"))
 
-(defn julia-inverse-iters
+(defn julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify points
   in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255."
   [initial-val inverse-f]
