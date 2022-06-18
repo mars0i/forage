@@ -151,22 +151,22 @@
   ;; Should be a disconnected Julia set; c is to the right of the middle-sized
   ;; lower "ear" of the Mandelbrot set.
   (def f (quad-fn (c/complex 0.06310618062296447 -0.7250300283183553)))
-  (def zs (filled-julia-vecs -2 2 -2 2 0.01 100 4 f))
-  (count zs) ;=> 0  UH OH
-
+  (def zs (filled-julia-vecs -2 2 -2 2 0.0005 100 4 f)) ; hard to grid size right
+  (count zs)
   ;; c is near center of left "head" of Mandelbrot set:
   (def f (quad-fn (c/complex -1.025871775288859 -0.0007815313243673128)))
   (def zs (filled-julia-vecs -2 2 -2 2 0.01 100 4 f))
   (count zs)
-  (require '[forage.viz.hanami :as h])
-  (def vl-zs (h/add-point-labels "Julia set" zs))
-  (take 5 vl-zs)
-  (def julia-plot (h/vega-food-plot vl-zs 5 800 1))
-  (oz/view! julia-plot)
-
   ;; c is outside the Mandelbrot set, nestled in the crevice on the right.
   (def f (quad-fn (c/complex 0.18815628082336522 -1.2981763209035255)))
   (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
+
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (def vl-zs (h/add-point-labels "Julia set" zs))
+  (def julia-plot (h/vega-food-plot vl-zs 500 800 1))
+  (oz/view! julia-plot)
+
 )
 
 
