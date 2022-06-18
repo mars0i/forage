@@ -1,9 +1,13 @@
 ;; Mathematical operations to create or manipulate fractal structures
 (ns utils.fractal
-  (:require [fastmath.complex :as c]))
+  (:require [fastmath.complex :as c]
+            [fastmath.vector :as v]))
 
 
-;; note it's not enough to recursively apply the functions to the points,
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; GENERAL-PURPOSE ITERATIVE FUNCTION SYSTEMS
+
+;; Note it's not enough to recursively apply the functions to the points,
 ;; because the functions themselves must be recursively transformed.
 ;; e.g. additions as well as multiplications have to be scaled recursively.
 ;; (In theory the recursion could be moved to a macro body that simply
@@ -46,6 +50,9 @@
                endpoints))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; FOURNIER UNIVERSES (see Mandelbrot's books)
+
 (defn fournier-children
   "Given a coordinate pair, return four coordinate pairs that are
   shifted by offset up, down, left, and right from the original point."
@@ -86,7 +93,7 @@
         (recur (into pts new-pts) new-offset (dec iters))))))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; QUADRATIC JULIA FUNCTIONS
 
 (defn quad-fn
@@ -112,11 +119,12 @@
           (> i max-iters) true
           :else (recur (inc i) (f z)))))
 
-(defn filled-julia-escape
+(defn filled-julia
   "Find all points in the box from [x-min, c-min] to [x-max, x-max] at
   increments of size step that approximate the filled Julia set of f, by
   finding those points such that results of iterating f on its output up
-  to max-iters times doesn't exceed esc-bound."
+  to max-iters times doesn't exceed esc-bound.  Returns a collection of
+  fastmath.complex Vec2 pairs."
   [x-min x-max c-min c-max step max-iters esc-bound f]
   (for [x (range x-min x-max step)
         c (range c-min c-max step)
@@ -124,31 +132,43 @@
         :when (doesnt-escape? max-iters esc-bound f z)]
     z))
 
+(defn filled-julia-vecs
+  "Calls filled-julia and then converts its output to a collection
+  of Clojure vectors."
+  [x-min x-max c-min c-max step max-iters esc-bound f]
+  (map v/vec->Vec
+       (filled-julia x-min x-max c-min c-max step max-iters esc-bound f)))
+
 (comment
+  ;; Examples, informal tests of filled-julia-vecs:
+
   (def f (quad-fn c/ZERO))
-  (def zs (julia-escape 0 2 -1 1 0.01 100 4 f))
+  (def zs (filled-julia -2 1 -1 1 0.01 100 2 f))
   (count zs)
-  (take 45 zs)
-  (take 1000 (drop 12000 zs))
+  (take 10 zs)
+  (map v/vec->Vec (take 10 zs))
 
   ;; Should be a disconnected Julia set; c is to the right of the middle-sized
   ;; lower "ear" of the Mandelbrot set.
   (def f (quad-fn (c/complex 0.06310618062296447 -0.7250300283183553)))
-  (def zs (julia-escape 0 2 -1 1 0.01 100 4 f))
+  (def zs (filled-julia-vecs -2 2 -2 2 0.01 100 4 f))
   (count zs) ;=> 0  UH OH
 
   ;; c is near center of left "head" of Mandelbrot set:
   (def f (quad-fn (c/complex -1.025871775288859 -0.0007815313243673128)))
-  (def zs (julia-escape 0 2 -1 1 0.01 100 4 f))
+  (def zs (filled-julia-vecs -2 2 -2 2 0.01 100 4 f))
   (count zs)
+  (require '[forage.viz.hanami :as h])
+  (def vl-zs (h/add-point-labels "Julia set" zs))
+  (take 5 vl-zs)
+  (def julia-plot (h/vega-food-plot vl-zs 5 800 1))
+  (oz/view! julia-plot)
 
   ;; c is outside the Mandelbrot set, nestled in the crevice on the right.
   (def f (quad-fn (c/complex 0.18815628082336522 -1.2981763209035255)))
-  (def zs (julia-escape 0 2 -1 1 0.001 10 2 f))
-  (count zs)
-  (take 50 zs)
-
+  (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
 )
+
 
 (defn julia-corners
   "Algorithm for approximating a (non-filled Julia set sketched in Falconer's
