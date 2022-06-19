@@ -138,11 +138,18 @@
   [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
   (let [x-subrange (/ (- x-max x-min) n-threads)
         x-mins (range x-min x-max x-subrange)
-        x-maxs (conj (vec (map inc (rest x-mins))) x-max)]
-    `(pvalues ~@(map
-                 (fn [xmn xmx]
-                   (list 'filled-julia xmn xmx c-min c-max step max-iters esc-bound f)
-                   x-mins x-maxs)))))
+        x-maxs (conj (vec (rest x-mins)) x-max)
+        filled-julia-forms# (map (fn [xmn xmx]
+                                   (list 'filled-julia xmn xmx c-min c-max step max-iters esc-bound f))
+                                 x-mins x-maxs)]
+    ;(clojure.pprint/pprint filled-julia-forms#) ;; DEBUG
+    `(apply concat (pvalues ~@filled-julia-forms#))))
+
+(comment
+  (p-filled-julia 2 -2 2 -1 1 0.01 10 2 f)
+  (macroexpand-1 '(p-filled-julia 4 -2 2 -1 1 0.01 10 2 f))
+  (macroexpand-1 '(defn yo [x] (* x x)))
+)
 
 
 (defn filled-julia-vecs
@@ -153,7 +160,7 @@
        (filled-julia x-min x-max c-min c-max step max-iters esc-bound f)))
 
 (comment
-  ;; Examples, informal tests of filled-julia-vecs:
+  ;; Informal tests/illustrations of filled-julia-vecs:
 
   (def f (quad-fn c/ZERO))
   (def zs (filled-julia -2 1 -1 1 0.01 100 2 f))
@@ -170,11 +177,20 @@
   (def f (quad-fn (c/complex -1.025871775288859 -0.0007815313243673128)))
   (def zs (filled-julia-vecs -2 2 -2 2 0.01 100 4 f))
   (count zs)
+
   ;; c is outside the Mandelbrot set, nestled in the crevice on the right.
+  ;; The plot is indeed disconnected.
   (def f (quad-fn (c/complex 0.18815628082336522 -1.2981763209035255)))
   (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
 
+  ;; This is supposed to be disconnected, but my algorithm is creating a
+  ;; connected, filled image, even with a dots of dimension 1.
   (def f (quad-fn (c/complex -0.025470973685652876 -0.6729258199015218)))
+  (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
+  (count zs)
+
+  ;; Disconnected Julia set from pp. 253, 254 of Falconer's _Fractal Geometry_
+  (def f (quad-fn (c/complex 0.0 0.066)))
   (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
   (count zs)
 
