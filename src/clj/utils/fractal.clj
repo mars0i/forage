@@ -119,6 +119,7 @@
           (> i max-iters) true
           :else (recur (inc i) (f z)))))
 
+
 (defn filled-julia
   "Find all points in the box from [x-min, c-min] to [x-max, x-max] at
   increments of size step that approximate the filled Julia set of f, by
@@ -131,6 +132,18 @@
         :let [z (c/complex x c)]
         :when (doesnt-escape? max-iters esc-bound f z)]
     z))
+
+;; FIXME first draft.  probably wrong.
+(defmacro p-filled-julia
+  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
+  (let [x-subrange (/ (- x-max x-min) n-threads)
+        x-mins (range x-min x-max x-subrange)
+        x-maxs (conj (vec (map inc (rest x-mins))) x-max)]
+    `(pvalues ~@(map
+                 (fn [xmn xmx]
+                   (list 'filled-julia xmn xmx c-min c-max step max-iters esc-bound f)
+                   x-mins x-maxs)))))
+
 
 (defn filled-julia-vecs
   "Calls filled-julia and then converts its output to a collection
@@ -161,10 +174,15 @@
   (def f (quad-fn (c/complex 0.18815628082336522 -1.2981763209035255)))
   (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
 
+  (def f (quad-fn (c/complex -0.025470973685652876 -0.6729258199015218)))
+  (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
+  (count zs)
+
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (def vl-zs (h/add-point-labels "Julia set" zs))
   (def julia-plot (h/vega-food-plot vl-zs 500 800 1))
+  (count julia-plot)
   (oz/view! julia-plot)
 
 )
