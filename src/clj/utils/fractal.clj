@@ -142,23 +142,23 @@
         x-maxs (conj (vec (rest x-mins)) x-max)
         filled-julia-forms# (map (fn [xmn xmx]
                                    ;(list 'filled-julia xmn xmx c-min c-max step max-iters esc-bound f))
-                                   `(filled-julia ~xmn ~xmx ~c-min ~c-max ~step ~max-iters ~esc-bound ~f))
+                                   `(filled-julia xmn xmx c-min c-max step max-iters esc-bound f))
                                  x-mins x-maxs)]
-    `(into [] cat (pvalues ~@filled-julia-forms#)))) ; cat concatenates.  This realizes the for's.
+    `(into [] cat (pvalues @filled-julia-forms#)))) ; cat concatenates.  This realizes the for's.
 
 
 ;; FIXME Draft.  probably wrong.
 (defmacro p-filled-julia-v2
   [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
-  `(let [x-subrange# (/ (- ~x-max ~x-min) ~n-threads)
-        x-mins# (range ~x-min ~x-max x-subrange#)
-        x-maxs# (conj (vec (rest x-mins#)) ~x-max)
+  `(let [x-subrange# (/ (- x-max x-min) n-threads)
+        x-mins# (range x-min x-max x-subrange#)
+        x-maxs# (conj (vec (rest x-mins#)) x-max)
         filled-julia-forms# (map (fn [xmn# xmx#]
-                                   (list 'filled-julia xmn# xmx# ~c-min ~c-max ~step ~max-iters ~esc-bound ~f))
-                                   ;(filled-julia xmn# xmx# ~c-min ~c-max ~step ~max-iters ~esc-bound ~f))
+                                   (list 'filled-julia xmn# xmx# c-min c-max step max-iters esc-bound f))
+                                   ;(filled-julia xmn# xmx# c-min c-max step max-iters esc-bound f))
                                  x-mins# x-maxs#)]
-    (into [] cat (pvalues ~@'filled-julia-forms#))
-    ;(into [] cat (pvalues ~@(construct-filled-julia-forms 
+    (into [] cat (pvalues @'filled-julia-forms#))
+    ;(into [] cat (pvalues @(construct-filled-julia-forms 
     ;                          n-threads x-min x-max c-min c-max step max-iters esc-bound f)))
     ;nil
     )) ; cat concatenates.  This realizes the for's.
@@ -170,13 +170,13 @@
         x-mins (range x-min x-max x-subrange)
         x-maxs (conj (vec (rest x-mins)) x-max)]
     (map (fn [xmn# xmx#]
-           `(filled-julia ~xmn# ~xmx# ~c-min ~c-max ~step ~max-iters ~esc-bound ~f))
+           `(filled-julia xmn# xmx# c-min c-max step max-iters esc-bound f))
          x-mins x-maxs)))
 
 ;; FIXME Draft.  probably wrong.
 (defmacro p-filled-julia-v3
   [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
-  `(into [] cat (pvalues ~@(construct-filled-julia-forms 
+  `(into [] cat (pvalues @(construct-filled-julia-forms 
                              n-threads x-min x-max c-min c-max step max-iters esc-bound f))))
 
 
@@ -188,11 +188,23 @@
 
 (defmacro p-filled-julia-v5
   [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
-  `(into [] cat (pvalues ~@(construct-filled-julia-forms 
-                             ~'n-threads ~'x-min ~'x-max ~'c-min ~'c-max ~'step ~'max-iters ~'esc-bound ~'f))))
+  `(into [] cat (pvalues @(construct-filled-julia-forms 
+                             'n-threads 'x-min 'x-max 'c-min 'c-max 'step 'max-iters 'esc-bound 'f))))
 
+(defn p-filled-julia
+  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
+  (let [x-subrange (/ (- x-max x-min) n-threads)
+        x-mins (range x-min x-max x-subrange)
+        x-maxs (conj (vec (rest x-mins)) x-max)]
+    (into [] cat
+          (apply pcalls (map (fn [xmn xmx]
+                               #(filled-julia xmn xmx c-min c-max step max-iters esc-bound f))
+                             x-mins x-maxs)))))
+
+(comment
 (def a -2) (def b 2) (def c -1) (def d 1)
 (def f1 (quad-fn (c/complex 0.0 0.066)))
+
 (clojure.pprint/pprint
   (construct-filled-julia-forms 4
                                 a
@@ -209,7 +221,6 @@
                                           1
                                           0.01 10 2 f1)))
 
-(comment
 (clojure.pprint/pprint (macroexpand-1 
                          '(p-filled-julia 4
                                           a
