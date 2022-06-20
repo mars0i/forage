@@ -133,29 +133,109 @@
         :when (doesnt-escape? max-iters esc-bound f z)]
     z))
 
-;; FIXME first draft.  probably wrong.
-(defmacro p-filled-julia
+
+;; FIXME Draft.  probably wrong.
+(defmacro p-filled-julia-v1
   [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
   (let [x-subrange (/ (- x-max x-min) n-threads)
         x-mins (range x-min x-max x-subrange)
         x-maxs (conj (vec (rest x-mins)) x-max)
         filled-julia-forms# (map (fn [xmn xmx]
-                                   (list 'filled-julia xmn xmx c-min c-max step max-iters esc-bound f))
+                                   ;(list 'filled-julia xmn xmx c-min c-max step max-iters esc-bound f))
+                                   `(filled-julia ~xmn ~xmx ~c-min ~c-max ~step ~max-iters ~esc-bound ~f))
                                  x-mins x-maxs)]
-    ;(clojure.pprint/pprint filled-julia-forms#) ;; DEBUG
-    `(apply concat (pvalues ~@filled-julia-forms#))))
+    `(into [] cat (pvalues ~@filled-julia-forms#)))) ; cat concatenates.  This realizes the for's.
+
+
+;; FIXME Draft.  probably wrong.
+(defmacro p-filled-julia-v2
+  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
+  `(let [x-subrange# (/ (- ~x-max ~x-min) ~n-threads)
+        x-mins# (range ~x-min ~x-max x-subrange#)
+        x-maxs# (conj (vec (rest x-mins#)) ~x-max)
+        filled-julia-forms# (map (fn [xmn# xmx#]
+                                   (list 'filled-julia xmn# xmx# ~c-min ~c-max ~step ~max-iters ~esc-bound ~f))
+                                   ;(filled-julia xmn# xmx# ~c-min ~c-max ~step ~max-iters ~esc-bound ~f))
+                                 x-mins# x-maxs#)]
+    (into [] cat (pvalues ~@'filled-julia-forms#))
+    ;(into [] cat (pvalues ~@(construct-filled-julia-forms 
+    ;                          n-threads x-min x-max c-min c-max step max-iters esc-bound f)))
+    ;nil
+    )) ; cat concatenates.  This realizes the for's.
+
+
+(defn construct-filled-julia-forms
+  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
+  (let [x-subrange (/ (- x-max x-min) n-threads)
+        x-mins (range x-min x-max x-subrange)
+        x-maxs (conj (vec (rest x-mins)) x-max)]
+    (map (fn [xmn# xmx#]
+           `(filled-julia ~xmn# ~xmx# ~c-min ~c-max ~step ~max-iters ~esc-bound ~f))
+         x-mins x-maxs)))
+
+;; FIXME Draft.  probably wrong.
+(defmacro p-filled-julia-v3
+  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
+  `(into [] cat (pvalues ~@(construct-filled-julia-forms 
+                             n-threads x-min x-max c-min c-max step max-iters esc-bound f))))
+
+
+(defmacro p-filled-julia-v4
+  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
+  (concat '[into [] cat]
+          (cons 'pvalues (construct-filled-julia-forms 
+                           n-threads x-min x-max c-min c-max step max-iters esc-bound f))))
+
+(defmacro p-filled-julia-v5
+  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
+  `(into [] cat (pvalues ~@(construct-filled-julia-forms 
+                             ~'n-threads ~'x-min ~'x-max ~'c-min ~'c-max ~'step ~'max-iters ~'esc-bound ~'f))))
+
+(def a -2) (def b 2) (def c -1) (def d 1)
+(def f1 (quad-fn (c/complex 0.0 0.066)))
+(clojure.pprint/pprint
+  (construct-filled-julia-forms 4
+                                a
+                                b
+                                c
+                                d
+                                0.01 10 2 f1))
+
+(clojure.pprint/pprint (macroexpand-1 
+                         '(p-filled-julia 4
+                                          -2
+                                          2
+                                          -1
+                                          1
+                                          0.01 10 2 f1)))
 
 (comment
-  (p-filled-julia 2 -2 2 -1 1 0.01 10 2 f)
+(clojure.pprint/pprint (macroexpand-1 
+                         '(p-filled-julia 4
+                                          a
+                                          b
+                                          c
+                                          d
+                                          0.01 10 2 f1)))
+)
+
+(comment
+  (def yo (p-filled-julia 2 -2 2 -1 1 0.01 10 2 f1))
   (macroexpand-1 '(p-filled-julia 4 -2 2 -1 1 0.01 10 2 f))
   (macroexpand-1 '(defn yo [x] (* x x)))
 )
 
+(defn complex-to-vecs
+  "Convenience function convert a collection of fastmath.complex numbers
+  to a sequence of Clojure vector pairs by calling vec->Vec."
+  [cs]
+  (map v/vec->Vec cs))
 
 (defn filled-julia-vecs
   "Calls filled-julia and then converts its output to a collection
   of Clojure vectors."
   [x-min x-max c-min c-max step max-iters esc-bound f]
+  (println "DEPRECATED")
   (map v/vec->Vec
        (filled-julia x-min x-max c-min c-max step max-iters esc-bound f)))
 
@@ -191,7 +271,7 @@
 
   ;; Disconnected Julia set from pp. 253, 254 of Falconer's _Fractal Geometry_
   (def f (quad-fn (c/complex 0.0 0.066)))
-  (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
+  (def zs (time (-> (p-filled-julia 2 -2 2 -2 2 0.001 10 2 f) (complex-to-vecs))))
   (count zs)
 
   (require '[forage.viz.hanami :as h])
