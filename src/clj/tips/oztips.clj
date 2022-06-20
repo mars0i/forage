@@ -1,9 +1,11 @@
-(ns tips.oz
+(ns tips.oztips
   (require [oz.core :as oz]))
 
 (comment
 (oz/start-server!)
 (oz/view! vega-lite-spec)
+(oz/export! vega-lite-spec "filename.svg")
+(oz/export! vega-lite-spec "filename.png") ; supposed to work but doesn't
 )
 
 (defn play-data [& names]
