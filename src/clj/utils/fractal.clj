@@ -257,6 +257,8 @@
   [cs]
   (map v/vec->Vec cs))
 
+(def c2v complex-to-vecs)
+
 (defn filled-julia-vecs
   "Calls filled-julia and then converts its output to a collection
   of Clojure vectors."
@@ -266,12 +268,53 @@
        (filled-julia x-min x-max c-min c-max step max-iters esc-bound f)))
 
 
-;; TODO UNIMPLEMENTED
-(defn julia-corners
-  "Algorithm for approximating a (non-filled Julia set sketched in Falconer's
-  _Fractal Geometry_, 3d ed, pp. 255f."
-  [x-min x-max c-min c-max max-iters f]
-  (println "UNIMPLEMENTED"))
+
+
+(comment
+  ;; Informal tests/illustrations of filled-julia-vecs:
+
+  (def f1 (quad-fn c/ZERO))
+  (def zs (filled-julia -2 1 -1 1 0.01 100 2 f1))
+  (count zs)
+  (take 10 zs)
+  (map v/vec->Vec (take 10 zs))
+
+  ;; Should be a disconnected Julia set; c is to the right of the middle-sized
+  ;; lower "ear" of the Mandelbrot set.
+  (def f1 (quad-fn (c/complex 0.06310618062296447 -0.7250300283183553)))
+  (def zs (filled-julia-vecs -2 2 -2 2 0.0005 100 4 f1)) ; hard to grid size right
+  (count zs)
+  ;; c is near center of left "head" of Mandelbrot set:
+  (def f1 (quad-fn (c/complex -1.025871775288859 -0.0007815313243673128)))
+  (def zs (filled-julia-vecs -2 2 -2 2 0.01 100 4 f1))
+  (count zs)
+
+  ;; c is outside the Mandelbrot set, nestled in the crevice on the right.
+  ;; The plot is indeed disconnected.
+  (def f1 (quad-fn (c/complex 0.18815628082336522 -1.2981763209035255)))
+  (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f1))
+
+  ;; This is supposed to be disconnected, but my algorithm is creating a
+  ;; connected, filled image, even with a dots of dimension 1.
+  (def f1 (quad-fn (c/complex -0.025470973685652876 -0.6729258199015218)))
+  (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f1))
+  (count zs)
+
+  ;; Disconnected Julia set from pp. 253, 254 of Falconer's _Fractal Geometry_
+  (def f1 (quad-fn (c/complex 0.0 0.66)))
+  (def zs (time (doall (-> (p-filled-julia 8 -2 2 -1.5 1.5 0.001 10 5 f1) (complex-to-vecs)))))
+  (count zs)
+
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (def vl-zs (doall (h/add-point-labels "Julia set" zs)))
+  (def julia-plot (time (h/vega-food-plot vl-zs 500 800 1)))
+  (def julia-plot (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
+  (oz/view! julia-plot)
+  (time (oz/view! (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
+
+)
+
 
 ;; TODO UNIMPLEMENTED
 (defn julia-inverse
@@ -280,49 +323,64 @@
   [initial-val inverse-f]
   (println "UNIMPLEMENTED"))
 
+;; view-source:https://marksmath.org/visualization/julia_sets/JuliaSetApp.js:
+;;
+;; // Draw the Julia set using an inverse iteration algorithm
+;; function draw_inverse_iterates(c, draw_canvas) {
+;; 	"use strict";
+;; 	var bailout = 10;
+;; 	var draw_context = draw_canvas.getContext("2d");
+;; 	var plot_record = new Array(draw_canvas.height);
+;; 	for(var cnt=0; cnt<draw_canvas.height; cnt++) {
+;; 		plot_record[cnt] = new Array(draw_canvas.width);
+;; 	}
+;; 	for(var row = 0; row < draw_canvas.height; row++) {
+;; 		for(var col = 0; col < draw_canvas.width; col++) { 
+;; 			plot_record[row][col] = 0;
+;; 		}
+;; 	}
+;; 	var z0 = math.complex(0.12,0.34);
+;; 	for(var cnt = 0; cnt<5; cnt++) {
+;; 		z0 = math.sqrt(math.add(z0,math.multiply(c,-1)));
+;; 		z0 = math.multiply(math.sqrt(math.add(z0,math.multiply(c,-1))),-1);
+;; 	}
+;; 	var zNode = new JuliaTreeNode(z0);
+;; 	var queue = [zNode];
+;; 	var cnt = 0;
+;; 	while(queue.length > 0) {
+;; 		zNode = queue.pop();
+;; 		var z = zNode.z;
+;; 		var ij = complex_to_canvas(z, -2,2, -2,2, draw_canvas);
+;; 		var i = ij[0];
+;; 		var j = ij[1];
+;; 		if(plot_record[i][j] < bailout) {
+;; 			draw_context.fillRect(i,j,1,1);
+;; 			var z1 = math.sqrt(math.add(z,math.multiply(c,-1)));
+;; 			var z2 = math.multiply(z1,-1);
+;; 			var left = new JuliaTreeNode(z1);
+;; 			var right = new JuliaTreeNode(z2);
+;; 			zNode.left = left;
+;; 			zNode.right = right;
+;; 			queue.push(left);
+;; 			queue.push(right);
+;; 			plot_record[i][j] = plot_record[i][j]+1;
+;; 		}
+;; 	}
+;; }
+;; 
+;; // The inverse iteration algorithm constructs the Julia set as a
+;; // binary tree with these types of nodes.
+;; function JuliaTreeNode(z /* , left, right */) {
+;; 	this.z = z || 0;
+;; 	this.left = "empty";
+;; 	this.right = "empty";
+;; }
 
 
-(comment
-  ;; Informal tests/illustrations of filled-julia-vecs:
 
-  (def f1 (quad-fn c/ZERO))
-  (def zs (filled-julia -2 1 -1 1 0.01 100 2 f))
-  (count zs)
-  (take 10 zs)
-  (map v/vec->Vec (take 10 zs))
-
-  ;; Should be a disconnected Julia set; c is to the right of the middle-sized
-  ;; lower "ear" of the Mandelbrot set.
-  (def f1 (quad-fn (c/complex 0.06310618062296447 -0.7250300283183553)))
-  (def zs (filled-julia-vecs -2 2 -2 2 0.0005 100 4 f)) ; hard to grid size right
-  (count zs)
-  ;; c is near center of left "head" of Mandelbrot set:
-  (def f1 (quad-fn (c/complex -1.025871775288859 -0.0007815313243673128)))
-  (def zs (filled-julia-vecs -2 2 -2 2 0.01 100 4 f))
-  (count zs)
-
-  ;; c is outside the Mandelbrot set, nestled in the crevice on the right.
-  ;; The plot is indeed disconnected.
-  (def f1 (quad-fn (c/complex 0.18815628082336522 -1.2981763209035255)))
-  (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
-
-  ;; This is supposed to be disconnected, but my algorithm is creating a
-  ;; connected, filled image, even with a dots of dimension 1.
-  (def f1 (quad-fn (c/complex -0.025470973685652876 -0.6729258199015218)))
-  (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
-  (count zs)
-
-  ;; Disconnected Julia set from pp. 253, 254 of Falconer's _Fractal Geometry_
-  (def f1 (quad-fn (c/complex 0.0 0.066)))
-  (def zs (time (-> (p-filled-julia 2 -2 2 -2 2 0.001 10 2 f) (complex-to-vecs))))
-  (count zs)
-
-  (require '[forage.viz.hanami :as h])
-  (require '[oz.core :as oz])
-  (def vl-zs (doall (h/add-point-labels "Julia set" zs)))
-  (def julia-plot (time (h/vega-food-plot vl-zs 500 800 1)))
-  (count julia-plot)
-  (oz/view! julia-plot)
-
-)
-
+;; TODO UNIMPLEMENTED
+(defn julia-corners
+  "Algorithm for approximating a (non-filled Julia set sketched in Falconer's
+  _Fractal Geometry_, 3d ed, pp. 255f."
+  [x-min x-max c-min c-max max-iters f]
+  (println "UNIMPLEMENTED"))
