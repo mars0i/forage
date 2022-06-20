@@ -180,17 +180,20 @@
                              n-threads x-min x-max c-min c-max step max-iters esc-bound f))))
 
 
+;; FIXME Draft.  probably wrong.
 (defmacro p-filled-julia-v4
   [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
   (concat '[into [] cat]
           (cons 'pvalues (construct-filled-julia-forms 
                            n-threads x-min x-max c-min c-max step max-iters esc-bound f))))
 
+;; FIXME Draft.  probably wrong.
 (defmacro p-filled-julia-v5
   [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
   `(into [] cat (pvalues @(construct-filled-julia-forms 
                              'n-threads 'x-min 'x-max 'c-min 'c-max 'step 'max-iters 'esc-bound 'f))))
 
+;; FIXME Draft.  probably wrong.
 (defn p-filled-julia-v6
   [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
   (let [x-subrange (/ (- x-max x-min) n-threads)
@@ -262,10 +265,27 @@
   (map v/vec->Vec
        (filled-julia x-min x-max c-min c-max step max-iters esc-bound f)))
 
+
+;; TODO UNIMPLEMENTED
+(defn julia-corners
+  "Algorithm for approximating a (non-filled Julia set sketched in Falconer's
+  _Fractal Geometry_, 3d ed, pp. 255f."
+  [x-min x-max c-min c-max max-iters f]
+  (println "UNIMPLEMENTED"))
+
+;; TODO UNIMPLEMENTED
+(defn julia-inverse
+  "Use iterations of the inverse of a quadratic function f to identify points
+  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255."
+  [initial-val inverse-f]
+  (println "UNIMPLEMENTED"))
+
+
+
 (comment
   ;; Informal tests/illustrations of filled-julia-vecs:
 
-  (def f (quad-fn c/ZERO))
+  (def f1 (quad-fn c/ZERO))
   (def zs (filled-julia -2 1 -1 1 0.01 100 2 f))
   (count zs)
   (take 10 zs)
@@ -273,50 +293,36 @@
 
   ;; Should be a disconnected Julia set; c is to the right of the middle-sized
   ;; lower "ear" of the Mandelbrot set.
-  (def f (quad-fn (c/complex 0.06310618062296447 -0.7250300283183553)))
+  (def f1 (quad-fn (c/complex 0.06310618062296447 -0.7250300283183553)))
   (def zs (filled-julia-vecs -2 2 -2 2 0.0005 100 4 f)) ; hard to grid size right
   (count zs)
   ;; c is near center of left "head" of Mandelbrot set:
-  (def f (quad-fn (c/complex -1.025871775288859 -0.0007815313243673128)))
+  (def f1 (quad-fn (c/complex -1.025871775288859 -0.0007815313243673128)))
   (def zs (filled-julia-vecs -2 2 -2 2 0.01 100 4 f))
   (count zs)
 
   ;; c is outside the Mandelbrot set, nestled in the crevice on the right.
   ;; The plot is indeed disconnected.
-  (def f (quad-fn (c/complex 0.18815628082336522 -1.2981763209035255)))
+  (def f1 (quad-fn (c/complex 0.18815628082336522 -1.2981763209035255)))
   (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
 
   ;; This is supposed to be disconnected, but my algorithm is creating a
   ;; connected, filled image, even with a dots of dimension 1.
-  (def f (quad-fn (c/complex -0.025470973685652876 -0.6729258199015218)))
+  (def f1 (quad-fn (c/complex -0.025470973685652876 -0.6729258199015218)))
   (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f))
   (count zs)
 
   ;; Disconnected Julia set from pp. 253, 254 of Falconer's _Fractal Geometry_
-  (def f (quad-fn (c/complex 0.0 0.066)))
+  (def f1 (quad-fn (c/complex 0.0 0.066)))
   (def zs (time (-> (p-filled-julia 2 -2 2 -2 2 0.001 10 2 f) (complex-to-vecs))))
   (count zs)
 
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
-  (def vl-zs (h/add-point-labels "Julia set" zs))
-  (def julia-plot (h/vega-food-plot vl-zs 500 800 1))
+  (def vl-zs (doall (h/add-point-labels "Julia set" zs)))
+  (def julia-plot (time (h/vega-food-plot vl-zs 500 800 1)))
   (count julia-plot)
   (oz/view! julia-plot)
 
 )
-
-
-(defn julia-corners
-  "Algorithm for approximating a (non-filled Julia set sketched in Falconer's
-  _Fractal Geometry_, 3d ed, pp. 255f."
-  [x-min x-max c-min c-max max-iters f]
-  (println "UNIMPLEMENTED"))
-
-(defn julia-inverse
-  "Use iterations of the inverse of a quadratic function f to identify points
-  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255."
-  [initial-val inverse-f]
-  (println "UNIMPLEMENTED"))
-
 
