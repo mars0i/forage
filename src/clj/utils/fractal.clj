@@ -148,89 +148,37 @@
     (let [posval (c/sqrt (c/sub z c))]
       [posval (c/neg posval)])))
 
-(comment
-  ((inv-quad-fn (c/complex 0.5 0.5)) (c/complex 0.0 0.0))
-  (def f-1 (inv-quad-fn (c/complex 0.5 0.5)))
-  (def z (c/complex 0.0 0.0))
-  (def zs (f-1 z))
-  (do (def zs (mapcat f-1 zs)) (clojure.pprint/pprint zs))
-)
-
-;; FIXME
-(defn julia-inverse-simple-v1
+(defn julia-inverse-simple-alt
   "Use iterations of the inverse of a quadratic function f to identify points
   in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255, and
-  Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\"."
-  [inverse-f depth initial-pt]
-  (letfn [(calc-pts [d z]
-                (if (pos? d)
-                  (let [[z0 z1] (inverse-f z)]
-                    (println [z0 z1]) ; DEBUG
-                    (concat (calc-pts (dec d) z0)
-                            (calc-pts (dec d) z1)))
-                  z))]
-    (calc-pts depth initial-pt)))
-
-;; FIXME
-(defn julia-inverse-simple-v2
-  "Use iterations of the inverse of a quadratic function f to identify points
-  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255, and
-  Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\"."
-  [inverse-f depth initial-pt]
-  (letfn [(calc-pts [d z]
-            (let [[z0 z1] (inverse-f z)]
-              (println [z0 z1]) ; DEBUG
-              (if (pos? d)
-                (concat (calc-pts (dec d) z0)
-                        (calc-pts (dec d) z1)))
-              nil))]
-    (calc-pts depth initial-pt)))
-
-;; FIXME
-(defn julia-inverse-simple-v3
-  "Use iterations of the inverse of a quadratic function f to identify points
-  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255, and
-  Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\"."
-  [inverse-f depth initial-pt]
-  (letfn [(calc-pts [d z]
-            (let [zs (inverse-f z)]
-              (println d zs) ; DEBUG
-              (if (<= d 0)
-                zs
-                (concat (calc-pts (dec d) (first zs))
-                        (calc-pts (dec d) (second zs))))))]
-    (calc-pts depth initial-pt)))
-
-
-;; TODO
-(defn julia-inverse-simple-v4
-  "Use iterations of the inverse of a quadratic function f to identify points
-  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255, and
-  Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\"."
+  Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\".
+  depth must be >= 0."
   [inverse-f depth initial-pt]
   (letfn [(calc-pts [d z]
             (if (<= d 0)
               nil
               (let [zs (inverse-f z)]
-                (concat zs
-                        (calc-pts (dec d) (first zs))
-                        (calc-pts (dec d) (second zs))))))]
+                (doall (concat zs
+                               (calc-pts (dec d) (first zs))
+                               (calc-pts (dec d) (second zs)))))))]
     (calc-pts depth initial-pt)))
 
-
+;; This simple algorithm with partial is a little faster than an earlier
+;; version julia-inverse-simple-alt that recurses using an internal function
+;; without partial.
 (defn julia-inverse-simple
-  "Use iterations of the inverse of a quadratic function f to identify points
-  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255, and
-  Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\".
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed,
+  p. 255, or Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\".
   depth must be >=1."
   [inverse-f depth z]
   (let [pair (inverse-f z)]
     (if (== depth 1)
       pair
-      (concat pair
-              (mapcat (partial julia-inverse-simple inverse-f (dec depth))
-                      pair)))))
-
+      (doall ; periodically make sure won't be tripped up by concat's laziness
+       (concat pair
+               (mapcat (partial julia-inverse-simple inverse-f (dec depth))
+                       pair)))))))
 
 (comment
 
@@ -241,12 +189,10 @@
   (def ps (julia-inverse-simple circle 3 (c/complex 0.0 1.0)))
   (def ps (julia-inverse-simple circle 4 (c/complex 0.0 1.0)))
   (def ps (julia-inverse-simple circle 5 (c/complex 0.0 1.0)))
-  (count ps)
-  (def ps (time (julia-inverse-simple f-1 15 (c/complex 0.0 0.0))))
-  (def ps4 (time (julia-inverse-simple-v4 f-1 15 (c/complex 0.0 0.0))))
-  (= ps4 ps)
-  (count ps)
-  (count ps2)
+
+  (def ps (time (julia-inverse-simple f-1 23 (c/complex 0.0 0.0))))
+  (def psalt (time (julia-inverse-simple-alt f-1 23 (c/complex 0.0 0.0))))
+  (= psalt ps)
 
   (require '[clojure.math.numeric-tower :as nt])
 
