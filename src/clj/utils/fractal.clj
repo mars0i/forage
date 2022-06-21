@@ -148,22 +148,7 @@
     (let [posval (c/sqrt (c/sub z c))]
       [posval (c/neg posval)])))
 
-(defn julia-inverse-simple-alt
-  "Use iterations of the inverse of a quadratic function f to identify points
-  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255, and
-  Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\".
-  depth must be >= 0."
-  [inverse-f depth initial-pt]
-  (letfn [(calc-pts [d z]
-            (if (<= d 0)
-              nil
-              (let [zs (inverse-f z)]
-                (doall (concat zs
-                               (calc-pts (dec d) (first zs))
-                               (calc-pts (dec d) (second zs)))))))]
-    (calc-pts depth initial-pt)))
-
-;; This simple algorithm with partial is a little faster than an earlier
+;; This simple algorithm using partial is a little faster than an earlier
 ;; version julia-inverse-simple-alt that recurses using an internal function
 ;; without partial.
 (defn julia-inverse-simple
