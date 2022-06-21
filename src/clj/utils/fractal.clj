@@ -148,7 +148,7 @@
                 x-mins x-maxs))))
 
 ;; FIXME
-(defn yo-julia-inverse-simple
+(defn julia-inverse-simple-v1
   "Use iterations of the inverse of a quadratic function f to identify points
   in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255, and
   Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\"."
@@ -163,7 +163,7 @@
     (calc-pts depth initial-pt)))
 
 ;; FIXME
-(defn julia-inverse-simple
+(defn julia-inverse-simple-v2
   "Use iterations of the inverse of a quadratic function f to identify points
   in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255, and
   Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\"."
@@ -177,12 +177,26 @@
               nil))]
     (calc-pts depth initial-pt)))
 
+;; FIXME
+(defn julia-inverse-simple-v3
+  "Use iterations of the inverse of a quadratic function f to identify points
+  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255, and
+  Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\"."
+  [inverse-f depth initial-pt]
+  (letfn [(calc-pts [d z]
+            (let [zs (inverse-f z)]
+              (println d zs) ; DEBUG
+              (if (<= d 0)
+                zs
+                (concat (calc-pts (dec d) (first zs))
+                        (calc-pts (dec d) (second zs))))))]
+    (calc-pts depth initial-pt)))
 
 
 (comment
 
   (def circle (inv-quad-fn (c/complex 0 0)))
-  (def ps (julia-inverse-simple circle 5 (c/complex 1.0135 0)))
+  (def ps (julia-inverse-simple circle 5 (c/complex 1.0 0)))
 
 )
 
