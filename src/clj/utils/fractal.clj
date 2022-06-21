@@ -109,8 +109,8 @@
   containg the positive and negative values of the square root."
   [c]
   (fn [z] 
-    (let [posroot (c/sqrt (c/sub z c))]
-      [posroot (c/neg posroot)])))
+    (let [posval (c/sqrt (c/sub z c))]
+      [posval (c/neg posval)])))
 
 (defn doesnt-escape?
   [max-iters esc-bound f init-z]
@@ -134,78 +134,10 @@
     z))
 
 
-;; FIXME Draft.  probably wrong.
-(defmacro p-filled-julia-v1
-  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
-  (let [x-subrange (/ (- x-max x-min) n-threads)
-        x-mins (range x-min x-max x-subrange)
-        x-maxs (conj (vec (rest x-mins)) x-max)
-        filled-julia-forms# (map (fn [xmn xmx]
-                                   ;(list 'filled-julia xmn xmx c-min c-max step max-iters esc-bound f))
-                                   `(filled-julia xmn xmx c-min c-max step max-iters esc-bound f))
-                                 x-mins x-maxs)]
-    `(into [] cat (pvalues @filled-julia-forms#)))) ; cat concatenates.  This realizes the for's.
-
-
-;; FIXME Draft.  probably wrong.
-(defmacro p-filled-julia-v2
-  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
-  `(let [x-subrange# (/ (- x-max x-min) n-threads)
-        x-mins# (range x-min x-max x-subrange#)
-        x-maxs# (conj (vec (rest x-mins#)) x-max)
-        filled-julia-forms# (map (fn [xmn# xmx#]
-                                   (list 'filled-julia xmn# xmx# c-min c-max step max-iters esc-bound f))
-                                   ;(filled-julia xmn# xmx# c-min c-max step max-iters esc-bound f))
-                                 x-mins# x-maxs#)]
-    (into [] cat (pvalues @'filled-julia-forms#))
-    ;(into [] cat (pvalues @(construct-filled-julia-forms 
-    ;                          n-threads x-min x-max c-min c-max step max-iters esc-bound f)))
-    ;nil
-    )) ; cat concatenates.  This realizes the for's.
-
-
-(defn construct-filled-julia-forms
-  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
-  (let [x-subrange (/ (- x-max x-min) n-threads)
-        x-mins (range x-min x-max x-subrange)
-        x-maxs (conj (vec (rest x-mins)) x-max)]
-    (map (fn [xmn# xmx#]
-           `(filled-julia xmn# xmx# c-min c-max step max-iters esc-bound f))
-         x-mins x-maxs)))
-
-;; FIXME Draft.  probably wrong.
-(defmacro p-filled-julia-v3
-  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
-  `(into [] cat (pvalues @(construct-filled-julia-forms 
-                             n-threads x-min x-max c-min c-max step max-iters esc-bound f))))
-
-
-;; FIXME Draft.  probably wrong.
-(defmacro p-filled-julia-v4
-  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
-  (concat '[into [] cat]
-          (cons 'pvalues (construct-filled-julia-forms 
-                           n-threads x-min x-max c-min c-max step max-iters esc-bound f))))
-
-;; FIXME Draft.  probably wrong.
-(defmacro p-filled-julia-v5
-  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
-  `(into [] cat (pvalues @(construct-filled-julia-forms 
-                             'n-threads 'x-min 'x-max 'c-min 'c-max 'step 'max-iters 'esc-bound 'f))))
-
-;; FIXME Draft.  probably wrong.
-(defn p-filled-julia-v6
-  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
-  (let [x-subrange (/ (- x-max x-min) n-threads)
-        x-mins (range x-min x-max x-subrange)
-        x-maxs (conj (vec (rest x-mins)) x-max)]
-    (into [] cat
-          (apply pcalls
-                 (map (fn [xmn xmx]
-                        #(filled-julia xmn xmx c-min c-max step max-iters esc-bound f))
-                      x-mins x-maxs)))))
-
+;; DOESN'T SEEM TO IMPROVE SPEED
 (defn p-filled-julia
+  "Perform calculation similar to filled-julia (q.v.), but try to calculate
+  in parallel in n-threads threads."
   [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
   (let [x-subrange (/ (- x-max x-min) n-threads)
         x-mins (range x-min x-max x-subrange)
@@ -215,41 +147,45 @@
                   (filled-julia xmn xmx c-min c-max step max-iters esc-bound f))
                 x-mins x-maxs))))
 
+;; FIXME
+(defn yo-julia-inverse-simple
+  "Use iterations of the inverse of a quadratic function f to identify points
+  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255, and
+  Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\"."
+  [inverse-f depth initial-pt]
+  (letfn [(calc-pts [d z]
+                (if (pos? d)
+                  (let [[z0 z1] (inverse-f z)]
+                    (println [z0 z1]) ; DEBUG
+                    (concat (calc-pts (dec d) z0)
+                            (calc-pts (dec d) z1)))
+                  z))]
+    (calc-pts depth initial-pt)))
+
+;; FIXME
+(defn julia-inverse-simple
+  "Use iterations of the inverse of a quadratic function f to identify points
+  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255, and
+  Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\"."
+  [inverse-f depth initial-pt]
+  (letfn [(calc-pts [d z]
+            (let [[z0 z1] (inverse-f z)]
+              (println [z0 z1]) ; DEBUG
+              (if (pos? d)
+                (concat (calc-pts (dec d) z0)
+                        (calc-pts (dec d) z1)))
+              nil))]
+    (calc-pts depth initial-pt)))
+
+
 
 (comment
-  (def a -2) (def b 2) (def c -1) (def d 1)
-  (def f1 (quad-fn (c/complex 0.0 0.066)))
 
-  (clojure.pprint/pprint
-   (construct-filled-julia-forms 4
-                                 a
-                                 b
-                                 c
-                                 d
-                                 0.01 10 2 f1))
+  (def circle (inv-quad-fn (c/complex 0 0)))
+  (def ps (julia-inverse-simple circle 5 (c/complex 1.0135 0)))
 
-  (clojure.pprint/pprint (macroexpand-1 
-                          '(p-filled-julia 4
-                                           -2
-                                           2
-                                           -1
-                                           1
-                                           0.01 10 2 f1)))
-
-  (clojure.pprint/pprint (macroexpand-1 
-                          '(p-filled-julia 4
-                                           a
-                                           b
-                                           c
-                                           d
-                                           0.01 10 2 f1)))
 )
 
-(comment
-  (def yo (p-filled-julia 2 -2 2 -1 1 0.01 10 2 f1))
-  (macroexpand-1 '(p-filled-julia 4 -2 2 -1 1 0.01 10 2 f))
-  (macroexpand-1 '(defn yo [x] (* x x)))
-)
 
 (defn complex-to-vecs
   "Convenience function convert a collection of fastmath.complex numbers
@@ -266,8 +202,6 @@
   (println "DEPRECATED")
   (map v/vec->Vec
        (filled-julia x-min x-max c-min c-max step max-iters esc-bound f)))
-
-
 
 
 (comment
@@ -315,66 +249,6 @@
 
 )
 
-
-;; TODO UNIMPLEMENTED
-(defn julia-inverse
-  "Use iterations of the inverse of a quadratic function f to identify points
-  in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed, p. 255."
-  [initial-val inverse-f]
-  (println "UNIMPLEMENTED"))
-
-;; view-source:https://marksmath.org/visualization/julia_sets/JuliaSetApp.js:
-;;
-;; // Draw the Julia set using an inverse iteration algorithm
-;; function draw_inverse_iterates(c, draw_canvas) {
-;; 	"use strict";
-;; 	var bailout = 10;
-;; 	var draw_context = draw_canvas.getContext("2d");
-;; 	var plot_record = new Array(draw_canvas.height);
-;; 	for(var cnt=0; cnt<draw_canvas.height; cnt++) {
-;; 		plot_record[cnt] = new Array(draw_canvas.width);
-;; 	}
-;; 	for(var row = 0; row < draw_canvas.height; row++) {
-;; 		for(var col = 0; col < draw_canvas.width; col++) { 
-;; 			plot_record[row][col] = 0;
-;; 		}
-;; 	}
-;; 	var z0 = math.complex(0.12,0.34);
-;; 	for(var cnt = 0; cnt<5; cnt++) {
-;; 		z0 = math.sqrt(math.add(z0,math.multiply(c,-1)));
-;; 		z0 = math.multiply(math.sqrt(math.add(z0,math.multiply(c,-1))),-1);
-;; 	}
-;; 	var zNode = new JuliaTreeNode(z0);
-;; 	var queue = [zNode];
-;; 	var cnt = 0;
-;; 	while(queue.length > 0) {
-;; 		zNode = queue.pop();
-;; 		var z = zNode.z;
-;; 		var ij = complex_to_canvas(z, -2,2, -2,2, draw_canvas);
-;; 		var i = ij[0];
-;; 		var j = ij[1];
-;; 		if(plot_record[i][j] < bailout) {
-;; 			draw_context.fillRect(i,j,1,1);
-;; 			var z1 = math.sqrt(math.add(z,math.multiply(c,-1)));
-;; 			var z2 = math.multiply(z1,-1);
-;; 			var left = new JuliaTreeNode(z1);
-;; 			var right = new JuliaTreeNode(z2);
-;; 			zNode.left = left;
-;; 			zNode.right = right;
-;; 			queue.push(left);
-;; 			queue.push(right);
-;; 			plot_record[i][j] = plot_record[i][j]+1;
-;; 		}
-;; 	}
-;; }
-;; 
-;; // The inverse iteration algorithm constructs the Julia set as a
-;; // binary tree with these types of nodes.
-;; function JuliaTreeNode(z /* , left, right */) {
-;; 	this.z = z || 0;
-;; 	this.left = "empty";
-;; 	this.right = "empty";
-;; }
 
 
 
