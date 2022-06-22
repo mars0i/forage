@@ -160,18 +160,23 @@
   [z] (c/complex (nt/floor (c/re z))
                  (nt/floor (c/im z))))
 
+;; Possibly rewrite using all reals, and recreate a complex at the end.
 (defn c-clip
+  "Like floor (for complex numbers), but floors to the nearest multiple
+  of a real number resolution, rather than the nearest integer.  If z is
+  not provided, returns a function of one argument."
   ([resolution z]
    (let [cres (c/complex resolution 0.0)]
      (-> z
-         (c/mult cres)   ; NOT RIGHT?
+         (c/div cres) ; multiply by the reciprocal of cres
          c-floor
-         (c/div cres))))
-  ([resolution] (fn [z] (c-clip resolution z)))) ; doesn't do what I want?
+         (c/mult cres)))) ; divide by the reciprocal
+  ([resolution] (fn [z] (c-clip resolution z)))) ; for use with into
 
 (comment
   (c-floor (c/complex 1.5 -3.6))
   (c-clip 0.25 (c/complex 21.571 -3.6))
+  ((c-clip 0.25) (c/complex 21.571 -3.6))
  )
 
 (defn clip-into-set
@@ -181,15 +186,15 @@
   Research_, v.7 (1998), no. 2, pp 22-28,
   https://marksmath.org/scholarship/Julia.pdf"
   [resolution zs]
-  (into #{} (c-clip resolution) zs)) ; doesn't work?
+  (into #{} (map (c-clip resolution)) zs))
 
-(clip-into-set 0.5 [(c/complex 1.5 1.6) (c/complex -1.5 0.8) (c/complex 0.2 -27)])
-
-
+(comment
+  (clip-into-set 1/3 [(c/complex 1.5 1.6) (c/complex -1.5 0.8) (c/complex 0.2 -27)])
+)
 
 
 ;; This simple algorithm using partial is a little faster than an earlier
-;; version julia-inverse-simple-alt that recurses using an internal function
+;; version, julia-inverse-simple-alt, that recursed using an internal function
 ;; without partial.
 (defn julia-inverse-simple
   "Use iterations of the inverse of a quadratic function f to identify
