@@ -1,7 +1,7 @@
 ;; Mathematical operations to create or manipulate fractal structures
 (ns utils.fractal
   (:require [clojure.math.numeric-tower :as nt :refer [floor]]
-            [clojure.set :as set]
+            [clojure.set :as s]
             [fastmath.complex :as c]
             [fastmath.vector :as v]))
 
@@ -211,6 +211,7 @@
                      (mapcat (partial julia-inverse-simple inverse-f (dec depth))
                              pair))))))
 
+
 (comment
   (def circle (inv-quad-fn (c/complex 0.2 -0.35)))
   (def f-1 (inv-quad-fn (c/complex 0.7 0.25)))
@@ -224,7 +225,14 @@
   (= psalt ps)
 )
 
-;; FIXME broken
+;; FIXME Broken - generates an error.
+;; FIXME The logic is wrong?: Shouldn't recursing on the second element
+;; check the set returned from the first element?  Otherwise, there
+;; can be duplication between them that's not removed until they
+;; both return.
+;; So ... what?  I should do depth-first and then bring all of the values
+;; back up and then use them in the second leaf node? And collect that and
+;; use it in the second leaf of the second leaf-parent?  And so on??
 ;; TODO Was I supposed to use the actual values or the floored values
 ;; for the recursion?
 (defn julia-inverse
@@ -233,24 +241,27 @@
   from points already collected.  More precisely, points are kept if they
   are still new after being floored to a multiple of gap.  This is
   based on the second algorithm in Mark McClure's
-  \"Inverse Iteration Algorithms for Julia Sets\".  
-  depth must be >=1."
+  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
+  of McClure's resolution.) depth must be >=1."
   [gap inverse-f depth z]
   (letfn [(inv-recur [curr-zs curr-depth curr-z]
-            (let [possibly-new-zs
-                  (clip-into-set gap 
-                                 (inverse-f curr-z))
-                  new-zs (set/difference possibly-new-zs curr-zs)
-                  zs (set/union new-zs curr-zs)]
+            (println curr-depth curr-z curr-zs) ; DEBUG
+            (let [possibly-new-zs (clip-into-set gap (inverse-f curr-z))
+                  _ (println "possibly-new-zs:" possibly-new-zs) ; DEBUG
+                  new-zs (s/difference possibly-new-zs curr-zs)
+                  _ (println "new-zs:" new-zs) ; DEBUG
+                  zs (s/union new-zs curr-zs)]
               (if (== depth 1)
                 new-zs
-                (apply set/union new-zs
-                       (map (partial inv-recur zs (dec depth)) new-zs)))))]
+                (apply s/union new-zs
+                       (doall (map (partial inv-recur zs (dec depth)) new-zs))))))]
     (seq (inv-recur #{} depth z))))
+
 
 (comment
   (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
   (def ps (time (julia-inverse 0.01 f-1 10 c/ZERO)))
+  (def ps (time (julia-inverse 0.01 f-1 4 c/ZERO)))
 )
 
 
