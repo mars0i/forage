@@ -1,6 +1,7 @@
 ;; Mathematical operations to create or manipulate fractal structures
 (ns utils.fractal
   (:require [clojure.math.numeric-tower :as nt :refer [floor]]
+            [clojure.set :as set]
             [fastmath.complex :as c]
             [fastmath.vector :as v]))
 
@@ -163,15 +164,15 @@
 ;; Possibly rewrite using all reals, and recreate a complex at the end.
 (defn c-clip
   "Like floor (for complex numbers), but floors to the nearest multiple
-  of a real number resolution, rather than the nearest integer.  If z is
+  of a real number gap, rather than the nearest integer.  If z is
   not provided, returns a function of one argument."
-  ([resolution z]
-   (let [cres (c/complex resolution 0.0)]
+  ([gap z]
+   (let [cres (c/complex gap 0.0)]
      (-> z
          (c/div cres) ; multiply by the reciprocal of cres
          c-floor
          (c/mult cres)))) ; divide by the reciprocal
-  ([resolution] (fn [z] (c-clip resolution z)))) ; for use with into
+  ([gap] (fn [z] (c-clip gap z)))) ; for use with into
 
 (comment
   (c-floor (c/complex 1.5 -3.6))
@@ -180,18 +181,18 @@
  )
 
 (defn clip-into-set
-  "Clips elements in zs to multiples of resolution, and returns the
+  "Clips elements in zs to multiples of gap, and returns the
   modified values as a set.  Inspired by \"Inverse iteration algorithms
   for Julia sets\", by Mark McClure,in _Mathematica in Education and
   Research_, v.7 (1998), no. 2, pp 22-28,
   https://marksmath.org/scholarship/Julia.pdf"
-  [resolution zs]
-  (into #{} (map (c-clip resolution)) zs))
+  [gap zs]
+  (into #{} (map (c-clip gap)) zs))
+  ;; or: (set (map (c-clip gap) zs))
 
 (comment
   (clip-into-set 1/3 [(c/complex 1.5 1.6) (c/complex -1.5 0.8) (c/complex 0.2 -27)])
 )
-
 
 ;; This simple algorithm using partial is a little faster than an earlier
 ;; version, julia-inverse-simple-alt, that recursed using an internal function
@@ -211,7 +212,6 @@
                              pair))))))
 
 (comment
-
   (def circle (inv-quad-fn (c/complex 0.2 -0.35)))
   (def f-1 (inv-quad-fn (c/complex 0.7 0.25)))
   (def ps (julia-inverse-simple circle 1 (c/complex 0.0 1.0)))
@@ -219,15 +219,38 @@
   (def ps (julia-inverse-simple circle 3 (c/complex 0.0 1.0)))
   (def ps (julia-inverse-simple circle 4 (c/complex 0.0 1.0)))
   (def ps (julia-inverse-simple circle 5 (c/complex 0.0 1.0)))
-
   (def ps (time (julia-inverse-simple f-1 23 (c/complex 0.0 0.0))))
   (def psalt (time (julia-inverse-simple-alt f-1 23 (c/complex 0.0 0.0))))
   (= psalt ps)
+)
 
-  (require '[clojure.math.numeric-tower :as nt])
+;; FIXME broken
+;; TODO Was I supposed to use the actual values or the floored values
+;; for the recursion?
+(defn julia-inverse
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, skipping points that within gap distance
+  from points already collected.  More precisely, points are kept if they
+  are still new after being floored to a multiple of gap.  This is
+  based on the second algorithm in Mark McClure's
+  \"Inverse Iteration Algorithms for Julia Sets\".  
+  depth must be >=1."
+  [gap inverse-f depth z]
+  (letfn [(inv-recur [curr-zs curr-depth curr-z]
+            (let [possibly-new-zs
+                  (clip-into-set gap 
+                                 (inverse-f curr-z))
+                  new-zs (set/difference possibly-new-zs curr-zs)
+                  zs (set/union new-zs curr-zs)]
+              (if (== depth 1)
+                new-zs
+                (apply set/union new-zs
+                       (map (partial inv-recur zs (dec depth)) new-zs)))))]
+    (seq (inv-recur #{} depth z))))
 
-  (nt/expt 2 11)
-
+(comment
+  (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
+  (def ps (time (julia-inverse 0.01 f-1 10 c/ZERO)))
 )
 
 
