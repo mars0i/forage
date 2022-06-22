@@ -1,6 +1,7 @@
 ;; Mathematical operations to create or manipulate fractal structures
 (ns utils.fractal
-  (:require [fastmath.complex :as c]
+  (:require [clojure.math.numeric-tower :as nt :refer [floor]]
+            [fastmath.complex :as c]
             [fastmath.vector :as v]))
 
 
@@ -148,6 +149,45 @@
     (let [posval (c/sqrt (c/sub z c))]
       [posval (c/neg posval)])))
 
+(defn c-floor
+  "Floor function for complex numbers based on Wolframe's Floor function:
+  Floors the real and imaginary parts separately.  See 
+  https://mathworld.wolfram.com/FloorFunction.html,
+  https://math.stackexchange.com/a/2095679/73467, 
+  \"Inverse iteration algorithms for Julia sets\", by Mark McClure, in
+  _Mathematica in Education and Research_, v.7 (1998), no. 2, pp 22-28,
+  https://marksmath.org/scholarship/Julia.pdf"
+  [z] (c/complex (nt/floor (c/re z))
+                 (nt/floor (c/im z))))
+
+(defn c-clip
+  ([resolution z]
+   (let [cres (c/complex resolution 0.0)]
+     (-> z
+         (c/mult cres)   ; NOT RIGHT?
+         c-floor
+         (c/div cres))))
+  ([resolution] (fn [z] (c-clip resolution z)))) ; doesn't do what I want?
+
+(comment
+  (c-floor (c/complex 1.5 -3.6))
+  (c-clip 0.25 (c/complex 21.571 -3.6))
+ )
+
+(defn clip-into-set
+  "Clips elements in zs to multiples of resolution, and returns the
+  modified values as a set.  Inspired by \"Inverse iteration algorithms
+  for Julia sets\", by Mark McClure,in _Mathematica in Education and
+  Research_, v.7 (1998), no. 2, pp 22-28,
+  https://marksmath.org/scholarship/Julia.pdf"
+  [resolution zs]
+  (into #{} (c-clip resolution) zs)) ; doesn't work?
+
+(clip-into-set 0.5 [(c/complex 1.5 1.6) (c/complex -1.5 0.8) (c/complex 0.2 -27)])
+
+
+
+
 ;; This simple algorithm using partial is a little faster than an earlier
 ;; version julia-inverse-simple-alt that recurses using an internal function
 ;; without partial.
@@ -161,9 +201,9 @@
     (if (== depth 1)
       pair
       (doall ; periodically make sure won't be tripped up by concat's laziness
-       (concat pair
-               (mapcat (partial julia-inverse-simple inverse-f (dec depth))
-                       pair)))))))
+             (concat pair
+                     (mapcat (partial julia-inverse-simple inverse-f (dec depth))
+                             pair))))))
 
 (comment
 
@@ -188,7 +228,9 @@
 
 (defn complex-to-vecs
   "Convenience function convert a collection of fastmath.complex numbers
-  to a sequence of Clojure vector pairs by calling vec->Vec."
+  to a sequence of Clojure vector pairs by calling vec->Vec.  (Not always
+  needed. Some contexts will treat complex numbers, i.e. Vec2's, as 
+  sequences.)"
   [cs]
   (map v/vec->Vec cs))
 
@@ -233,8 +275,10 @@
   (def zs (filled-julia-vecs -2 2 -2 2 0.001 10 2 f1))
   (count zs)
 
+  (def f1 (quad-fn (c/complex 0.0 0.68)))
   ;; Disconnected Julia set from pp. 253, 254 of Falconer's _Fractal Geometry_
   (def f1 (quad-fn (c/complex 0.0 0.66)))
+  (def zs (time (doall (-> (filled-julia -2 2 -1.5 1.5 0.001 10 5 f1) (complex-to-vecs)))))
   (def zs (time (doall (-> (p-filled-julia 8 -2 2 -1.5 1.5 0.001 10 5 f1) (complex-to-vecs)))))
   (count zs)
 
@@ -245,6 +289,8 @@
   (def julia-plot (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
   (oz/view! julia-plot)
   (time (oz/view! (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
+
+  (let [[x c] (c/complex 5 4)] [x c])
 
 )
 
