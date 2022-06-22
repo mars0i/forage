@@ -226,7 +226,7 @@
 )
 
 ;; FIXME Broken - generates an error.
-;; FIXME The logic is wrong?: Shouldn't recursing on the second element
+;; FIXME The logic is wrong??: Shouldn't recursing on the second element
 ;; check the set returned from the first element?  Otherwise, there
 ;; can be duplication between them that's not removed until they
 ;; both return.
@@ -245,23 +245,30 @@
   of McClure's resolution.) depth must be >=1."
   [gap inverse-f depth z]
   (letfn [(inv-recur [curr-zs curr-depth curr-z]
-            (println curr-depth curr-z curr-zs) ; DEBUG
-            (let [possibly-new-zs (clip-into-set gap (inverse-f curr-z))
-                  _ (println "possibly-new-zs:" possibly-new-zs) ; DEBUG
-                  new-zs (s/difference possibly-new-zs curr-zs)
-                  _ (println "new-zs:" new-zs) ; DEBUG
-                  zs (s/union new-zs curr-zs)]
-              (if (== depth 1)
-                new-zs
-                (apply s/union new-zs
-                       (doall (map (partial inv-recur zs (dec depth)) new-zs))))))]
+            ;(println curr-depth curr-z curr-zs) ; DEBUG
+            (let [poss-new-vals (clip-into-set gap (inverse-f curr-z))
+                  ;_ (println "poss-new-vals:" poss-new-vals) ; DEBUG
+                  new-vals (s/difference poss-new-vals curr-zs)
+                  ;_ (println "new-vals:" new-vals) ; DEBUG
+                  zs (s/union new-vals curr-zs)]
+              ;(println) (flush) ; DEBUG
+              (if (== curr-depth 1)
+                (set new-vals)
+                (apply s/union new-vals
+                       (doall (map 
+                                (partial inv-recur zs (dec curr-depth))
+                                new-vals))))))]
     (seq (inv-recur #{} depth z))))
 
 
 (comment
   (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
-  (def ps (time (julia-inverse 0.01 f-1 10 c/ZERO)))
-  (def ps (time (julia-inverse 0.01 f-1 4 c/ZERO)))
+  (def zs (time (julia-inverse 0.01 f-1 2 c/ZERO)))
+  (def zs (time (julia-inverse 0.01 f-1 24 c/ZERO)))
+  (count zs)
+  (f-1 (c/complex 0.58 -0.59))
+  (f-1 (c/complex 0.99 -0.64))
+  (f-1 (c/complex -1.0 0.63))
 )
 
 
@@ -323,10 +330,12 @@
 
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
+  (def zs ps)
   (def vl-zs (doall (h/add-point-labels "Julia set" zs)))
   (def julia-plot (time (h/vega-food-plot vl-zs 500 800 1)))
   (def julia-plot (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
   (oz/view! julia-plot)
+  (time (oz/view! (h/vega-food-plot (h/add-point-labels "Julia set" zs) 500 800 1)))
   (time (oz/view! (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
 
   (let [[x c] (c/complex 5 4)] [x c])
@@ -338,7 +347,7 @@
 
 ;; TODO UNIMPLEMENTED
 (defn julia-corners
-  "Algorithm for approximating a (non-filled Julia set sketched in Falconer's
-  _Fractal Geometry_, 3d ed, pp. 255f."
+  "Algorithm for approximating a (non-filled) Julia set, sketched in 
+  Falconer's _Fractal Geometry_, 3d ed, pp. 255f."
   [x-min x-max c-min c-max max-iters f]
   (println "UNIMPLEMENTED"))
