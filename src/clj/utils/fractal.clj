@@ -211,7 +211,6 @@
                      (mapcat (partial julia-inverse-simple inverse-f (dec depth))
                              pair))))))
 
-
 (comment
   (def circle (inv-quad-fn (c/complex 0.2 -0.35)))
   (def f-1 (inv-quad-fn (c/complex 0.7 0.25)))
@@ -225,16 +224,12 @@
   (= psalt ps)
 )
 
-;; FIXME Broken - generates an error.
-;; FIXME The logic is wrong??: Shouldn't recursing on the second element
+;; TODO Is the the logic optimal? Shouldn't recursing on the second element
 ;; check the set returned from the first element?  Otherwise, there
 ;; can be duplication between them that's not removed until they
 ;; both return.
-;; So ... what?  I should do depth-first and then bring all of the values
-;; back up and then use them in the second leaf node? And collect that and
-;; use it in the second leaf of the second leaf-parent?  And so on??
-;; TODO Was I supposed to use the actual values or the floored values
-;; for the recursion?
+;; TODO Should I use the actual values or the floored values
+;; for the recursion?  (Using the latter initially.) How much does it matter?
 (defn julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
@@ -245,15 +240,12 @@
   of McClure's resolution.) depth must be >=1."
   [gap inverse-f depth z]
   (letfn [(inv-recur [curr-zs curr-depth curr-z]
-            ;(println curr-depth curr-z curr-zs) ; DEBUG
             (let [poss-new-vals (clip-into-set gap (inverse-f curr-z))
-                  ;_ (println "poss-new-vals:" poss-new-vals) ; DEBUG
                   new-vals (s/difference poss-new-vals curr-zs)
-                  ;_ (println "new-vals:" new-vals) ; DEBUG
                   zs (s/union new-vals curr-zs)]
-              ;(println) (flush) ; DEBUG
+              ;(print [curr-depth (count zs)])(flush) ; DEBUG
               (if (== curr-depth 1)
-                (set new-vals)
+                (set new-vals)  ; i.e. make a set out of it (this doesn't set anything)
                 (apply s/union new-vals
                        (doall (map 
                                 (partial inv-recur zs (dec curr-depth))
