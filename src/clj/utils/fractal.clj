@@ -184,9 +184,6 @@
   (clip-into-set 1/3 [(c/complex 1.5 1.6) (c/complex -1.5 0.8) (c/complex 0.2 -27)])
 )
 
-;; This simple algorithm using partial is a little faster than an earlier
-;; version, julia-inverse-simple-alt, that recursed using an internal function
-;; without partial.
 (defn julia-inverse-simple
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed,
@@ -214,86 +211,7 @@
   (= psalt ps)
 )
 
-;; TODO Is the the logic optimal? Shouldn't recursing on the second element
-;; check the set returned from the first element?  Otherwise, there
-;; can be duplication between them that's not removed until they
-;; both return.
-;; TODO Should I use the actual values or the floored values
-;; for the recursion?  (Using the latter initially.) How much does it matter?
-;; 
-;; How it works:
-;; zs is used only to store points kept so far.
-;; The ultimate result is constructed by unioning all of the new-vals
-;; that are still left.  This means that the recursion will sometimes only
-;; go to one or no branches.
-;; Question: Why do I union all of the resulting new-vals, when I am
-;; already keeping the points found?
-(defn julia-inverse-old
-  "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within gap distance
-  from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of gap.  This is
-  based on the second algorithm in Mark McClure's
-  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
-  of McClure's resolution.) depth must be >=1."
-  [gap inverse-f depth z]
-  (letfn [(inv-recur [curr-zs curr-depth curr-z]
-            (let [poss-new-vals (clip-into-set gap (inverse-f curr-z))
-                  new-vals (s/difference poss-new-vals curr-zs)
-                  zs (s/union new-vals curr-zs)]
-              (if (== curr-depth 1)
-                new-vals
-                (apply s/union new-vals ; why? aren't they already in zs? seems to matter though
-                       (map (partial inv-recur zs (dec curr-depth))
-                                   new-vals)))))]
-    (seq (inv-recur #{} depth z))))
-
-;; Semi-imperative version. Fast, easier to understand than my functional versions.
-;; TODO Should I use the actual values or the floored values
-;; for the recursion?  (Using the latter initially.) How much does it matter?
 (defn julia-inverse
-  "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within gap distance
-  from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of gap.  This is
-  based on the second algorithm in Mark McClure's
-  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
-  of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
-  fastmath.complex (Vec2) points (which often will automatically be
-  converted to Clojure seq pairs)."
-  [gap inverse-f depth z]
-  (let [curr-zs$ (atom #{})]
-    (letfn [(inv-recur [curr-depth curr-z]
-              (let [poss-new-vals (clip-into-set gap (inverse-f curr-z))
-                    new-vals (s/difference poss-new-vals @curr-zs$)]
-                (swap! curr-zs$ s/union new-vals)
-                (when (> curr-depth 1)
-                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
-      (inv-recur depth z))
-    @curr-zs$))
-
-(defn julia-inverse3
-  "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within gap distance
-  from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of gap.  This is
-  based on the second algorithm in Mark McClure's
-  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
-  of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
-  fastmath.complex (Vec2) points (which often will automatically be
-  converted to Clojure seq pairs)."
-  [gap inverse-f depth z]
-  (let [curr-zs$ (atom #{})]
-    (letfn [(inv-recur [curr-depth curr-z]
-              (let [new-vals (s/difference (clip-into-set gap (inverse-f curr-z))
-                                           @curr-zs$)]
-                (swap! curr-zs$ s/union new-vals)
-                (when (> curr-depth 1)
-                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
-      (inv-recur depth z))
-    @curr-zs$))
-
-(defn julia-inverse4
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
   from points already collected.  More precisely, points are kept if they
