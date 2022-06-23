@@ -230,6 +230,14 @@
 ;; both return.
 ;; TODO Should I use the actual values or the floored values
 ;; for the recursion?  (Using the latter initially.) How much does it matter?
+;; 
+;; How it works:
+;; zs is used only to store points kept so far.
+;; The ultimate result is constructed by unioning all of the new-vals
+;; that are still left.  This means that the recursion will sometimes only
+;; go to one or no branches.
+;; Question: Why do I union all of the resulting new-vals, when I am
+;; already keeping the points found?
 (defn julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
@@ -246,10 +254,33 @@
               (if (== curr-depth 1)
                 new-vals
                 (apply s/union new-vals ; why? aren't they already in zs? seems to matter though
-                       (doall (map  ; replacing with pmap quickly fails ("unable to create new native thread")
-                                (partial inv-recur zs (dec curr-depth))
-                                new-vals))))))]
+                       (map (partial inv-recur zs (dec curr-depth))
+                                   new-vals)))))]
     (seq (inv-recur #{} depth z))))
+
+;; Semi-imperative version.
+;; Very fast.  Seems to work--the plot looks OK--but there are fewer points,
+;; as if it's aborting sooner or not including some points.
+;; It's good--I can just add more depth--but I would like to understand why
+;; this one returns different points from the one above.
+(defn julia-inverse2
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, skipping points that within gap distance
+  from points already collected.  More precisely, points are kept if they
+  are still new after being floored to a multiple of gap.  This is
+  based on the second algorithm in Mark McClure's
+  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
+  of McClure's resolution.) depth must be >=1."
+  [gap inverse-f depth z]
+  (let [curr-zs$ (atom #{})]
+    (letfn [(inv-recur [curr-depth curr-z]
+              (let [poss-new-vals (clip-into-set gap (inverse-f curr-z))
+                    new-vals (s/difference poss-new-vals @curr-zs$)]
+                (swap! curr-zs$ s/union new-vals)
+                (when (> curr-depth 1)
+                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
+      (inv-recur depth z))
+    @curr-zs$))
 
 (comment
   (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
