@@ -247,29 +247,7 @@
               (if (== curr-depth 1)
                 (set new-vals)  ; i.e. make a set out of it (this doesn't set anything)
                 (apply s/union new-vals
-                       (doall (map 
-                                (partial inv-recur zs (dec curr-depth))
-                                new-vals))))))]
-    (seq (inv-recur #{} depth z))))
-
-(defn p-julia-inverse
-  "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within gap distance
-  from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of gap.  This is
-  based on the second algorithm in Mark McClure's
-  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
-  of McClure's resolution.) depth must be >=1."
-  [gap inverse-f depth z]
-  (letfn [(inv-recur [curr-zs curr-depth curr-z]
-            (let [poss-new-vals (clip-into-set gap (inverse-f curr-z))
-                  new-vals (s/difference poss-new-vals curr-zs)
-                  zs (s/union new-vals curr-zs)]
-              ;(print [curr-depth (count zs)])(flush) ; DEBUG
-              (if (== curr-depth 1)
-                (set new-vals)  ; i.e. make a set out of it (this doesn't set anything)
-                (apply s/union new-vals
-                       (doall (pmap 
+                       (doall (map  ; replacing with pmap quickly fails ("unable to create new native thread")
                                 (partial inv-recur zs (dec curr-depth))
                                 new-vals))))))]
     (seq (inv-recur #{} depth z))))
