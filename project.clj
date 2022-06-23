@@ -22,6 +22,7 @@
 
   :source-paths ["src/clj"]
 
+  ;; TIP:
   ;; Use (into [] (.getInputArguments (java.lang.management.ManagementFactory/getRuntimeMXBean)))
   ;; to check JVM params.
 
@@ -39,11 +40,22 @@
                                forage.mason.GUI
                                forage.mason.core]}
 
+	     ;; -Xss specifies per-thread max stack size.  If you set it too 
+             ;; small (< 144K) or too large (> 1G), java won't run.
+
 ;; Usage tip: lein with-profile +production
              :production {;:dependencies [[generateme/fastmath "2.1.8"]
                           :jvm-opts ["-Xms4g"  ; initial heap
                                      "-Xmx18g" ; max heap
+                                     "-Xss1g"  ; max per-thread stack size (s/b smaller?)
                                      "-XX:TieredStopAtLevel=4"]} ; 3X improvement
+
+             ;; For use with my MBA:
+             :smallproduction {;:dependencies [[generateme/fastmath "2.1.8"]
+                                :jvm-opts ["-Xms4g" ; initial heap
+                                           "-Xmx8g" ; max heap
+                                           "-Xss1g" ; max per-thread stack size (s/b smaller?)
+                                           "-XX:TieredStopAtLevel=4"]} ; 3X improvement
 
              ;; Usage tip: lein with-profile +production,profiling
              :profiling  {:dependencies [;[generateme/fastmath "2.1.8"]
@@ -59,6 +71,9 @@
                                         [org.scicloj/kindly "1-alpha3"]]
                          :repl-options {:nrepl-middleware [scicloj.notespace.v4.nrepl/middleware]}}}
 
+)
+
+
 ;:repl-options {:init-ns forage.core}
   ;:global-vars {*warn-on-reflection* true}
   ;:aot [forage.Sim forage.GUI]
@@ -69,4 +84,3 @@
   ;;    lein localrepo install <jarfilename> <libname> <version num>'
   ;:plugins [[lein-localrepo "0.5.3"]
   ;          [lein-expand-resource-paths "0.0.1"]] ; allows wildcards in resource-paths (https://github.com/dchelimsky/lein-expand-resource-paths)
-  )
