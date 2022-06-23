@@ -243,10 +243,9 @@
             (let [poss-new-vals (clip-into-set gap (inverse-f curr-z))
                   new-vals (s/difference poss-new-vals curr-zs)
                   zs (s/union new-vals curr-zs)]
-              ;(print [curr-depth (count zs)])(flush) ; DEBUG
               (if (== curr-depth 1)
-                (set new-vals)  ; i.e. make a set out of it (this doesn't set anything)
-                (apply s/union new-vals
+                new-vals
+                (apply s/union new-vals ; why? aren't they already in zs? seems to matter though
                        (doall (map  ; replacing with pmap quickly fails ("unable to create new native thread")
                                 (partial inv-recur zs (dec curr-depth))
                                 new-vals))))))]
@@ -261,7 +260,6 @@
   (f-1 (c/complex 0.99 -0.64))
   (f-1 (c/complex -1.0 0.63))
 )
-
 
 (defn complex-to-vecs
   "Convenience function convert a collection of fastmath.complex numbers
