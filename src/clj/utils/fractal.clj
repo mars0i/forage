@@ -112,6 +112,10 @@
           :else (recur (inc i) (f z)))))
 
 
+;; This is fine for connected Julia sets, although you get a filled
+;; Julia set, which might not be what you want.  For disconnected
+;; Julia sets, it sometimes works, but sometimes you get a solid 
+;; blob, as if it was a connected Julia set.
 (defn filled-julia
   "Find all points in the box from [x-min, c-min] to [x-max, x-max] at
   increments of size step that approximate the filled Julia set of f, by
@@ -119,26 +123,12 @@
   to max-iters times doesn't exceed esc-bound.  Returns a collection of
   fastmath.complex Vec2 pairs."
   [x-min x-max c-min c-max step max-iters esc-bound f]
-  (for [x (range x-min x-max step)
-        c (range c-min c-max step)
-        :let [z (c/complex x c)]
-        :when (doesnt-escape? max-iters esc-bound f z)]
-    z))
-
-
-;; DOESN'T SEEM TO IMPROVE SPEED
-(defn p-filled-julia
-  "Perform calculation similar to filled-julia (q.v.), but try to calculate
-  in parallel in n-threads threads."
-  [n-threads x-min x-max c-min c-max step max-iters esc-bound f]
-  (let [x-subrange (/ (- x-max x-min) n-threads)
-        x-mins (range x-min x-max x-subrange)
-        x-maxs (conj (vec (rest x-mins)) x-max)]
-    (into [] cat
-          (pmap (fn [xmn xmx]
-                  (filled-julia xmn xmx c-min c-max step max-iters esc-bound f))
-                x-mins x-maxs))))
-
+  (doall
+   (for [x (range x-min x-max step)
+         c (range c-min c-max step)
+         :let [z (c/complex x c)]
+         :when (doesnt-escape? max-iters esc-bound f z)]
+     z)))
 
 (defn inv-quad-fn
   "Returns an implementation of the inverse of the quadratic function
@@ -238,7 +228,7 @@
 ;; go to one or no branches.
 ;; Question: Why do I union all of the resulting new-vals, when I am
 ;; already keeping the points found?
-(defn julia-inverse
+(defn julia-inverse-old
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
   from points already collected.  More precisely, points are kept if they
@@ -258,19 +248,19 @@
                                    new-vals)))))]
     (seq (inv-recur #{} depth z))))
 
-;; Semi-imperative version.
-;; Very fast.  Seems to work--the plot looks OK--but there are fewer points,
-;; as if it's aborting sooner or not including some points.
-;; It's good--I can just add more depth--but I would like to understand why
-;; this one returns different points from the one above.
-(defn julia-inverse2
+;; Semi-imperative version. Fast, easier to understand than my functional versions.
+;; TODO Should I use the actual values or the floored values
+;; for the recursion?  (Using the latter initially.) How much does it matter?
+(defn julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
   from points already collected.  More precisely, points are kept if they
   are still new after being floored to a multiple of gap.  This is
   based on the second algorithm in Mark McClure's
   \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
-  of McClure's resolution.) depth must be >=1."
+  of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
+  fastmath.complex (Vec2) points (which often will automatically be
+  converted to Clojure seq pairs)."
   [gap inverse-f depth z]
   (let [curr-zs$ (atom #{})]
     (letfn [(inv-recur [curr-depth curr-z]
@@ -282,10 +272,52 @@
       (inv-recur depth z))
     @curr-zs$))
 
+(defn julia-inverse3
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, skipping points that within gap distance
+  from points already collected.  More precisely, points are kept if they
+  are still new after being floored to a multiple of gap.  This is
+  based on the second algorithm in Mark McClure's
+  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
+  of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
+  fastmath.complex (Vec2) points (which often will automatically be
+  converted to Clojure seq pairs)."
+  [gap inverse-f depth z]
+  (let [curr-zs$ (atom #{})]
+    (letfn [(inv-recur [curr-depth curr-z]
+              (let [new-vals (s/difference (clip-into-set gap (inverse-f curr-z))
+                                           @curr-zs$)]
+                (swap! curr-zs$ s/union new-vals)
+                (when (> curr-depth 1)
+                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
+      (inv-recur depth z))
+    @curr-zs$))
+
+(defn julia-inverse4
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, skipping points that within gap distance
+  from points already collected.  More precisely, points are kept if they
+  are still new after being floored to a multiple of gap.  This is
+  based on the second algorithm in Mark McClure's
+  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
+  of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
+  fastmath.complex (Vec2) points (which often will automatically be
+  converted to Clojure seq pairs)."
+  [gap inverse-f depth z]
+  (let [curr-zs$ (atom #{})]
+    (letfn [(inv-recur [curr-depth curr-z]
+              (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
+                                 (s/difference @curr-zs$))]
+                (swap! curr-zs$ s/union new-vals)
+                (when (> curr-depth 1)
+                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
+      (inv-recur depth z))
+    @curr-zs$))
+
 (comment
   (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
   (def zs (time (julia-inverse 0.01 f-1 2 c/ZERO)))
-  (def zs (time (julia-inverse 0.01 f-1 24 c/ZERO)))
+  (def zs (time (julia-inverse 0.001 f-1 1000 c/ZERO)))
   (count zs)
   (f-1 (c/complex 0.58 -0.59))
   (f-1 (c/complex 0.99 -0.64))
