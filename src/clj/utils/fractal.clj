@@ -184,20 +184,6 @@
   (clip-into-set 1/3 [(c/complex 1.5 1.6) (c/complex -1.5 0.8) (c/complex 0.2 -27)])
 )
 
-(defn julia-inverse-simple
-  "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed,
-  p. 255, or Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\".
-  depth must be >=1."
-  [inverse-f depth z]
-  (let [pair (inverse-f z)]
-    (if (== depth 1)
-      pair
-      (doall ; periodically make sure won't be tripped up by concat's laziness
-             (concat pair
-                     (mapcat (partial julia-inverse-simple inverse-f (dec depth))
-                             pair))))))
-
 (comment
   (def circle (inv-quad-fn (c/complex 0.2 -0.35)))
   (def f-1 (inv-quad-fn (c/complex 0.7 0.25)))
@@ -237,10 +223,22 @@
   (def zs (time (julia-inverse 0.01 f-1 2 c/ZERO)))
   (def zs (time (julia-inverse 0.001 f-1 1000 c/ZERO)))
   (count zs)
-  (f-1 (c/complex 0.58 -0.59))
-  (f-1 (c/complex 0.99 -0.64))
-  (f-1 (c/complex -1.0 0.63))
 )
+
+(defn julia-inverse-simple
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed,
+  p. 255, or Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\".
+  depth must be >=1.  (Computes sum_i^n 2^i values.  julia-inverse is more
+  efficient.)"
+  [inverse-f depth z]
+  (let [pair (inverse-f z)]
+    (if (== depth 1)
+      pair
+      (doall ; periodically make sure won't be tripped up by concat's laziness
+             (concat pair
+                     (mapcat (partial julia-inverse-simple inverse-f (dec depth))
+                             pair))))))
 
 (defn complex-to-vecs
   "Convenience function convert a collection of fastmath.complex numbers
