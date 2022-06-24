@@ -227,6 +227,8 @@
       (inv-recur depth z))
     @curr-zs$))
 
+;; Version that attempts to preserver order which points were added
+;; to the set, so that the first ones cthey an be removed later.
 (defn new-julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
