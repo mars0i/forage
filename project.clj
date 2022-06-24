@@ -11,6 +11,7 @@
                  [org.apache.commons/commons-rng-client-api "1.4"]
                  [org.apache.commons/commons-rng-sampling "1.4"]
                  [generateme/fastmath "2.1.8"]
+                 [org.flatland/ordered "1.15.10"] ; for ordered-set
                  [aerial.hanami "0.17.0"]
                  [techascent/tech.viz "6.00-beta-16-2"]
                  [io.github.nextjournal/clerk "0.5.346"]
@@ -52,10 +53,10 @@
 
              ;; For use with my MBA:
              :smallproduction {;:dependencies [[generateme/fastmath "2.1.8"]
-                                :jvm-opts ["-Xms4g" ; initial heap
-                                           "-Xmx8g" ; max heap
-                                           "-Xss1g" ; max per-thread stack size (s/b smaller?)
-                                           "-XX:TieredStopAtLevel=4"]} ; 3X improvement
+                               :jvm-opts ["-Xms4g" ; initial heap
+                                          "-Xmx8g" ; max heap
+                                          "-Xss1g" ; max per-thread stack size (s/b smaller?)
+                                          "-XX:TieredStopAtLevel=4"]} ; 3X improvement
 
              ;; Usage tip: lein with-profile +production,profiling
              :profiling  {:dependencies [;[generateme/fastmath "2.1.8"]
@@ -69,9 +70,7 @@
              :notespace {:dependencies [[scicloj/notespace "4-alpha-21"]
                                         [org.scicloj/tempfiles "1-alpha2"]
                                         [org.scicloj/kindly "1-alpha3"]]
-                         :repl-options {:nrepl-middleware [scicloj.notespace.v4.nrepl/middleware]}}}
-
-)
+                         :repl-options {:nrepl-middleware [scicloj.notespace.v4.nrepl/middleware]}}})
 
 
 ;:repl-options {:init-ns forage.core}

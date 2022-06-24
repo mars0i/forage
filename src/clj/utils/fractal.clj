@@ -2,9 +2,16 @@
 (ns utils.fractal
   (:require [clojure.math.numeric-tower :as nt :refer [floor]]
             [clojure.set :as s]
+            [flatland.ordered.set :as os]
             [fastmath.complex :as c]
             [fastmath.vector :as v]))
 
+;; From the ordered-set docstring:
+;;
+;;    Note that clojure.set functions like union, intersection, and
+;;    difference can change the order of their input sets for efficiency
+;;    purposes, so may not return the order you expect given ordered sets
+;;    as input
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERAL-PURPOSE ITERATIVE FUNCTION SYSTEMS
@@ -184,20 +191,22 @@
   (clip-into-set 1/3 [(c/complex 1.5 1.6) (c/complex -1.5 0.8) (c/complex 0.2 -27)])
 )
 
+;; Useful with ordered-set, because clojure.set/union may reorder elements,
+;; and concat always returns a sequence, not a set.  ordered-set knows about
+;; conj, though.
+(defn multi-conj
+  "Successively conj each element of ys onto xs."
+  [xs ys]
+  (reduce (fn [newxs y] (conj newxs y))
+          xs ys))
+
 (comment
-  (def circle (inv-quad-fn (c/complex 0.2 -0.35)))
-  (def f-1 (inv-quad-fn (c/complex 0.7 0.25)))
-  (def ps (julia-inverse-simple circle 1 (c/complex 0.0 1.0)))
-  (def ps (julia-inverse-simple circle 2 (c/complex 0.0 1.0)))
-  (def ps (julia-inverse-simple circle 3 (c/complex 0.0 1.0)))
-  (def ps (julia-inverse-simple circle 4 (c/complex 0.0 1.0)))
-  (def ps (julia-inverse-simple circle 5 (c/complex 0.0 1.0)))
-  (def ps (time (julia-inverse-simple f-1 23 (c/complex 0.0 0.0))))
-  (def psalt (time (julia-inverse-simple-alt f-1 23 (c/complex 0.0 0.0))))
-  (= psalt ps)
+  (multi-conj [4 5 6] [3 2 4])
+  (multi-conj (os/ordered-set 4 5 6) [3 4 8])
+  (multi-conj (os/ordered-set 4 5 6) (os/ordered-set 4 3))
 )
 
-(defn julia-inverse
+(defn old-julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
   from points already collected.  More precisely, points are kept if they
@@ -213,6 +222,27 @@
               (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
                                  (s/difference @curr-zs$))]
                 (swap! curr-zs$ s/union new-vals)
+                (when (> curr-depth 1)
+                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
+      (inv-recur depth z))
+    @curr-zs$))
+
+(defn julia-inverse
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, skipping points that within gap distance
+  from points already collected.  More precisely, points are kept if they
+  are still new after being floored to a multiple of gap.  This is
+  based on the second algorithm in Mark McClure's
+  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
+  of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
+  fastmath.complex (Vec2) points (which often will automatically be
+  converted to Clojure seq pairs)."
+  [gap inverse-f depth z]
+  (let [curr-zs$ (atom (os/ordered-set))]
+    (letfn [(inv-recur [curr-depth curr-z]
+              (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
+                                 (s/difference @curr-zs$))]
+                (swap! curr-zs$ multi-conj new-vals)
                 (when (> curr-depth 1)
                   (run! (partial inv-recur (dec curr-depth)) new-vals))))]
       (inv-recur depth z))
@@ -302,9 +332,10 @@
   (def vl-zs (doall (h/add-point-labels "Julia set" zs)))
   (def julia-plot (time (h/vega-food-plot vl-zs 500 800 1)))
   (def julia-plot (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
+  (oz/start-server!)
   (oz/view! julia-plot)
-  (time (oz/view! (h/vega-food-plot (h/add-point-labels "Julia set" zs) 500 800 1)))
-  (time (oz/view! (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
+  (oz/view! (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 500 800 1)))
+  (oz/view! (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
 
   (let [[x c] (c/complex 5 4)] [x c])
 
