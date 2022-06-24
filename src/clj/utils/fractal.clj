@@ -217,6 +217,27 @@
   fastmath.complex (Vec2) points (which often will automatically be
   converted to Clojure seq pairs)."
   [gap inverse-f depth z]
+  (let [curr-zs$ (atom #{})]
+    (letfn [(inv-recur [curr-depth curr-z]
+              (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
+                                 (s/difference @curr-zs$))]
+                (swap! curr-zs$ s/union new-vals)
+                (when (> curr-depth 1)
+                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
+      (inv-recur depth z))
+    @curr-zs$))
+
+(defn new-julia-inverse
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, skipping points that within gap distance
+  from points already collected.  More precisely, points are kept if they
+  are still new after being floored to a multiple of gap.  This is
+  based on the second algorithm in Mark McClure's
+  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
+  of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
+  fastmath.complex (Vec2) points (which often will automatically be
+  converted to Clojure seq pairs)."
+  [gap inverse-f depth z]
   (let [curr-zs$ (atom (os/ordered-set))]
     (letfn [(inv-recur [curr-depth curr-z]
               (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
