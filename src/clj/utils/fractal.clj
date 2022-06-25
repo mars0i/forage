@@ -178,7 +178,7 @@
  )
 
 (defn clip-into-set
-  "Clips elements in zs to multiples of gap, and returns the
+  "Clips (floors) elements in zs to multiples of gap, and returns the
   modified values as a set.  Inspired by \"Inverse iteration algorithms
   for Julia sets\", by Mark McClure,in _Mathematica in Education and
   Research_, v.7 (1998), no. 2, pp 22-28,
@@ -206,6 +206,7 @@
   (multi-conj (os/ordered-set 4 5 6) (os/ordered-set 4 3))
 )
 
+;; It might be interesting to write this using clojure.core/tree-seq.
 (defn julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
@@ -217,15 +218,15 @@
   fastmath.complex (Vec2) points (which often will automatically be
   converted to Clojure seq pairs)."
   [gap inverse-f depth z]
-  (let [curr-zs$ (atom #{})]
+  (let [zs-set$ (atom #{})]
     (letfn [(inv-recur [curr-depth curr-z]
               (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
-                                 (s/difference @curr-zs$))]
-                (swap! curr-zs$ s/union new-vals)
+                                 (s/difference @zs-set$))]
+                (swap! zs-set$ s/union new-vals)
                 (when (> curr-depth 1)
                   (run! (partial inv-recur (dec curr-depth)) new-vals))))]
       (inv-recur depth z))
-    @curr-zs$))
+    @zs-set$))
 
 (comment
   (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
@@ -233,6 +234,27 @@
   (def zs (time (julia-inverse 0.001 f-1 1000 c/ZERO)))
   (count zs)
 )
+
+(defn julia-inverse-debug
+  "Version of julia-inverse that stores additional information.  julia-inverse
+  only stores recorded points in a set; this function also stores them in a
+  sequence, with new points conj'ed onto the end, and in a tree that reflects
+  the way that points are found by the recursive calls.  
+  NOTE: Make sure algorithm is up to date with julia-inverse before using!"
+  [gap inverse-f depth z]
+  (let [zs-set$ (atom #{})
+        zs-seq$ (atom [])  ; records complex numbers in order found
+        zs-set-seq$ (atom [])] ; records pairs/singletons/empty sets in order found
+    (letfn [(inv-recur [curr-depth curr-z]
+              (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
+                                 (s/difference @zs-set$))]
+                (swap! zs-set$ s/union new-vals)
+                (swap! zs-seq$ multi-conj new-vals)
+                (swap! zs-set-seq$ conj new-vals) ; #{a b} or #{a} or #{b} or #{}
+                (when (> curr-depth 1)
+                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
+      (inv-recur depth z))
+    [@zs-set$ @zs-seq$ @zs-set-seq$]))
 
 (defn julia-inverse-simple
   "Use iterations of the inverse of a quadratic function f to identify
@@ -307,12 +329,8 @@
 
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
-  (def zs ps)
   (def vl-zs (doall (h/add-point-labels "Julia set" zs)))
-  (def julia-plot (time (h/vega-food-plot vl-zs 500 800 1)))
-  (def julia-plot (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
   (oz/start-server!)
-  (oz/view! julia-plot)
   (oz/view! (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 500 800 1)))
   (oz/view! (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
 
