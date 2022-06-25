@@ -227,9 +227,31 @@
       (inv-recur depth z))
     @curr-zs$))
 
+(defn new-julia-inverse-2
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, skipping points that within gap distance
+  from points already collected.  More precisely, points are kept if they
+  are still new after being floored to a multiple of gap.  This is
+  based on the second algorithm in Mark McClure's
+  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
+  of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
+  fastmath.complex (Vec2) points (which often will automatically be
+  converted to Clojure seq pairs)."
+  [gap inverse-f init-z start-depth max-depth]
+  (let [curr-zs$ (atom #{})]
+    (letfn [(inv-recur [curr-depth curr-z]
+              (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
+                                 (s/difference @curr-zs$))]
+                (when (>= curr-depth start-depth)
+                  (swap! curr-zs$ s/union new-vals))
+                (when (< curr-depth max-depth)
+                  (run! (partial inv-recur (inc curr-depth)) new-vals))))]
+      (inv-recur 1 init-z))
+    @curr-zs$))
+
 ;; Version that attempts to preserver order which points were added
 ;; to the set, so that the first ones cthey an be removed later.
-(defn new-julia-inverse
+(defn new-julia-inverse-1
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
   from points already collected.  More precisely, points are kept if they
