@@ -251,13 +251,23 @@
                     [cv1 cv2 :as cvs] (mapv (partial c-clip gap) vs)
                     zs-set @zs-set$
                     new-clipped1 (zs-set cv1)
-                    new-clipped2 (zs-set cv2)]
-                ;; NOT RIGHT
-                (swap! zs-set$ s/union newclipped)
+                    new-clipped2 (zs-set cv2)
+                    new-vals (cond (and new-clipped1 new-clipped2) [v1 v2]
+                                   new-clipped1 [v1]
+                                   new-clipped2 [v2]
+                                   :else nil)
+                    ;; can't this be more efficient and succinct?
+                    new-clipped (cond (and new-clipped1 new-clipped2) #{new-clipped1
+                                                                        new-clipped2}
+                                   new-clipped1 #{new-clipped1}
+                                   new-clipped2 #{new-clipped2}
+                                   :else nil)]
+                (when new-clipped
+                  (swap! zs-set$ s/union new-clipped))
                 (when (> curr-depth 1)
-                  (run! (partial inv-recur (dec curr-depth)) clipped-vals))))]
+                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
       (inv-recur depth z))
-    @zs-set$))
+    @zs-set$)) ; or should I return the real thing?
 
 (defn julia-inverse-debug
   "Version of julia-inverse that stores additional information.  julia-inverse
