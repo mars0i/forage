@@ -206,6 +206,40 @@
   (multi-conj (os/ordered-set 4 5 6) (os/ordered-set 4 3))
 )
 
+(defn yo
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, skipping points that within gap distance
+  from points already collected.  More precisely, points are kept if they
+  are still new after being floored to a multiple of gap.  This is
+  based on the second algorithm in Mark McClure's
+  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
+  of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
+  fastmath.complex (Vec2) points (which often will automatically be
+  converted to Clojure seq pairs)."
+  [gap inverse-f depth z]
+  (let [curr-zs$ (atom #{})
+        yonotyet$ (atom true)]
+    (letfn [(inv-recur [curr-depth curr-z]
+              (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
+                                 (s/difference @curr-zs$))]
+                (swap! curr-zs$ s/union new-vals)
+                (when @yonotyet$
+                  (println new-vals)
+                  (let [nvs (seq new-vals)]
+                    (when (or (= c/ZERO (first nvs))
+                              (= c/ZERO (second nvs)))
+                      (reset! yonotyet$ false))))
+                (when (> curr-depth 1)
+                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
+      (inv-recur depth z))
+    @curr-zs$))
+
+;; FIXME Need to try recursing using actual, unclipped values, *but* identify
+;; the ones to recurse with using the clipped versions--and store *those*
+;; in the found-points set.  I think it's OK to plot those, but still, 
+;; recurse with the real ones. I think this might make a difference to
+;; those apparently spurious points.  Not sure.
+;; 
 ;; It might be interesting to write this using clojure.core/tree-seq.
 (defn julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
@@ -228,13 +262,6 @@
       (inv-recur depth z))
     @zs-set$))
 
-(comment
-  (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
-  (def zs (time (julia-inverse 0.01 f-1 2 c/ZERO)))
-  (def zs (time (julia-inverse 0.001 f-1 1000 c/ZERO)))
-  (count zs)
-)
-
 (defn julia-inverse-debug
   "Version of julia-inverse that stores additional information.  julia-inverse
   only stores recorded points in a set; this function also stores them in a
@@ -255,6 +282,13 @@
                   (run! (partial inv-recur (dec curr-depth)) new-vals))))]
       (inv-recur depth z))
     [@zs-set$ @zs-seq$ @zs-set-seq$]))
+
+(comment
+  (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
+  (def zs (time (julia-inverse 0.01 f-1 2 c/ZERO)))
+  (def zs (time (julia-inverse 0.001 f-1 1000 c/ZERO)))
+  (count zs)
+)
 
 (defn julia-inverse-simple
   "Use iterations of the inverse of a quadratic function f to identify
