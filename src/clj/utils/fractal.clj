@@ -250,8 +250,8 @@
               (let [[v1 v2 :as vs] (inverse-f curr-z)
                     [cv1 cv2 :as cvs] (mapv (partial c-clip gap) vs)
                     zs-set @zs-set$
-                    new-clipped1 (zs-set cv1)
-                    new-clipped2 (zs-set cv2)
+                    new-clipped1 (not (zs-set cv1))
+                    new-clipped2 (not (zs-set cv2))
                     new-vals (cond (and new-clipped1 new-clipped2) [v1 v2]
                                    new-clipped1 [v1]
                                    new-clipped2 [v2]
