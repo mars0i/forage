@@ -125,13 +125,18 @@
 
 ;; This is fine for connected Julia sets, although you get a filled
 ;; Julia set, which might not be what you want.  For disconnected
-;; Julia sets, it sometimes works, but sometimes you get a solid 
-;; blob, as if it was a connected Julia set.
+;; Julia sets, sometimes you get a solid blob, as if it was a connected 
+;; Julia set IF max-iters IS TOO SMALL.  This is because by that point,
+;; they points have not necessarily escaped the bound.  These parameters
+;; may need to be tuned for each quadratic function to avoid blobs or 
+;; night-sky style images.  (e.g. for 0.0+0.68i, they should be set e.g.
+;; to max-iters=60, esc-bound=10 will give you an OK representation of the
+;; actual Julia set with minimal blobs.)
 (defn filled-julia
   "Find all points in the box from [x-min, c-min] to [x-max, x-max] at
-  increments of size step that approximate the filled Julia set of f, by
-  finding those points such that results of iterating f on its output up
-  to max-iters times doesn't exceed esc-bound.  Returns a collection of
+  increments of size step that approximate the filled Julia set of f
+  Method: Find points such that results of iterating f on its output up
+  to max-iters times does not exceed esc-bound.  Returns a collection of
   fastmath.complex Vec2 pairs."
   [x-min x-max c-min c-max step max-iters esc-bound f]
   (doall
@@ -216,11 +221,12 @@
   points in f's Julia set, skipping points that within gap distance
   from points already collected.  More precisely, points are kept if they
   are still new after being floored to a multiple of gap.  This is
-  based on the second algorithm in Mark McClure's
-  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
-  of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
-  fastmath.complex (Vec2) points (which often will automatically be
-  converted to Clojure seq pairs)."
+  based on the second algorithm in Mark McClure's \"Inverse Iteration 
+  Algorithms for Julia Sets\".  (gap is the reciprocal of McClure's
+  resolution.) depth must be >=1.  Returns a Clojure set of fastmath.complex
+  (Vec2) points.  [NOTE internal computations iterate on non-clipped
+  doubles, but the set of returned values consists of the clipped values
+  that were used to identify nearby points.]"
   [gap inverse-f depth z]
   (let [zs-set_ (atom #{})]
     (letfn [(inv-recur [curr-depth curr-z]
@@ -284,7 +290,7 @@
       (inv-recur depth z))
     [@zs-set_ @zs-seq_ @zs-set-seq_]))
 
-(defn yo
+(defn yo-julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
   from points already collected.  More precisely, points are kept if they
@@ -311,13 +317,6 @@
                   (run! (partial inv-recur (dec curr-depth)) new-vals))))]
       (inv-recur depth z))
     @curr-zs_))
-
-(comment
-  (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
-  (def zs (time (julia-inverse 0.01 f-1 2 c/ZERO)))
-  (def zs (time (julia-inverse 0.001 f-1 1000 c/ZERO)))
-  (count zs)
-)
 
 (defn julia-inverse-simple
   "Use iterations of the inverse of a quadratic function f to identify
@@ -390,9 +389,13 @@
   (def zs (time (doall (-> (p-filled-julia 8 -2 2 -1.5 1.5 0.001 10 5 f1) (complex-to-vecs)))))
   (count zs)
 
+
+  (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
+  (def zs (time (julia-inverse 0.001 f-1 100000 c/ZERO)))
+  (count zs)
+
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
-  (def vl-zs (doall (h/add-point-labels "Julia set" zs)))
   (oz/start-server!)
   (oz/view! (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 500 800 1)))
   (oz/view! (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
