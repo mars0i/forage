@@ -6,6 +6,10 @@
             [fastmath.complex :as c]
             [fastmath.vector :as v]))
 
+;; Switched my earlier naming convention for atoms (final "$") to Peter Taoussanis's
+;; better known and equally good convention from taoensso.encore (final "_"):
+;; https://github.com/ptaoussanis/encore/blob/f2450b7a12712b7553bb61603e6e98ac75d4a34d/src/taoensso/encore.cljc#L19
+
 ;; From the ordered-set docstring:
 ;;
 ;;    Note that clojure.set functions like union, intersection, and
@@ -224,16 +228,19 @@
   fastmath.complex (Vec2) points (which often will automatically be
   converted to Clojure seq pairs)."
   [gap inverse-f depth z]
-  (let [zs-set$ (atom #{})]
+  (let [zs-set_ (atom #{})]
     (letfn [(inv-recur [curr-depth curr-z]
               (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
-                                 (s/difference @zs-set$))]
-                (swap! zs-set$ s/union new-vals)
+                                 (s/difference @zs-set_))]
+                (swap! zs-set_ s/union new-vals)
                 (when (> curr-depth 1)
-                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
+                  (run! (partial inv-recur (dec curr-depth)) new-vals))))] ; depth first
       (inv-recur depth z))
-    @zs-set$))
+    @zs-set_))
 
+;; Should I collect and return the precise values, not clipped?  Well, 
+;; I'm already throwing out a lot of precise values; why is the one that is
+;; retained special?  The clipped value is the average--the effective meaning.
 (defn new-julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
@@ -242,32 +249,24 @@
   based on the second algorithm in Mark McClure's
   \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
   of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
-  fastmath.complex (Vec2) points (which often will automatically be
-  converted to Clojure seq pairs)."
+  fastmath.complex (Vec2) clipped (i.e. floored) points."
   [gap inverse-f depth z]
-  (let [zs-set$ (atom #{})]
+  (let [zs-set_ (atom #{})]
     (letfn [(inv-recur [curr-depth curr-z]
-              (let [[v1 v2 :as vs] (inverse-f curr-z)
-                    [cv1 cv2 :as cvs] (mapv (partial c-clip gap) vs)
-                    zs-set @zs-set$
-                    new-clipped1 (not (zs-set cv1))
-                    new-clipped2 (not (zs-set cv2))
-                    new-vals (cond (and new-clipped1 new-clipped2) [v1 v2]
-                                   new-clipped1 [v1]
-                                   new-clipped2 [v2]
-                                   :else nil)
-                    ;; can't this be more efficient and succinct?
-                    new-clipped (cond (and new-clipped1 new-clipped2) #{new-clipped1
-                                                                        new-clipped2}
-                                   new-clipped1 #{new-clipped1}
-                                   new-clipped2 #{new-clipped2}
-                                   :else nil)]
-                (when new-clipped
-                  (swap! zs-set$ s/union new-clipped))
+              (let [zs-set @zs-set_
+                    [v1 v2] (inverse-f curr-z)
+                    cv1 (c-clip gap v1)
+                    cv2 (c-clip gap v2)
+                    v1-isnt-near (not (contains? zs-set cv1))
+                    v2-isnt-near (not (contains? zs-set cv2))]
+                  (swap! zs-set_ s/union [cv1 cv2]) ; partly redundant; conj individually iff v?-isnt-near ?
                 (when (> curr-depth 1)
-                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
+                  (when v1-isnt-near 
+                    (inv-recur (dec curr-depth) v1)) ; not worth avoiding recursion;
+                  (when v2-isnt-near                      ; unlikely to blow stack
+                    (inv-recur (dec curr-depth) v2)))))]
       (inv-recur depth z))
-    @zs-set$)) ; or should I return the real thing?
+    @zs-set_))
 
 (defn julia-inverse-debug
   "Version of julia-inverse that stores additional information.  julia-inverse
@@ -276,19 +275,19 @@
   the way that points are found by the recursive calls.  
   NOTE: Make sure algorithm is up to date with julia-inverse before using!"
   [gap inverse-f depth z]
-  (let [zs-set$ (atom #{})
-        zs-seq$ (atom [])  ; records complex numbers in order found
-        zs-set-seq$ (atom [])] ; records pairs/singletons/empty sets in order found
+  (let [zs-set_ (atom #{})
+        zs-seq_ (atom [])  ; records complex numbers in order found
+        zs-set-seq_ (atom [])] ; records pairs/singletons/empty sets in order found
     (letfn [(inv-recur [curr-depth curr-z]
               (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
-                                 (s/difference @zs-set$))]
-                (swap! zs-set$ s/union new-vals)
-                (swap! zs-seq$ multi-conj new-vals)
-                (swap! zs-set-seq$ conj new-vals) ; #{a b} or #{a} or #{b} or #{}
+                                 (s/difference @zs-set_))]
+                (swap! zs-set_ s/union new-vals)
+                (swap! zs-seq_ multi-conj new-vals)
+                (swap! zs-set-seq_ conj new-vals) ; #{a b} or #{a} or #{b} or #{}
                 (when (> curr-depth 1)
                   (run! (partial inv-recur (dec curr-depth)) new-vals))))]
       (inv-recur depth z))
-    [@zs-set$ @zs-seq$ @zs-set-seq$]))
+    [@zs-set_ @zs-seq_ @zs-set-seq_]))
 
 (defn yo
   "Use iterations of the inverse of a quadratic function f to identify
@@ -301,22 +300,22 @@
   fastmath.complex (Vec2) points (which often will automatically be
   converted to Clojure seq pairs)."
   [gap inverse-f depth z]
-  (let [curr-zs$ (atom #{})
-        yonotyet$ (atom true)]
+  (let [curr-zs_ (atom #{})
+        yonotyet_ (atom true)]
     (letfn [(inv-recur [curr-depth curr-z]
               (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
-                                 (s/difference @curr-zs$))]
-                (swap! curr-zs$ s/union new-vals)
-                (when @yonotyet$
+                                 (s/difference @curr-zs_))]
+                (swap! curr-zs_ s/union new-vals)
+                (when @yonotyet_
                   (println new-vals)
                   (let [nvs (seq new-vals)]
                     (when (or (= c/ZERO (first nvs))
                               (= c/ZERO (second nvs)))
-                      (reset! yonotyet$ false))))
+                      (reset! yonotyet_ false))))
                 (when (> curr-depth 1)
                   (run! (partial inv-recur (dec curr-depth)) new-vals))))]
       (inv-recur depth z))
-    @curr-zs$))
+    @curr-zs_))
 
 (comment
   (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
