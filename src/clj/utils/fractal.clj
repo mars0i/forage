@@ -259,7 +259,7 @@
                     cv2 (c-clip gap v2)
                     v1-isnt-near (not (contains? zs-set cv1))
                     v2-isnt-near (not (contains? zs-set cv2))]
-                  (swap! zs-set_ s/union [cv1 cv2]) ; partly redundant; conj individually iff v?-isnt-near ?
+                (swap! zs-set_ s/union #{cv1 cv2}) ; partly redundant; conj individually iff v?-isnt-near ?
                 (when (> curr-depth 1)
                   (when v1-isnt-near 
                     (inv-recur (dec curr-depth) v1)) ; not worth avoiding recursion;
