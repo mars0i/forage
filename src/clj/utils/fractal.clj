@@ -210,14 +210,8 @@
   (multi-conj (os/ordered-set 4 5 6) (os/ordered-set 4 3))
 )
 
-;; FIXME Need to try recursing using actual, unclipped values, *but* identify
-;; the ones to recurse with using the clipped versions--and store *those*
-;; in the found-points set.  I think it's OK to plot those, but still, 
-;; recurse with the real ones. I think this might make a difference to
-;; those apparently spurious points.  Not sure.
-;; 
 ;; It might be interesting to write this using clojure.core/tree-seq.
-(defn julia-inverse
+(defn old-julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
   from points already collected.  More precisely, points are kept if they
@@ -241,7 +235,8 @@
 ;; Should I collect and return the precise values, not clipped?  Well, 
 ;; I'm already throwing out a lot of precise values; why is the one that is
 ;; retained special?  The clipped value is the average--the effective meaning.
-(defn new-julia-inverse
+;; (It might be interesting to write this using clojure.core/tree-seq.)
+(defn julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within gap distance
   from points already collected.  More precisely, points are kept if they
