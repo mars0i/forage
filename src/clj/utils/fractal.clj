@@ -317,21 +317,6 @@
       (inv-recur depth init-z))
     @zs-map_))
 
-;; Doesn't work.  Harder to understand and debug than the imperative version.
-(defn bad-fnl-julia-inverse
-  [increment inverse-f depth init-z]
-  (letfn [(inv-recur [zs-map d z]
-            (if (= d 0)
-              zs-map
-              (let [[z+ z-] (inverse-f z)
-                    cz+ (c-round-to increment z+)
-                    cz- (c-round-to increment z-)]
-                (when-not (zs-map cz+)
-                  (let [zs-map' (inv-recur (assoc zs-map cz+ z+) (dec d) z+)]
-                    (when-not (zs-map' cz-)
-                      (inv-recur (assoc zs-map' cz- z-) (dec d) z-)))))))]
-    (inv-recur {} depth init-z)))
-
 (defn julia-inverse-simple
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed,
