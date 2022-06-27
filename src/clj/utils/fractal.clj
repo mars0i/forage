@@ -167,6 +167,17 @@
   [z] (c/complex (nt/floor (c/re z))
                  (nt/floor (c/im z))))
 
+(defn c-round
+  "Floor function for complex numbers based on Wolframe's Floor function:
+  Floors the real and imaginary parts separately.  See 
+  https://mathworld.wolfram.com/FloorFunction.html,
+  https://math.stackexchange.com/a/2095679/73467, 
+  \"Inverse iteration algorithms for Julia sets\", by Mark McClure, in
+  _Mathematica in Education and Research_, v.7 (1998), no. 2, pp 22-28,
+  https://marksmath.org/scholarship/Julia.pdf"
+  [z] (c/complex (nt/round (c/re z))
+                 (nt/round (c/im z))))
+
 ;; Possibly rewrite using all reals, and recreate a complex at the end.
 (defn c-clip
   "Like floor (for complex numbers), but floors to the nearest multiple
@@ -176,7 +187,7 @@
    (let [cres (c/complex gap 0.0)]
      (-> z
          (c/div cres) ; multiply by the reciprocal of cres
-         c-floor
+         c-round
          (c/mult cres)))) ; divide by the reciprocal
   ([gap] (fn [z] (c-clip gap z)))) ; for use with into
 
