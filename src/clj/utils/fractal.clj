@@ -286,12 +286,12 @@
 
 ;; THIS VERSION RECURSES ON THE UN-CLIPPED VALUES, RETURNING A MAP WITH 
 ;; CLIPPED VALUES AS KEYS AND UNCLIPPED ONES AS  VALUES.  Note that the
-;; unclipped values are just the ones that go there first, so in a sense
+;; unclipped values are just the ones that got there first, so in a sense
 ;; the clipped values have a better claim to being the *real* values to
 ;; be returned.  But by retaining the values actually used for the recursion,
-;; we keep around info about what the iteration was actually based on, rather
+;; we keep around info about what the iteration was actually based on rather
 ;; than discarding that information.  This may use up a little bit more memory,
-;; but it's not slower.  (It may even be a little faster.)
+;; but it's useful, and it's not slower.  (It may even be a little faster.)
 (defn julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within increment distance
