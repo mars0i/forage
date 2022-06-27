@@ -301,98 +301,36 @@
   be >=1.  Returns a Clojure map in which each key is one of the clipped
   points, whose value is the first, non-clipped value that caused the
   key/value pair to be added to the map."
-  [increment inverse-f depth z]
+  [increment inverse-f depth init-z]
   (let [zs-map_ (atom {})]  ; a recursive imperative algorithm
     (letfn [(inv-recur [curr-depth curr-z]
               (when (> curr-depth 0) ; otherwise nil--which won't be used
-                (let [[z1 z2] (inverse-f curr-z)
-                      cz1 (c-round-to increment z1)
-                      cz2 (c-round-to increment z2)
-                      zs-map @zs-map_
-                      z1-is-near (zs-map cz1)
-                      z2-is-near (zs-map cz2)]
-                  (when-not z1-is-near 
-                    (swap! zs-map_ assoc cz1 z1)
-                    (inv-recur (dec curr-depth) z1)) ; unlikely to blow stack 
-                  (when-not z2-is-near
-                    (swap! zs-map_ assoc cz2 z2)
-                    (inv-recur (dec curr-depth) z2)))))]
-      (inv-recur depth z))
+                (let [[z+ z-] (inverse-f curr-z)
+                      cz+ (c-round-to increment z+)
+                      cz- (c-round-to increment z-)]
+                  (when-not (@zs-map_ cz+)
+                    (swap! zs-map_ assoc cz+ z+)
+                    (inv-recur (dec curr-depth) z+)) ; unlikely to blow stack 
+                  (when-not (@zs-map_ cz-)
+                    (swap! zs-map_ assoc cz- z-)
+                    (inv-recur (dec curr-depth) z-)))))]
+      (inv-recur depth init-z))
     @zs-map_))
 
-(defn fnl-julia-inverse
-  "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within increment distance
-  from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of increment.  z is the initial
-  value to iterate from, a  fastmath.complex (Vec2) number.  depth must 
-  be an integer >=0.  Returns a Clojure map in which each key is one of the 
-  clipped points, whose value is the first, non-clipped value that caused the
-  key/value pair to be added to the map."
+;; Doesn't work.  Harder to understand and debug than the imperative version.
+(defn bad-fnl-julia-inverse
   [increment inverse-f depth init-z]
   (letfn [(inv-recur [zs-map d z]
-            (print d ".")
             (if (= d 0)
               zs-map
               (let [[z+ z-] (inverse-f z)
                     cz+ (c-round-to increment z+)
-                    cz- (c-round-to increment z-)
-                    is-near-z+ (zs-map cz+)
-                    is-near-z- (zs-map cz-)]
-                (when-not is-near-z+ 
-                  (inv-recur (assoc zs-map cz+ z+) (dec d) z+))
-                (when-not is-near-z-
-                  (inv-recur (assoc zs-map cz- z-) (dec d) z-)))))]
+                    cz- (c-round-to increment z-)]
+                (when-not (zs-map cz+)
+                  (let [zs-map' (inv-recur (assoc zs-map cz+ z+) (dec d) z+)]
+                    (when-not (zs-map' cz-)
+                      (inv-recur (assoc zs-map' cz- z-) (dec d) z-)))))))]
     (inv-recur {} depth init-z)))
-
-(defn julia-inverse-debug
-  "Version of julia-inverse that stores additional information.  julia-inverse
-  only stores recorded points in a set; this function also stores them in a
-  sequence, with new points conj'ed onto the end, and in a tree that reflects
-  the way that points are found by the recursive calls.  
-  NOTE: Make sure algorithm is up to date with julia-inverse before using!"
-  [increment inverse-f depth z]
-  (let [zs-set_ (atom #{})
-        zs-seq_ (atom [])  ; records complex numbers in order found
-        zs-set-seq_ (atom [])] ; records pairs/singletons/empty sets in order found
-    (letfn [(inv-recur [curr-depth curr-z]
-              (let [new-vals (-> (clip-into-set increment (inverse-f curr-z))
-                                 (s/difference @zs-set_))]
-                (swap! zs-set_ s/union new-vals)
-                (swap! zs-seq_ multi-conj new-vals)
-                (swap! zs-set-seq_ conj new-vals) ; #{a b} or #{a} or #{b} or #{}
-                (when (> curr-depth 1)
-                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
-      (inv-recur depth z))
-    [@zs-set_ @zs-seq_ @zs-set-seq_]))
-
-(defn yo-julia-inverse
-  "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within increment distance
-  from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of increment.  This is
-  based on the second algorithm in Mark McClure's
-  \"Inverse Iteration Algorithms for Julia Sets\".  (increment is the reciprocal
-  of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
-  fastmath.complex (Vec2) points (which often will automatically be
-  converted to Clojure seq pairs)."
-  [increment inverse-f depth z]
-  (let [curr-zs_ (atom #{})
-        yonotyet_ (atom true)]
-    (letfn [(inv-recur [curr-depth curr-z]
-              (let [new-vals (-> (clip-into-set increment (inverse-f curr-z))
-                                 (s/difference @curr-zs_))]
-                (swap! curr-zs_ s/union new-vals)
-                (when @yonotyet_
-                  (println new-vals)
-                  (let [nvs (seq new-vals)]
-                    (when (or (= c/ZERO (first nvs))
-                              (= c/ZERO (second nvs)))
-                      (reset! yonotyet_ false))))
-                (when (> curr-depth 1)
-                  (run! (partial inv-recur (dec curr-depth)) new-vals))))]
-      (inv-recur depth z))
-    @curr-zs_))
 
 (defn julia-inverse-simple
   "Use iterations of the inverse of a quadratic function f to identify
