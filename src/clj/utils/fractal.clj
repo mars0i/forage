@@ -296,11 +296,13 @@
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within increment distance
   from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of increment.  z is the initial
- value to iterate from, a  fastmath.complex (Vec2) number.  depth must 
-  be >=1.  Returns a Clojure map in which each key is one of the clipped
-  points, whose value is the first, non-clipped value that caused the
-  key/value pair to be added to the map."
+  are still new after being floored to a multiple of increment.  z is the 
+  initial value to iterate from, a  fastmath.complex (Vec2) number.  depth
+  must be >=0.  Returns a Clojure map in which each key is one of the 
+  clipped points, whose value is the first, non-clipped value that caused
+  the key/value pair to be added to the map.  NOTE: To avoid spurious
+  isolated points that are not part of the Julia set, re-run with init-z
+  very near some part of the Julia set."
   [increment inverse-f depth init-z]
   (let [zs-map_ (atom {})]  ; a recursive imperative algorithm
     (letfn [(inv-recur [curr-depth curr-z]
@@ -399,7 +401,9 @@
   (oz/view! (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 500 800 1)))
   (oz/view! (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
 
-  (let [[x c] (c/complex 5 4)] [x c])
+  ;; This didn't work--Firefox displayed blank:
+  (def julia68s (time (into {} (map (fn [z] [z (julia-inverse 0.001 f-1 100000 z)]) [c/ZERO (c/complex 1 0) (c/complex 0 1) (c/complex 1 1) (c/complex 5 0) (c/complex 0 5) (c/complex 5 5)]))))
+  (def grid68s (hc/xform uh/grid-chart :COLUMNS 3 :CONCAT (mapv (fn [k] (h/vega-food-plot (h/add-point-labels (str k) (keys (julia68s k))) 500 800 2)) (keys julia68s))))
 
 )
 
