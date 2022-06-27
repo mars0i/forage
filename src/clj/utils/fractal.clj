@@ -211,26 +211,73 @@
   (clip-into-set 1/3 [(c/complex 1.5 1.6) (c/complex -1.5 0.8) (c/complex 0.2 -27)])
 )
 
-;; Useful with ordered-set, because clojure.set/union may reorder elements,
-;; and concat always returns a sequence, not a set.  ordered-set knows about
-;; conj, though.
-(defn multi-conj
-  "Successively conj each element of ys onto xs."
-  [xs ys]
-  (reduce (fn [newxs y] (conj newxs y))
-          xs ys))
-
-(comment
-  (multi-conj [4 5 6] [3 2 4])
-  (multi-conj (os/ordered-set 4 5 6) [3 4 8])
-  (multi-conj (os/ordered-set 4 5 6) (os/ordered-set 4 3))
-)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; JULIA INVERSE ITERATION FUNCTIONS
-;; Based on an algorithm in Mark McClure's \"Inverse Iteration Algorithms for 
+;; JULIA INVERSE ITERATION FUNCTIONS 
+;; Based on an algorithms in Mark McClure's \"Inverse Iteration Algorithms for 
 ;; Julia Sets\".  The parameter 'increment' below is the reciprocal of McClure's 'resolution'."
+
+;; julia-inverse below is a Clojure function that ... commits the sin of using
+;; an imperative algorithm when a purely functional algorithm seems like it might
+;; be reasonable.  I love functional methods, but despite what some functional
+;; programming devotees say, there are cases in which an imperative algorithm
+;; is easier to understand.  This is one of them.  (I think it might be more
+;; efficient, too--if I ever manage to write a correct functional version.)
+
 ;; It might be interesting to write this using clojure.core/tree-seq.
+
+;; The simple function that julia-inverse improves on.
+(defn julia-inverse-simple
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed,
+  p. 255, or Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\".
+  depth must be >=1.  (Computes sum_i^n 2^i values.  julia-inverse is more
+  efficient!)"
+  [inverse-f depth z]
+  (let [pair (inverse-f z)]
+    (if (== depth 1)
+      pair
+      (doall ; periodically make sure won't be tripped up by concat's laziness
+             (concat pair
+                     (mapcat (partial julia-inverse-simple inverse-f (dec depth))
+                             pair))))))
+
+;; THIS VERSION RECURSES ON THE UN-CLIPPED VALUES, RETURNING A MAP WITH 
+;; CLIPPED VALUES AS KEYS AND UNCLIPPED ONES AS  VALUES.  Note that the
+;; unclipped values are just the ones that got there first, so in a sense
+;; the clipped values have a better claim to being the *real* values to
+;; be returned.  But by retaining the values actually used for the recursion,
+;; we keep around info about what the iteration was actually based on rather
+;; than discarding that information.  This may use up a little bit more memory,
+;; but it's useful, and it's not slower.  (It may even be a little faster.)
+;; Note there's no simple way to use loop/recur here; we need to recurse down 
+;; two parallel paths.  But the number of iterations needed is unlikely to
+;; blow the stack, and it runs quickly.
+(defn julia-inverse
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, skipping points that within increment distance
+  from points already collected.  More precisely, points are kept if they
+  are still new after being floored to a multiple of increment.  z is the 
+  initial value to iterate from, a  fastmath.complex (Vec2) number.  depth
+  must be >=0.  Returns a Clojure map in which each key is one of the 
+  clipped points, whose value is the first, non-clipped value that caused
+  the key/value pair to be added to the map.  NOTE: To avoid spurious
+  isolated points that are not part of the Julia set, re-run with init-z
+  very near some part of the Julia set."
+  [increment inverse-f depth init-z]
+  (let [zs-map_ (atom {})]  ; a recursive imperative algorithm
+    (letfn [(inv-recur [curr-depth curr-z]
+              (when (> curr-depth 0) ; otherwise nil--which won't be used
+                (let [[z+ z-] (inverse-f curr-z)
+                      cz+ (c-round-to increment z+)
+                      cz- (c-round-to increment z-)]
+                  (when-not (@zs-map_ cz+)           ; If z+ is not near a previous point
+                    (swap! zs-map_ assoc cz+ z+)     ; add clipped version and z+ to the map
+                    (inv-recur (dec curr-depth) z+)) ; and iterate on z+ .
+                  (when-not (@zs-map_ cz-)           ; Ditto for z- .
+                    (swap! zs-map_ assoc cz- z-)
+                    (inv-recur (dec curr-depth) z-)))))]
+      (inv-recur depth init-z))
+    @zs-map_))
 
 ;; THIS VERSION RECURSES ON THE CLIPPED VALUES, RETURNING THEM AS A SET.
 (defn old-julia-inverse-recurse-on-clipped
@@ -284,56 +331,6 @@
       (inv-recur depth z))
     @zs-set_))
 
-;; THIS VERSION RECURSES ON THE UN-CLIPPED VALUES, RETURNING A MAP WITH 
-;; CLIPPED VALUES AS KEYS AND UNCLIPPED ONES AS  VALUES.  Note that the
-;; unclipped values are just the ones that got there first, so in a sense
-;; the clipped values have a better claim to being the *real* values to
-;; be returned.  But by retaining the values actually used for the recursion,
-;; we keep around info about what the iteration was actually based on rather
-;; than discarding that information.  This may use up a little bit more memory,
-;; but it's useful, and it's not slower.  (It may even be a little faster.)
-(defn julia-inverse
-  "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within increment distance
-  from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of increment.  z is the 
-  initial value to iterate from, a  fastmath.complex (Vec2) number.  depth
-  must be >=0.  Returns a Clojure map in which each key is one of the 
-  clipped points, whose value is the first, non-clipped value that caused
-  the key/value pair to be added to the map.  NOTE: To avoid spurious
-  isolated points that are not part of the Julia set, re-run with init-z
-  very near some part of the Julia set."
-  [increment inverse-f depth init-z]
-  (let [zs-map_ (atom {})]  ; a recursive imperative algorithm
-    (letfn [(inv-recur [curr-depth curr-z]
-              (when (> curr-depth 0) ; otherwise nil--which won't be used
-                (let [[z+ z-] (inverse-f curr-z)
-                      cz+ (c-round-to increment z+)
-                      cz- (c-round-to increment z-)]
-                  (when-not (@zs-map_ cz+)
-                    (swap! zs-map_ assoc cz+ z+)
-                    (inv-recur (dec curr-depth) z+)) ; unlikely to blow stack 
-                  (when-not (@zs-map_ cz-)
-                    (swap! zs-map_ assoc cz- z-)
-                    (inv-recur (dec curr-depth) z-)))))]
-      (inv-recur depth init-z))
-    @zs-map_))
-
-(defn julia-inverse-simple
-  "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed,
-  p. 255, or Mark McClure's \"Inverse Iteration Algorithms for Julia Sets\".
-  depth must be >=1.  (Computes sum_i^n 2^i values.  julia-inverse is more
-  efficient.)"
-  [inverse-f depth z]
-  (let [pair (inverse-f z)]
-    (if (== depth 1)
-      pair
-      (doall ; periodically make sure won't be tripped up by concat's laziness
-             (concat pair
-                     (mapcat (partial julia-inverse-simple inverse-f (dec depth))
-                             pair))))))
-
 (defn complex-to-vecs
   "Convenience function convert a collection of fastmath.complex numbers
   to a sequence of Clojure vector pairs by calling vec->Vec.  (Not always
@@ -351,6 +348,21 @@
   (println "DEPRECATED")
   (map v/vec->Vec
        (filled-julia x-min x-max c-min c-max step max-iters esc-bound f)))
+
+;; Useful with ordered-set, because clojure.set/union may reorder elements,
+;; and concat always returns a sequence, not a set.  ordered-set knows about
+;; conj, though.
+(defn multi-conj
+  "Successively conj each element of ys onto xs."
+  [xs ys]
+  (reduce (fn [newxs y] (conj newxs y))
+          xs ys))
+
+(comment
+  (multi-conj [4 5 6] [3 2 4])
+  (multi-conj (os/ordered-set 4 5 6) [3 4 8])
+  (multi-conj (os/ordered-set 4 5 6) (os/ordered-set 4 3))
+)
 
 
 (comment
