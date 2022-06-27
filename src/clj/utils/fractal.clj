@@ -254,20 +254,52 @@
   [gap inverse-f depth z]
   (let [zs-set_ (atom #{})]
     (letfn [(inv-recur [curr-depth curr-z]
-              (let [zs-set @zs-set_
-                    [v1 v2] (inverse-f curr-z)
-                    cv1 (c-clip gap v1)
-                    cv2 (c-clip gap v2)
-                    v1-isnt-near (not (contains? zs-set cv1))
-                    v2-isnt-near (not (contains? zs-set cv2))]
-                (swap! zs-set_ s/union #{cv1 cv2}) ; partly redundant; conj individually iff v?-isnt-near ?
-                (when (> curr-depth 1)
+              (when (> curr-depth 1) ; otherwise nil--which won't be used
+                (let [zs-set @zs-set_
+                      [v1 v2] (inverse-f curr-z)
+                      cv1 (c-clip gap v1)
+                      cv2 (c-clip gap v2)
+                      v1-isnt-near (not (contains? zs-set cv1))
+                      v2-isnt-near (not (contains? zs-set cv2))]
+                  ;not exactly same as below--not sure why: (swap! zs-set_ s/union #{cv1 cv2})
                   (when v1-isnt-near 
-                    (inv-recur (dec curr-depth) v1)) ; not worth avoiding recursion;
-                  (when v2-isnt-near                      ; unlikely to blow stack
+                    (swap! zs-set_ conj cv1) 
+                    (inv-recur (dec curr-depth) v1)) ; unlikely to blow stack
+                  (when v2-isnt-near
+                    (swap! zs-set_ conj cv2) 
                     (inv-recur (dec curr-depth) v2)))))]
       (inv-recur depth z))
     @zs-set_))
+
+;; Based on an algorithm in Mark McClure's \"Inverse Iteration Algorithms
+;; for Julia Sets\".  gap is the reciprocal of McClure's resolution."
+(defn new-julia-inverse
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, skipping points that within gap distance
+  from points already collected.  More precisely, points are kept if they
+  are still new after being floored to a multiple of gap.  z is the initial
+ value to iterate from, a  fastmath.complex (Vec2) number.  depth must 
+  be >=1.  Returns a Clojure map in which each key is one of the clipped
+  points, whose value is the first, non-clipped value that caused the
+  key/value pair to be added to the map."
+  [gap inverse-f depth z]
+  (let [zs-map_ (atom {})]  ; a recursive imperative algorithm
+    (letfn [(inv-recur [curr-depth curr-z]
+              (when (> curr-depth 1) ; otherwise nil--which won't be used
+                (let [[v1 v2] (inverse-f curr-z)
+                      cv1 (c-clip gap v1)
+                      cv2 (c-clip gap v2)
+                      zs-map @zs-map_
+                      v1-is-near (zs-map cv1)
+                      v2-is-near (zs-map cv2)]
+                  (when-not v1-is-near 
+                    (swap! zs-map_ assoc cv1 v1)
+                    (inv-recur (dec curr-depth) v1)) ; unlikely to blow stack 
+                  (when-not v2-is-near
+                    (swap! zs-map_ assoc cv2 v2)
+                    (inv-recur (dec curr-depth) v2)))))]
+      (inv-recur depth z))
+    @zs-map_))
 
 (defn julia-inverse-debug
   "Version of julia-inverse that stores additional information.  julia-inverse
