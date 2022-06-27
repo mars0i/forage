@@ -233,7 +233,7 @@
 ;; It might be interesting to write this using clojure.core/tree-seq.
 
 ;; THIS VERSION RECURSES ON THE CLIPPED VALUES, RETURNING THEM AS A SET.
-(defn old-julia-inverse
+(defn old-julia-inverse-recurse-on-clipped
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within increment distance
   from points already collected.  More precisely, points are kept if they
@@ -255,7 +255,7 @@
 
 ;; THIS VERSION RECURSES ON THE UN-CLIPPED VALUES, BUT RETURNS THE CLIPPED
 ;; VALUES, NOT THE UNCLIPPED ONES, AS A SET.
-(defn julia-inverse
+(defn old-julia-inverse-recurse-on-unclipped
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within increment distance
   from points already collected.  More precisely, points are kept if they
@@ -292,7 +292,7 @@
 ;; we keep around info about what the iteration was actually based on, rather
 ;; than discarding that information.  This may use up a little bit more memory,
 ;; but it's not slower.  (It may even be a little faster.)
-(defn new-julia-inverse
+(defn julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within increment distance
   from points already collected.  More precisely, points are kept if they
