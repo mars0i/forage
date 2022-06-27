@@ -178,34 +178,34 @@
   [z] (c/complex (nt/round (c/re z))
                  (nt/round (c/im z))))
 
-;; Possibly rewrite using all reals, and recreate a complex at the end.
-(defn c-clip
+(defn c-round-to
   "Like floor (for complex numbers), but floors to the nearest multiple
-  of a real number gap, rather than the nearest integer.  If z is
+  of a real number increment, rather than the nearest integer.  If z is
   not provided, returns a function of one argument."
-  ([gap z]
-   (let [cres (c/complex gap 0.0)]
+  ([increment z]
+   (let [cres (c/complex increment 0.0)]
      (-> z
          (c/div cres) ; multiply by the reciprocal of cres
          c-round
          (c/mult cres)))) ; divide by the reciprocal
-  ([gap] (fn [z] (c-clip gap z)))) ; for use with into
+  ([increment] (fn [z] (c-round-to increment z)))) ; for use with into
 
 (comment
   (c-floor (c/complex 1.5 -3.6))
-  (c-clip 0.25 (c/complex 21.571 -3.6))
-  ((c-clip 0.25) (c/complex 21.571 -3.6))
+  (c-round-to 0.25 (c/complex 21.571 -3.6))
+  ((c-round-to 0.25) (c/complex 21.571 -3.6))
  )
 
+;; DEPRECATED
 (defn clip-into-set
-  "Clips (floors) elements in zs to multiples of gap, and returns the
+  "Clips (floors) elements in zs to multiples of increment, and returns the
   modified values as a set.  Inspired by \"Inverse iteration algorithms
   for Julia sets\", by Mark McClure,in _Mathematica in Education and
   Research_, v.7 (1998), no. 2, pp 22-28,
   https://marksmath.org/scholarship/Julia.pdf"
-  [gap zs]
-  (into #{} (map (c-clip gap)) zs))
-  ;; or: (set (map (c-clip gap) zs))
+  [increment zs]
+  (into #{} (map (c-round-to increment)) zs))
+  ;; or: (set (map (c-round-to increment) zs))
 
 (comment
   (clip-into-set 1/3 [(c/complex 1.5 1.6) (c/complex -1.5 0.8) (c/complex 0.2 -27)])
@@ -226,22 +226,26 @@
   (multi-conj (os/ordered-set 4 5 6) (os/ordered-set 4 3))
 )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; JULIA INVERSE ITERATION FUNCTIONS
+;; Based on an algorithm in Mark McClure's \"Inverse Iteration Algorithms for 
+;; Julia Sets\".  The parameter 'increment' below is the reciprocal of McClure's 'resolution'."
 ;; It might be interesting to write this using clojure.core/tree-seq.
+
+;; THIS VERSION RECURSES ON THE CLIPPED VALUES, RETURNING THEM AS A SET.
 (defn old-julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within gap distance
+  points in f's Julia set, skipping points that within increment distance
   from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of gap.  This is
+  are still new after being floored to a multiple of increment.  This is
   based on the second algorithm in Mark McClure's \"Inverse Iteration 
-  Algorithms for Julia Sets\".  (gap is the reciprocal of McClure's
+  Algorithms for Julia Sets\".  (increment is the reciprocal of McClure's
   resolution.) depth must be >=1.  Returns a Clojure set of fastmath.complex
-  (Vec2) points.  [NOTE internal computations iterate on non-clipped
-  doubles, but the set of returned values consists of the clipped values
-  that were used to identify nearby points.]"
-  [gap inverse-f depth z]
+  (Vec2) points."
+  [increment inverse-f depth z]
   (let [zs-set_ (atom #{})]
     (letfn [(inv-recur [curr-depth curr-z]
-              (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
+              (let [new-vals (-> (clip-into-set increment (inverse-f curr-z))
                                  (s/difference @zs-set_))]
                 (swap! zs-set_ s/union new-vals)
                 (when (> curr-depth 1)
@@ -249,27 +253,25 @@
       (inv-recur depth z))
     @zs-set_))
 
-;; Should I collect and return the precise values, not clipped?  Well, 
-;; I'm already throwing out a lot of precise values; why is the one that is
-;; retained special?  The clipped value is the average--the effective meaning.
-;; (It might be interesting to write this using clojure.core/tree-seq.)
+;; THIS VERSION RECURSES ON THE UN-CLIPPED VALUES, BUT RETURNS THE CLIPPED
+;; VALUES, NOT THE UNCLIPPED ONES, AS A SET.
 (defn julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within gap distance
+  points in f's Julia set, skipping points that within increment distance
   from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of gap.  This is
+  are still new after being floored to a multiple of increment.  This is
   based on the second algorithm in Mark McClure's
-  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
+  \"Inverse Iteration Algorithms for Julia Sets\".  (increment is the reciprocal
   of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
   fastmath.complex (Vec2) clipped (i.e. floored) points."
-  [gap inverse-f depth z]
+  [increment inverse-f depth z]
   (let [zs-set_ (atom #{})]
     (letfn [(inv-recur [curr-depth curr-z]
-              (when (> curr-depth 1) ; otherwise nil--which won't be used
+              (when (> curr-depth 0) ; otherwise nil--which won't be used
                 (let [zs-set @zs-set_
                       [v1 v2] (inverse-f curr-z)
-                      cv1 (c-clip gap v1)
-                      cv2 (c-clip gap v2)
+                      cv1 (c-round-to increment v1)
+                      cv2 (c-round-to increment v2)
                       v1-isnt-near (not (contains? zs-set cv1))
                       v2-isnt-near (not (contains? zs-set cv2))]
                   ;not exactly same as below--not sure why: (swap! zs-set_ s/union #{cv1 cv2})
@@ -282,35 +284,66 @@
       (inv-recur depth z))
     @zs-set_))
 
-;; Based on an algorithm in Mark McClure's \"Inverse Iteration Algorithms
-;; for Julia Sets\".  gap is the reciprocal of McClure's resolution."
+;; THIS VERSION RECURSES ON THE UN-CLIPPED VALUES, RETURNING A MAP WITH 
+;; CLIPPED VALUES AS KEYS AND UNCLIPPED ONES AS  VALUES.  Note that the
+;; unclipped values are just the ones that go there first, so in a sense
+;; the clipped values have a better claim to being the *real* values to
+;; be returned.  But by retaining the values actually used for the recursion,
+;; we keep around info about what the iteration was actually based on, rather
+;; than discarding that information.  This may use up a little bit more memory,
+;; but it's not slower.  (It may even be a little faster.)
 (defn new-julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within gap distance
+  points in f's Julia set, skipping points that within increment distance
   from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of gap.  z is the initial
+  are still new after being floored to a multiple of increment.  z is the initial
  value to iterate from, a  fastmath.complex (Vec2) number.  depth must 
   be >=1.  Returns a Clojure map in which each key is one of the clipped
   points, whose value is the first, non-clipped value that caused the
   key/value pair to be added to the map."
-  [gap inverse-f depth z]
+  [increment inverse-f depth z]
   (let [zs-map_ (atom {})]  ; a recursive imperative algorithm
     (letfn [(inv-recur [curr-depth curr-z]
-              (when (> curr-depth 1) ; otherwise nil--which won't be used
-                (let [[v1 v2] (inverse-f curr-z)
-                      cv1 (c-clip gap v1)
-                      cv2 (c-clip gap v2)
+              (when (> curr-depth 0) ; otherwise nil--which won't be used
+                (let [[z1 z2] (inverse-f curr-z)
+                      cz1 (c-round-to increment z1)
+                      cz2 (c-round-to increment z2)
                       zs-map @zs-map_
-                      v1-is-near (zs-map cv1)
-                      v2-is-near (zs-map cv2)]
-                  (when-not v1-is-near 
-                    (swap! zs-map_ assoc cv1 v1)
-                    (inv-recur (dec curr-depth) v1)) ; unlikely to blow stack 
-                  (when-not v2-is-near
-                    (swap! zs-map_ assoc cv2 v2)
-                    (inv-recur (dec curr-depth) v2)))))]
+                      z1-is-near (zs-map cz1)
+                      z2-is-near (zs-map cz2)]
+                  (when-not z1-is-near 
+                    (swap! zs-map_ assoc cz1 z1)
+                    (inv-recur (dec curr-depth) z1)) ; unlikely to blow stack 
+                  (when-not z2-is-near
+                    (swap! zs-map_ assoc cz2 z2)
+                    (inv-recur (dec curr-depth) z2)))))]
       (inv-recur depth z))
     @zs-map_))
+
+(defn fnl-julia-inverse
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, skipping points that within increment distance
+  from points already collected.  More precisely, points are kept if they
+  are still new after being floored to a multiple of increment.  z is the initial
+  value to iterate from, a  fastmath.complex (Vec2) number.  depth must 
+  be an integer >=0.  Returns a Clojure map in which each key is one of the 
+  clipped points, whose value is the first, non-clipped value that caused the
+  key/value pair to be added to the map."
+  [increment inverse-f depth init-z]
+  (letfn [(inv-recur [zs-map d z]
+            (print d ".")
+            (if (= d 0)
+              zs-map
+              (let [[z+ z-] (inverse-f z)
+                    cz+ (c-round-to increment z+)
+                    cz- (c-round-to increment z-)
+                    is-near-z+ (zs-map cz+)
+                    is-near-z- (zs-map cz-)]
+                (when-not is-near-z+ 
+                  (inv-recur (assoc zs-map cz+ z+) (dec d) z+))
+                (when-not is-near-z-
+                  (inv-recur (assoc zs-map cz- z-) (dec d) z-)))))]
+    (inv-recur {} depth init-z)))
 
 (defn julia-inverse-debug
   "Version of julia-inverse that stores additional information.  julia-inverse
@@ -318,12 +351,12 @@
   sequence, with new points conj'ed onto the end, and in a tree that reflects
   the way that points are found by the recursive calls.  
   NOTE: Make sure algorithm is up to date with julia-inverse before using!"
-  [gap inverse-f depth z]
+  [increment inverse-f depth z]
   (let [zs-set_ (atom #{})
         zs-seq_ (atom [])  ; records complex numbers in order found
         zs-set-seq_ (atom [])] ; records pairs/singletons/empty sets in order found
     (letfn [(inv-recur [curr-depth curr-z]
-              (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
+              (let [new-vals (-> (clip-into-set increment (inverse-f curr-z))
                                  (s/difference @zs-set_))]
                 (swap! zs-set_ s/union new-vals)
                 (swap! zs-seq_ multi-conj new-vals)
@@ -335,19 +368,19 @@
 
 (defn yo-julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within gap distance
+  points in f's Julia set, skipping points that within increment distance
   from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of gap.  This is
+  are still new after being floored to a multiple of increment.  This is
   based on the second algorithm in Mark McClure's
-  \"Inverse Iteration Algorithms for Julia Sets\".  (gap is the reciprocal
+  \"Inverse Iteration Algorithms for Julia Sets\".  (increment is the reciprocal
   of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
   fastmath.complex (Vec2) points (which often will automatically be
   converted to Clojure seq pairs)."
-  [gap inverse-f depth z]
+  [increment inverse-f depth z]
   (let [curr-zs_ (atom #{})
         yonotyet_ (atom true)]
     (letfn [(inv-recur [curr-depth curr-z]
-              (let [new-vals (-> (clip-into-set gap (inverse-f curr-z))
+              (let [new-vals (-> (clip-into-set increment (inverse-f curr-z))
                                  (s/difference @curr-zs_))]
                 (swap! curr-zs_ s/union new-vals)
                 (when @yonotyet_
