@@ -106,8 +106,8 @@
         (recur (into pts new-pts) new-offset (dec iters))))))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; QUADRATIC JULIA FUNCTIONS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; QUADRATIC JULIA FUNCTIONS: SIMPLE GENERATION AND SUPPORT FUNCTIONS
 
 (defn quad-fn
   "Returns an implementation of the quadratic function f(z) = z^2 + c,
@@ -115,13 +115,22 @@
   [c]
   (fn [z] (c/add (c/sq z) c)))
 
+(defn inv-quad-fn
+  "Returns an implementation of the inverse of the quadratic function
+  f(z) = z^2 + c, i.e. returns f^{-1}(z) = sqrt(z - c), where z and c
+  are instances of fastmath.complex numbers, i.e. Vec2's.  Returns a pair
+  containg the positive and negative values of the square root."
+  [c]
+  (fn [z] 
+    (let [posval (c/sqrt (c/sub z c))]
+      [posval (c/neg posval)])))
+
 (defn doesnt-escape?
   [max-iters esc-bound f init-z]
   (loop [i 1, z init-z]
     (cond (> (c/abs z) esc-bound) false
           (> i max-iters) true
           :else (recur (inc i) (f z)))))
-
 
 ;; This is fine for connected Julia sets, although you get a filled
 ;; Julia set, which might not be what you want.  For disconnected
@@ -146,16 +155,6 @@
          :when (doesnt-escape? max-iters esc-bound f z)]
      z)))
 
-(defn inv-quad-fn
-  "Returns an implementation of the inverse of the quadratic function
-  f(z) = z^2 + c, i.e. returns f^{-1}(z) = sqrt(z - c), where z and c
-  are instances of fastmath.complex numbers, i.e. Vec2's.  Returns a pair
-  containg the positive and negative values of the square root."
-  [c]
-  (fn [z] 
-    (let [posval (c/sqrt (c/sub z c))]
-      [posval (c/neg posval)])))
-
 (defn c-floor
   "Floor function for complex numbers based on Wolframe's Floor function:
   Floors the real and imaginary parts separately.  See 
@@ -168,7 +167,7 @@
                  (nt/floor (c/im z))))
 
 (defn c-round
-  "Floor function for complex numbers based on Wolframe's Floor function:
+  "Round function for complex numbers based on Wolframe's Floor function:
   Floors the real and imaginary parts separately.  See 
   https://mathworld.wolfram.com/FloorFunction.html,
   https://math.stackexchange.com/a/2095679/73467, 
@@ -179,53 +178,30 @@
                  (nt/round (c/im z))))
 
 (defn c-round-to
-  "Like floor (for complex numbers), but floors to the nearest multiple
-  of a real number increment, rather than the nearest integer.  If z is
+  "Like round (for complex numbers), but rounds to the nearest multiple
+  of a real number resolution, rather than the nearest integer.  If z is
   not provided, returns a function of one argument."
-  ([increment z]
-   (let [cres (c/complex increment 0.0)]
+  ([resolution z]
+   (let [cres (c/complex resolution 0.0)]
      (-> z
          (c/div cres) ; multiply by the reciprocal of cres
          c-round
          (c/mult cres)))) ; divide by the reciprocal
-  ([increment] (fn [z] (c-round-to increment z)))) ; for use with into
-
-(comment
-  (c-floor (c/complex 1.5 -3.6))
-  (c-round-to 0.25 (c/complex 21.571 -3.6))
-  ((c-round-to 0.25) (c/complex 21.571 -3.6))
- )
+  ([resolution] (fn [z] (c-round-to resolution z)))) ; for use with into
 
 ;; DEPRECATED
 (defn clip-into-set
-  "Clips (floors) elements in zs to multiples of increment, and returns the
+  "Clips (floors) elements in zs to multiples of resolution, and returns the
   modified values as a set.  Inspired by \"Inverse iteration algorithms
   for Julia sets\", by Mark McClure,in _Mathematica in Education and
   Research_, v.7 (1998), no. 2, pp 22-28,
   https://marksmath.org/scholarship/Julia.pdf"
-  [increment zs]
-  (into #{} (map (c-round-to increment)) zs))
-  ;; or: (set (map (c-round-to increment) zs))
+  [resolution zs]
+  (into #{} (map (c-round-to resolution)) zs))
+  ;; or: (set (map (c-round-to resolution) zs))
 
-(comment
-  (clip-into-set 1/3 [(c/complex 1.5 1.6) (c/complex -1.5 0.8) (c/complex 0.2 -27)])
-)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; JULIA INVERSE ITERATION FUNCTIONS 
-;; Based on an algorithms in Mark McClure's \"Inverse Iteration Algorithms for 
-;; Julia Sets\".  The parameter 'increment' below is the reciprocal of McClure's 'resolution'."
-
-;; julia-inverse below is a Clojure function that ... commits the sin of using
-;; an imperative algorithm when a purely functional algorithm seems like it might
-;; be reasonable.  I love functional methods, but despite what some functional
-;; programming devotees say, there are cases in which an imperative algorithm
-;; is easier to understand.  This is one of them.  (I think it might be more
-;; efficient, too--if I ever manage to write a correct functional version.)
-
-;; It might be interesting to write this using clojure.core/tree-seq.
-
-;; The simple function that julia-inverse improves on.
+;; The simple function that julia-inverse below improves on.
 (defn julia-inverse-simple
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set.  See e.g. Falconer's _Fractal Geometry_, 3d ed,
@@ -241,6 +217,24 @@
                      (mapcat (partial julia-inverse-simple inverse-f (dec depth))
                              pair))))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EFFICIENT JULIA INVERSE ITERATION GENERATORS
+;; Based on an algorithms in Mark McClure's \"Inverse Iteration Algorithms for 
+;; Julia Sets\" and Peitgen and Richter's _The Beauty of Fractals_.
+;; NOTE: The parameter 'resolution' below is the reciprocal of McClure's 
+;; misnamed 'resolution' variable.
+
+;; julia-inverse below commits the sin of using an imperative algorithm
+;; when a purely functional algorithm might be reasonable.  Despite what
+;; some functional programming devotees say, there are cases in which an
+;; imperative algorithm is easier to understand.  This is one of them.
+;; However, the imperative bit is kept contained within the function itself.
+;; From the outside, julia-inverse can be treated as purely functional.
+
+;; It might be interesting to write this using clojure.core/tree-seq.
+
+;; Based on McClure's algorithm.
 ;; THIS VERSION RECURSES ON THE UN-CLIPPED VALUES, RETURNING A MAP WITH 
 ;; CLIPPED VALUES AS KEYS AND UNCLIPPED ONES AS  VALUES.  Note that the
 ;; unclipped values are just the ones that got there first, so in a sense
@@ -254,22 +248,22 @@
 ;; blow the stack, and it runs quickly.
 (defn julia-inverse
   "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within increment distance
+  points in f's Julia set, skipping points that within resolution distance
   from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of increment.  z is the 
+  are still new after being floored to a multiple of resolution.  z is the 
   initial value to iterate from, a  fastmath.complex (Vec2) number.  depth
   must be >=0.  Returns a Clojure map in which each key is one of the 
   clipped points, whose value is the first, non-clipped value that caused
   the key/value pair to be added to the map.  NOTE: To avoid spurious
   isolated points that are not part of the Julia set, re-run with init-z
   very near some part of the Julia set."
-  [increment inverse-f depth init-z]
+  [resolution inverse-f depth init-z]
   (let [zs-map_ (atom {})]  ; a recursive imperative algorithm
     (letfn [(inv-recur [curr-depth curr-z]
               (when (> curr-depth 0) ; otherwise nil--which won't be used
                 (let [[z+ z-] (inverse-f curr-z)
-                      cz+ (c-round-to increment z+)
-                      cz- (c-round-to increment z-)]
+                      cz+ (c-round-to resolution z+)
+                      cz- (c-round-to resolution z-)]
                   (when-not (@zs-map_ cz+)           ; If z+ is not near a previous point
                     (swap! zs-map_ assoc cz+ z+)     ; add clipped version and z+ to the map
                     (inv-recur (dec curr-depth) z+)) ; and iterate on z+ .
@@ -282,17 +276,17 @@
 ;; THIS VERSION RECURSES ON THE CLIPPED VALUES, RETURNING THEM AS A SET.
 (defn old-julia-inverse-recurse-on-clipped
   "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within increment distance
+  points in f's Julia set, skipping points that within resolution distance
   from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of increment.  This is
+  are still new after being floored to a multiple of resolution.  This is
   based on the second algorithm in Mark McClure's \"Inverse Iteration 
-  Algorithms for Julia Sets\".  (increment is the reciprocal of McClure's
+  Algorithms for Julia Sets\".  (resolution is the reciprocal of McClure's
   resolution.) depth must be >=1.  Returns a Clojure set of fastmath.complex
   (Vec2) points."
-  [increment inverse-f depth z]
+  [resolution inverse-f depth z]
   (let [zs-set_ (atom #{})]
     (letfn [(inv-recur [curr-depth curr-z]
-              (let [new-vals (-> (clip-into-set increment (inverse-f curr-z))
+              (let [new-vals (-> (clip-into-set resolution (inverse-f curr-z))
                                  (s/difference @zs-set_))]
                 (swap! zs-set_ s/union new-vals)
                 (when (> curr-depth 1)
@@ -304,21 +298,21 @@
 ;; VALUES, NOT THE UNCLIPPED ONES, AS A SET.
 (defn old-julia-inverse-recurse-on-unclipped
   "Use iterations of the inverse of a quadratic function f to identify
-  points in f's Julia set, skipping points that within increment distance
+  points in f's Julia set, skipping points that within resolution distance
   from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of increment.  This is
+  are still new after being floored to a multiple of resolution.  This is
   based on the second algorithm in Mark McClure's
-  \"Inverse Iteration Algorithms for Julia Sets\".  (increment is the reciprocal
+  \"Inverse Iteration Algorithms for Julia Sets\".  (resolution is the reciprocal
   of McClure's resolution.) depth must be >=1.  Returns a Clojure set of 
   fastmath.complex (Vec2) clipped (i.e. floored) points."
-  [increment inverse-f depth z]
+  [resolution inverse-f depth z]
   (let [zs-set_ (atom #{})]
     (letfn [(inv-recur [curr-depth curr-z]
               (when (> curr-depth 0) ; otherwise nil--which won't be used
                 (let [zs-set @zs-set_
                       [v1 v2] (inverse-f curr-z)
-                      cv1 (c-round-to increment v1)
-                      cv2 (c-round-to increment v2)
+                      cv1 (c-round-to resolution v1)
+                      cv2 (c-round-to resolution v2)
                       v1-isnt-near (not (contains? zs-set cv1))
                       v2-isnt-near (not (contains? zs-set cv2))]
                   ;not exactly same as below--not sure why: (swap! zs-set_ s/union #{cv1 cv2})
