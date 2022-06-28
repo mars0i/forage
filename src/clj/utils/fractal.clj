@@ -246,18 +246,18 @@
 ;; Note there's no simple way to use loop/recur here; we need to recurse down 
 ;; two parallel paths.  But the number of iterations needed is unlikely to
 ;; blow the stack, and it runs quickly.
-(defn julia-inverse
+(defn julia-inverse-debug-store-full-vals
   "Use iterations of the inverse of a quadratic function f to identify
   points in f's Julia set, skipping points that within resolution distance
   from points already collected.  More precisely, points are kept if they
-  are still new after being floored to a multiple of resolution.  z is the 
-  initial value to iterate from, a  fastmath.complex (Vec2) number.  depth
+  are still new after being rounded to a multiple of resolution.  init-z is the 
+  initial value to iterate from, a  fastmath.complex (Vec2) number.  iter-depth
   must be >=0.  Returns a Clojure map in which each key is one of the 
   clipped points, whose value is the first, non-clipped value that caused
   the key/value pair to be added to the map.  NOTE: To avoid spurious
   isolated points that are not part of the Julia set, re-run with init-z
   very near some part of the Julia set."
-  [resolution inverse-f depth init-z]
+  [resolution iter-depth inverse-f init-z]
   (let [zs-map_ (atom {})]  ; a recursive imperative algorithm
     (letfn [(inv-recur [curr-depth curr-z]
               (when (> curr-depth 0) ; otherwise nil--which won't be used
@@ -270,8 +270,44 @@
                   (when-not (@zs-map_ cz-)           ; Ditto for z- .
                     (swap! zs-map_ assoc cz- z-)
                     (inv-recur (dec curr-depth) z-)))))]
-      (inv-recur depth init-z))
+      (inv-recur iter-depth init-z))
     @zs-map_))
+
+(defn inc-or-one
+  "Return (inc x) unless x is falsey, in which case return 1, as if nil
+  was zero and was incremented."
+  [x]
+  (if x (inc x) 1))
+
+;; TODO WHY DO FUNCTIONS ABOVE AND BELOW RETURN SLIGHTLY DIFFERENT SETS?
+
+;; Based on an algorithm in Peitgen and Richter.
+(defn julia-inverse
+  "Use iterations of the inverse of a quadratic function f to identify
+  points in f's Julia set, but without iterating further when too many
+  previous points are within resolution distance of the new point.
+  init-z is the initial value to iterate from [a fastmath.complex (Vec2)
+  number].  iter-depth must be >=0.  Returns a Clojure map in which each key
+  is one of the clipped points, and the values of the counts of nearby points
+  that have been iterated on."
+  [resolution max-revisits iter-depth inverse-f init-z]
+  (let [zsmap_ (atom {})]  ; a recursive imperative algorithm
+    (letfn [(inv-recur [curr-depth curr-z]
+              (when (> curr-depth 0) ; otherwise nil--which won't be used
+                (let [[z+ z-] (inverse-f curr-z)
+                      cz+ (c-round-to resolution z+) ; canonical value of micro-region
+                      cz- (c-round-to resolution z-) ; ditto
+                      z+count (@zsmap_ cz+)  ; number of prev visits, or nil if none
+                      z-count (@zsmap_ cz-)] ; ditto
+                  ;; recurse on branches for which micro-region is not overpopulated:
+                  (when (or (not z+count) (< z+count max-revisits))
+                      (swap! zsmap_ update cz+ inc-or-one)
+                      (inv-recur (dec curr-depth) z+))
+                  (when (or (not z-count) (< z-count max-revisits))
+                      (swap! zsmap_ update cz- inc-or-one)
+                      (inv-recur (dec curr-depth) z-)))))]
+      (inv-recur iter-depth init-z))
+    @zsmap_))
 
 ;; THIS VERSION RECURSES ON THE CLIPPED VALUES, RETURNING THEM AS A SET.
 (defn old-julia-inverse-recurse-on-clipped
