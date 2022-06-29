@@ -434,14 +434,13 @@
 
 
   (def f-1 (inv-quad-fn (c/complex 0.0 0.68)))
-  (def zs (time (julia-inverse 0.001 f-1 100000 c/ZERO)))
+  (def zs (time (julia-inverse 0.001 5 100000 f-1 c/ZERO)))
   (count zs)
 
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (oz/view! (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 500 800 1)))
-  (oz/view! (time (h/vega-food-plot (h/add-point-labels "Julia set" zs) 1000 1000 1)))
+  (oz/view! (time (h/vega-food-plot (h/add-point-labels "Julia set" (keys zs)) 500 800 0.7)))
 
   ;; This didn't work--Firefox displayed blank:
   (def julia68s (time (into {} (map (fn [z] [z (julia-inverse 0.001 f-1 100000 z)]) [c/ZERO (c/complex 1 0) (c/complex 0 1) (c/complex 1 1) (c/complex 5 0) (c/complex 0 5) (c/complex 5 5)]))))
