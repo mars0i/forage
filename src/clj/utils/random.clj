@@ -217,10 +217,7 @@
   seed."
   [rng k mu] (make-pareto rng k (dec mu)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; NOTE THE FOLLOWING WERE WRITTEN FOR APACHE COMMONS MATH 3.6.1
-;; Probably don't work with 1.4.
-;; 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATOR AND DISTRIBUTION ACCESS FUNCTIONS
 ;; These are collected together, sometimes in a protocol, because
@@ -228,66 +225,8 @@
 ;; and a distribution object have the same functionality, though the
 ;; methods might have different names.
 
-;; Notes on Apache Commons Math 3.6.1 methods:
-;; cumulativeProbablity:
-;;   cumulativeProbability(x) does what you think.
-;;   cumulativeProbability(x, y) returns 
-;;     cumulativeProbability(y) - cumulativeProbability(x).  However, 
-;;     the name is deprecated, and in fact cumulativeProbability(x,y) just
-;;     calls probability(x,y), which does the subtraction.
-;; probability:
-;;   probability(x,y) returns the probability of a value 
-;;     falling in the interval (x,y], i.e. 
-;;     cumulativeProbability(y) - cumulativeProbability(x).
-;;   probability(x) just returns zero for continuous distributions,
-;;     since the probability of a point is zero.
-;; density:
-;;   density(x) returns the value of the pdf at x, which is probably
-;;     what you wanted if you called probablity(x).
-
-(defn density
-  "Return the density at x according to (Apache Commons math) distribution dist."
-  [dist x]
-  (.density dist x))
-
-(defn probability
-  "Return the probability that a value from dist falls within (low,high]."
-  [dist low high]
-   (.probability dist low high))
-
-;; Easiest to keep this as a separate definition that can be called
-;; via arity-selection from cumulative.  This makes it easy to memoize
-;; using a closure.  Note that it's still a slightly faster to use this
-;; function directly rather than calling the multi-arity cumulative.
-(def trunc-cumulative
-  "Return the value of the cumulative probability distribution dist at
-  x for Apache Commons Math3 distribution dist for which values outside
-  of (low, high] have zero probability.  Memoizes the normalizing value,
-  but only if the first three arguments are the same as on the previous
-  call: dist must be identical? to its previous value, while low and high
-  each must be = to their previous values."
-  (let [memo$ (atom {})]
-    (fn [dist low high x]
-      (cond (<= x low) 0.0  ; Or throw exception? Return nil?
-            (> x high) 1.0
-            :else (let [args [dist low high]
-                        tot-prob (or (@memo$ args)
-                                     (let [newprob (apply probability args)]
-                                       (reset! memo$ {args newprob})
-                                       newprob))]
-                    (/ (.cumulativeProbability dist x) tot-prob))))))
-
-(defn cumulative
-  "Return the value of the cumulative probability distribution at x for
-  (Apache Commons math) distribution dist.  If low and high are provided,
-  returns the the cumulative probability for the truncated distribution 
-  corresponding to for x in (low,high] but assigning zero probability to 
-  values outside of it."
-  ([dist x] (.cumulativeProbability dist x))
-  ([dist low high x] (trunc-cumulative dist low high x)))
-
 (defprotocol RandDist
-  "Provides a common interface to some functionality shared by PRNG 
+  "Provides a common interface to some functionality shared by Math3 PRNG 
   and distribution classes."
   (next-double 
     [this]
@@ -346,3 +285,67 @@
   and pi, i.e. in [0,pi)."
   [rng]
   (* 2 Math/PI (next-double rng)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; NOTE THE FOLLOWING WERE WRITTEN FOR APACHE COMMONS MATH 3.6.1
+;; Probably don't work with 1.4.
+;; 
+
+;; Notes on Apache Commons Math 3.6.1 methods:
+;; cumulativeProbablity:
+;;   cumulativeProbability(x) does what you think.
+;;   cumulativeProbability(x, y) returns 
+;;     cumulativeProbability(y) - cumulativeProbability(x).  However, 
+;;     the name is deprecated, and in fact cumulativeProbability(x,y) just
+;;     calls probability(x,y), which does the subtraction.
+;; probability:
+;;   probability(x,y) returns the probability of a value 
+;;     falling in the interval (x,y], i.e. 
+;;     cumulativeProbability(y) - cumulativeProbability(x).
+;;   probability(x) just returns zero for continuous distributions,
+;;     since the probability of a point is zero.
+;; density:
+;;   density(x) returns the value of the pdf at x, which is probably
+;;     what you wanted if you called probablity(x).
+
+(defn density
+  "Return the density at x according to (Apache Commons Math3) distribution dist."
+  [dist x]
+  (.density dist x))
+
+(defn probability
+  "Return the probability that a value from Apache Commons Math3 dist falls
+  within (low,high]."
+  [dist low high]
+   (.probability dist low high))
+
+;; Easiest to keep this as a separate definition that can be called
+;; via arity-selection from cumulative.  This makes it easy to memoize
+;; using a closure.  Note that it's still a slightly faster to use this
+;; function directly rather than calling the multi-arity cumulative.
+(def trunc-cumulative
+  "Return the value of the cumulative probability distribution for Apache
+  Commons Math3 dist at x, where values outside (low, high] have zero
+  probability.  Memoizes the normalizing value, but only if the first three
+  arguments are the same as on the previous call: dist must be identical? to
+  its previous value, while low and high each must be = to their previous
+  values."
+  (let [memo$ (atom {})]
+    (fn [dist low high x]
+      (cond (<= x low) 0.0  ; Or throw exception? Return nil?
+            (> x high) 1.0
+            :else (let [args [dist low high]
+                        tot-prob (or (@memo$ args)
+                                     (let [newprob (apply probability args)]
+                                       (reset! memo$ {args newprob})
+                                       newprob))]
+                    (/ (.cumulativeProbability dist x) tot-prob))))))
+
+(defn cumulative
+  "Return the value of the cumulative probability distribution at x for
+  (Apache Commons Math3) distribution dist.  If low and high are provided,
+  returns the the cumulative probability for the truncated distribution 
+  corresponding to for x in (low,high] but assigning zero probability to 
+  values outside of it."
+  ([dist x] (.cumulativeProbability dist x))
+  ([dist low high x] (trunc-cumulative dist low high x)))
