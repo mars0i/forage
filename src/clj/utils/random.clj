@@ -10,17 +10,23 @@
 ;; See e.g.
 ;; https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/RandomSource.html
 (ns utils.random
-  (:import [org.apache.commons.rng UniformRandomProvider]
-           [org.apache.commons.rng.simple RandomSource]
-           [org.apache.commons.rng.core RandomProviderDefaultState]
-           [org.apache.commons.rng.core.source32 AbstractWell Well19937c Well44497b]
-           [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler]
-           ;[org.apache.commons.statistics.distribution ParetoDistribution]
-            [java.io
-             ByteArrayOutputStream ObjectOutputStream FileOutputStream
-             ByteArrayInputStream  ObjectInputStream  FileInputStream])
-   (:require [clojure.math.numeric-tower :as nt]
-             [clojure.java.io :as io]))
+  (:import [org.apache.commons.math3.distribution ParetoDistribution] ; 3.6.1
+           [org.apache.commons.rng UniformRandomProvider] ; 1.4
+           [org.apache.commons.rng.simple RandomSource] ; 1.4
+           [org.apache.commons.rng.core RandomProviderDefaultState] ; 1.4
+           [org.apache.commons.rng.core.source32 AbstractWell Well19937c Well44497b] ; 1.4
+           [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler] ; 1.4
+           ;[org.apache.commons.statistics.distribution ParetoDistribution] ; 1.4, I think, but not Mavenized yet
+           [java.io
+            ByteArrayOutputStream ObjectOutputStream FileOutputStream
+            ByteArrayInputStream  ObjectInputStream  FileInputStream])
+  (:require [clojure.math.numeric-tower :as nt]
+            [clojure.java.io :as io]))
+
+;; NOTE Apache Commons Math 3.6.1 is latest official, but I started using
+;; the newer version, 1.4, because it allowed saving internal state of
+;; a PRNG.  However, some functions aren't yet realeased with 1.4, so
+;; I'm using 3.6.1 now, too.
 
 (comment
   (def rng (make-well19937 42))
@@ -56,6 +62,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PRNG-CREATION FUNCTIONS
+;; MOSTLY FROM APACHE COMMONS 1.4
 
 ;; Similar to what Apache Commons PRNGs do if unseeded.
 ;; Note that the Apache Commons PRNGs will use all of a long seed--
@@ -189,7 +196,7 @@
 ;; https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/distribution/AbstractRealDistribution.html
 
 (defn make-pareto
-  "Returns an Apache Commons Pareto distribution with min-value (\"scale\")
+  "Returns an Apache Commons 1.4 Pareto distribution with min-value (\"scale\")
   parameter k and shape parameter alpha."
   [rng k alpha]
   (InverseTransformParetoSampler/of rng k alpha))
@@ -212,7 +219,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; NOTE THE FOLLOWING WERE WRITTEN FOR APACHE COMMONS MATH 3.6.1
-;; Not sure whether they work with 1.4.
+;; Probably don't work with 1.4.
 ;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATOR AND DISTRIBUTION ACCESS FUNCTIONS
@@ -254,11 +261,11 @@
 ;; function directly rather than calling the multi-arity cumulative.
 (def trunc-cumulative
   "Return the value of the cumulative probability distribution dist at
-  x for distribution dist for which values outside of (low, high] have
-  zero probability.  Memoizes the normalizing value, but only if the
-  first three arguments are the same as on the previous call: dist must
-  be identical? to its previous value, while low and high each must be =
-  to their previous values."
+  x for Apache Commons Math3 distribution dist for which values outside
+  of (low, high] have zero probability.  Memoizes the normalizing value,
+  but only if the first three arguments are the same as on the previous
+  call: dist must be identical? to its previous value, while low and high
+  each must be = to their previous values."
   (let [memo$ (atom {})]
     (fn [dist low high x]
       (cond (<= x low) 0.0  ; Or throw exception? Return nil?

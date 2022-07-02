@@ -5,9 +5,9 @@
             :url "https://www.gnu.org/licenses/gpl-3.0.en.html"}
   :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/math.numeric-tower "0.0.5"]
-                 ;[org.apache.commons/commons-math3 "3.6.1"]
-                 [org.apache.commons/commons-rng-core "1.4"]
-                 [org.apache.commons/commons-rng-simple "1.4"]
+                 [org.apache.commons/commons-math3 "3.6.1"]    ; NOTE USING DIFFERENT INCOMPATIBLE
+                 [org.apache.commons/commons-rng-core "1.4"]   ; VERSIONS OF Apache Commons math
+                 [org.apache.commons/commons-rng-simple "1.4"] ; libs because of nonoverlapping features
                  [org.apache.commons/commons-rng-client-api "1.4"]
                  [org.apache.commons/commons-rng-sampling "1.4"]
                  [generateme/fastmath "2.1.8"]
