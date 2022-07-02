@@ -15,9 +15,10 @@
            [org.apache.commons.rng.core RandomProviderDefaultState]
            [org.apache.commons.rng.core.source32 AbstractWell Well19937c Well44497b]
            [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler]
-           [java.io
-            ByteArrayOutputStream ObjectOutputStream FileOutputStream
-            ByteArrayInputStream  ObjectInputStream  FileInputStream])
+           ;[org.apache.commons.statistics.distribution ParetoDistribution]
+            [java.io
+             ByteArrayOutputStream ObjectOutputStream FileOutputStream
+             ByteArrayInputStream  ObjectInputStream  FileInputStream])
    (:require [clojure.math.numeric-tower :as nt]
              [clojure.java.io :as io]))
 
@@ -209,6 +210,10 @@
   seed."
   [rng k mu] (make-pareto rng k (dec mu)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; NOTE THE FOLLOWING WERE WRITTEN FOR APACHE COMMONS MATH 3.6.1
+;; Not sure whether they work with 1.4.
+;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATOR AND DISTRIBUTION ACCESS FUNCTIONS
 ;; These are collected together, sometimes in a protocol, because
