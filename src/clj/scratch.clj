@@ -6,15 +6,43 @@
             [forage.walks :as w]
             [forage.food :as f]
             [forage.run :as fr]
-            [forage.mason.foodspot :as mf]
+            [forage.mason.foodspot :as mf] 
+            [cljplot.build :as cb]
+            [cljplot.render :as cr]
+            [cljplot.core :as cc]
             [utils.math :as m]
             [utils.random :as r]))
-
 
 
 (comment
 
   (def rng (r/make-well19937))
+
+  (def len-dist (r/make-powerlaw rng 1 2))
+  (def steps (repeatedly (w/step-vector-fn rng len-dist 1 2000)))
+  (def indexed-steps (map conj steps (range)))
+(take 4 steps)
+
+  ;; Based on https://github.com/generateme/cljplot/blob/master/sketches/vega.clj#L570
+  (def plot-result
+    (let [data (take 100 steps)]
+      (-> 
+        ;(cb/series [:grid] [:line data {:stroke {:size 2} :point {:type \O}}])
+       (cb/series [:grid] [:line data {:stroke {:size 1}}])
+       (cb/preprocess-series)
+       ;(cb/update-scale :x :ticks 4)
+       (cb/update-scale :x :domain [-100 100])
+       (cb/update-scale :y :domain [-100 100])
+       (cb/add-axes :bottom)
+       (cb/add-axes :left)
+       (cb/add-label :bottom "x")
+       (cb/add-label :left "y")
+       (cr/render-lattice {:width 400 :height 400 :border 20})
+       ;(cc/save "yo.jpg")
+       (cc/show)
+       )))
+
+
   (def env (mf/make-env 10 1000))
   (def look-fn (partial mf/perc-foodspots-exactly-toroidal env 1))
   (def fw (w/levy-foodwalk look-fn 0.1 10000 false 10000 rng 1 2 [0 0]))
