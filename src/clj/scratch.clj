@@ -51,15 +51,17 @@
 
   (def rng (r/make-well19937))
   (def len-dist (r/make-powerlaw rng 1 2))
+  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 4000)))
   (def stops (w/walk-stops [0 0] 
-                           (w/vecs-upto-len 2000 
-                                            (repeatedly (w/step-vector-fn rng len-dist 1 1000)))))
+                           (w/vecs-upto-len 8500 step-vector-pool)))
+  (count stops)
+
 
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (def plot-result
-    (let [data (take 5000 stops)]
+    (let [data (take 5000 stops)] ; stops may have many fewer points
       (-> (cb/series [:grid] [:line (correct-path data)
-                              {:color [255 0 0 150] :margins nil}])
+                              {:color [0 0 255 150] :margins nil}])
           (cb/preprocess-series)
           (cb/update-scale :x :domain [-200 200])
           (cb/update-scale :y :domain [-200 200])
