@@ -14,58 +14,78 @@
             [utils.random :as r]))
 
 
+;; by generateme, from 
+;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
+(def boundary-left -200.0)
+(def boundary-right 200.0)
+(def width (- boundary-right boundary-left))
+
+(defn correct-path
+  [path]
+  (first (reduce (fn [[new-path shift-x shift-y] [[curr-x curr-y] [next-x next-y]]]
+                   (let [s-curr-x (+ shift-x curr-x)
+                         s-curr-y (+ shift-y curr-y)
+                         s-next-x (+ shift-x next-x)
+                         s-next-y (+ shift-y next-y)
+                         new-shift-x (cond
+                                       (< s-next-x boundary-left) (+ shift-x width)
+                                       (> s-next-x boundary-right) (- shift-x width)
+                                       :else shift-x)
+                         new-shift-y (cond
+                                       (< s-next-y boundary-left) (+ shift-y width)
+                                       (> s-next-y boundary-right) (- shift-y width)
+                                       :else shift-y)]
+                     [(if (and (== new-shift-x shift-x)
+                               (== new-shift-y shift-y))
+                        (conj new-path [s-curr-x s-curr-y])
+                        (conj new-path
+                              [s-curr-x s-curr-y] [s-next-x s-next-y]
+                              [##NaN ##NaN] ;; new chunk separator
+                              [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
+                      new-shift-x
+                      new-shift-y]))
+                 [[] 0.0 0.0] (partition 2 1 path))))
+
+
 (comment
 
   (def rng (r/make-well19937))
-
   (def len-dist (r/make-powerlaw rng 1 2))
   (def stops (w/walk-stops [0 0] 
-                           (w/vecs-upto-len 3000 
+                           (w/vecs-upto-len 2000 
                                             (repeatedly (w/step-vector-fn rng len-dist 1 1000)))))
-
-  ;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
-  (defn walk-step
-    [[x y]]
-    [(+ x 2.0 (r/next-double rng 0.1 2.0))
-     (+ y 0.5 (r/next-double rng 0.1 2.0))])
-  (def some-walk (iterate walk-step [0.0 0.0]))
-
-  (take 3 some-walk)
-
-  (take 3 steps)
 
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (def plot-result
     (let [data (take 5000 stops)]
-      (-> (cb/series [:grid] [:line data ; (correct-path (take 3000 some-walk))
-                              {:color [0 50 255 150] :margins nil}])
+      (-> (cb/series [:grid] [:line (correct-path data)
+                              {:color [255 0 0 150] :margins nil}])
           (cb/preprocess-series)
           (cb/update-scale :x :domain [-200 200])
           (cb/update-scale :y :domain [-200 200])
           (cb/add-axes :bottom)
           (cb/add-axes :left)
           (cr/render-lattice {:width 800 :height 800})
-          ;(cc/save "yo.jpg")
+          (cc/save "yo.jpg")
           (cc/show)
           )))
-
 
   ;; Based on https://github.com/generateme/cljplot/blob/master/sketches/vega.clj#L570
   (def plot-result
     (let [data (take 1000 stops)]
       (-> 
         ;(cb/series [:grid] [:line data {:stroke {:size 2} :point {:type \O}}])
-       (cb/series [:grid] [:line data {:stroke {:size 1}}])
+       (cb/series [:grid] [:line (correct-path data) {:stroke {:size 1}}])
        (cb/preprocess-series)
        ;(cb/update-scale :x :ticks 4)
-       (cb/update-scale :x :domain [-100 100])
-       (cb/update-scale :y :domain [-100 100])
+       (cb/update-scale :x :domain [-200 200])
+       (cb/update-scale :y :domain [-200 200])
        (cb/add-axes :bottom)
        (cb/add-axes :left)
        (cb/add-label :bottom "x")
        (cb/add-label :left "y")
        (cr/render-lattice {:width 400 :height 400 :border 20})
-       ;(cc/save "yo.jpg")
+       (cc/save "yo.jpg")
        (cc/show)
        )))
 
