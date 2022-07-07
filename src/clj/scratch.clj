@@ -20,10 +20,11 @@
 (def boundary-right 200.0)
 (def width (- boundary-right boundary-left))
 
+;; [most comments added by Marshall]
 (defn correct-path
   [path]
   (first (reduce (fn [[new-path shift-x shift-y] [[curr-x curr-y] [next-x next-y]]]
-                   (let [s-curr-x (+ shift-x curr-x)
+                   (let [s-curr-x (+ shift-x curr-x) ; "s-" means "shifted"
                          s-curr-y (+ shift-y curr-y)
                          s-next-x (+ shift-x next-x)
                          s-next-y (+ shift-y next-y)
@@ -35,12 +36,12 @@
                                        (< s-next-y boundary-left) (+ shift-y width)
                                        (> s-next-y boundary-right) (- shift-y width)
                                        :else shift-y)]
-                     [(if (and (== new-shift-x shift-x)
+                     [(if (and (== new-shift-x shift-x)  ; or could have the conds return boolean
                                (== new-shift-y shift-y))
                         (conj new-path [s-curr-x s-curr-y])
                         (conj new-path
-                              [s-curr-x s-curr-y] [s-next-x s-next-y]
-                              [##NaN ##NaN] ;; new chunk separator
+                              [s-curr-x s-curr-y] [s-next-x s-next-y] ; 2nd vec is dupe vector for other side
+                              [##NaN ##NaN] ;; new chunk separator [M: can this be generalized for vega-lite?]
                               [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
                       new-shift-x
                       new-shift-y]))
@@ -48,6 +49,7 @@
 
 
 (comment
+
 
   (def rng (r/make-well19937))
   (def len-dist (r/make-powerlaw rng 1 2))
