@@ -16,36 +16,44 @@
 
 ;; by generateme, from 
 ;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
-(def boundary-left -200.0)
-(def boundary-right 200.0)
-(def width (- boundary-right boundary-left))
+;(def boundary-left -200.0)
+;(def boundary-right 200.0)
 
 ;; [most comments added by Marshall]
 (defn correct-path
-  [path]
-  (first (reduce (fn [[new-path shift-x shift-y] [[curr-x curr-y] [next-x next-y]]]
-                   (let [s-curr-x (+ shift-x curr-x) ; "s-" means "shifted"
-                         s-curr-y (+ shift-y curr-y)
-                         s-next-x (+ shift-x next-x)
-                         s-next-y (+ shift-y next-y)
-                         new-shift-x (cond
-                                       (< s-next-x boundary-left) (+ shift-x width)
-                                       (> s-next-x boundary-right) (- shift-x width)
-                                       :else shift-x)
-                         new-shift-y (cond
-                                       (< s-next-y boundary-left) (+ shift-y width)
-                                       (> s-next-y boundary-right) (- shift-y width)
-                                       :else shift-y)]
-                     [(if (and (== new-shift-x shift-x)  ; or could have the conds return boolean
-                               (== new-shift-y shift-y))
-                        (conj new-path [s-curr-x s-curr-y])
-                        (conj new-path
-                              [s-curr-x s-curr-y] [s-next-x s-next-y] ; 2nd vec is dupe vector for other side
-                              [##NaN ##NaN] ;; new chunk separator [M: can this be generalized for vega-lite?]
-                              [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
-                      new-shift-x
-                      new-shift-y]))
-                 [[] 0.0 0.0] (partition 2 1 path))))
+  [boundary-left boundary-right path]
+  (let [width (- boundary-right boundary-left)]
+    (first  ; no longer need shift-x and shift-y; we used the accumulator to pass them along
+     (reduce (fn [[new-path shift-x shift-y]
+                  [[curr-x curr-y] [next-x next-y]]] ; endpts of a line segment
+               (let [s-curr-x (+ shift-x curr-x) ; "s-" = "shifted"
+                     s-curr-y (+ shift-y curr-y) ; Once image is shifted, it
+                     s-next-x (+ shift-x next-x) ; remains so (unless back-shifted).
+                     s-next-y (+ shift-y next-y)
+                     ;; If needed, we pass a new shift to the next iteration
+                     ;; because we'll duplicate the current segment, shifted, and
+                     ;; then all subsequent points will be additionally shifted 
+                     ;; that much:
+                     new-shift-x (cond
+                                   (< s-next-x boundary-left) (+ shift-x width)
+                                   (> s-next-x boundary-right) (- shift-x width)
+                                   :else shift-x)
+                     new-shift-y (cond
+                                   (< s-next-y boundary-left) (+ shift-y width)
+                                   (> s-next-y boundary-right) (- shift-y width)
+                                   :else shift-y)]
+                 [(if (and (== new-shift-x shift-x)  ; not duplicating with shift
+                           (== new-shift-y shift-y)) ; just using old shift
+                    (conj new-path [s-curr-x s-curr-y]) ; so just add new point
+                    (conj new-path
+                          [s-curr-x s-curr-y] [s-next-x s-next-y] ; segment that runs past at least one boundary
+                          [##NaN ##NaN] ; tells cljplot to break continuous lines
+                          [(+ curr-x new-shift-x) (+ curr-y new-shift-y)])) ; shifted outside boundaries--duplicate of the point that was *within* boundaries on other side
+                                                                            ; next point will be shifted as much, but inside
+                  new-shift-x
+                  new-shift-y]))
+             [[] 0.0 0.0]
+             (partition 2 1 path))))) ; points -> segments (with shared endpoints)
 
 
 (comment
@@ -55,22 +63,23 @@
   (def len-dist (r/make-powerlaw rng 1 2))
   (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 4000)))
   (def stops (w/walk-stops [0 0] 
-                           (w/vecs-upto-len 8500 step-vector-pool)))
+                           (w/vecs-upto-len 8 step-vector-pool)))
   (count stops)
+  (correct-path -2 2 stops)
 
 
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (def plot-result
     (let [data (take 5000 stops)] ; stops may have many fewer points
-      (-> (cb/series [:grid] [:line (correct-path data)
+      (-> (cb/series [:grid] [:line (correct-path -2 2 data)
                               {:color [0 0 255 150] :margins nil}])
           (cb/preprocess-series)
-          (cb/update-scale :x :domain [-200 200])
-          (cb/update-scale :y :domain [-200 200])
+          (cb/update-scale :x :domain [-2 2])
+          (cb/update-scale :y :domain [-2 2])
           (cb/add-axes :bottom)
           (cb/add-axes :left)
-          (cr/render-lattice {:width 800 :height 800})
-          (cc/save "yo.jpg")
+          (cr/render-lattice {:width 500 :height 500})
+          ;(cc/save "yo.jpg")
           (cc/show)
           )))
 
@@ -79,7 +88,7 @@
     (let [data (take 1000 stops)]
       (-> 
         ;(cb/series [:grid] [:line data {:stroke {:size 2} :point {:type \O}}])
-       (cb/series [:grid] [:line (correct-path data) {:stroke {:size 1}}])
+       (cb/series [:grid] [:line (correct-path -200 200 data) {:stroke {:size 1}}])
        (cb/preprocess-series)
        ;(cb/update-scale :x :ticks 4)
        (cb/update-scale :x :domain [-200 200])
