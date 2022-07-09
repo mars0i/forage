@@ -23,9 +23,9 @@
 (defn correct-path
   [boundary-left boundary-right path]
   (let [width (- boundary-right boundary-left)]
-    (first  ; no longer need shift-x and shift-y; we used the accumulator to pass them along
+    (first  ; <- we no longer need shift-x and shift-y (they had to be passed along during)
      (reduce (fn [[new-path shift-x shift-y]
-                  [[curr-x curr-y] [next-x next-y]]] ; endpts of a line segment
+                  [[curr-x curr-y] [next-x next-y]]] ; endpoints of a line segment
                (let [s-curr-x (+ shift-x curr-x) ; "s-" = "shifted"
                      s-curr-y (+ shift-y curr-y) ; Once image is shifted, it
                      s-next-x (+ shift-x next-x) ; remains so (unless back-shifted).
@@ -55,17 +55,32 @@
              [[] 0.0 0.0]
              (partition 2 1 path))))) ; points -> segments (with shared endpoints)
 
+;; generateme asked (about the original version of this code--nearly the same):
+;; The problems to solve:
+;;  1. What is start is not inside a range? (figure out starting offset)
+;;  2. What if jump is longer than range size? (apply proper wrapping/modulo)
+;;  3. What happened to the last point? (probably partition-all should be used)
+
+;; Answers:
+;;  re 3: No, it works correctly as is.  See 
+
+
 
 (comment
-
 
   (def rng (r/make-well19937))
   (def len-dist (r/make-powerlaw rng 1 2))
   (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 4000)))
   (def stops (w/walk-stops [0 0] 
-                           (w/vecs-upto-len 8 step-vector-pool)))
+                           (w/vecs-upto-len 20 step-vector-pool)))
   (count stops)
   (correct-path -2 2 stops)
+
+  (def stops [[0 0]
+              [0.9700914276659796 1.6365790878224906]
+              [-0.824501634774673 2.1803587635156556]
+              [1.261448866116044 2.834273995635776]
+              [0.21316777054277192 1.0885351519809954]])
 
 
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
@@ -74,11 +89,13 @@
       (-> (cb/series [:grid] [:line (correct-path -2 2 data)
                               {:color [0 0 255 150] :margins nil}])
           (cb/preprocess-series)
-          (cb/update-scale :x :domain [-2 2])
-          (cb/update-scale :y :domain [-2 2])
+          ;(cb/update-scale :x :domain [-2 2])
+          ;(cb/update-scale :y :domain [-2 2])
+          (cb/update-scale :x :domain [-3 3])
+          (cb/update-scale :y :domain [-3 3])
           (cb/add-axes :bottom)
           (cb/add-axes :left)
-          (cr/render-lattice {:width 500 :height 500})
+          (cr/render-lattice {:width 750 :height 750 :border 10})
           ;(cc/save "yo.jpg")
           (cc/show)
           )))
