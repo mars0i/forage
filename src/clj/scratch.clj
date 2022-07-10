@@ -27,9 +27,9 @@
      (reduce (fn [[new-path shift-x shift-y]
                   [[curr-x curr-y] [next-x next-y]]] ; endpoints of a line segment
                (let [s-curr-x (+ shift-x curr-x) ; "s-" = "shifted"
-                     s-curr-y (+ shift-y curr-y) ; Once image is shifted, it
-                     s-next-x (+ shift-x next-x) ; remains so (unless back-shifted).
-                     s-next-y (+ shift-y next-y)
+                     s-curr-y (+ shift-y curr-y) ; note first point assumed w/in bounds
+                     s-next-x (+ shift-x next-x) ; Once image is shifted, it
+                     s-next-y (+ shift-y next-y) ; remains so (unless back-shifted).
                      ;; If needed, we pass a new shift to the next iteration
                      ;; because we'll duplicate the current segment, shifted, and
                      ;; then all subsequent points will be additionally shifted 
