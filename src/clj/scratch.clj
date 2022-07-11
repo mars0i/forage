@@ -44,7 +44,7 @@
                     (conj new-path [s-curr-x s-curr-y]) ; so just add new point
                     (conj new-path
                           [s-curr-x s-curr-y] [s-next-x s-next-y] ; segment that runs past at least one boundary
-                          [##NaN ##NaN] ; tells cljplot to break continuous lines
+                          nil ; break between continuous lines
                           [(+ curr-x new-shift-x) (+ curr-y new-shift-y)])) ; shifted outside boundaries--duplicate of the point that was *within* boundaries on other side
                                                                             ; next point will be shifted as much, but inside
                   new-shift-x
@@ -61,6 +61,42 @@
 ;; Answers:
 ;;  re 3: No, it works correctly as is.  See 
 
+(defn correct-path2
+  [boundary-left boundary-right path]
+  (let [width (- boundary-right boundary-left)]
+    (loop [new-path [],
+           shift-x 0.0, shift-y 0.0,
+           segments (partition 2 1 path)]
+      (if-not segments
+        new-path
+        (let [[[curr-x curr-y] [next-x next-y]] (first segments)
+              shifted-curr-x (+ shift-x curr-x)
+              shifted-curr-y (+ shift-y curr-y)
+              shifted-next-x (+ shift-x next-x)
+              shifted-next-y (+ shift-y next-y)
+              new-shift-x (cond
+                            (< shifted-next-x boundary-left) (+ shift-x width)
+                            (> shifted-next-x boundary-right) (- shift-x width)
+                            :else shift-x)
+              new-shift-y (cond
+                            (< shifted-next-y boundary-left) (+ shift-y width)
+                            (> shifted-next-y boundary-right) (- shift-y width)
+                            :else shift-y)]
+          (recur (if (and (== new-shift-x shift-x)
+                          (== new-shift-y shift-y))
+                   (conj new-path [shifted-curr-x shifted-curr-y])
+                   (conj new-path
+                         [shifted-curr-x shifted-curr-y]
+                         [shifted-next-x shifted-next-y]
+                         nil  ; replace as needed for plotting system
+                         [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
+                 new-shift-x new-shift-y
+                 (next segments)))))))
+
+(defn add-cljplot-path-breaks
+  [pts]
+  (map (fn [pt] (if-not pt [##NaN ##NaN] pt))
+       pts))
 
 
 (comment
@@ -71,7 +107,11 @@
   (def stops (w/walk-stops [0 0] 
                            (w/vecs-upto-len 200  step-vector-pool)))
   (count stops)
-  (correct-path -2 2 stops)
+  (def corrected-stops (correct-path -2 2 stops))
+  (def corrected2-stops (correct-path2 -2 2 stops))
+  (= corrected-stops corrected2-stops)
+  (add-cljplot-path-breaks corrected2-stops)
+
 
   (def stops 
     [[0 0]
@@ -85,13 +125,17 @@
     [[0.0 0.0]
      [0.9700914276659796 1.6365790878224906]
      [-0.824501634774673 2.1803587635156556]
-     [##NaN ##NaN]
+     nil
      [0.9700914276659796 -2.363420912177509]
      [-0.824501634774673 -1.8196412364843444]
      [1.261448866116044 -1.165726004364224]
      [0.21316777054277192 -2.911464848019005]
-     [##NaN ##NaN]
+     nil
      [1.261448866116044 2.834273995635776]])
+
+  (def corrected2-stops (correct-path2 -2 2 stops))
+
+  (= corrected-stops corrected2-stops)
 
 
   (def short-stops 
@@ -104,13 +148,13 @@
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (def plot-result
     (let [data (take 5000 stops)] ; stops may have many fewer points
-      (-> (cb/series [:grid] [:line data; (correct-path -2 2 data)
+      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks (correct-path -2 2 data))
                               {:color [0 0 255 150] :margins nil}])
           (cb/preprocess-series)
           ;(cb/update-scale :x :domain [-2 2])
           ;(cb/update-scale :y :domain [-2 2])
-          (cb/update-scale :x :domain [-150 150])
-          (cb/update-scale :y :domain [-150 150])
+          (cb/update-scale :x :domain [-2 2])
+          (cb/update-scale :y :domain [-2 2])
           (cb/add-axes :bottom)
           (cb/add-axes :left)
           (cr/render-lattice {:width 750 :height 750 :border 10})
