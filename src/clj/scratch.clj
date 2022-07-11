@@ -14,11 +14,8 @@
             [utils.random :as r]))
 
 
-;; by generateme, from 
+;; Based on code by generateme at
 ;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
-;(def boundary-left -200.0)
-;(def boundary-right 200.0)
-
 ;; [most comments added by Marshall]
 (defn correct-path
   [boundary-left boundary-right path]
@@ -72,27 +69,48 @@
   (def len-dist (r/make-powerlaw rng 1 2))
   (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 4000)))
   (def stops (w/walk-stops [0 0] 
-                           (w/vecs-upto-len 20 step-vector-pool)))
+                           (w/vecs-upto-len 200  step-vector-pool)))
   (count stops)
   (correct-path -2 2 stops)
 
-  (def stops [[0 0]
-              [0.9700914276659796 1.6365790878224906]
-              [-0.824501634774673 2.1803587635156556]
-              [1.261448866116044 2.834273995635776]
-              [0.21316777054277192 1.0885351519809954]])
+  (def stops 
+    [[0 0]
+     [0.9700914276659796 1.6365790878224906]
+     [-0.824501634774673 2.1803587635156556]
+     [1.261448866116044 2.834273995635776]
+     [0.21316777054277192 1.0885351519809954]])
 
+  (correct-path -2 2 stops) ; =
+  (def corrected-stops 
+    [[0.0 0.0]
+     [0.9700914276659796 1.6365790878224906]
+     [-0.824501634774673 2.1803587635156556]
+     [##NaN ##NaN]
+     [0.9700914276659796 -2.363420912177509]
+     [-0.824501634774673 -1.8196412364843444]
+     [1.261448866116044 -1.165726004364224]
+     [0.21316777054277192 -2.911464848019005]
+     [##NaN ##NaN]
+     [1.261448866116044 2.834273995635776]])
+
+
+  (def short-stops 
+    [[0 0]
+     [1.261448866116044 2.834273995635776]
+     [0.21316777054277192 1.0885351519809954]])
+
+  (def corrected-short-stops (correct-path -2 2 short-stops))
 
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (def plot-result
     (let [data (take 5000 stops)] ; stops may have many fewer points
-      (-> (cb/series [:grid] [:line (correct-path -2 2 data)
+      (-> (cb/series [:grid] [:line data; (correct-path -2 2 data)
                               {:color [0 0 255 150] :margins nil}])
           (cb/preprocess-series)
           ;(cb/update-scale :x :domain [-2 2])
           ;(cb/update-scale :y :domain [-2 2])
-          (cb/update-scale :x :domain [-3 3])
-          (cb/update-scale :y :domain [-3 3])
+          (cb/update-scale :x :domain [-150 150])
+          (cb/update-scale :y :domain [-150 150])
           (cb/add-axes :bottom)
           (cb/add-axes :left)
           (cr/render-lattice {:width 750 :height 750 :border 10})
@@ -100,7 +118,7 @@
           (cc/show)
           )))
 
-  ;; Based on https://github.com/generateme/cljplot/blob/master/sketches/vega.clj#L570
+  ;; old version based on https://github.com/generateme/cljplot/blob/master/sketches/vega.clj#L570
   (def plot-result
     (let [data (take 1000 stops)]
       (-> 
