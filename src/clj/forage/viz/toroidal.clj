@@ -197,7 +197,7 @@
       m
       remx)))
 
-
+;; BUG: only handles a single env-width.  What if a point is beyond twice the width?
 (defn wrap-stops-toroidally
   "Map coordinates in a sequence of points to their values mod maxx and maxy."
   [env-width env-height stops]
