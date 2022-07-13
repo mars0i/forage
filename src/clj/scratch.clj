@@ -28,36 +28,36 @@
   [boundary-left boundary-right path]
   (let [width (- boundary-right boundary-left)]
     (first  ; <- we no longer need shift-x and shift-y (they had to be passed along during)
-     (reduce (fn [[new-path shift-x shift-y]
-                  [[curr-x curr-y] [next-x next-y]]] ; endpoints of a line segment
-               (let [s-curr-x (+ shift-x curr-x) ; "s-" = "shifted"
-                     s-curr-y (+ shift-y curr-y) ; note first point assumed w/in bounds
-                     s-next-x (+ shift-x next-x) ; Once image is shifted, it
-                     s-next-y (+ shift-y next-y) ; remains so (unless back-shifted).
-                     ;; If needed, we pass a new shift to the next iteration
-                     ;; because we'll duplicate the current segment, shifted, and
-                     ;; then all subsequent points will be additionally shifted 
-                     ;; that much:
-                     new-shift-x (cond
-                                   (< s-next-x boundary-left) (+ shift-x width)
-                                   (> s-next-x boundary-right) (- shift-x width)
-                                   :else shift-x)
-                     new-shift-y (cond
-                                   (< s-next-y boundary-left) (+ shift-y width)
-                                   (> s-next-y boundary-right) (- shift-y width)
-                                   :else shift-y)]
-                 [(if (and (== new-shift-x shift-x)  ; not duplicating with shift
-                           (== new-shift-y shift-y)) ; just using old shift
-                    (conj new-path [s-curr-x s-curr-y]) ; so just add new point
-                    (conj new-path
-                          [s-curr-x s-curr-y] [s-next-x s-next-y] ; segment that runs past at least one boundary
-                          nil ; break between continuous lines
-                          [(+ curr-x new-shift-x) (+ curr-y new-shift-y)])) ; shifted outside boundaries--duplicate of the point that was *within* boundaries on other side
-                                                                            ; next point will be shifted as much, but inside
-                  new-shift-x
-                  new-shift-y]))
-             [[] 0.0 0.0]
-             (partition 2 1 path))))) ; points -> segments (with shared endpoints)
+           (reduce (fn [[new-path shift-x shift-y]
+                        [[curr-x curr-y] [next-x next-y]]] ; endpoints of a line segment
+                     (let [s-curr-x (+ shift-x curr-x) ; "s-" = "shifted"
+                           s-curr-y (+ shift-y curr-y) ; note first point assumed w/in bounds
+                           s-next-x (+ shift-x next-x) ; Once image is shifted, it
+                           s-next-y (+ shift-y next-y) ; remains so (unless back-shifted).
+                           ;; If needed, we pass a new shift to the next iteration
+                           ;; because we'll duplicate the current segment, shifted, and
+                           ;; then all subsequent points will be additionally shifted 
+                           ;; that much:
+                           new-shift-x (cond
+                                         (< s-next-x boundary-left) (+ shift-x width)
+                                         (> s-next-x boundary-right) (- shift-x width)
+                                         :else shift-x)
+                           new-shift-y (cond
+                                         (< s-next-y boundary-left) (+ shift-y width)
+                                         (> s-next-y boundary-right) (- shift-y width)
+                                         :else shift-y)]
+                       [(if (and (== new-shift-x shift-x)  ; not duplicating with shift
+                                 (== new-shift-y shift-y)) ; just using old shift
+                          (conj new-path [s-curr-x s-curr-y]) ; so just add new point
+                          (conj new-path
+                                [s-curr-x s-curr-y] [s-next-x s-next-y] ; segment that runs past at least one boundary
+                                nil ; break between continuous lines
+                                [(+ curr-x new-shift-x) (+ curr-y new-shift-y)])) ; shifted outside boundaries--duplicate of the point that was *within* boundaries on other side
+                        ; next point will be shifted as much, but inside
+                        new-shift-x
+                        new-shift-y]))
+                   [[] 0.0 0.0]
+                   (partition 2 1 path))))) ; points -> segments (with shared endpoints)
 
 (defn correct-path-loop
   [boundary-left boundary-right path]
@@ -89,6 +89,47 @@
                          [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
                  new-shift-x new-shift-y
                  (next segments)))))))
+
+
+;; new attempt at revision
+;; NOT RIGHT (seems to loop infinitely)
+(defn correct-path-loop*
+  [boundary-left boundary-right path]
+  (let [width (- boundary-right boundary-left)]
+    (loop [new-path [], shift-x 0.0, shift-y 0.0,
+           segments (partition 2 1 path)]
+      (if-not segments
+        new-path
+        (let [[[curr-x curr-y] [next-x next-y]] (first segments)
+              shifted-curr-x (+ shift-x curr-x)
+              shifted-curr-y (+ shift-y curr-y)
+              shifted-next-x (+ shift-x next-x)
+              shifted-next-y (+ shift-y next-y)
+              new-point [shifted-curr-x shifted-curr-y]
+              [new-points new-shift-x new-shift-y]
+              (loop [new-pts [new-point]
+                     shift-x shift-x
+                     shift-y shift-y]
+                (let [new-shift-x (cond
+                                    (< shifted-next-x boundary-left) (+ shift-x width)
+                                    (> shifted-next-x boundary-right) (- shift-x width)
+                                    :else shift-x)
+                      new-shift-y (cond
+                                    (< shifted-next-y boundary-left) (+ shift-y width)
+                                    (> shifted-next-y boundary-right) (- shift-y width)
+                                    :else shift-y)]
+                  (if (and (== new-shift-x shift-x)
+                           (== new-shift-y shift-y))
+                    [new-pts new-shift-x new-shift-y]
+                    (recur (conj new-pts
+                                 [shifted-next-x shifted-next-y]
+                                 nil
+                                 [(+ curr-x new-shift-x) (+ curr-y new-shift-y)])
+                           new-shift-x new-shift-y))))]
+          (recur (conj new-path new-points)
+                 new-shift-x new-shift-y
+                 (next segments)))))))
+
 
 
 ;; Behavior identical to correct-path, but does the "partitioning" internally
@@ -176,14 +217,14 @@
   (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 10)))
   (def stops (w/walk-stops [0 0] 
                            (w/vecs-upto-len 10  step-vector-pool)))
-  (count stops))
+  (count stops)
   (def corrected-stops (correct-path -2 2 stops))
   (def corrected2-stops (correct-path2 -2 2 stops))
   (= corrected-stops corrected2-stops)
   (add-cljplot-path-breaks corrected2-stops)
 
 
-  (def stops1
+  (def stops
     [[0 0]
      [0.9700914276659796 1.6365790878224906]
      [-0.824501634774673 2.1803587635156556]
@@ -191,12 +232,13 @@
      [0.21316777054277192 1.0885351519809954]])
 
   (=
-  (correct-path5a -2 2 stops)
-  (correct-path5 -2 2 stops)
-  (correct-path -2 2 stops)
-  )
+   (correct-path5a -2 2 stops)
+   (correct-path5 -2 2 stops)
+   (correct-path -2 2 stops)
+   (correct-path-loop* -2 2 stops)
+   )
 
-  (def corrected-stops1
+  (def corrected-stops
     [[0.0 0.0]
      [0.9700914276659796 1.6365790878224906]
      [-0.824501634774673 2.1803587635156556]
@@ -223,7 +265,7 @@
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (def plot-result
     (let [data (take 5000 stops)] ; stops may have many fewer points
-      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks (correct-path5 -2 2 data))
+      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks (correct-path-loop* -2 2 data))
                               {:color [0 0 255 150] :margins nil}])
           (cb/preprocess-series)
           (cb/update-scale :x :domain [-8 8])
@@ -240,19 +282,19 @@
     (let [data (take 1000 stops)]
       (-> 
         ;(cb/series [:grid] [:line data {:stroke {:size 2} :point {:type \O}}])
-       (cb/series [:grid] [:line (correct-path -200 200 data) {:stroke {:size 1}}])
-       (cb/preprocess-series)
-       ;(cb/update-scale :x :ticks 4)
-       (cb/update-scale :x :domain [-200 200])
-       (cb/update-scale :y :domain [-200 200])
-       (cb/add-axes :bottom)
-       (cb/add-axes :left)
-       (cb/add-label :bottom "x")
-       (cb/add-label :left "y")
-       (cr/render-lattice {:width 400 :height 400 :border 20})
-       (cc/save "yo.jpg")
-       (cc/show)
-       )))
+        (cb/series [:grid] [:line (correct-path -200 200 data) {:stroke {:size 1}}])
+        (cb/preprocess-series)
+        ;(cb/update-scale :x :ticks 4)
+        (cb/update-scale :x :domain [-200 200])
+        (cb/update-scale :y :domain [-200 200])
+        (cb/add-axes :bottom)
+        (cb/add-axes :left)
+        (cb/add-label :bottom "x")
+        (cb/add-label :left "y")
+        (cr/render-lattice {:width 400 :height 400 :border 20})
+        (cc/save "yo.jpg")
+        (cc/show)
+        )))
 
 
   (def env (mf/make-env 10 1000))
@@ -293,26 +335,25 @@
 
   (def plot
     (->
-     (hc/xform
-      ht/vconcat-chart
-      :TITLE "Yow, yeah!"
-      :TOFFSET "10" ; space between meta-title and plots
-      :VCONCAT [(hc/xform
-                 ht/line-chart
-                 :TITLE "Yow plot"
-                 :DATA (select-by-label data "yow")
-                 :MSIZE 2)
-                (hc/xform
-                 ht/line-chart
-                 :TITLE "Yeah plot"
-                 :DATA (select-by-label data "yeah")
-                 :MSIZE 2)])
-     (update :vconcat #(map add-ord %))))
+      (hc/xform
+        ht/vconcat-chart
+        :TITLE "Yow, yeah!"
+        :TOFFSET "10" ; space between meta-title and plots
+        :VCONCAT [(hc/xform
+                    ht/line-chart
+                    :TITLE "Yow plot"
+                    :DATA (select-by-label data "yow")
+                    :MSIZE 2)
+                  (hc/xform
+                    ht/line-chart
+                    :TITLE "Yeah plot"
+                    :DATA (select-by-label data "yeah")
+                    :MSIZE 2)])
+      (update :vconcat #(map add-ord %))))
 
   plot
 
   (oz/view! plot)
-
 
 )
 
