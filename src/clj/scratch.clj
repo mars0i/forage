@@ -103,7 +103,6 @@
 ;;  we also need to add on the first point in the segment after the nil.
 (defn segs-to-points
   [segs]
-  (prn "pre:" (first segs)) ; DEBUG
   (cons (first (first segs))
         (loop [pts [], more-segs segs]
           (cond (empty? more-segs) pts
@@ -111,7 +110,6 @@
                 :else (let [seg (first more-segs)]
                         (if (nil? seg)
                           (let [[pt1 pt2] (second more-segs)]
-                            (prn "post-nil:" (second more-segs) pt1 pt2) ; DEBUG
                             (recur (conj pts nil pt1 pt2)
                                    (drop 2 more-segs))) ; i.e. drop the nil and seg we just used
                           (recur (conj pts (second seg))
@@ -126,31 +124,32 @@
 ;; add seg to output
 ;; if not in bounds, add nil to output, then push seg back on stack
 
+;; loop/recur version.  nothing fancy yet: just dupes what correct-segs-reduce did.
 (defn correct-segs
-  [boundary-left boundary-right segs]
+  [boundary-left boundary-right segments]
   (let [width (- boundary-right boundary-left)]
-    (first (reduce (fn [[new-segs shift-x shift-y] seg]
-                     (let [new-seg (shift-seg shift-x shift-y seg)
-                           [[new-x1 new-y1] [new-x2 new-y2]] new-seg
-                           new-shift-x (cond
-                                         (< new-x2 boundary-left)  (+ shift-x width)
-                                         (> new-x2 boundary-right) (- shift-x width)
-                                         :else shift-x)
-                           new-shift-y (cond
-                                         (< new-y2 boundary-left)  (+ shift-y width)
-                                         (> new-y2 boundary-right) (- shift-y width)
-                                         :else shift-y)]
-                       [(if (and (== new-shift-x shift-x)
-                                 (== new-shift-y shift-y))
-                          (conj new-segs new-seg)
-                          (conj new-segs
-                                new-seg
-                                nil
-                                (shift-seg new-shift-x new-shift-y new-seg)))
-                        new-shift-x
-                        new-shift-y]))
-                   [[] 0.0 0.0]
-                   segs))))
+    (loop [new-segs [], shift-x 0.0, shift-y 0.0, segs segments]
+      (if-not segs
+        new-segs
+        (let [new-seg (shift-seg shift-x shift-y (first segs))
+              [[new-x1 new-y1] [new-x2 new-y2]] new-seg
+              new-shift-x (cond
+                            (< new-x2 boundary-left)  (+ shift-x width)
+                            (> new-x2 boundary-right) (- shift-x width)
+                            :else shift-x)
+              new-shift-y (cond
+                            (< new-y2 boundary-left)  (+ shift-y width)
+                            (> new-y2 boundary-right) (- shift-y width)
+                            :else shift-y)]
+          (recur (if (and (== new-shift-x shift-x)
+                          (== new-shift-y shift-y))
+                   (conj new-segs new-seg)
+                   (conj new-segs
+                         new-seg
+                         nil
+                         (shift-seg new-shift-x new-shift-y new-seg)))
+                 new-shift-x new-shift-y
+                 (next segs)))))))
 
 (defn correct-segs-reduce
   [boundary-left boundary-right segs]
@@ -354,6 +353,7 @@
 
   (segs-to-points (partition 2 1 stops))
   (segs-to-points (correct-segs-reduce -2 2 (points-to-segs stops)))
+  (segs-to-points (correct-segs -2 2 (points-to-segs stops)))
 
   (=
    (correct-path5a -2 2 stops)
