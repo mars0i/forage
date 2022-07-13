@@ -59,10 +59,41 @@
              [[] 0.0 0.0]
              (partition 2 1 path))))) ; points -> segments (with shared endpoints)
 
+(defn correct-path-loop
+  [boundary-left boundary-right path]
+  (let [width (- boundary-right boundary-left)]
+    (loop [new-path [], shift-x 0.0, shift-y 0.0,
+           segments (partition 2 1 path)]
+      (if-not segments
+        new-path
+        (let [[[curr-x curr-y] [next-x next-y]] (first segments)
+              shifted-curr-x (+ shift-x curr-x)
+              shifted-curr-y (+ shift-y curr-y)
+              shifted-next-x (+ shift-x next-x)
+              shifted-next-y (+ shift-y next-y)
+              new-shift-x (cond
+                            (< shifted-next-x boundary-left) (+ shift-x width)
+                            (> shifted-next-x boundary-right) (- shift-x width)
+                            :else shift-x)
+              new-shift-y (cond
+                            (< shifted-next-y boundary-left) (+ shift-y width)
+                            (> shifted-next-y boundary-right) (- shift-y width)
+                            :else shift-y)]
+          (recur (if (and (== new-shift-x shift-x)
+                          (== new-shift-y shift-y))
+                   (conj new-path [shifted-curr-x shifted-curr-y])
+                   (conj new-path
+                         [shifted-curr-x shifted-curr-y]
+                         [shifted-next-x shifted-next-y]
+                         nil  ; replace as needed for plotting system
+                         [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
+                 new-shift-x new-shift-y
+                 (next segments)))))))
+
 
 ;; Behavior identical to correct-path, but does the "partitioning" internally
 ;; rather than in the sequence passed to reduce.
-(defn correct-path5
+(defn correct-path-loop-internal
   [boundary-left boundary-right path]
   (let [width (- boundary-right boundary-left)]
     (loop [new-path [], shift-x 0.0, shift-y 0.0, points path]
@@ -129,37 +160,6 @@
                      new-shift-x new-shift-y 
                      (cons newly-shifted-curr (drop 2 points)))))))))) ; replace new head
 
-
-(defn correct-path2
-  [boundary-left boundary-right path]
-  (let [width (- boundary-right boundary-left)]
-    (loop [new-path [], shift-x 0.0, shift-y 0.0,
-           segments (partition 2 1 path)]
-      (if-not segments
-        new-path
-        (let [[[curr-x curr-y] [next-x next-y]] (first segments)
-              shifted-curr-x (+ shift-x curr-x)
-              shifted-curr-y (+ shift-y curr-y)
-              shifted-next-x (+ shift-x next-x)
-              shifted-next-y (+ shift-y next-y)
-              new-shift-x (cond
-                            (< shifted-next-x boundary-left) (+ shift-x width)
-                            (> shifted-next-x boundary-right) (- shift-x width)
-                            :else shift-x)
-              new-shift-y (cond
-                            (< shifted-next-y boundary-left) (+ shift-y width)
-                            (> shifted-next-y boundary-right) (- shift-y width)
-                            :else shift-y)]
-          (recur (if (and (== new-shift-x shift-x)
-                          (== new-shift-y shift-y))
-                   (conj new-path [shifted-curr-x shifted-curr-y])
-                   (conj new-path
-                         [shifted-curr-x shifted-curr-y]
-                         [shifted-next-x shifted-next-y]
-                         nil  ; replace as needed for plotting system
-                         [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
-                 new-shift-x new-shift-y
-                 (next segments)))))))
 
 
 
