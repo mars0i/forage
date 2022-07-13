@@ -1,17 +1,14 @@
 ;; File for misc experiments.  Think of it as a repl.
 (ns scratch
-  (:require [forage.viz.hanami :as h]
-            [aerial.hanami.common :as hc]
-            [aerial.hanami.templates :as ht]
-            [forage.walks :as w]
-            [forage.food :as f]
-            [forage.run :as fr]
-            [forage.mason.foodspot :as mf] 
-            [cljplot.build :as cb]
-            [cljplot.render :as cr]
-            [cljplot.core :as cc]
-            [utils.math :as m]
-            [utils.random :as r]))
+  (:require
+   [aerial.hanami.common :as hc]
+   [aerial.hanami.templates :as ht]
+   [cljplot.build :as cb]
+   [cljplot.core :as cc]
+   [cljplot.render :as cr]
+   [forage.mason.foodspot :as mf]
+   [forage.walks :as w]
+   [utils.random :as r]))
 
 
 ;; generateme asked (about the original version of this code--nearly the same):
@@ -77,7 +74,7 @@
         (last (last segs))))
 
 ;; TODO probably not right
-(defn segs-to-points
+(defn segs-to-points-eh
   [segs]
   (if (< (count segs) 2)
     segs
@@ -96,6 +93,30 @@
                  (second more-segs)
                  (next more-segs)))))))
 
+;; FIXME doesn't work right
+;; The algorithm is:
+;; Always take only the second point of each segment (which is normally the
+;; first point of the next segment), except:
+;; At the beginning, we need to add on the first point in the first segment,
+;; and
+;; After a nil, which delimits duplicated-but-shifted points
+;;  we also need to add on the first point in the segment after the nil.
+(defn segs-to-points
+  [segs]
+  (cons (first (first segs))
+        (loop [pts [], more-segs segs]
+          (cond (empty? more-segs) pts
+                (= (count more-segs) 1) (conj pts (second (first more-segs))) ; will not be post-nil
+                :else (let [seg (first more-segs)]
+                        (if (nil? seg)
+                          (let [[pt1 pt2] (second more-segs)]
+                            (prn pt1 pt2)
+                            (recur (conj pts pt1 pt2)
+                                   (drop 2 more-segs))) ; i.e. drop the nil and seg we just used
+                          (recur (conj pts (second seg))
+                                 (rest more-segs)))))))) ; don't use next--we already deal with nils
+
+
 (defn points-to-segs
   [points]
   (partition 2 1 points))
@@ -105,7 +126,7 @@
 ;; if not in bounds, add nil to output, then push seg back on stack
 
 (defn correct-segs
-  [boundary-left boundary-right path]
+  [boundary-left boundary-right segs]
   (let [width (- boundary-right boundary-left)]
     (first (reduce (fn [[new-segs shift-x shift-y] seg]
                      (let [new-seg (shift-seg shift-x shift-y seg)
@@ -129,6 +150,33 @@
                         new-shift-y]))
                    [[] 0.0 0.0]
                    segs))))
+
+(defn correct-segs-reduce
+  [boundary-left boundary-right segs]
+  (let [width (- boundary-right boundary-left)]
+    (first (reduce (fn [[new-segs shift-x shift-y] seg]
+                     (let [new-seg (shift-seg shift-x shift-y seg)
+                           [[new-x1 new-y1] [new-x2 new-y2]] new-seg
+                           new-shift-x (cond
+                                         (< new-x2 boundary-left)  (+ shift-x width)
+                                         (> new-x2 boundary-right) (- shift-x width)
+                                         :else shift-x)
+                           new-shift-y (cond
+                                         (< new-y2 boundary-left)  (+ shift-y width)
+                                         (> new-y2 boundary-right) (- shift-y width)
+                                         :else shift-y)]
+                       [(if (and (== new-shift-x shift-x)
+                                 (== new-shift-y shift-y))
+                          (conj new-segs new-seg)
+                          (conj new-segs
+                                new-seg
+                                nil
+                                (shift-seg new-shift-x new-shift-y new-seg)))
+                        new-shift-x
+                        new-shift-y]))
+                   [[] 0.0 0.0]
+                   segs))))
+
 
 
 (defn correct-path-loop
@@ -303,7 +351,8 @@
      [1.261448866116044 2.834273995635776]
      [0.21316777054277192 1.0885351519809954]])
 
-  (segs-to-points (correct-path-segs-output -2 2 stops))
+  (segs-to-points (partition 2 1 stops))
+  (segs-to-points (correct-path -2 2 stops))
 
   (=
    (correct-path5a -2 2 stops)
