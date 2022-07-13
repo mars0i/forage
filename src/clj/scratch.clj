@@ -103,6 +103,7 @@
 ;;  we also need to add on the first point in the segment after the nil.
 (defn segs-to-points
   [segs]
+  (prn "pre:" (first segs)) ; DEBUG
   (cons (first (first segs))
         (loop [pts [], more-segs segs]
           (cond (empty? more-segs) pts
@@ -110,8 +111,8 @@
                 :else (let [seg (first more-segs)]
                         (if (nil? seg)
                           (let [[pt1 pt2] (second more-segs)]
-                            (prn pt1 pt2)
-                            (recur (conj pts pt1 pt2)
+                            (prn "post-nil:" (second more-segs) pt1 pt2) ; DEBUG
+                            (recur (conj pts nil pt1 pt2)
                                    (drop 2 more-segs))) ; i.e. drop the nil and seg we just used
                           (recur (conj pts (second seg))
                                  (rest more-segs)))))))) ; don't use next--we already deal with nils
@@ -352,7 +353,7 @@
      [0.21316777054277192 1.0885351519809954]])
 
   (segs-to-points (partition 2 1 stops))
-  (segs-to-points (correct-path -2 2 stops))
+  (segs-to-points (correct-segs-reduce -2 2 (points-to-segs stops)))
 
   (=
    (correct-path5a -2 2 stops)
