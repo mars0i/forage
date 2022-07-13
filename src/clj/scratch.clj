@@ -59,6 +59,77 @@
              [[] 0.0 0.0]
              (partition 2 1 path))))) ; points -> segments (with shared endpoints)
 
+
+;; Behavior identical to correct-path, but does the "partitioning" internally
+;; rather than in the sequence passed to reduce.
+(defn correct-path5
+  [boundary-left boundary-right path]
+  (let [width (- boundary-right boundary-left)]
+    (loop [new-path [], shift-x 0.0, shift-y 0.0, points path]
+      (if-not (next points)
+        new-path
+        (let [[curr-x curr-y] (first points) 
+              [next-x next-y] (second points)
+              shifted-curr-x (+ shift-x curr-x)
+              shifted-curr-y (+ shift-y curr-y)
+              shifted-next-x (+ shift-x next-x)
+              shifted-next-y (+ shift-y next-y)
+              new-shift-x (cond
+                            (< shifted-next-x boundary-left) (+ shift-x width)
+                            (> shifted-next-x boundary-right) (- shift-x width)
+                            :else shift-x)
+              new-shift-y (cond
+                            (< shifted-next-y boundary-left) (+ shift-y width)
+                            (> shifted-next-y boundary-right) (- shift-y width)
+                            :else shift-y)]
+          (if (and (== new-shift-x shift-x)
+                   (== new-shift-y shift-y))
+            (recur (conj new-path [shifted-curr-x shifted-curr-y])
+                   new-shift-x new-shift-y (next points))
+            (recur (conj new-path
+                         [shifted-curr-x shifted-curr-y]
+                         [shifted-next-x shifted-next-y]
+                         nil
+                         [(+ curr-x new-shift-x) (+ curr-y new-shift-y)])
+                   new-shift-x new-shift-y 
+                   (rest points))))))))
+
+
+;; Attempt at revised behavior:
+(defn correct-path5a
+  [boundary-left boundary-right path]
+  (let [width (- boundary-right boundary-left)]
+    (loop [new-path [], shift-x 0.0, shift-y 0.0, points path]
+      (if-not (next points)
+        new-path
+        (let [[curr-x curr-y] (first points) 
+              [next-x next-y] (second points)
+              shifted-curr-x (+ shift-x curr-x)
+              shifted-curr-y (+ shift-y curr-y)
+              shifted-next-x (+ shift-x next-x)
+              shifted-next-y (+ shift-y next-y)
+              new-shift-x (cond
+                            (< shifted-next-x boundary-left) (+ shift-x width)
+                            (> shifted-next-x boundary-right) (- shift-x width)
+                            :else shift-x)
+              new-shift-y (cond
+                            (< shifted-next-y boundary-left) (+ shift-y width)
+                            (> shifted-next-y boundary-right) (- shift-y width)
+                            :else shift-y)]
+          (if (and (== new-shift-x shift-x)
+                   (== new-shift-y shift-y))
+            (recur (conj new-path [shifted-curr-x shifted-curr-y])
+                   new-shift-x new-shift-y (next points))
+            (let [newly-shifted-curr [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]]
+              (recur (conj new-path
+                           [shifted-curr-x shifted-curr-y]
+                           [shifted-next-x shifted-next-y]
+                           nil
+                           newly-shifted-curr)
+                     new-shift-x new-shift-y 
+                     (cons newly-shifted-curr (drop 2 points)))))))))) ; replace new head
+
+
 (defn correct-path2
   [boundary-left boundary-right path]
   (let [width (- boundary-right boundary-left)]
@@ -91,71 +162,6 @@
                  (next segments)))))))
 
 
-(defn bad-correct-path3
-  [boundary-left boundary-right path]
-  (let [width (- boundary-right boundary-left)]
-    (loop [new-path [], shift-x 0.0, shift-y 0.0,
-           segments (partition 2 1 path)]
-      (if-not segments
-        new-path
-        (let [[[curr-x curr-y] [next-x next-y]] (first segments)
-              shifted-curr-x (+ shift-x curr-x)
-              shifted-curr-y (+ shift-y curr-y)
-              shifted-next-x (+ shift-x next-x)
-              shifted-next-y (+ shift-y next-y)
-              new-shift-x (cond
-                            (< shifted-next-x boundary-left) (+ shift-x width)
-                            (> shifted-next-x boundary-right) (- shift-x width)
-                            :else shift-x)
-              new-shift-y (cond
-                            (< shifted-next-y boundary-left) (+ shift-y width)
-                            (> shifted-next-y boundary-right) (- shift-y width)
-                            :else shift-y)]
-          (if (and (== new-shift-x shift-x)
-                   (== new-shift-y shift-y))
-            (recur (conj new-path [shifted-curr-x shifted-curr-y])
-                   new-shift-x new-shift-y (next segments))
-            (recur (conj new-path
-                         [shifted-curr-x shifted-curr-y]
-                         [shifted-next-x shifted-next-y]
-                         nil)  ; replace as needed for plotting system
-                   new-shift-x new-shift-y 
-                   (cons [[(+ curr-x new-shift-x) (+ curr-y new-shift-y)]
-                          [(+ next-x new-shift-x) (+ next-y new-shift-y)]]
-                         (next segments)))))))))
-
-(defn bad-correct-path4
-  [boundary-left boundary-right path]
-  (let [width (- boundary-right boundary-left)]
-    (loop [new-path [], shift-x 0.0, shift-y 0.0, points path]
-      (if-not (next points)
-        new-path
-        (let [[curr-x curr-y] (first points) 
-              [next-x next-y] (second points)
-              shifted-curr-x (+ shift-x curr-x)
-              shifted-curr-y (+ shift-y curr-y)
-              shifted-next-x (+ shift-x next-x)
-              shifted-next-y (+ shift-y next-y)
-              new-shift-x (cond
-                            (< shifted-next-x boundary-left) (+ shift-x width)
-                            (> shifted-next-x boundary-right) (- shift-x width)
-                            :else shift-x)
-              new-shift-y (cond
-                            (< shifted-next-y boundary-left) (+ shift-y width)
-                            (> shifted-next-y boundary-right) (- shift-y width)
-                            :else shift-y)]
-          (if (and (== new-shift-x shift-x)
-                   (== new-shift-y shift-y))
-            (recur (conj new-path [shifted-curr-x shifted-curr-y])
-                   new-shift-x new-shift-y (next points))
-            (recur (conj new-path
-                         [shifted-curr-x shifted-curr-y]
-                         [shifted-next-x shifted-next-y]
-                         nil)  ; replace as needed for plotting system
-                   new-shift-x new-shift-y 
-                   (cons [(+ next-x new-shift-x) (+ next-y new-shift-y)]
-                         (next points)))))))))
-
 
 (defn add-cljplot-path-breaks
   [pts]
@@ -167,26 +173,30 @@
 
   (def rng (r/make-well19937))
   (def len-dist (r/make-powerlaw rng 1 2))
-  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 4000)))
+  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 10)))
   (def stops (w/walk-stops [0 0] 
-                           (w/vecs-upto-len 200  step-vector-pool)))
-  (count stops)
+                           (w/vecs-upto-len 10  step-vector-pool)))
+  (count stops))
   (def corrected-stops (correct-path -2 2 stops))
   (def corrected2-stops (correct-path2 -2 2 stops))
   (= corrected-stops corrected2-stops)
   (add-cljplot-path-breaks corrected2-stops)
 
 
-  (def stops 
+  (def stops1
     [[0 0]
      [0.9700914276659796 1.6365790878224906]
      [-0.824501634774673 2.1803587635156556]
      [1.261448866116044 2.834273995635776]
      [0.21316777054277192 1.0885351519809954]])
 
-  (correct-path4 -2 2 stops)
-  (correct-path -2 2 stops) ; =
-  (def corrected-stops 
+  (=
+  (correct-path5a -2 2 stops)
+  (correct-path5 -2 2 stops)
+  (correct-path -2 2 stops)
+  )
+
+  (def corrected-stops1
     [[0.0 0.0]
      [0.9700914276659796 1.6365790878224906]
      [-0.824501634774673 2.1803587635156556]
@@ -213,11 +223,11 @@
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (def plot-result
     (let [data (take 5000 stops)] ; stops may have many fewer points
-      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks (correct-path4 -2 2 data))
+      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks (correct-path5 -2 2 data))
                               {:color [0 0 255 150] :margins nil}])
           (cb/preprocess-series)
-          (cb/update-scale :x :domain [-2 2])
-          (cb/update-scale :y :domain [-2 2])
+          (cb/update-scale :x :domain [-8 8])
+          (cb/update-scale :y :domain [-8 8])
           (cb/add-axes :bottom)
           (cb/add-axes :left)
           (cr/render-lattice {:width 750 :height 750 :border 10})
