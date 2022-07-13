@@ -59,6 +59,50 @@
                    [[] 0.0 0.0]
                    (partition 2 1 path))))) ; points -> segments (with shared endpoints)
 
+(defn shift-seg
+  [shift-x shift-y seg]
+  (let [[[x1 y1] [x2 y2]] seg]
+    [[(+ x1 shift-x) (+ y1 shift-y)]
+     [(+ x2 shift-x) (+ y2 shift-y)]]))
+
+;; FIXME (?): should not ignore second point before a nil
+(defn segs-to-points
+  "Convert a sequence of line segments (pairs of pairs, where the
+  second pair of each segment is the first pair of the next one),
+  into a sequence of points, where the overlapping points are
+  deduplicated.  nils may appear as delimiters, and will be
+  preserved."
+  [segs]
+  (conj (vec (map first segs)) ; relies on the fact that (first nil) => nil
+        (last (last segs))))
+
+(defn correct-path-segs-output
+  [boundary-left boundary-right path]
+  (let [width (- boundary-right boundary-left)]
+    (first (reduce (fn [[new-segs shift-x shift-y] seg]
+                     (let [new-seg (shift-seg shift-x shift-y seg)
+                           [[new-x1 new-y1] [new-x2 new-y2]] new-seg
+                           new-shift-x (cond
+                                         (< new-x2 boundary-left)  (+ shift-x width)
+                                         (> new-x2 boundary-right) (- shift-x width)
+                                         :else shift-x)
+                           new-shift-y (cond
+                                         (< new-y2 boundary-left)  (+ shift-y width)
+                                         (> new-y2 boundary-right) (- shift-y width)
+                                         :else shift-y)]
+                       [(if (and (== new-shift-x shift-x)
+                                 (== new-shift-y shift-y))
+                          (conj new-segs new-seg)
+                          (conj new-segs
+                                new-seg
+                                nil
+                                (shift-seg new-shift-x new-shift-y new-seg)))
+                        new-shift-x
+                        new-shift-y]))
+                   [[] 0.0 0.0]
+                   (partition 2 1 path)))))
+
+
 (defn correct-path-loop
   [boundary-left boundary-right path]
   (let [width (- boundary-right boundary-left)]
@@ -230,6 +274,8 @@
      [-0.824501634774673 2.1803587635156556]
      [1.261448866116044 2.834273995635776]
      [0.21316777054277192 1.0885351519809954]])
+
+  (segs-to-points (correct-path-segs-output -2 2 stops))
 
   (=
    (correct-path5a -2 2 stops)
