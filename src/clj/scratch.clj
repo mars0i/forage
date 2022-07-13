@@ -66,7 +66,7 @@
      [(+ x2 shift-x) (+ y2 shift-y)]]))
 
 ;; FIXME (?): should not ignore second point before a nil
-(defn segs-to-points
+(defn segs-to-points-bad
   "Convert a sequence of line segments (pairs of pairs, where the
   second pair of each segment is the first pair of the next one),
   into a sequence of points, where the overlapping points are
@@ -76,7 +76,35 @@
   (conj (vec (map first segs)) ; relies on the fact that (first nil) => nil
         (last (last segs))))
 
-(defn correct-path-segs-output
+;; TODO probably not right
+(defn segs-to-points
+  [segs]
+  (if (< (count segs) 2)
+    segs
+    (loop [points [],
+           curr-seg (first segs),
+           next-seg (second segs)
+           more-segs (next segs)] ; yes, it contains second
+      (if-not more-segs
+        points
+        (if (= (count more-segs) 1)
+          (conj points (last (first more-segs)))
+          (recur (if next-seg ; if not a marker nil
+                   (conj points (first curr-seg)) ; alaways get the first point
+                   (conj points (first curr-seg) (second curr-seg))) ; if nil is next, get second point, too
+                 (first more-segs)
+                 (second more-segs)
+                 (next more-segs)))))))
+
+(defn points-to-segs
+  [points]
+  (partition 2 1 points))
+
+;; a new strategy (needs loop/recur):
+;; add seg to output
+;; if not in bounds, add nil to output, then push seg back on stack
+
+(defn correct-segs
   [boundary-left boundary-right path]
   (let [width (- boundary-right boundary-left)]
     (first (reduce (fn [[new-segs shift-x shift-y] seg]
@@ -100,7 +128,7 @@
                         new-shift-x
                         new-shift-y]))
                    [[] 0.0 0.0]
-                   (partition 2 1 path)))))
+                   segs))))
 
 
 (defn correct-path-loop
