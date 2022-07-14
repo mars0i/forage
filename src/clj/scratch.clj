@@ -18,38 +18,6 @@
 ;;  3. What happened to the last point? (probably partition-all should be used)
 
 
-;; Mostly by generateme at
-;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
-;; See notes.forage/toroidal/correctpath.clj for a version with comments
-;; and a description of the algorithm.
-(defn correct-path
-  [boundary-left boundary-right path]
-  (let [width (- boundary-right boundary-left)]
-    (first (reduce (fn [[new-path shift-x shift-y] [[curr-x curr-y] [next-x next-y]]]
-                     (let [s-curr-x (+ shift-x curr-x)
-                           s-curr-y (+ shift-y curr-y)
-                           s-next-x (+ shift-x next-x)
-                           s-next-y (+ shift-y next-y)
-                           new-shift-x (cond
-                                         (< s-next-x boundary-left)  (+ shift-x width)
-                                         (> s-next-x boundary-right) (- shift-x width)
-                                         :else shift-x)
-                           new-shift-y (cond
-                                         (< s-next-y boundary-left)  (+ shift-y width)
-                                         (> s-next-y boundary-right) (- shift-y width)
-                                         :else shift-y)]
-                       [(if (and (== new-shift-x shift-x)
-                                 (== new-shift-y shift-y))
-                          (conj new-path [s-curr-x s-curr-y])
-                          (conj new-path
-                                [s-curr-x s-curr-y] [s-next-x s-next-y]
-                                nil
-                                [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
-                        new-shift-x
-                        new-shift-y]))
-                   [[] 0.0 0.0]
-                   (partition 2 1 path)))))
-
 (defn shift-seg
   [shift-x shift-y seg]
   (let [[[x1 y1] [x2 y2]] seg]
@@ -89,8 +57,10 @@
 ; FIXME Differs from correct-segs because generates one extra point
 ;; (Maybe this is the correct behavior?)
 ;; 
-;; loop/recur version.  nothing fancy yet: just dupes what correct-segs-reduce did.
-;; well supposedly.
+;; loop/recur version.  nothing fancy yet: just dupes what correct-segs-reduce did
+;; (well sortof) and what the original correct-path should have done.  Specifically,
+;; generateme's correct-path was missing the last line segment (as their comment
+;; highlighted, implicitly); this includes it.
 (defn correct-segs
   [boundary-left boundary-right segments]
   (let [width (- boundary-right boundary-left)]
@@ -100,14 +70,12 @@
         (let [seg (first segs)
               new-seg (shift-seg shift-x shift-y seg)
               [[new-x1 new-y1] [new-x2 new-y2]] new-seg
-              new-shift-x (cond
-                            (< new-x2 boundary-left)  (+ shift-x width)
-                            (> new-x2 boundary-right) (- shift-x width)
-                            :else shift-x)
-              new-shift-y (cond
-                            (< new-y2 boundary-left)  (+ shift-y width)
-                            (> new-y2 boundary-right) (- shift-y width)
-                            :else shift-y)]
+              new-shift-x (cond (< new-x2 boundary-left)  (+ shift-x width)
+                                (> new-x2 boundary-right) (- shift-x width)
+                                :else shift-x)
+              new-shift-y (cond (< new-y2 boundary-left)  (+ shift-y width)
+                                (> new-y2 boundary-right) (- shift-y width)
+                                :else shift-y)]
           (recur (if (and (== new-shift-x shift-x)
                           (== new-shift-y shift-y))
                    (conj new-segs new-seg)
@@ -118,6 +86,42 @@
                  new-shift-x new-shift-y
                  (next segs)))))))
 
+;; ORIGINAL BY GENERATEME (more or less) from
+;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
+;; See notes.forage/toroidal/correctpath.clj for a version with comments
+;; and a description of the algorithm.
+;; Note this is missing the last line segment (as one of generateme's original 
+;; comments highlighted.
+(defn correct-path
+  [boundary-left boundary-right path]
+  (let [width (- boundary-right boundary-left)]
+    (first (reduce (fn [[new-path shift-x shift-y] [[curr-x curr-y] [next-x next-y]]]
+                     (let [s-curr-x (+ shift-x curr-x)
+                           s-curr-y (+ shift-y curr-y)
+                           s-next-x (+ shift-x next-x)
+                           s-next-y (+ shift-y next-y)
+                           new-shift-x (cond
+                                         (< s-next-x boundary-left)  (+ shift-x width)
+                                         (> s-next-x boundary-right) (- shift-x width)
+                                         :else shift-x)
+                           new-shift-y (cond
+                                         (< s-next-y boundary-left)  (+ shift-y width)
+                                         (> s-next-y boundary-right) (- shift-y width)
+                                         :else shift-y)]
+                       [(if (and (== new-shift-x shift-x)
+                                 (== new-shift-y shift-y))
+                          (conj new-path [s-curr-x s-curr-y])
+                          (conj new-path
+                                [s-curr-x s-curr-y] [s-next-x s-next-y]
+                                nil
+                                [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
+                        new-shift-x
+                        new-shift-y]))
+                   [[] 0.0 0.0]
+                   (partition 2 1 path)))))
+
+
+;; deprecated. for reference.
 ;; supposed to do roughly same thing as generateme's correct-path
 (defn correct-segs-reduce
   [boundary-left boundary-right segs]
@@ -146,40 +150,6 @@
                    segs))))
 
 
-
-(defn correct-path-loop
-  [boundary-left boundary-right path]
-  (let [width (- boundary-right boundary-left)]
-    (loop [new-path [], shift-x 0.0, shift-y 0.0,
-           segments (partition 2 1 path)]
-      (if-not segments
-        new-path
-        (let [[[curr-x curr-y] [next-x next-y]] (first segments)
-              shifted-curr-x (+ shift-x curr-x)
-              shifted-curr-y (+ shift-y curr-y)
-              shifted-next-x (+ shift-x next-x)
-              shifted-next-y (+ shift-y next-y)
-              new-shift-x (cond
-                            (< shifted-next-x boundary-left) (+ shift-x width)
-                            (> shifted-next-x boundary-right) (- shift-x width)
-                            :else shift-x)
-              new-shift-y (cond
-                            (< shifted-next-y boundary-left) (+ shift-y width)
-                            (> shifted-next-y boundary-right) (- shift-y width)
-                            :else shift-y)]
-          (recur (if (and (== new-shift-x shift-x)
-                          (== new-shift-y shift-y))
-                   (conj new-path [shifted-curr-x shifted-curr-y])
-                   (conj new-path
-                         [shifted-curr-x shifted-curr-y]
-                         [shifted-next-x shifted-next-y]
-                         nil  ; replace as needed for plotting system
-                         [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
-                 new-shift-x new-shift-y
-                 (next segments)))))))
-
-
-
 (defn add-cljplot-path-breaks
   [pts]
   (map (fn [pt] (if-not pt [##NaN ##NaN] pt))
@@ -203,10 +173,8 @@
      [0.21316777054277192 1.0885351519809954]])
 
   (def stops [[0 0] [0.5 0.7] [1.2 -0.2] [2.8 -1.5] [4.5 -3.0] [5.0 -3.5]])
-  (+ -1.5 4)
-
-
   (partition 2 1 stops)
+  (partition 2 1 (range 4))
 
   (def p1 (correct-path -2 2 stops))
   (def p3 (segs-to-points (correct-segs -2 2 (points-to-segs stops))))
@@ -335,5 +303,3 @@
   (oz/view! plot)
 
 )
-
-
