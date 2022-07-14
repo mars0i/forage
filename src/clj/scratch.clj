@@ -18,7 +18,7 @@
 ;;  3. What happened to the last point? (probably partition-all should be used)
 
 
-;; Based on code by generateme at
+;; Mostly by generateme at
 ;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
 ;; [most comments added by Marshall]
 (defn correct-path
@@ -336,7 +336,7 @@
   (def len-dist (r/make-powerlaw rng 1 2))
   (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 10)))
   (def stops (w/walk-stops [0 0] 
-                           (w/vecs-upto-len 10  step-vector-pool)))
+                           (w/vecs-upto-len 100 step-vector-pool)))
   (count stops)
   (def corrected-stops (correct-path -2 2 stops))
   (def corrected2-stops (correct-path2 -2 2 stops))
@@ -351,16 +351,21 @@
      [1.261448866116044 2.834273995635776]
      [0.21316777054277192 1.0885351519809954]])
 
-  (segs-to-points (partition 2 1 stops))
-  (segs-to-points (correct-segs-reduce -2 2 (points-to-segs stops)))
-  (segs-to-points (correct-segs -2 2 (points-to-segs stops)))
+  (partition 2 1 stops)
 
-  (=
+  (segs-to-points (partition 2 1 stops))
+
+  (def p1 (correct-path -2 2 stops))
+  (def p2 (segs-to-points (correct-segs-reduce -2 2 (points-to-segs stops))))
+  (def p3 (segs-to-points (correct-segs -2 2 (points-to-segs stops))))
+  (= p2 p3)
+  (= (take 9 p1) (take 9 p2))
+
+
+
    (correct-path5a -2 2 stops)
    (correct-path5 -2 2 stops)
-   (correct-path -2 2 stops)
    (correct-path-loop* -2 2 stops)
-   )
 
   (def corrected-stops
     [[0.0 0.0]
