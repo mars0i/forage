@@ -86,10 +86,11 @@
 ;; add seg to output
 ;; if not in bounds, add nil to output, then push seg back on stack
 
-; FIXME bug seems to depart from correct-path after the *second nil*. (!?)
-;; ... so something happens when recur is called ...
-;; correct-segs-reduce is the same.
+; FIXME Differs from correct-segs because generates one extra point
+;; (Maybe this is the correct behavior?)
+;; 
 ;; loop/recur version.  nothing fancy yet: just dupes what correct-segs-reduce did.
+;; well supposedly.
 (defn correct-segs
   [boundary-left boundary-right segments]
   (let [width (- boundary-right boundary-left)]
@@ -138,7 +139,7 @@
                           (conj new-segs
                                 new-seg
                                 nil
-                                (shift-seg new-shift-x new-shift-y new-seg)))
+                                (shift-seg new-shift-x new-shift-y seg)))
                         new-shift-x
                         new-shift-y]))
                    [[] 0.0 0.0]
@@ -210,14 +211,10 @@
   (def p1 (correct-path -2 2 stops))
   (def p3 (segs-to-points (correct-segs -2 2 (points-to-segs stops))))
   (def p2 (segs-to-points (correct-segs-reduce -2 2 (points-to-segs stops))))
-  (= p2 p3)
+  (= p1 (butlast p3))
   (let [n 10] (= (take n p1) (take n p3)))
 
 
-
-   (correct-path5a -2 2 stops)
-   (correct-path5 -2 2 stops)
-   (correct-path-loop* -2 2 stops)
 
   (def corrected-stops
     [[0.0 0.0]
