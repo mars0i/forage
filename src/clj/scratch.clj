@@ -124,6 +124,9 @@
 ;; add seg to output
 ;; if not in bounds, add nil to output, then push seg back on stack
 
+; FIXME bug seems to depart from correct-path after the *second nil*. (!?)
+;; ... so something happens when recur is called ...
+;; correct-segs-reduce is the same.
 ;; loop/recur version.  nothing fancy yet: just dupes what correct-segs-reduce did.
 (defn correct-segs
   [boundary-left boundary-right segments]
@@ -211,118 +214,6 @@
                  (next segments)))))))
 
 
-;; new attempt at revision
-;; NOT RIGHT (seems to loop infinitely)
-(defn correct-path-loop*
-  [boundary-left boundary-right path]
-  (let [width (- boundary-right boundary-left)]
-    (loop [new-path [], shift-x 0.0, shift-y 0.0,
-           segments (partition 2 1 path)]
-      (if-not segments
-        new-path
-        (let [[[curr-x curr-y] [next-x next-y]] (first segments)
-              shifted-curr-x (+ shift-x curr-x)
-              shifted-curr-y (+ shift-y curr-y)
-              shifted-next-x (+ shift-x next-x)
-              shifted-next-y (+ shift-y next-y)
-              new-point [shifted-curr-x shifted-curr-y]
-              [new-points new-shift-x new-shift-y]
-              (loop [new-pts [new-point]
-                     shift-x shift-x
-                     shift-y shift-y]
-                (let [new-shift-x (cond
-                                    (< shifted-next-x boundary-left) (+ shift-x width)
-                                    (> shifted-next-x boundary-right) (- shift-x width)
-                                    :else shift-x)
-                      new-shift-y (cond
-                                    (< shifted-next-y boundary-left) (+ shift-y width)
-                                    (> shifted-next-y boundary-right) (- shift-y width)
-                                    :else shift-y)]
-                  (if (and (== new-shift-x shift-x)
-                           (== new-shift-y shift-y))
-                    [new-pts new-shift-x new-shift-y]
-                    (recur (conj new-pts
-                                 [shifted-next-x shifted-next-y]
-                                 nil
-                                 [(+ curr-x new-shift-x) (+ curr-y new-shift-y)])
-                           new-shift-x new-shift-y))))]
-          (recur (conj new-path new-points)
-                 new-shift-x new-shift-y
-                 (next segments)))))))
-
-
-
-;; Behavior identical to correct-path, but does the "partitioning" internally
-;; rather than in the sequence passed to reduce.
-(defn correct-path-loop-internal
-  [boundary-left boundary-right path]
-  (let [width (- boundary-right boundary-left)]
-    (loop [new-path [], shift-x 0.0, shift-y 0.0, points path]
-      (if-not (next points)
-        new-path
-        (let [[curr-x curr-y] (first points) 
-              [next-x next-y] (second points)
-              shifted-curr-x (+ shift-x curr-x)
-              shifted-curr-y (+ shift-y curr-y)
-              shifted-next-x (+ shift-x next-x)
-              shifted-next-y (+ shift-y next-y)
-              new-shift-x (cond
-                            (< shifted-next-x boundary-left) (+ shift-x width)
-                            (> shifted-next-x boundary-right) (- shift-x width)
-                            :else shift-x)
-              new-shift-y (cond
-                            (< shifted-next-y boundary-left) (+ shift-y width)
-                            (> shifted-next-y boundary-right) (- shift-y width)
-                            :else shift-y)]
-          (if (and (== new-shift-x shift-x)
-                   (== new-shift-y shift-y))
-            (recur (conj new-path [shifted-curr-x shifted-curr-y])
-                   new-shift-x new-shift-y (next points))
-            (recur (conj new-path
-                         [shifted-curr-x shifted-curr-y]
-                         [shifted-next-x shifted-next-y]
-                         nil
-                         [(+ curr-x new-shift-x) (+ curr-y new-shift-y)])
-                   new-shift-x new-shift-y 
-                   (rest points))))))))
-
-
-;; Attempt at revised behavior:
-(defn correct-path5a
-  [boundary-left boundary-right path]
-  (let [width (- boundary-right boundary-left)]
-    (loop [new-path [], shift-x 0.0, shift-y 0.0, points path]
-      (if-not (next points)
-        new-path
-        (let [[curr-x curr-y] (first points) 
-              [next-x next-y] (second points)
-              shifted-curr-x (+ shift-x curr-x)
-              shifted-curr-y (+ shift-y curr-y)
-              shifted-next-x (+ shift-x next-x)
-              shifted-next-y (+ shift-y next-y)
-              new-shift-x (cond
-                            (< shifted-next-x boundary-left) (+ shift-x width)
-                            (> shifted-next-x boundary-right) (- shift-x width)
-                            :else shift-x)
-              new-shift-y (cond
-                            (< shifted-next-y boundary-left) (+ shift-y width)
-                            (> shifted-next-y boundary-right) (- shift-y width)
-                            :else shift-y)]
-          (if (and (== new-shift-x shift-x)
-                   (== new-shift-y shift-y))
-            (recur (conj new-path [shifted-curr-x shifted-curr-y])
-                   new-shift-x new-shift-y (next points))
-            (let [newly-shifted-curr [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]]
-              (recur (conj new-path
-                           [shifted-curr-x shifted-curr-y]
-                           [shifted-next-x shifted-next-y]
-                           nil
-                           newly-shifted-curr)
-                     new-shift-x new-shift-y 
-                     (cons newly-shifted-curr (drop 2 points)))))))))) ; replace new head
-
-
-
 
 (defn add-cljplot-path-breaks
   [pts]
@@ -334,15 +225,10 @@
 
   (def rng (r/make-well19937))
   (def len-dist (r/make-powerlaw rng 1 2))
-  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 10)))
+  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 20)))
   (def stops (w/walk-stops [0 0] 
                            (w/vecs-upto-len 100 step-vector-pool)))
   (count stops)
-  (def corrected-stops (correct-path -2 2 stops))
-  (def corrected2-stops (correct-path2 -2 2 stops))
-  (= corrected-stops corrected2-stops)
-  (add-cljplot-path-breaks corrected2-stops)
-
 
   (def stops
     [[0 0]
@@ -353,13 +239,15 @@
 
   (partition 2 1 stops)
 
-  (segs-to-points (partition 2 1 stops))
-
   (def p1 (correct-path -2 2 stops))
   (def p2 (segs-to-points (correct-segs-reduce -2 2 (points-to-segs stops))))
   (def p3 (segs-to-points (correct-segs -2 2 (points-to-segs stops))))
   (= p2 p3)
-  (= (take 9 p1) (take 9 p2))
+  (let [n 10] (= (take n p1) (take n p3)))
+  (take 12 p1)
+  (take 12 p3)
+  (count p1)
+  (count p2)
 
 
 
