@@ -20,41 +20,35 @@
 
 ;; Mostly by generateme at
 ;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
-;; [most comments added by Marshall]
+;; See notes.forage/toroidal/correctpath.clj for a version with comments
+;; and a description of the algorithm.
 (defn correct-path
   [boundary-left boundary-right path]
   (let [width (- boundary-right boundary-left)]
-    (first  ; <- we no longer need shift-x and shift-y (they had to be passed along during)
-           (reduce (fn [[new-path shift-x shift-y]
-                        [[curr-x curr-y] [next-x next-y]]] ; endpoints of a line segment
-                     (let [s-curr-x (+ shift-x curr-x) ; "s-" = "shifted"
-                           s-curr-y (+ shift-y curr-y) ; note first point assumed w/in bounds
-                           s-next-x (+ shift-x next-x) ; Once image is shifted, it
-                           s-next-y (+ shift-y next-y) ; remains so (unless back-shifted).
-                           ;; If needed, we pass a new shift to the next iteration
-                           ;; because we'll duplicate the current segment, shifted, and
-                           ;; then all subsequent points will be additionally shifted 
-                           ;; that much:
+    (first (reduce (fn [[new-path shift-x shift-y] [[curr-x curr-y] [next-x next-y]]]
+                     (let [s-curr-x (+ shift-x curr-x)
+                           s-curr-y (+ shift-y curr-y)
+                           s-next-x (+ shift-x next-x)
+                           s-next-y (+ shift-y next-y)
                            new-shift-x (cond
-                                         (< s-next-x boundary-left) (+ shift-x width)
+                                         (< s-next-x boundary-left)  (+ shift-x width)
                                          (> s-next-x boundary-right) (- shift-x width)
                                          :else shift-x)
                            new-shift-y (cond
-                                         (< s-next-y boundary-left) (+ shift-y width)
+                                         (< s-next-y boundary-left)  (+ shift-y width)
                                          (> s-next-y boundary-right) (- shift-y width)
                                          :else shift-y)]
-                       [(if (and (== new-shift-x shift-x)  ; not duplicating with shift
-                                 (== new-shift-y shift-y)) ; just using old shift
-                          (conj new-path [s-curr-x s-curr-y]) ; so just add new point
+                       [(if (and (== new-shift-x shift-x)
+                                 (== new-shift-y shift-y))
+                          (conj new-path [s-curr-x s-curr-y])
                           (conj new-path
-                                [s-curr-x s-curr-y] [s-next-x s-next-y] ; segment that runs past at least one boundary
-                                nil ; break between continuous lines
-                                [(+ curr-x new-shift-x) (+ curr-y new-shift-y)])) ; shifted outside boundaries--duplicate of the point that was *within* boundaries on other side
-                        ; next point will be shifted as much, but inside
+                                [s-curr-x s-curr-y] [s-next-x s-next-y]
+                                nil
+                                [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
                         new-shift-x
                         new-shift-y]))
                    [[] 0.0 0.0]
-                   (partition 2 1 path))))) ; points -> segments (with shared endpoints)
+                   (partition 2 1 path)))))
 
 (defn shift-seg
   [shift-x shift-y seg]
@@ -62,38 +56,6 @@
     [[(+ x1 shift-x) (+ y1 shift-y)]
      [(+ x2 shift-x) (+ y2 shift-y)]]))
 
-;; FIXME (?): should not ignore second point before a nil
-(defn segs-to-points-bad
-  "Convert a sequence of line segments (pairs of pairs, where the
-  second pair of each segment is the first pair of the next one),
-  into a sequence of points, where the overlapping points are
-  deduplicated.  nils may appear as delimiters, and will be
-  preserved."
-  [segs]
-  (conj (vec (map first segs)) ; relies on the fact that (first nil) => nil
-        (last (last segs))))
-
-;; TODO probably not right
-(defn segs-to-points-eh
-  [segs]
-  (if (< (count segs) 2)
-    segs
-    (loop [points [],
-           curr-seg (first segs),
-           next-seg (second segs)
-           more-segs (next segs)] ; yes, it contains second
-      (if-not more-segs
-        points
-        (if (= (count more-segs) 1)
-          (conj points (last (first more-segs)))
-          (recur (if next-seg ; if not a marker nil
-                   (conj points (first curr-seg)) ; alaways get the first point
-                   (conj points (first curr-seg) (second curr-seg))) ; if nil is next, get second point, too
-                 (first more-segs)
-                 (second more-segs)
-                 (next more-segs)))))))
-
-;; FIXME doesn't work right
 ;; The algorithm is:
 ;; Always take only the second point of each segment (which is normally the
 ;; first point of the next segment), except:
@@ -134,7 +96,8 @@
     (loop [new-segs [], shift-x 0.0, shift-y 0.0, segs segments]
       (if-not segs
         new-segs
-        (let [new-seg (shift-seg shift-x shift-y (first segs))
+        (let [seg (first segs)
+              new-seg (shift-seg shift-x shift-y seg)
               [[new-x1 new-y1] [new-x2 new-y2]] new-seg
               new-shift-x (cond
                             (< new-x2 boundary-left)  (+ shift-x width)
@@ -150,10 +113,11 @@
                    (conj new-segs
                          new-seg
                          nil
-                         (shift-seg new-shift-x new-shift-y new-seg)))
+                         (shift-seg new-shift-x new-shift-y seg)))
                  new-shift-x new-shift-y
                  (next segs)))))))
 
+;; supposed to do roughly same thing as generateme's correct-path
 (defn correct-segs-reduce
   [boundary-left boundary-right segs]
   (let [width (- boundary-right boundary-left)]
@@ -237,17 +201,17 @@
      [1.261448866116044 2.834273995635776]
      [0.21316777054277192 1.0885351519809954]])
 
+  (def stops [[0 0] [0.5 0.7] [1.2 -0.2] [2.8 -1.5] [4.5 -3.0] [5.0 -3.5]])
+  (+ -1.5 4)
+
+
   (partition 2 1 stops)
 
   (def p1 (correct-path -2 2 stops))
-  (def p2 (segs-to-points (correct-segs-reduce -2 2 (points-to-segs stops))))
   (def p3 (segs-to-points (correct-segs -2 2 (points-to-segs stops))))
+  (def p2 (segs-to-points (correct-segs-reduce -2 2 (points-to-segs stops))))
   (= p2 p3)
   (let [n 10] (= (take n p1) (take n p3)))
-  (take 12 p1)
-  (take 12 p3)
-  (count p1)
-  (count p2)
 
 
 
@@ -280,19 +244,20 @@
   (def corrected-short-stops (correct-path -2 2 short-stops))
 
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
-  (def plot-result
+  (defn plot-result
+    [boundary]
     (let [data (take 5000 stops)] ; stops may have many fewer points
-      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks (correct-path-loop* -2 2 data))
+      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks (correct-path -2 2 data))
                               {:color [0 0 255 150] :margins nil}])
           (cb/preprocess-series)
-          (cb/update-scale :x :domain [-8 8])
-          (cb/update-scale :y :domain [-8 8])
+          (cb/update-scale :x :domain [(- boundary) boundary])
+          (cb/update-scale :y :domain [(- boundary) boundary])
           (cb/add-axes :bottom)
           (cb/add-axes :left)
           (cr/render-lattice {:width 750 :height 750 :border 10})
           ;(cc/save "yo.jpg")
-          (cc/show)
-          )))
+          (cc/show))))
+  (plot-result 2)
 
   ;; old version based on https://github.com/generateme/cljplot/blob/master/sketches/vega.clj#L570
   (def plot-result
