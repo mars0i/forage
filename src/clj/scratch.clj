@@ -104,18 +104,6 @@
     (correct-segs boundary-left boundary-right
                   (points-to-segs points))))
 
-(defn correct-path+
-  "Given a sequence of points representing a path connected by line
-  segments, returns a transformed path in which segments that would go
-  beyond the boundaries are \"duplicated\" with new segments shifted
-  so that all parts of the original segment would get displayed
-  within the boundaries.  A sequence of points from such segments
-  are returned, where \"duplicates\" are by nils."
-  [boundary-left boundary-right points]
-  (segs-to-points
-    (correct-segs+ boundary-left boundary-right
-                  (points-to-segs points))))
-
 ;; PROPOSED STRATEGY FOR HANDLING LONG SEGMENTS:
 ;; In the second branch of the if, remove the last line (so nil is the
 ;; last output), and remove "next" before segs, so that the same
@@ -150,6 +138,17 @@
                   ; FIXME No, doesn't work.  It's not outputing new nils and
                   ; shifted segments.  
 
+(defn correct-path+
+  "Given a sequence of points representing a path connected by line
+  segments, returns a transformed path in which segments that would go
+  beyond the boundaries are \"duplicated\" with new segments shifted
+  so that all parts of the original segment would get displayed
+  within the boundaries.  A sequence of points from such segments
+  are returned, where \"duplicates\" are by nils."
+  [boundary-left boundary-right points]
+  (segs-to-points
+    (correct-segs+ boundary-left boundary-right
+                  (points-to-segs points))))
 
 
 ;; ORIGINAL BY GENERATEME (more or less) from
@@ -232,9 +231,9 @@
 
   (def rng (r/make-well19937))
   (def len-dist (r/make-powerlaw rng 1 2))
-  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 100)))
+  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 500)))
   (def stops (w/walk-stops [0 0] 
-                           (w/vecs-upto-len 40 step-vector-pool)))
+                           (w/vecs-upto-len 50 step-vector-pool)))
   (count stops)
 
   (def stops [[0 0] [3 2.5]])
@@ -243,23 +242,29 @@
   (def stops [[0 0] [0.5 0.7] [1.2 -0.2] [2.8 -1.5] [4.5 -3.0] [5.0 -3.5]])
   (def stops [[0 0] [0.5 0.7] [1.2 -0.2] [8.3 -17.5] [4.5 -3.0] [5.0 -3.5]])
 
+  (def stops
+    [[0 0] [0.8639961884906487 1.0500342594681982] [39.0127813655803 -1.9674464655078325]])
+
+
   (def p1 (original-correct-path -2 2 stops))
   (def p3 (correct-path -2 2 stops))
   (def p3- (correct-segs -2 2 (points-to-segs stops)))
   (def p4 (correct-path+ -2 2 stops))
-  (def p4+ (segs-to-points (correct-segs+ -2 2 (points-to-segs stops))))
+  (def p4+ (segs-to-points (correct-segs+ -4 4 (points-to-segs stops))))
   (= p1 (butlast p3))
 
-  (plot-result 10)
+  (plot-result 50 4)
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (defn plot-result
-    [boundary]
+    [display-boundary data-boundary]
     (let [data (take 5000 stops)] ; stops may have many fewer points
-      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks (correct-path+ -10 10 data))
+      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks
+                                      data; (correct-path+ (- data-boundary) data-boundary data)
+                                     )
                               {:color [0 0 255 150] :margins nil}])
           (cb/preprocess-series)
-          (cb/update-scale :x :domain [(- boundary) boundary])
-          (cb/update-scale :y :domain [(- boundary) boundary])
+          (cb/update-scale :x :domain [(- display-boundary) display-boundary])
+          (cb/update-scale :y :domain [(- display-boundary) display-boundary])
           (cb/add-axes :bottom)
           (cb/add-axes :left)
           (cr/render-lattice {:width 800 :height 800 :border 10})
