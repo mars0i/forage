@@ -50,10 +50,6 @@
   [points]
   (partition 2 1 points))
 
-;; a new strategy (needs loop/recur):
-;; add seg to output
-;; if not in bounds, add nil to output, then push seg back on stack
-
 ; FIXME Differs from correct-segs because generates one extra point
 ;; (Maybe this is the correct behavior?)
 ;; 
@@ -85,6 +81,42 @@
                          (shift-seg new-shift-x new-shift-y seg)))
                  new-shift-x new-shift-y
                  (next segs)))))))
+
+;; PROPOSED STRATEGY FOR HANDLING LONG SEGMENTS:
+;; In the second branch of the if, remove the last line (so nil is the
+;; last output), and remove "next" before segs, so that the same
+;; segment is processed again--but now with new shifts.  So to do
+;; that, the recur must be pushed into the if branches; there have to
+;; be two recurs.
+(defn correct-segs+
+  [boundary-left boundary-right segments]
+  (let [width (- boundary-right boundary-left)]
+    (loop [new-segs [], shift-x 0.0, shift-y 0.0, segs segments]
+      (if-not segs
+        new-segs
+        (let [seg (first segs)
+              new-seg (shift-seg shift-x shift-y seg)
+              [[new-x1 new-y1] [new-x2 new-y2]] new-seg
+              new-shift-x (cond (< new-x2 boundary-left)  (+ shift-x width)
+                                (> new-x2 boundary-right) (- shift-x width)
+                                :else shift-x)
+              new-shift-y (cond (< new-y2 boundary-left)  (+ shift-y width)
+                                (> new-y2 boundary-right) (- shift-y width)
+                                :else shift-y)]
+          (if (and (== new-shift-x shift-x)
+                   (== new-shift-y shift-y))
+            (recur (conj new-segs new-seg)
+                   new-shift-x new-shift-y
+                   (next segs))
+            (recur (conj new-segs new-seg nil)
+                   new-shift-x new-shift-y
+                   segs))))))) ; Add same seg after nil, but with new shifts
+                               ; and keep doing that until the forward end
+                               ; no longer goes beyond a boundary.
+                  ; FIXME No, doesn't work.  It's not outputing new nils and
+                  ; shifted segments.  
+
+
 
 ;; ORIGINAL BY GENERATEME (more or less) from
 ;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
@@ -173,12 +205,13 @@
      [0.21316777054277192 1.0885351519809954]])
 
   (def stops [[0 0] [0.5 0.7] [1.2 -0.2] [2.8 -1.5] [4.5 -3.0] [5.0 -3.5]])
+  (def stops [[0 0] [0.5 0.7] [1.2 -0.2] [8.3 -17.5] [4.5 -3.0] [5.0 -3.5]])
   (partition 2 1 stops)
   (partition 2 1 (range 4))
 
   (def p1 (correct-path -2 2 stops))
   (def p3 (segs-to-points (correct-segs -2 2 (points-to-segs stops))))
-  (def p2 (segs-to-points (correct-segs-reduce -2 2 (points-to-segs stops))))
+  (def p3 (segs-to-points (correct-segs+ -2 2 (points-to-segs stops))))
   (= p1 (butlast p3))
   (let [n 10] (= (take n p1) (take n p3)))
 
