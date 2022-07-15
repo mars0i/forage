@@ -19,6 +19,10 @@
 
 
 (defn shift-seg
+  "Given a line segment seg (represented by its 2D endpoints as a pair
+  of pairs of numbers), returns a version of the line segment in which
+  the x-coordinates have been shifted by the addition of shift-x, and
+  the y-coordinates have been shifted by the addition of shift-y."
   [shift-x shift-y seg]
   (let [[[x1 y1] [x2 y2]] seg]
     [[(+ x1 shift-x) (+ y1 shift-y)]
@@ -32,6 +36,12 @@
 ;; After a nil, which delimits duplicated-but-shifted points
 ;;  we also need to add on the first point in the segment after the nil.
 (defn segs-to-points
+  "segs is a sequence of line segments (pairs of pairs representing 2D
+  coordinates), possibly separated by nils, where each second coordinate
+  is identical to  the next first coordinate, except across nils. Extracts
+  the sequence of coordinate pairs (without duplicating common second and
+  first endpoints), separated by nils where the source line segments were
+  separated."
   [segs]
   (cons (first (first segs))
         (loop [pts [], more-segs segs]
@@ -47,6 +57,9 @@
 
 
 (defn points-to-segs
+  "Given points, a sequence of 2D coordinate pairs, returns a sequence
+  of line segments (pairs of coordinate pairs) connecting these points,
+  in sequence [a wrapper for (partition 2 1 points)]."
   [points]
   (partition 2 1 points))
 
