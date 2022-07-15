@@ -63,9 +63,6 @@
   [points]
   (partition 2 1 points))
 
-; FIXME Differs from correct-segs because generates one extra point
-;; (Maybe this is the correct behavior?)
-;; 
 ;; loop/recur version.  nothing fancy yet: just dupes what correct-segs-reduce did
 ;; (well sortof) and what the original correct-path should have done.  Specifically,
 ;; generateme's correct-path was missing the last line segment (as their comment
@@ -94,6 +91,19 @@
                          (shift-seg new-shift-x new-shift-y seg)))
                  new-shift-x new-shift-y
                  (next segs)))))))
+
+(defn correct-path
+  "Given a sequence of points representing a path connected by line
+  segments, returns a transformed path in which segments that would go
+  beyond the boundaries are \"duplicated\" with a new segment that is
+  the previous version shifted so that, if it is short enough, it will
+  end within the boundaries.  A sequence of points from such segments
+  are returned, where \"duplicates\" are by nils."
+  [boundary-left boundary-right points]
+  (segs-to-points
+    (correct-segs boundary-left boundary-right
+                  (points-to-segs points))))
+
 
 ;; PROPOSED STRATEGY FOR HANDLING LONG SEGMENTS:
 ;; In the second branch of the if, remove the last line (so nil is the
@@ -137,7 +147,13 @@
 ;; and a description of the algorithm.
 ;; Note this is missing the last line segment (as one of generateme's original 
 ;; comments highlighted.
-(defn correct-path
+(defn original-correct-path
+  "Given a sequence of points representing a path connected by line
+  segments, returns a transformed path in which segments that would go
+  beyond the boundaries are \"duplicated\" with a new segment that is
+  the previous version shifted so that, if it is short enough, it will
+  end within the boundaries.  A sequence of points from such segments
+  are returned, where \"duplicates\" are by nils."
   [boundary-left boundary-right path]
   (let [width (- boundary-right boundary-left)]
     (first (reduce (fn [[new-path shift-x shift-y] [[curr-x curr-y] [next-x next-y]]]
@@ -205,55 +221,22 @@
 
   (def rng (r/make-well19937))
   (def len-dist (r/make-powerlaw rng 1 2))
-  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 20)))
+  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 100)))
   (def stops (w/walk-stops [0 0] 
-                           (w/vecs-upto-len 100 step-vector-pool)))
+                           (w/vecs-upto-len 40 step-vector-pool)))
   (count stops)
 
-  (def stops
-    [[0 0]
-     [0.9700914276659796 1.6365790878224906]
-     [-0.824501634774673 2.1803587635156556]
-     [1.261448866116044 2.834273995635776]
-     [0.21316777054277192 1.0885351519809954]])
-
+  (def stops [[0 0] [3 2.5]])
   (def stops [[0 0] [0.5 0.7] [1.2 -0.2] [2.8 -1.5] [4.5 -3.0] [5.0 -3.5]])
   (def stops [[0 0] [0.5 0.7] [1.2 -0.2] [8.3 -17.5] [4.5 -3.0] [5.0 -3.5]])
-  (partition 2 1 stops)
-  (partition 2 1 (range 4))
 
-  (def p1 (correct-path -2 2 stops))
-  (def p3 (segs-to-points (correct-segs -2 2 (points-to-segs stops))))
-  (def p3 (segs-to-points (correct-segs+ -2 2 (points-to-segs stops))))
+  (def p1 (original-correct-path -2 2 stops))
+  (def p3- (correct-segs -2 2 (points-to-segs stops)))
+  (def p3 (correct-path -2 2 stops))
+  (def p3+ (segs-to-points (correct-segs+ -2 2 (points-to-segs stops))))
   (= p1 (butlast p3))
-  (let [n 10] (= (take n p1) (take n p3)))
 
-
-
-  (def corrected-stops
-    [[0.0 0.0]
-     [0.9700914276659796 1.6365790878224906]
-     [-0.824501634774673 2.1803587635156556]
-     nil
-     [0.9700914276659796 -2.363420912177509]
-     [-0.824501634774673 -1.8196412364843444]
-     [1.261448866116044 -1.165726004364224]
-     [0.21316777054277192 -2.911464848019005]
-     nil
-     [1.261448866116044 2.834273995635776]])
-
-  (def corrected2-stops (correct-path2 -2 2 stops))
-
-  (= corrected-stops corrected2-stops)
-
-
-  (def short-stops 
-    [[0 0]
-     [1.261448866116044 2.834273995635776]
-     [0.21316777054277192 1.0885351519809954]])
-
-  (def corrected-short-stops (correct-path -2 2 short-stops))
-
+  (plot-result 2)
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (defn plot-result
     [boundary]
@@ -265,39 +248,18 @@
           (cb/update-scale :y :domain [(- boundary) boundary])
           (cb/add-axes :bottom)
           (cb/add-axes :left)
-          (cr/render-lattice {:width 750 :height 750 :border 10})
+          (cr/render-lattice {:width 800 :height 800 :border 10})
           ;(cc/save "yo.jpg")
           (cc/show))))
-  (plot-result 2)
 
-  ;; old version based on https://github.com/generateme/cljplot/blob/master/sketches/vega.clj#L570
-  (def plot-result
-    (let [data (take 1000 stops)]
-      (-> 
-        ;(cb/series [:grid] [:line data {:stroke {:size 2} :point {:type \O}}])
-        (cb/series [:grid] [:line (correct-path -200 200 data) {:stroke {:size 1}}])
-        (cb/preprocess-series)
-        ;(cb/update-scale :x :ticks 4)
-        (cb/update-scale :x :domain [-200 200])
-        (cb/update-scale :y :domain [-200 200])
-        (cb/add-axes :bottom)
-        (cb/add-axes :left)
-        (cb/add-label :bottom "x")
-        (cb/add-label :left "y")
-        (cr/render-lattice {:width 400 :height 400 :border 20})
-        (cc/save "yo.jpg")
-        (cc/show)
-        )))
+)
 
+
+(comment
 
   (def env (mf/make-env 10 1000))
   (def look-fn (partial mf/perc-foodspots-exactly-toroidal env 1))
   (def fw (w/levy-foodwalk look-fn 0.1 10000 false 10000 rng 1 2 [0 0]))
-
-  (map count fw)
-  (= (nth fw 1) (nth fw 2))
-
-
 
   (defn ignore-food [x y] nil)
 
