@@ -104,6 +104,17 @@
     (correct-segs boundary-left boundary-right
                   (points-to-segs points))))
 
+(defn correct-path+
+  "Given a sequence of points representing a path connected by line
+  segments, returns a transformed path in which segments that would go
+  beyond the boundaries are \"duplicated\" with new segments shifted
+  so that all parts of the original segment would get displayed
+  within the boundaries.  A sequence of points from such segments
+  are returned, where \"duplicates\" are by nils."
+  [boundary-left boundary-right points]
+  (segs-to-points
+    (correct-segs+ boundary-left boundary-right
+                  (points-to-segs points))))
 
 ;; PROPOSED STRATEGY FOR HANDLING LONG SEGMENTS:
 ;; In the second branch of the if, remove the last line (so nil is the
@@ -227,21 +238,24 @@
   (count stops)
 
   (def stops [[0 0] [3 2.5]])
+  (def stops [[0 0] [7 6.5]])
+  (def stops [[0 0] [11 10.5]])
   (def stops [[0 0] [0.5 0.7] [1.2 -0.2] [2.8 -1.5] [4.5 -3.0] [5.0 -3.5]])
   (def stops [[0 0] [0.5 0.7] [1.2 -0.2] [8.3 -17.5] [4.5 -3.0] [5.0 -3.5]])
 
   (def p1 (original-correct-path -2 2 stops))
-  (def p3- (correct-segs -2 2 (points-to-segs stops)))
   (def p3 (correct-path -2 2 stops))
-  (def p3+ (segs-to-points (correct-segs+ -2 2 (points-to-segs stops))))
+  (def p3- (correct-segs -2 2 (points-to-segs stops)))
+  (def p4 (correct-path+ -2 2 stops))
+  (def p4+ (segs-to-points (correct-segs+ -2 2 (points-to-segs stops))))
   (= p1 (butlast p3))
 
-  (plot-result 2)
+  (plot-result 10)
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (defn plot-result
     [boundary]
     (let [data (take 5000 stops)] ; stops may have many fewer points
-      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks (correct-path -2 2 data))
+      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks (correct-path+ -10 10 data))
                               {:color [0 0 255 150] :margins nil}])
           (cb/preprocess-series)
           (cb/update-scale :x :domain [(- boundary) boundary])
