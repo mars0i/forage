@@ -136,7 +136,27 @@
                                ; and keep doing that until the forward end
                                ; (new-x/y2) no longer goes beyond boundary.
 
+(defn fix-first-seg
+  "If first segment begins outside the boundaries, shifts it in."
+  [boundary-left boundary-right points]
+  ;; FIXME
+  points)
+
+;; TODO test equivalence with the old version
 (defn correct-path+
+  "Given a sequence of points representing a path connected by line
+  segments, returns a transformed path in which segments that would go
+  beyond the boundaries are \"duplicated\" with new segments shifted
+  so that all parts of the original segment would get displayed
+  within the boundaries.  A sequence of points from such segments
+  are returned, where \"duplicates\" are by nils."
+  [boundary-left boundary-right points]
+  (->> (points-to-segs points)
+       (fix-first-seg)
+       (correct-segs+ boundary-left boundary-right)
+       (segs-to-points)))
+
+(defn correct-path+old
   "Given a sequence of points representing a path connected by line
   segments, returns a transformed path in which segments that would go
   beyond the boundaries are \"duplicated\" with new segments shifted
@@ -147,7 +167,6 @@
   (segs-to-points
     (correct-segs+ boundary-left boundary-right
                   (points-to-segs points))))
-
 
 ;; ORIGINAL BY GENERATEME (with minor changes) from
 ;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
@@ -245,6 +264,17 @@
   (def stops
     [[0 0] [0.8639961884906487 1.0500342594681982] [39.0127813655803 -1.9674464655078325]])
 
+  ;; TODO This seems problematic.  With correct-path+, one of the shifts creates a line
+  ;; that's wholly outside the boundaries -4,4.  (Does this have to do with the fact that
+  ;; the first segment is long?)
+  (def stops
+    [[0 0] [39.0127813655803 -1.9674464655078325] [10.8639961884906487 11.0500342594681982]])
+
+  ;; Here, too, the shift on the second segment doesn't look right.  Shouldn't it
+  ;; to the left, so it emerges from the bottom boundary under where the previous
+  ;; one goes out of the top?
+  (def stops
+    [[0 0] [19.0127813655803 -1.9674464655078325] [10.8639961884906487 11.0500342594681982]])
 
   (def p1 (original-correct-path -2 2 stops))
   (def p3 (correct-path -2 2 stops))
@@ -253,13 +283,13 @@
   (def p4+ (segs-to-points (correct-segs+ -4 4 (points-to-segs stops))))
   (= p1 (butlast p3))
 
-  (plot-result 50 4)
+  (plot-result 4 4)
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (defn plot-result
     [display-boundary data-boundary]
     (let [data (take 5000 stops)] ; stops may have many fewer points
       (-> (cb/series [:grid] [:line (add-cljplot-path-breaks
-                                      data; (correct-path+ (- data-boundary) data-boundary data)
+                                      (correct-path+ (- data-boundary) data-boundary data)
                                      )
                               {:color [0 0 255 150] :margins nil}])
           (cb/preprocess-series)
