@@ -152,7 +152,7 @@
   are returned, where \"duplicates\" are by nils."
   [boundary-left boundary-right points]
   (->> (points-to-segs points)
-       (fix-first-seg)
+       ;(fix-first-seg boundary-left boundary-right)
        (correct-segs+ boundary-left boundary-right)
        (segs-to-points)))
 
@@ -272,33 +272,49 @@
 
   ;; Here, too, the shift on the second segment doesn't look right.  Shouldn't it
   ;; to the left, so it emerges from the bottom boundary under where the previous
-  ;; one goes out of the top?
+  ;; one goes out of the top?  But it is following the intended algorithm.  Is that wrong?
   (def stops
     [[0 0] [19.0127813655803 -1.9674464655078325] [10.8639961884906487 11.0500342594681982]])
 
-  (def p1 (original-correct-path -2 2 stops))
-  (def p3 (correct-path -2 2 stops))
-  (def p3- (correct-segs -2 2 (points-to-segs stops)))
-  (def p4 (correct-path+ -2 2 stops))
+  (def stops [[0 0] [19 -2] [10 11]])
+
+  (def p4 (correct-path+ -4 4 stops))
   (def p4+ (segs-to-points (correct-segs+ -4 4 (points-to-segs stops))))
   (= p1 (butlast p3))
 
-  (plot-result 4 4)
+
+  (plot-result 4 4  (correct-path+ -4 4 stops) "tight.jpg")
+  (plot-result 20 4 (correct-path+ -4 4 stops) "loose.jpg")
+  (plot-result 20 4 stops "raw.jpg")
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
   (defn plot-result
-    [display-boundary data-boundary]
-    (let [data (take 5000 stops)] ; stops may have many fewer points
-      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks
-                                      (correct-path+ (- data-boundary) data-boundary data)
-                                     )
-                              {:color [0 0 255 150] :margins nil}])
-          (cb/preprocess-series)
-          (cb/update-scale :x :domain [(- display-boundary) display-boundary])
-          (cb/update-scale :y :domain [(- display-boundary) display-boundary])
-          (cb/add-axes :bottom)
-          (cb/add-axes :left)
-          (cr/render-lattice {:width 800 :height 800 :border 10})
-          ;(cc/save "yo.jpg")
-          (cc/show))))
+    ([display-boundary data-boundary data]
+     (plot-result display-boundary data-boundary data nil))
+    ([display-boundary data-boundary data filename]
+     (let [plotfn (fn [chart] (if filename
+                                (cc/save chart filename)
+                                (cc/show chart )))]
+       (-> (cb/series [:grid] [:line (add-cljplot-path-breaks
+                                      data ; (correct-path+ (- data-boundary) data-boundary data)
+                                      )
+                               {:color [0 0 255 150] :margins nil}])
+           (cb/preprocess-series)
+           (cb/update-scale :x :domain [(- display-boundary) display-boundary])
+           (cb/update-scale :y :domain [(- display-boundary) display-boundary])
+           (cb/add-axes :bottom)
+           (cb/add-axes :left)
+           (cr/render-lattice {:width 800 :height 800 :border 10})
+           (plotfn)))))
+
+
+  (defn foo [x & ys]
+    (->> x
+         (println)
+         (if ys
+           (println "But wait! There's more:" ys "and")
+           (println "Just"))))
+
+  (defn bar [x :truth]
+    (println x truth))
 
 )
