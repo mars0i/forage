@@ -132,11 +132,9 @@
                    (next segs))
             (recur (conj new-segs new-seg nil)
                    new-shift-x new-shift-y
-                   segs))))))) ; Add same seg after nil, but with new shifts
+                   segs))))))) ; Add same seg after nil, but with new shifts;
                                ; and keep doing that until the forward end
-                               ; no longer goes beyond a boundary.
-                  ; FIXME No, doesn't work.  It's not outputing new nils and
-                  ; shifted segments.  
+                               ; (new-x/y2) no longer goes beyond boundary.
 
 (defn correct-path+
   "Given a sequence of points representing a path connected by line
@@ -151,8 +149,10 @@
                   (points-to-segs points))))
 
 
-;; ORIGINAL BY GENERATEME (more or less) from
+;; ORIGINAL BY GENERATEME (with minor changes) from
 ;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
+;; Also at
+;; https://github.com/generateme/cljplot/blob/f272932c0228273f293a834e6c19c50d0374d3da/sketches/examples.clj#L572
 ;; See notes.forage/toroidal/correctpath.clj for a version with comments
 ;; and a description of the algorithm.
 ;; Note this is missing the last line segment (as one of generateme's original 
