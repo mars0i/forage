@@ -246,6 +246,32 @@
        pts))
 
 
+;; FIXME Temporary: should be revised and moved away from the preceding
+;; which is more generic
+(defn plot-result
+  ([display-boundary data-boundary data]
+   (plot-result display-boundary data-boundary data nil))
+  ([display-boundary data-boundary data filename]
+   (let [plotfn (fn [chart] (if filename
+                              (cc/save chart filename)
+                              (cc/show chart )))]
+     (-> (cb/series [:grid] [:line (add-cljplot-path-breaks data)
+                             {:color [0 0 255 150] :margins nil}])
+         ;; trying to add a box where the data boundary is, but it's not working:
+         ;(cb/series [:grid] [:line [[(- data-boundary) (- data-boundary)]
+         ;                           [(- data-boundary) data-boundary]
+         ;                           [data-boundary data-boundary]
+         ;                           [data-boundary (- data-boundary)]
+         ;                           [(- data-boundary) (- data-boundary)]]
+         ;                    {:color [0 255 0 0] :margins nil}])
+         (cb/preprocess-series)
+         (cb/update-scale :x :domain [(- display-boundary) display-boundary])
+         (cb/update-scale :y :domain [(- display-boundary) display-boundary])
+         (cb/add-axes :bottom)
+         (cb/add-axes :left)
+         (cr/render-lattice {:width 800 :height 800 :border 10})
+         (plotfn)))))
+
 (comment
 
   (def rng (r/make-well19937))
@@ -276,35 +302,21 @@
   (def stops
     [[0 0] [19.0127813655803 -1.9674464655078325] [10.8639961884906487 11.0500342594681982]])
 
+  ;; Here, too, the shift on the second segment doesn't look right.  Shouldn't it
+  ;; to the left, so it emerges from the bottom boundary under where the previous
+  ;; one goes out of the top?  But it is following the intended algorithm.  Is that wrong?
   (def stops [[0 0] [19 -2] [10 11]])
+  (def stops [[0 0] [19 -2] [10 31]])
 
   (def p4 (correct-path+ -4 4 stops))
   (def p4+ (segs-to-points (correct-segs+ -4 4 (points-to-segs stops))))
+  (add-cljplot-path-breaks (correct-path+ -4 4 stops))
   (= p1 (butlast p3))
-
 
   (plot-result 4 4  (correct-path+ -4 4 stops) "tight.jpg")
   (plot-result 20 4 (correct-path+ -4 4 stops) "loose.jpg")
   (plot-result 20 4 stops "raw.jpg")
   ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
-  (defn plot-result
-    ([display-boundary data-boundary data]
-     (plot-result display-boundary data-boundary data nil))
-    ([display-boundary data-boundary data filename]
-     (let [plotfn (fn [chart] (if filename
-                                (cc/save chart filename)
-                                (cc/show chart )))]
-       (-> (cb/series [:grid] [:line (add-cljplot-path-breaks
-                                      data ; (correct-path+ (- data-boundary) data-boundary data)
-                                      )
-                               {:color [0 0 255 150] :margins nil}])
-           (cb/preprocess-series)
-           (cb/update-scale :x :domain [(- display-boundary) display-boundary])
-           (cb/update-scale :y :domain [(- display-boundary) display-boundary])
-           (cb/add-axes :bottom)
-           (cb/add-axes :left)
-           (cr/render-lattice {:width 800 :height 800 :border 10})
-           (plotfn)))))
 
 
   (defn foo [x & ys]
