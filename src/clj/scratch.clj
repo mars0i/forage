@@ -1,13 +1,14 @@
 ;; File for misc experiments.  Think of it as a repl.
 (ns scratch
   (:require
-   [aerial.hanami.common :as hc]
-   [aerial.hanami.templates :as ht]
+   ;[aerial.hanami.common :as hc]
+   ;[aerial.hanami.templates :as ht]
    [cljplot.build :as cb]
    [cljplot.core :as cc]
    [cljplot.render :as cr]
-   [forage.mason.foodspot :as mf]
+   ;[forage.mason.foodspot :as mf]
    [forage.walks :as w]
+   [forage.toroidal :as t]
    [utils.random :as r]))
 
 
