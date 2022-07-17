@@ -119,6 +119,8 @@
         (let [seg (first segs)
               new-seg (shift-seg shift-x shift-y seg)
               [[new-x1 new-y1] [new-x2 new-y2]] new-seg
+              ;; FIXME see example below: we should only care about exceeding 
+              ;; boundaries *within* the other-direction boundaries.
               new-shift-x (cond (< new-x2 boundary-left)  (+ shift-x width)
                                 (> new-x2 boundary-right) (- shift-x width)
                                 :else shift-x)
@@ -248,6 +250,15 @@
 
 ;; FIXME Temporary: should be revised and moved away from the preceding
 ;; which is more generic
+;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
+;; Notes on usage:
+;;    in arg to cb/series :
+;;    [:grid] selects a default grid pattern
+;;    [:grid nil] seems to be the same; the first nil below seems to be an argument placeholder
+;;    [:grid nil {:x nil}] means that there are no vertical grid lines
+;;    [:grid nil {:y nil}] means that there are no horizontal grid lines
+;; Fourth element in the :color option seems to be transparency or darkness or something
+;;    [:grid nil {:position [0 1]}] I don't understand; squashes plot somewhere other than gridlines
 (defn plot-result
   ([display-boundary data-boundary data]
    (plot-result display-boundary data-boundary data nil))
@@ -257,13 +268,6 @@
                               (cc/show chart )))]
      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks data)
                              {:color [0 0 255 150] :margins nil}])
-         ;; trying to add a box where the data boundary is, but it's not working:
-         ;(cb/series [:grid] [:line [[(- data-boundary) (- data-boundary)]
-         ;                           [(- data-boundary) data-boundary]
-         ;                           [data-boundary data-boundary]
-         ;                           [data-boundary (- data-boundary)]
-         ;                           [(- data-boundary) (- data-boundary)]]
-         ;                    {:color [0 255 0 0] :margins nil}])
          (cb/preprocess-series)
          (cb/update-scale :x :domain [(- display-boundary) display-boundary])
          (cb/update-scale :y :domain [(- display-boundary) display-boundary])
@@ -271,6 +275,14 @@
          (cb/add-axes :left)
          (cr/render-lattice {:width 800 :height 800 :border 10})
          (plotfn)))))
+
+         ;; trying to add a box where the data boundary is, but it's not working:
+         ;(cb/series [:grid] [:line [[(- data-boundary) (- data-boundary)]
+         ;                           [(- data-boundary) data-boundary]
+         ;                           [data-boundary data-boundary]
+         ;                           [data-boundary (- data-boundary)]
+         ;                           [(- data-boundary) (- data-boundary)]]
+         ;                    {:color [0 255 0 0] :margins nil}])
 
 (comment
 
@@ -315,18 +327,42 @@
 
   (plot-result 4 4  (correct-path+ -4 4 stops) "tight.jpg")
   (plot-result 20 4 (correct-path+ -4 4 stops) "loose.jpg")
-  (plot-result 20 4 stops "raw.jpg")
-  ;; based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
+  (plot-result 20 4 stops "unmod.jpg")
 
 
-  (defn foo [x & ys]
-    (->> x
-         (println)
-         (if ys
-           (println "But wait! There's more:" ys "and")
-           (println "Just"))))
+  ;; FIXME
+  ;; this:
+  (def stops [[0 0] [19 -2] [10 31]])
+  ;; produces this:
+  (def actual [[[0.0 0.0] [19.0 -2.0]]
+               nil
+               [[-8.0 0.0] [11.0 -2.0]]
+               nil
+               [[-16.0 0.0] [3.0 -2.0]]
+               [[3.0 -2.0] [-6.0 11.0]]
+               nil
+               [[11.0 -10.0] [2.0 3.0]]])
+  ;; but it seems like the following is closer to what should be:
+  (def hacked [[[0.0 0.0] [19.0 -2.0]]
+               nil
+               [[-8.0 0.0] [11.0 -2.0]]
+               nil
+               [[-16.0 0.0] [3.0 -2.0]]
+               [[3.0 -2.0] [-6.0 11.0]]
+               nil
+               [[3.0 -10.0] [-6.0 3.0]]]) ; I modified this line by hand
+               ;; (but additional segs seem needed)
+  ;; TODO I think the problem may be that the diagonal-up line that's being modified
+  ;; *does* end outside the left boundary (as well as the upper boundary)
+  ;; but *it doesn't do so within the vertical boundaries*, so the fact that
+  ;; the forward point is beyond the left bound is irrelevant; below the upper
+  ;; bound, it's within the horizontal bounds.
+  ;; This problem doesn't occur with the first seg in the sequence, because
+  ;; though it exeeds the right boundary, it never exceeds vertical boundaries.
 
-  (defn bar [x :truth]
-    (println x truth))
+  (plot-result 20 4 (segs-to-points hacked) "hackedloose.jpg")
+  (plot-result 4  4 (segs-to-points hacked) "hackedtight.jpg")
+
+
 
 )
