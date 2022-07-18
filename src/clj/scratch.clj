@@ -19,165 +19,13 @@
 ;;  3. What happened to the last point? (probably partition-all should be used)
 
 
-(defn shift-seg
-  "Given a line segment seg (represented by its 2D endpoints as a pair
-  of pairs of numbers), returns a version of the line segment in which
-  the x-coordinates have been shifted by the addition of shift-x, and
-  the y-coordinates have been shifted by the addition of shift-y."
-  [shift-x shift-y seg]
-  (let [[[x1 y1] [x2 y2]] seg]
-    [[(+ x1 shift-x) (+ y1 shift-y)]
-     [(+ x2 shift-x) (+ y2 shift-y)]]))
-
-;; The algorithm is:
-;; Always take only the second point of each segment (which is normally the
-;; first point of the next segment), except:
-;; At the beginning, we need to add on the first point in the first segment,
-;; and
-;; After a nil, which delimits duplicated-but-shifted points
-;;  we also need to add on the first point in the segment after the nil.
-(defn segs-to-points
-  "segs is a sequence of line segments (pairs of pairs representing 2D
-  coordinates), possibly separated by nils, where each second coordinate
-  is identical to  the next first coordinate, except across nils. Extracts
-  the sequence of coordinate pairs (without duplicating common second and
-  first endpoints), separated by nils where the source line segments were
-  separated."
-  [segs]
-  (cons (first (first segs))
-        (loop [pts [], more-segs segs]
-          (cond (empty? more-segs) pts
-                (= (count more-segs) 1) (conj pts (second (first more-segs))) ; will not be post-nil
-                :else (let [seg (first more-segs)]
-                        (if (nil? seg)
-                          (let [[pt1 pt2] (second more-segs)]
-                            (recur (conj pts nil pt1 pt2)
-                                   (drop 2 more-segs))) ; i.e. drop the nil and seg we just used
-                          (recur (conj pts (second seg))
-                                 (rest more-segs)))))))) ; don't use next--we already deal with nils
-
-
-(defn points-to-segs
-  "Given points, a sequence of 2D coordinate pairs, returns a sequence
-  of line segments (pairs of coordinate pairs) connecting these points,
-  in sequence [a wrapper for (partition 2 1 points)]."
-  [points]
-  (partition 2 1 points))
-
-;; loop/recur version.  nothing fancy yet: just dupes what correct-segs-reduce did
-;; (well sortof) and what the original correct-path should have done.  Specifically,
-;; generateme's correct-path was missing the last line segment (as their comment
-;; highlighted, implicitly); this includes it.
-(defn correct-segs
-  [boundary-left boundary-right segments]
-  (let [width (- boundary-right boundary-left)]
-    (loop [new-segs [], shift-x 0.0, shift-y 0.0, segs segments]
-      (if-not segs
-        new-segs
-        (let [seg (first segs)
-              new-seg (shift-seg shift-x shift-y seg)
-              [[new-x1 new-y1] [new-x2 new-y2]] new-seg
-              new-shift-x (cond (< new-x2 boundary-left)  (+ shift-x width)
-                                (> new-x2 boundary-right) (- shift-x width)
-                                :else shift-x)
-              new-shift-y (cond (< new-y2 boundary-left)  (+ shift-y width)
-                                (> new-y2 boundary-right) (- shift-y width)
-                                :else shift-y)]
-          (recur (if (and (== new-shift-x shift-x)
-                          (== new-shift-y shift-y))
-                   (conj new-segs new-seg)
-                   (conj new-segs
-                         new-seg
-                         nil
-                         (shift-seg new-shift-x new-shift-y seg)))
-                 new-shift-x new-shift-y
-                 (next segs)))))))
-
-(defn correct-path
-  "Given a sequence of points representing a path connected by line
-  segments, returns a transformed path in which segments that would go
-  beyond the boundaries are \"duplicated\" with a new segment that is
-  the previous version shifted so that, if it is short enough, it will
-  end within the boundaries.  A sequence of points from such segments
-  are returned, where \"duplicates\" are by nils."
-  [boundary-left boundary-right points]
-  (segs-to-points
-    (correct-segs boundary-left boundary-right
-                  (points-to-segs points))))
-
-;; PROPOSED STRATEGY FOR HANDLING LONG SEGMENTS:
-;; In the second branch of the if, remove the last line (so nil is the
-;; last output), and remove "next" before segs, so that the same
-;; segment is processed again--but now with new shifts.  So to do
-;; that, the recur must be pushed into the if branches; there have to
-;; be two recurs.
-(defn correct-segs+
-  [boundary-left boundary-right segments]
-  (let [width (- boundary-right boundary-left)]
-    (loop [new-segs [], shift-x 0.0, shift-y 0.0, segs segments]
-      (if-not segs
-        new-segs
-        (let [seg (first segs)
-              new-seg (shift-seg shift-x shift-y seg)
-              [[new-x1 new-y1] [new-x2 new-y2]] new-seg
-              ;; FIXME see example below: we should only care about exceeding 
-              ;; boundaries *within* the other-direction boundaries.
-              new-shift-x (cond (< new-x2 boundary-left)  (+ shift-x width)
-                                (> new-x2 boundary-right) (- shift-x width)
-                                :else shift-x)
-              new-shift-y (cond (< new-y2 boundary-left)  (+ shift-y width)
-                                (> new-y2 boundary-right) (- shift-y width)
-                                :else shift-y)]
-          (if (and (== new-shift-x shift-x)
-                   (== new-shift-y shift-y))
-            (recur (conj new-segs new-seg)
-                   new-shift-x new-shift-y
-                   (next segs))
-            (recur (conj new-segs new-seg nil)
-                   new-shift-x new-shift-y
-                   segs))))))) ; Add same seg after nil, but with new shifts;
-                               ; and keep doing that until the forward end
-                               ; (new-x/y2) no longer goes beyond boundary.
-
-(defn fix-first-seg
-  "If first segment begins outside the boundaries, shifts it in."
-  [boundary-left boundary-right points]
-  ;; FIXME
-  points)
-
-;; TODO test equivalence with the old version
-(defn correct-path+
-  "Given a sequence of points representing a path connected by line
-  segments, returns a transformed path in which segments that would go
-  beyond the boundaries are \"duplicated\" with new segments shifted
-  so that all parts of the original segment would get displayed
-  within the boundaries.  A sequence of points from such segments
-  are returned, where \"duplicates\" are by nils."
-  [boundary-left boundary-right points]
-  (->> (points-to-segs points)
-       ;(fix-first-seg boundary-left boundary-right)
-       (correct-segs+ boundary-left boundary-right)
-       (segs-to-points)))
-
-(defn correct-path+old
-  "Given a sequence of points representing a path connected by line
-  segments, returns a transformed path in which segments that would go
-  beyond the boundaries are \"duplicated\" with new segments shifted
-  so that all parts of the original segment would get displayed
-  within the boundaries.  A sequence of points from such segments
-  are returned, where \"duplicates\" are by nils."
-  [boundary-left boundary-right points]
-  (segs-to-points
-    (correct-segs+ boundary-left boundary-right
-                  (points-to-segs points))))
-
 ;; ORIGINAL BY GENERATEME (with minor changes) from
 ;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
 ;; Also at
 ;; https://github.com/generateme/cljplot/blob/f272932c0228273f293a834e6c19c50d0374d3da/sketches/examples.clj#L572
 ;; See notes.forage/toroidal/correctpath.clj for a version with comments
 ;; and a description of the algorithm.
-;; Note this is missing the last line segment (as one of generateme's original 
+;; SUPERSEDED BY wrap-path and wrap-segment in forage.toroidal.
 ;; comments highlighted.
 (defn original-correct-path
   "Given a sequence of points representing a path connected by line
@@ -212,35 +60,6 @@
                         new-shift-y]))
                    [[] 0.0 0.0]
                    (partition 2 1 path)))))
-
-
-;; deprecated. for reference.
-;; supposed to do roughly same thing as generateme's correct-path
-(defn correct-segs-reduce
-  [boundary-left boundary-right segs]
-  (let [width (- boundary-right boundary-left)]
-    (first (reduce (fn [[new-segs shift-x shift-y] seg]
-                     (let [new-seg (shift-seg shift-x shift-y seg)
-                           [[new-x1 new-y1] [new-x2 new-y2]] new-seg
-                           new-shift-x (cond
-                                         (< new-x2 boundary-left)  (+ shift-x width)
-                                         (> new-x2 boundary-right) (- shift-x width)
-                                         :else shift-x)
-                           new-shift-y (cond
-                                         (< new-y2 boundary-left)  (+ shift-y width)
-                                         (> new-y2 boundary-right) (- shift-y width)
-                                         :else shift-y)]
-                       [(if (and (== new-shift-x shift-x)
-                                 (== new-shift-y shift-y))
-                          (conj new-segs new-seg)
-                          (conj new-segs
-                                new-seg
-                                nil
-                                (shift-seg new-shift-x new-shift-y seg)))
-                        new-shift-x
-                        new-shift-y]))
-                   [[] 0.0 0.0]
-                   segs))))
 
 
 (defn add-cljplot-path-breaks
@@ -303,7 +122,7 @@
   (def stops
     [[0 0] [0.8639961884906487 1.0500342594681982] [39.0127813655803 -1.9674464655078325]])
 
-  ;; TODO This seems problematic.  With correct-path+, one of the shifts creates a line
+  ;; TODO This seems problematic.  With wrap-path, one of the shifts creates a line
   ;; that's wholly outside the boundaries -4,4.  (Does this have to do with the fact that
   ;; the first segment is long?)
   (def stops
@@ -321,13 +140,13 @@
   (def stops [[0 0] [19 -2] [10 11]])
   (def stops [[0 0] [19 -2] [10 31]])
 
-  (def p4 (correct-path+ -4 4 stops))
-  (def p4+ (segs-to-points (correct-segs+ -4 4 (points-to-segs stops))))
-  (add-cljplot-path-breaks (correct-path+ -4 4 stops))
+  (def p4 (t/wrap-path -4 4 stops))
+  (def p4+ (segs-to-points (t/wrap-segs -4 4 (points-to-segs stops))))
+  (add-cljplot-path-breaks (t/wrap-path -4 4 stops))
   (= p1 (butlast p3))
 
-  (plot-result 4 4  (correct-path+ -4 4 stops) "tight.jpg")
-  (plot-result 20 4 (correct-path+ -4 4 stops) "loose.jpg")
+  (plot-result 4 4  (t/wrap-path -4 4 stops) "tight.jpg")
+  (plot-result 20 4 (t/wrap-path -4 4 stops) "loose.jpg")
   (plot-result 20 4 stops "unmod.jpg")
 
 
@@ -343,7 +162,7 @@
                [[3.0 -2.0] [-6.0 11.0]]
                nil
                [[11.0 -10.0] [2.0 3.0]]])
-  ;; but it seems like the following is closer to what should be:
+  ;; but it seems like the following is what it should be:
   (def hacked [[[0.0 0.0] [19.0 -2.0]]
                nil
                [[-8.0 0.0] [11.0 -2.0]]
@@ -351,8 +170,19 @@
                [[-16.0 0.0] [3.0 -2.0]]
                [[3.0 -2.0] [-6.0 11.0]]
                nil
-               [[3.0 -10.0] [-6.0 3.0]]]) ; I modified this line by hand
-               ;; (but additional segs seem needed)
+               [[3.0 -10.0] [-6.0 3.0]]  ; I modified or added rest of lines by hand
+               nil
+               [[11.0 -10.0] [2.0 3.0]]])
+  ;; Note that [[3.0 -10.0] [-6.0 3.0]] is shifted down from the previous version, 
+  ;; but [[11.0 -10.0] [2.0 3.0]] is shifted right from the previous version.
+  ;; This is because the segment that's shifted down because its predecessor went
+  ;; through the upper boundary, then goes out through the left boundary, so it's
+  ;; successor should be shifted right.  [In hackedtight.jpg (see below), you can
+  ;; see that the original line goes out through the top, comes back in at the
+  ;; same x coordinate at the bottom, goes out through the left, and then comes
+  ;; back in at the same y coordinate on the right.]
+
+
   ;; TODO I think the problem may be that the diagonal-up line that's being modified
   ;; *does* end outside the left boundary (as well as the upper boundary)
   ;; but *it doesn't do so within the vertical boundaries*, so the fact that
@@ -361,8 +191,8 @@
   ;; This problem doesn't occur with the first seg in the sequence, because
   ;; though it exeeds the right boundary, it never exceeds vertical boundaries.
 
-  (plot-result 20 4 (segs-to-points hacked) "hackedloose.jpg")
-  (plot-result 4  4 (segs-to-points hacked) "hackedtight.jpg")
+  (plot-result 20 4 (t/segs-to-points hacked) "hackedloose.jpg")
+  (plot-result 4  4 (t/segs-to-points hacked) "hackedtight.jpg")
 
 
 
