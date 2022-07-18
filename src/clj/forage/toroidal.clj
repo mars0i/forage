@@ -1,7 +1,7 @@
 ;; Functions to manipulate search paths as if in a toroidal environment,
 ;; i.e. one with periodic boundary conditions.
 (ns forage.toroidal
-  (:require [utils.math as m]))
+  (:require [utils.math :as m]))
 
 
 ;; generateme asked (about the original version of this code--nearly the same):
@@ -59,7 +59,7 @@
 ;; FIXME Bug: If a segment exceeds a boundary *only* beyond a boundary in
 ;; the other direction, it's duplicated and shifted in the first direction,
 ;; even though it shouldn't be.
-(defn wrap-segments
+(defn wrap-segs
   "Given a sequence of line segments--pairs of pairs of numbers--representing
   a path connected by line segments, returns a transformed sequence in which
   segments whose second point that would go beyond the boundaries are
