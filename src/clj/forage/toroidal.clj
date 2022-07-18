@@ -56,10 +56,53 @@
   [points]
   (partition 2 1 points))
 
+(defn new-shift-increments
+  [boundary-left boundary-right seg]
+  (let [width (- boundary-right boundary-left) ; poss pull this out so not duping calc
+        [[x1 y1] [x2 y2]] seg]
+    [(cond (< x2 boundary-left) width
+           (> x2 boundary-right) (- width)
+           :else 0)
+     (cond (< y2 boundary-left) width
+           (> y2 boundary-right) (- width)
+           :else 0)]))
+
+
 ;; FIXME Bug: If a segment exceeds a boundary *only* beyond a boundary in
 ;; the other direction, it's duplicated and shifted in the first direction,
 ;; even though it shouldn't be.
+;; FIXME: This prelim version supposed to be equivalent to wrap-segs-old, but it's not.
 (defn wrap-segs
+  "Given a sequence of line segments--pairs of pairs of numbers--representing
+  a path connected by line segments, returns a transformed sequence in which
+  segments whose second point that would go beyond the boundaries are
+  \"duplicated\" with a new segment that is the previous version shifted so
+  that, if it's short enough, the duplicate ends within boundaries.  If it
+  doesn't, then another \"duplicate\" will be created that's further shifted,
+  and so on, until there is a duplicate that ends within the boundaries.
+  \"Duplicate\" segments are separated by nils."
+  [boundary-left boundary-right segments]
+  (loop [new-segs [], shift-x 0.0, shift-y 0.0, segs segments]
+    (if-not segs
+      new-segs
+      (let [seg (first segs)
+            new-seg (shift-seg shift-x shift-y seg)
+            [inc-x inc-y] (new-shift-increments boundary-left boundary-right new-seg)
+            new-shift-x (+ shift-x inc-x)
+            new-shift-y (+ shift-x inc-x)]
+        (if (and (== new-shift-x shift-x)
+                 (== new-shift-y shift-y))
+          (recur (conj new-segs new-seg)
+                 new-shift-x new-shift-y
+                 (next segs))
+          (recur (conj new-segs new-seg nil)
+                 new-shift-x new-shift-y
+                 segs)))))) ; Add same seg after nil, but with new shifts;
+                            ; and keep doing that until the forward end
+                            ; (new-x/y2) no longer goes beyond boundary.
+
+;; DEPRECATED
+(defn wrap-segs-old
   "Given a sequence of line segments--pairs of pairs of numbers--representing
   a path connected by line segments, returns a transformed sequence in which
   segments whose second point that would go beyond the boundaries are
@@ -110,6 +153,20 @@
   (->> (points-to-segs points)
        ;(fix-first-seg boundary-left boundary-right)
        (wrap-segs boundary-left boundary-right)
+       (segs-to-points)))
+
+;; DEPRECATED
+(defn wrap-path-old
+  "Given a sequence of points representing a path connected by line
+  segments, returns a transformed path in which segments that would go
+  beyond the boundaries are \"duplicated\" with new segments shifted
+  so that all parts of the original segment would get displayed
+  within the boundaries.  A sequence of points from such segments
+  are returned, where \"duplicates\" are by nils."
+  [boundary-left boundary-right points]
+  (->> (points-to-segs points)
+       ;(fix-first-seg boundary-left boundary-right)
+       (wrap-segs-old boundary-left boundary-right)
        (segs-to-points)))
 
 
