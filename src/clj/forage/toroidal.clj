@@ -73,6 +73,8 @@
            (> y2 boundary-max) -1
            :else 0)]))
 
+;; FIXME DUMMY VALUES WITH PSEUDOCODE: currently simply returns [x-dir, y-dir] as is.
+;; BE CAREFUL THOUGH ABOUT VERTICAL SLOPES.  MAYBE INVERT AND UNINVERT FIRST.
 (defn which-shifts
   "The forward point of seg is assumed to exceed boundaries in both 
   dimensions. Returns a pair of shift values, for x and y, after
@@ -83,7 +85,27 @@
   appropriate only when a line segment goes through a corner of the
   standard region."
   [boundary-min boundary-max x-dir y-dir seg]
-  seg) ; temporary FIXME
+  ; PSEUDOCODE WITH DUMMY VALUES:
+  (let [slope 0 ; calculate slope, i.e. vector direction of seg
+        x-at-y-bound 0 ; use slope, first point of seg to calculate x position on line at relevant y boundary
+        y-at-x-bound 0 ; use slope, first point of seg to calculate y position on line at relevant x boundary
+        x-dir' (if true ; if x position at y boundary is within or equal to x boundaries,
+                 x-dir  ;   we'll return x-dir
+                 0)     ;   otherwise we'll return 0 for the x direction
+        y-dir' (if true ; if y position at y boundary is within or equal to y boundaries,
+                 y-dir  ;   we'll return y-dir
+                 0)]    ;   otherwise we'll return 0 for the y direction
+    [x-dir' y-dir'])) ; note both are nonzero only when line through segment passes through a corner, i.e. is equal to two boundaries
+;; POSSIBLE REVISION: If position at y boundary is equal to the x boundary,
+;; we know that the same is true in the opposite dimension.
+;; So no need to test the other dimension: just return [x-dir y-dir].
+;; Maybe start with a test for equality in one dimension:
+;;    if (= x-at-y-bound y-bound) ...
+;; before even bothering to calculate y-at-x-bound.
+;; BUT BE CAREFUL THOUGH ABOUT VERTICAL SLOPES.  MAYBE INVERT AND UNINVERT FIRST.
+;; Hmm can I avoid that problem with the equality test?  Or maybe just take a small
+;; slope to be enough of a test?
+
 
 
 ;; FIXME Bug: If a segment exceeds a boundary *only* beyond a boundary in
@@ -107,9 +129,10 @@
       (let [seg (first segs)
               new-seg (shift-seg shift-x shift-y seg)
               [x-dir y-dir] (new-shift-dirs boundary-min boundary-max new-seg) ; directions in which new shifts needed
-              [new-shift-x new-shift-y] (if (or (zero? x-dir) (zero? y-dir)) ; if no more than one boundary exceeded
-                                          [(+ shift-x (* x-dir width)) (+ shift-y (* y-dir width))]  ; simple method to shift
-                                          (which-shifts boundary-min boundary-max x-dir y-dir seg))] ; else it's more complicated
+              [x-dir' y-dir'] (if (or (zero? x-dir) (zero? y-dir)) ; if no more than one boundary exceeded
+                                [x-dir y-dir] ; simple shift
+                                (which-shifts boundary-min boundary-max x-dir y-dir seg)) ; else need to choose which count
+              [new-shift-x new-shift-y] [(+ shift-x (* x-dir' width)) (+ shift-y (* y-dir' width))]]
           (if (and (== new-shift-x shift-x)
                    (== new-shift-y shift-y))
             (recur (conj new-segs new-seg)
