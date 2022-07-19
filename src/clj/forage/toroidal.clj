@@ -56,7 +56,7 @@
   [points]
   (partition 2 1 points))
 
-(defn new-shift-directions
+(defn new-shift-dirs
   "Returns a pair in which each element is -1, 0, or 1.  The first element
   indicates the direction in which the x coordinates of seg must be shifted
   in order for its forward point to be closer to being within
@@ -65,7 +65,7 @@
   a boundary is exceeded; it's the direction in which seg must be
   \"corrected\" by shifting it back toward the standard region.)"
   [boundary-min boundary-max seg]
-  (let [[[x1 y1] [x2 y2]] seg]
+  (let [[_ [x2 y2]] seg]
     [(cond (< x2 boundary-min) 1
            (> x2 boundary-max) -1
            :else 0)
@@ -74,11 +74,14 @@
            :else 0)]))
 
 (defn which-shifts
-  "The forward point of seg should exceed boundaries in both dimentions.
-  Returns a pair of shift values, for x and y, after determining whether
-  one of the forward coordinates exceeds its boundary outside of a boundary
-  in the other dimension.  That would mean that seg should not be shifted
-  in this dimension, but only in the other dimension."
+  "The forward point of seg is assumed to exceed boundaries in both 
+  dimensions. Returns a pair of shift values, for x and y, after
+  determining whether one of the forward coordinates exceeds a boundary
+  in dimension D at a location that is outside of a boundary in the other
+  dimension.  That would mean that seg should not be shifted in dimension
+  D, but only in the other dimension.  Shifts in both directions are
+  appropriate only when a line segment goes through a corner of the
+  standard region."
   [boundary-min boundary-max x-dir y-dir seg]
   seg) ; temporary FIXME
 
@@ -103,11 +106,10 @@
       new-segs
       (let [seg (first segs)
               new-seg (shift-seg shift-x shift-y seg)
-              [x-dir y-dir] (new-shift-directions boundary-min boundary-max new-seg)
-              [new-shift-x new-shift-y] (if (or (zero? x-dir)  ; if only one boundary is exceeded, use simple
-                                                (zero? y-dir)) ; method that shifts in only one direction:
-                                          [(+ shift-x (* x-dir width)) (+ shift-y (* y-dir width))]
-                                          (which-shifts boundary-min boundary-max x-dir y-dir seg))] ; else more complex processing
+              [x-dir y-dir] (new-shift-dirs boundary-min boundary-max new-seg) ; directions in which new shifts needed
+              [new-shift-x new-shift-y] (if (or (zero? x-dir) (zero? y-dir)) ; if no more than one boundary exceeded
+                                          [(+ shift-x (* x-dir width)) (+ shift-y (* y-dir width))]  ; simple method to shift
+                                          (which-shifts boundary-min boundary-max x-dir y-dir seg))] ; else it's more complicated
           (if (and (== new-shift-x shift-x)
                    (== new-shift-y shift-y))
             (recur (conj new-segs new-seg)
