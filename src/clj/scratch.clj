@@ -87,7 +87,8 @@
                               (cc/save chart filename)
                               (cc/show chart )))]
      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks data)
-                             {:color [0 0 255 150] :margins nil}])
+                             {:color [0 0 255 150] ; fourth arg is opacity or brightness or something like that
+                              :margins nil}]) 
          (cb/preprocess-series)
          (cb/update-scale :x :domain [(- display-boundary) display-boundary])
          (cb/update-scale :y :domain [(- display-boundary) display-boundary])
@@ -195,6 +196,9 @@
 
   (plot-result 20 4 (t/segs-to-points hacked) "hackedloose.jpg")
   (plot-result 4  4 (t/segs-to-points hacked) "hackedtight.jpg")
+
+  (def square [[-4 -4] [-4 4] [4 4] [4 -4] [-4 -4]])
+  (plot-result 5 4 square "square.jpg")
 
 
 
