@@ -89,7 +89,7 @@
             new-seg (shift-seg shift-x shift-y seg)
             [inc-x inc-y] (new-shift-increments boundary-left boundary-right new-seg)
             new-shift-x (+ shift-x inc-x)
-            new-shift-y (+ shift-x inc-x)]
+            new-shift-y (+ shift-y inc-y)]
         (if (and (== new-shift-x shift-x)
                  (== new-shift-y shift-y))
           (recur (conj new-segs new-seg)
