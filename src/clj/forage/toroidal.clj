@@ -56,16 +56,31 @@
   [points]
   (partition 2 1 points))
 
-(defn new-shift-increments
+(defn new-shift-directions
+  "Returns a pair in which each element is -1, 0, or 1.  The first element
+  indicates the direction in which the x coordinates of seg must be shifted
+  in order for its forward point to be closer to being within
+  [boundary-min boundary-max].  The second element does the same for seg's
+  y coordinates.  (Note that the value returned is not the direction in which
+  a boundary is exceeded; it's the direction in which seg must be
+  \"corrected\" by shifting it back toward the standard region.)"
   [boundary-min boundary-max seg]
-  (let [width (- boundary-max boundary-min) ; poss pull this out so not duping calc
-        [[x1 y1] [x2 y2]] seg]
-    [(cond (< x2 boundary-min) width
-           (> x2 boundary-max) (- width)
+  (let [[[x1 y1] [x2 y2]] seg]
+    [(cond (< x2 boundary-min) 1
+           (> x2 boundary-max) -1
            :else 0)
-     (cond (< y2 boundary-min) width
-           (> y2 boundary-max) (- width)
+     (cond (< y2 boundary-min) 1
+           (> y2 boundary-max) -1
            :else 0)]))
+
+(defn which-shifts
+  "The forward point of seg should exceed boundaries in both dimentions.
+  Returns a pair of shift values, for x and y, after determining whether
+  one of the forward coordinates exceeds its boundary outside of a boundary
+  in the other dimension.  That would mean that seg should not be shifted
+  in this dimension, but only in the other dimension."
+  [boundary-min boundary-max x-dir y-dir seg]
+  seg) ; temporary FIXME
 
 
 ;; FIXME Bug: If a segment exceeds a boundary *only* beyond a boundary in
@@ -83,22 +98,25 @@
   \"Duplicate\" segments are separated by nils."
   [boundary-min boundary-max segments]
   (loop [new-segs [], shift-x 0.0, shift-y 0.0, segs segments]
+  (let [width (- boundary-max boundary-min)]
     (if-not segs
       new-segs
       (let [seg (first segs)
-            new-seg (shift-seg shift-x shift-y seg)
-            [inc-x inc-y] (new-shift-increments boundary-min boundary-max new-seg)
-            new-shift-x (+ shift-x inc-x)
-            new-shift-y (+ shift-y inc-y)]
-        (if (and (== new-shift-x shift-x)
-                 (== new-shift-y shift-y))
-          (recur (conj new-segs new-seg)
-                 new-shift-x new-shift-y
-                 (next segs))
-          (recur (conj new-segs new-seg nil)
-                 new-shift-x new-shift-y
-                 segs)))))) ; Add same seg after nil, but with new shifts;
-                            ; and keep doing that until the forward end
+              new-seg (shift-seg shift-x shift-y seg)
+              [x-dir y-dir] (new-shift-directions boundary-min boundary-max new-seg)
+              [new-shift-x new-shift-y] (if (or (zero? x-dir)  ; if only one boundary is exceeded, use simple
+                                                (zero? y-dir)) ; method that shifts in only one direction:
+                                          [(+ shift-x (* x-dir width)) (+ shift-y (* y-dir width))]
+                                          (which-shifts boundary-min boundary-max x-dir y-dir seg))] ; else more complex processing
+          (if (and (== new-shift-x shift-x)
+                   (== new-shift-y shift-y))
+            (recur (conj new-segs new-seg)
+                   new-shift-x new-shift-y
+                   (next segs))
+            (recur (conj new-segs new-seg nil)
+                   new-shift-x new-shift-y
+                   segs))))))) ; Add same seg after nil, but with new shifts;
+; and keep doing that until the forward end
                             ; (new-x/y2) no longer goes beyond boundary.
 
 ;; DEPRECATED
@@ -169,23 +187,3 @@
        (wrap-segs-old boundary-min boundary-max)
        (segs-to-points)))
 
-
-
-(comment
-
-  (def rng (r/make-well19937))
-  (def len-dist (r/make-powerlaw rng 1 2))
-  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 500)))
-  (def stops (w/walk-stops [0 0] 
-                           (w/vecs-upto-len 50 step-vector-pool)))
-  (count stops)
-
-  ;; Illustrations of bug in wrap-segs described above.
-  (def stops [[0 0] [19 -2] [10 11]])
-  (def stops [[0 0] [19 -2] [10 31]])
-
-  ;; Should be identical
-  (def p1 (wrap-path -4 4 stops))
-  (def p2 (segs-to-points (wrap-segs -4 4 (points-to-segs stops))))
-
-)
