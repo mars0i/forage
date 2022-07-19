@@ -47,7 +47,8 @@
 ;  (Double/isNaN x))
 
 (defn slope-from-coords
-  "Given a pair of points on a line, return its slope.  If the line is
+  "Given a pair of points on a line, return its slope.  This is also the
+  vector direction from the first point to the second.  If the line is
   vertical, returns ##Inf (infinity) to indicate that."
   [[x1 y1] [x2 y2]]
   (if (== x1 x2)
