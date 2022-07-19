@@ -80,9 +80,7 @@
            (> y2 bound-max) -1
            :else 0)]))
 
-;; FIXME DUMMY VALUES WITH PSEUDOCODE: currently simply returns [x-dir, y-dir] as is.
-;; BE CAREFUL THOUGH ABOUT VERTICAL SLOPES.  MAYBE INVERT AND UNINVERT FIRST.
-(defn which-shifts
+(defn yo-old-which-shifts
   "The forward point of seg is assumed to exceed boundaries in both 
   dimensions. Returns a pair of shift values, for x and y, after
   determining whether one of the forward coordinates exceeds a boundary
@@ -99,6 +97,37 @@
   (let [slope 0 ; calculate slope, i.e. vector direction of seg
         x-at-y-bound 0 ; use slope, first point of seg to calculate x position on line at relevant y boundary
         y-at-x-bound 0 ; use slope, first point of seg to calculate y position on line at relevant x boundary
+        x-dir' (if true ; if x position at y boundary is within or equal to x boundaries,
+                 x-dir  ;   we'll return x-dir
+                 0)     ;   otherwise we'll return 0 for the x direction
+        y-dir' (if true ; if y position at y boundary is within or equal to y boundaries,
+                 y-dir  ;   we'll return y-dir
+                 0)]    ;   otherwise we'll return 0 for the y direction
+    [x-dir' y-dir'])) ; note both are nonzero only when line through segment passes through a corner, i.e. is equal to two boundaries
+
+;; FIXME DUMMY VALUES WITH PSEUDOCODE: currently simply returns [x-dir, y-dir] as is.
+;; BE CAREFUL THOUGH ABOUT VERTICAL SLOPES.  MAYBE INVERT AND UNINVERT FIRST.
+(defn which-shifts
+  "The forward point of seg is assumed to exceed boundaries in both 
+  dimensions, so x-dir and y-dir are each either -1 or 1. Returns a pair
+  of shift values, for x and y, after
+  determining whether one of the forward coordinates exceeds a boundary
+  in dimension D at a location that is outside of a boundary in the other
+  dimension.  That would mean that seg should not be shifted in dimension
+  D, but only in the other dimension.  Shifts in both directions are
+  appropriate only when a line segment goes through a corner of the
+  standard region.  (See doc/exceedingboundaries1.pdf for an illustration
+  in which the upper segment should be shifted down but not left, the
+  lower segment should be shifted left but not down, and the dashed
+  segment should be shifted in both directions.)"
+  [bound-min bound-max x-dir y-dir seg]
+  ; PSEUDOCODE WITH DUMMY VALUES:
+  (let [[[x1 y1] [x2 y2]] seg
+        slope (m/slope-from-coords [x1 y1] [x2 y2]) ; calculate slope, i.e. vector direction of seg
+        x-bound (if (pos? x-dir) bound-max bound-min) ; x-dir should be either 1 or -1
+        y-bound (if (pos? y-dir) bound-max bound-min) ; ditto for y-dir
+        y-at-x-bound (+ (* slope x-bound) y1) ; TODO IS THIS RIGHT? use slope, first point of seg to calculate y position on line at relevant x boundary
+        x-at-y-bound 0 ; use slope, first point of seg to calculate x position on line at relevant y boundary
         x-dir' (if true ; if x position at y boundary is within or equal to x boundaries,
                  x-dir  ;   we'll return x-dir
                  0)     ;   otherwise we'll return 0 for the x direction
