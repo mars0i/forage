@@ -3,6 +3,13 @@
 (ns forage.toroidal
   (:require [utils.math :as m]))
 
+;; NOTATION:
+;;  - "seg" means line segment, i.e. a pair of coordinate pairs.
+;;  - "bound-" means "boundary-", or as in "upper bound". 
+;;     (It has nothing to do with binding.)
+;;  - "sh" means "shifted".
+;;  - "dir" means "direction".
+;;  - sequences of points (coordinate pairs) are called either "points" or "pts".
 
 ;; generateme asked (about the original version of this code--nearly the same):
 ;; The problems to solve:
@@ -11,15 +18,15 @@
 ;;  3. What happened to the last point? (probably partition-all should be used)
 
 
-(defn shift-seg
+(defn sh-seg
   "Given a line segment seg (represented by its 2D endpoints as a pair
   of pairs of numbers), returns a version of the line segment in which
-  the x-coordinates have been shifted by the addition of shift-x, and
-  the y-coordinates have been shifted by the addition of shift-y."
-  [shift-x shift-y seg]
+  the x-coordinates have been shifted by the addition of sh-x, and
+  the y-coordinates have been shifted by the addition of sh-y."
+  [sh-x sh-y seg]
   (let [[[x1 y1] [x2 y2]] seg]
-    [[(+ x1 shift-x) (+ y1 shift-y)]
-     [(+ x2 shift-x) (+ y2 shift-y)]]))
+    [[(+ x1 sh-x) (+ y1 sh-y)]
+     [(+ x2 sh-x) (+ y2 sh-y)]]))
 
 ;; The algorithm is:
 ;; Always take only the second point of each segment (which is normally the
@@ -56,21 +63,21 @@
   [points]
   (partition 2 1 points))
 
-(defn new-shift-dirs
+(defn new-sh-dirs
   "Returns a pair in which each element is -1, 0, or 1.  The first element
   indicates the direction in which the x coordinates of seg must be shifted
   in order for its forward point to be closer to being within
-  [boundary-min boundary-max].  The second element does the same for seg's
+  [bound-min bound-max].  The second element does the same for seg's
   y coordinates.  (Note that the value returned is not the direction in which
   a boundary is exceeded; it's the direction in which seg must be
   \"corrected\" by shifting it back toward the standard region.)"
-  [boundary-min boundary-max seg]
+  [bound-min bound-max seg]
   (let [[_ [x2 y2]] seg]
-    [(cond (< x2 boundary-min) 1
-           (> x2 boundary-max) -1
+    [(cond (< x2 bound-min) 1
+           (> x2 bound-max) -1
            :else 0)
-     (cond (< y2 boundary-min) 1
-           (> y2 boundary-max) -1
+     (cond (< y2 bound-min) 1
+           (> y2 bound-max) -1
            :else 0)]))
 
 ;; FIXME DUMMY VALUES WITH PSEUDOCODE: currently simply returns [x-dir, y-dir] as is.
@@ -83,8 +90,11 @@
   dimension.  That would mean that seg should not be shifted in dimension
   D, but only in the other dimension.  Shifts in both directions are
   appropriate only when a line segment goes through a corner of the
-  standard region."
-  [boundary-min boundary-max x-dir y-dir seg]
+  standard region.  (See doc/exceedingboundaries1.pdf for an illustration
+  in which the upper segment should be shifted down but not left, the
+  lower segment should be shifted left but not down, and the dashed
+  segment should be shifted in both directions.)"
+  [bound-min bound-max x-dir y-dir seg]
   ; PSEUDOCODE WITH DUMMY VALUES:
   (let [slope 0 ; calculate slope, i.e. vector direction of seg
         x-at-y-bound 0 ; use slope, first point of seg to calculate x position on line at relevant y boundary
@@ -121,25 +131,25 @@
   doesn't, then another \"duplicate\" will be created that's further shifted,
   and so on, until there is a duplicate that ends within the boundaries.
   \"Duplicate\" segments are separated by nils."
-  [boundary-min boundary-max segments]
-  (loop [new-segs [], shift-x 0.0, shift-y 0.0, segs segments]
-  (let [width (- boundary-max boundary-min)]
+  [bound-min bound-max segments]
+  (loop [new-segs [], sh-x 0.0, sh-y 0.0, segs segments]
+  (let [width (- bound-max bound-min)]
     (if-not segs
       new-segs
       (let [seg (first segs)
-              new-seg (shift-seg shift-x shift-y seg)
-              [x-dir y-dir] (new-shift-dirs boundary-min boundary-max new-seg) ; directions in which new shifts needed
+              new-seg (sh-seg sh-x sh-y seg)
+              [x-dir y-dir] (new-sh-dirs bound-min bound-max new-seg) ; directions in which new shifts needed
               [x-dir' y-dir'] (if (or (zero? x-dir) (zero? y-dir)) ; if no more than one boundary exceeded
                                 [x-dir y-dir] ; simple shift
-                                (which-shifts boundary-min boundary-max x-dir y-dir seg)) ; else need to choose which count
-              [new-shift-x new-shift-y] [(+ shift-x (* x-dir' width)) (+ shift-y (* y-dir' width))]]
-          (if (and (== new-shift-x shift-x)
-                   (== new-shift-y shift-y))
+                                (which-shifts bound-min bound-max x-dir y-dir seg)) ; else need to choose which count
+              [new-sh-x new-sh-y] [(+ sh-x (* x-dir' width)) (+ sh-y (* y-dir' width))]]
+          (if (and (== new-sh-x sh-x)
+                   (== new-sh-y sh-y))
             (recur (conj new-segs new-seg)
-                   new-shift-x new-shift-y
+                   new-sh-x new-sh-y
                    (next segs))
             (recur (conj new-segs new-seg nil)
-                   new-shift-x new-shift-y
+                   new-sh-x new-sh-y
                    segs))))))) ; Add same seg after nil, but with new shifts;
 ; and keep doing that until the forward end
                             ; (new-x/y2) no longer goes beyond boundary.
@@ -154,34 +164,34 @@
   doesn't, then another \"duplicate\" will be created that's further shifted,
   and so on, until there is a duplicate that ends within the boundaries.
   \"Duplicate\" segments are separated by nils."
-  [boundary-min boundary-max segments]
-  (let [width (- boundary-max boundary-min)]
-    (loop [new-segs [], shift-x 0.0, shift-y 0.0, segs segments]
+  [bound-min bound-max segments]
+  (let [width (- bound-max bound-min)]
+    (loop [new-segs [], sh-x 0.0, sh-y 0.0, segs segments]
       (if-not segs
         new-segs
         (let [seg (first segs)
-              new-seg (shift-seg shift-x shift-y seg)
+              new-seg (sh-seg sh-x sh-y seg)
               [[new-x1 new-y1] [new-x2 new-y2]] new-seg
-              new-shift-x (cond (< new-x2 boundary-min)  (+ shift-x width)
-                                (> new-x2 boundary-max) (- shift-x width)
-                                :else shift-x)
-              new-shift-y (cond (< new-y2 boundary-min)  (+ shift-y width)
-                                (> new-y2 boundary-max) (- shift-y width)
-                                :else shift-y)]
-          (if (and (== new-shift-x shift-x)
-                   (== new-shift-y shift-y))
+              new-sh-x (cond (< new-x2 bound-min)  (+ sh-x width)
+                                (> new-x2 bound-max) (- sh-x width)
+                                :else sh-x)
+              new-sh-y (cond (< new-y2 bound-min)  (+ sh-y width)
+                                (> new-y2 bound-max) (- sh-y width)
+                                :else sh-y)]
+          (if (and (== new-sh-x sh-x)
+                   (== new-sh-y sh-y))
             (recur (conj new-segs new-seg)
-                   new-shift-x new-shift-y
+                   new-sh-x new-sh-y
                    (next segs))
             (recur (conj new-segs new-seg nil)
-                   new-shift-x new-shift-y
+                   new-sh-x new-sh-y
                    segs))))))) ; Add same seg after nil, but with new shifts;
                                ; and keep doing that until the forward end
                                ; (new-x/y2) no longer goes beyond boundary.
 
 (defn fix-first-seg
   "If first segment begins outside the boundaries, shifts it in."
-  [boundary-min boundary-max points]
+  [bound-min bound-max points]
   ;; TODO
   points)
 
@@ -192,10 +202,10 @@
   so that all parts of the original segment would get displayed
   within the boundaries.  A sequence of points from such segments
   are returned, where \"duplicates\" are by nils."
-  [boundary-min boundary-max points]
+  [bound-min bound-max points]
   (->> (points-to-segs points)
-       ;(fix-first-seg boundary-min boundary-max)
-       (wrap-segs boundary-min boundary-max)
+       ;(fix-first-seg bound-min bound-max)
+       (wrap-segs bound-min bound-max)
        (segs-to-points)))
 
 ;; DEPRECATED
@@ -206,9 +216,9 @@
   so that all parts of the original segment would get displayed
   within the boundaries.  A sequence of points from such segments
   are returned, where \"duplicates\" are by nils."
-  [boundary-min boundary-max points]
+  [bound-min bound-max points]
   (->> (points-to-segs points)
-       ;(fix-first-seg boundary-min boundary-max)
-       (wrap-segs-old boundary-min boundary-max)
+       ;(fix-first-seg bound-min bound-max)
+       (wrap-segs-old bound-min bound-max)
        (segs-to-points)))
 
