@@ -57,14 +57,14 @@
   (partition 2 1 points))
 
 (defn new-shift-increments
-  [boundary-left boundary-right seg]
-  (let [width (- boundary-right boundary-left) ; poss pull this out so not duping calc
+  [boundary-min boundary-max seg]
+  (let [width (- boundary-max boundary-min) ; poss pull this out so not duping calc
         [[x1 y1] [x2 y2]] seg]
-    [(cond (< x2 boundary-left) width
-           (> x2 boundary-right) (- width)
+    [(cond (< x2 boundary-min) width
+           (> x2 boundary-max) (- width)
            :else 0)
-     (cond (< y2 boundary-left) width
-           (> y2 boundary-right) (- width)
+     (cond (< y2 boundary-min) width
+           (> y2 boundary-max) (- width)
            :else 0)]))
 
 
@@ -81,13 +81,13 @@
   doesn't, then another \"duplicate\" will be created that's further shifted,
   and so on, until there is a duplicate that ends within the boundaries.
   \"Duplicate\" segments are separated by nils."
-  [boundary-left boundary-right segments]
+  [boundary-min boundary-max segments]
   (loop [new-segs [], shift-x 0.0, shift-y 0.0, segs segments]
     (if-not segs
       new-segs
       (let [seg (first segs)
             new-seg (shift-seg shift-x shift-y seg)
-            [inc-x inc-y] (new-shift-increments boundary-left boundary-right new-seg)
+            [inc-x inc-y] (new-shift-increments boundary-min boundary-max new-seg)
             new-shift-x (+ shift-x inc-x)
             new-shift-y (+ shift-y inc-y)]
         (if (and (== new-shift-x shift-x)
@@ -111,19 +111,19 @@
   doesn't, then another \"duplicate\" will be created that's further shifted,
   and so on, until there is a duplicate that ends within the boundaries.
   \"Duplicate\" segments are separated by nils."
-  [boundary-left boundary-right segments]
-  (let [width (- boundary-right boundary-left)]
+  [boundary-min boundary-max segments]
+  (let [width (- boundary-max boundary-min)]
     (loop [new-segs [], shift-x 0.0, shift-y 0.0, segs segments]
       (if-not segs
         new-segs
         (let [seg (first segs)
               new-seg (shift-seg shift-x shift-y seg)
               [[new-x1 new-y1] [new-x2 new-y2]] new-seg
-              new-shift-x (cond (< new-x2 boundary-left)  (+ shift-x width)
-                                (> new-x2 boundary-right) (- shift-x width)
+              new-shift-x (cond (< new-x2 boundary-min)  (+ shift-x width)
+                                (> new-x2 boundary-max) (- shift-x width)
                                 :else shift-x)
-              new-shift-y (cond (< new-y2 boundary-left)  (+ shift-y width)
-                                (> new-y2 boundary-right) (- shift-y width)
+              new-shift-y (cond (< new-y2 boundary-min)  (+ shift-y width)
+                                (> new-y2 boundary-max) (- shift-y width)
                                 :else shift-y)]
           (if (and (== new-shift-x shift-x)
                    (== new-shift-y shift-y))
@@ -138,7 +138,7 @@
 
 (defn fix-first-seg
   "If first segment begins outside the boundaries, shifts it in."
-  [boundary-left boundary-right points]
+  [boundary-min boundary-max points]
   ;; TODO
   points)
 
@@ -149,10 +149,10 @@
   so that all parts of the original segment would get displayed
   within the boundaries.  A sequence of points from such segments
   are returned, where \"duplicates\" are by nils."
-  [boundary-left boundary-right points]
+  [boundary-min boundary-max points]
   (->> (points-to-segs points)
-       ;(fix-first-seg boundary-left boundary-right)
-       (wrap-segs boundary-left boundary-right)
+       ;(fix-first-seg boundary-min boundary-max)
+       (wrap-segs boundary-min boundary-max)
        (segs-to-points)))
 
 ;; DEPRECATED
@@ -163,10 +163,10 @@
   so that all parts of the original segment would get displayed
   within the boundaries.  A sequence of points from such segments
   are returned, where \"duplicates\" are by nils."
-  [boundary-left boundary-right points]
+  [boundary-min boundary-max points]
   (->> (points-to-segs points)
-       ;(fix-first-seg boundary-left boundary-right)
-       (wrap-segs-old boundary-left boundary-right)
+       ;(fix-first-seg boundary-min boundary-max)
+       (wrap-segs-old boundary-min boundary-max)
        (segs-to-points)))
 
 
