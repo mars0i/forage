@@ -64,7 +64,7 @@
   (partition 2 1 points))
 
 
-(defn new-sh-dirs
+(defn new-shift-dirs
   "Returns a pair in which each element is -1, 0, or 1.  The first element
   indicates the direction in which the x coordinates of seg must be shifted
   in order for its forward point to be closer to being within
@@ -82,37 +82,10 @@
            :else 0)]))
 
 
-(defn yo-old-which-shifts
-  "The forward point of seg is assumed to exceed boundaries in both 
-  dimensions. Returns a pair of shift values, for x and y, after
-  determining whether one of the forward coordinates exceeds a boundary
-  in dimension D at a location that is outside of a boundary in the other
-  dimension.  That would mean that seg should not be shifted in dimension
-  D, but only in the other dimension.  Shifts in both directions are
-  appropriate only when a line segment goes through a corner of the
-  standard region.  (See doc/exceedingboundaries1.pdf for an illustration
-  in which the upper segment should be shifted down but not left, the
-  lower segment should be shifted left but not down, and the dashed
-  segment should be shifted in both directions.)"
-  [bound-min bound-max x-dir y-dir seg]
-  ; PSEUDOCODE WITH DUMMY VALUES:
-  (let [slope 0 ; calculate slope, i.e. vector direction of seg
-        x-at-y-bound 0 ; use slope, first point of seg to calculate x position on line at relevant y boundary
-        y-at-x-bound 0 ; use slope, first point of seg to calculate y position on line at relevant x boundary
-        x-dir' (if true ; if x position at y boundary is within or equal to x boundaries,
-                 x-dir  ;   we'll return x-dir
-                 0)     ;   otherwise we'll return 0 for the x direction
-        y-dir' (if true ; if y position at y boundary is within or equal to y boundaries,
-                 y-dir  ;   we'll return y-dir
-                 0)]    ;   otherwise we'll return 0 for the y direction
-    [x-dir' y-dir'])) ; note both are nonzero only when line through segment passes through a corner, i.e. is equal to two boundaries
-
-;; FIXME DUMMY VALUES WITH PSEUDOCODE: currently simply returns [x-dir, y-dir] as is.
-;; BE CAREFUL THOUGH ABOUT VERTICAL SLOPES.  MAYBE INVERT AND UNINVERT FIRST.
-(defn which-shifts
+(defn choose-shifts
   "The forward point of seg is assumed to exceed boundaries in both
-  dimensions, so x-dir and y-dir are each either -1 or 1. Returns a pair
-  of shift values, for x and y, after determining whether one of the
+  dimensions, so x-dir and y-dir should each be either -1 or 1. Returns a
+  pair of shift values, for x and y, after determining whether one of the
   forward coordinates exceeds a boundary in dimension D at a location
   that is outside of a boundary in the other dimension.  That would mean
   that seg should not be shifted in dimension D, but only in the other
@@ -123,30 +96,23 @@
   be shifted left but not down, and the dashed segment should be shifted
   in both directions.)"
   [bound-min bound-max x-dir y-dir seg]
-  ; PSEUDOCODE WITH DUMMY VALUES:
-  (let [[[x1 y1] [x2 y2]] seg
-        slope (m/slope-from-coords [x1 y1] [x2 y2]) ; calculate slope, i.e. vector direction of seg
-        x-bound (if (pos? x-dir) bound-min bound-max) ; x-dir = dir of needed shift: pos if seg crossed left bound
-        y-bound (if (pos? y-dir) bound-min bound-max) ; similar for y-dir
-        y-at-x-bound (+ (* slope x-bound) y1) ; TODO IS THIS RIGHT? use slope, first point of seg to calculate y position on line at relevant x boundary
-        x-at-y-bound 0 ; use slope, first point of seg to calculate x position on line at relevant y boundary
-        x-dir' (if true ; if x position at y boundary is within or equal to x boundaries,
-                 x-dir  ;   we'll return x-dir
-                 0)     ;   otherwise we'll return 0 for the x direction
-        y-dir' (if true ; if y position at y boundary is within or equal to y boundaries,
-                 y-dir  ;   we'll return y-dir
-                 0)]    ;   otherwise we'll return 0 for the y direction
-    [x-dir' y-dir'])) ; note both are nonzero only when line through segment passes through a corner, i.e. is equal to two boundaries
-;; POSSIBLE REVISION: If position at y boundary is equal to the x boundary,
-;; we know that the same is true in the opposite dimension.
-;; So no need to test the other dimension: just return [x-dir y-dir].
-;; Maybe start with a test for equality in one dimension:
-;;    if (= x-at-y-bound y-bound) ...
-;; before even bothering to calculate y-at-x-bound.
-;; BUT BE CAREFUL THOUGH ABOUT VERTICAL SLOPES.  MAYBE INVERT AND UNINVERT FIRST.
-;; Hmm can I avoid that problem with the equality test?  Or maybe just take a small
-;; slope to be enough of a test?
-
+  (let [[pt1 pt2] seg
+        [x1 y1] pt1
+        [x2 y2] pt2
+        ;; WHAT ABOUT VERTICAL (or NEAR-VERTICAL) SLOPE?
+        slope (m/slope-from-coords pt1 pt2)]
+    (if (m/pos-inf? slope) ; vertical slope: special case (WHAT ABOUT NEARLY VERTICAL?)
+      (cond (and (neg? y-dir) (> y2 bound-max)) [0 y-dir] ; y-dir points in direction of needed shift,
+            (and (pos? y-dir) (< y2 bound-min)) [0 y-dir] ; i.e. opposite of dir that segment might exceed
+            :else [0 0]) ; should not happen
+      (let [intercept (m/intercept-from-slope slope [x1 y1])
+            x-bound (if (pos? x-dir) bound-min bound-max) ; x-dir = dir of needed shift: pos if seg crossed left bound
+            y-bound (if (pos? y-dir) bound-min bound-max) ; similar for y-dir
+            y-at-x-bound (+ (* slope x-bound) intercept)]
+        ;; THIS PROBABLY ISN'T RIGHT.  DIRECTION OF INEQUALITY SHOULD DEPEND ON x-dir.
+        (cond (< y-at-x-bound x-bound) [x-dir 0]
+              (> y-at-x-bound x-bound) [0 y-dir]
+              (= y-at-x-bound y-bound) [x-dir y-dir]))))) ; rare case
 
 
 ;; FIXME Bug: If a segment exceeds a boundary *only* beyond a boundary in
@@ -169,10 +135,10 @@
       new-segs
       (let [seg (first segs)
               new-seg (shift-seg sh-x sh-y seg)
-              [x-dir y-dir] (new-sh-dirs bound-min bound-max new-seg) ; directions in which new shifts needed
+              [x-dir y-dir] (new-shift-dirs bound-min bound-max new-seg) ; directions in which new shifts needed
               [x-dir' y-dir'] (if (or (zero? x-dir) (zero? y-dir)) ; if no more than one boundary exceeded
                                 [x-dir y-dir] ; simple shift
-                                (which-shifts bound-min bound-max x-dir y-dir seg)) ; else need to choose which count
+                                (choose-shifts bound-min bound-max x-dir y-dir seg)) ; else need to choose which count
               [new-sh-x new-sh-y] [(+ sh-x (* x-dir' width)) (+ sh-y (* y-dir' width))]]
           (if (and (== new-sh-x sh-x)
                    (== new-sh-y sh-y))
@@ -253,3 +219,28 @@
        (wrap-segs-old bound-min bound-max)
        (segs-to-points)))
 
+;; DEPRECATED
+(defn yo-old-choose-shifts
+  "The forward point of seg is assumed to exceed boundaries in both 
+  dimensions. Returns a pair of shift values, for x and y, after
+  determining whether one of the forward coordinates exceeds a boundary
+  in dimension D at a location that is outside of a boundary in the other
+  dimension.  That would mean that seg should not be shifted in dimension
+  D, but only in the other dimension.  Shifts in both directions are
+  appropriate only when a line segment goes through a corner of the
+  standard region.  (See doc/exceedingboundaries1.pdf for an illustration
+  in which the upper segment should be shifted down but not left, the
+  lower segment should be shifted left but not down, and the dashed
+  segment should be shifted in both directions.)"
+  [bound-min bound-max x-dir y-dir seg]
+  ; PSEUDOCODE WITH DUMMY VALUES:
+  (let [slope 0 ; calculate slope, i.e. vector direction of seg
+        x-at-y-bound 0 ; use slope, first point of seg to calculate x position on line at relevant y boundary
+        y-at-x-bound 0 ; use slope, first point of seg to calculate y position on line at relevant x boundary
+        x-dir' (if true ; if x position at y boundary is within or equal to x boundaries,
+                 x-dir  ;   we'll return x-dir
+                 0)     ;   otherwise we'll return 0 for the x direction
+        y-dir' (if true ; if y position at y boundary is within or equal to y boundaries,
+                 y-dir  ;   we'll return y-dir
+                 0)]    ;   otherwise we'll return 0 for the y direction
+    [x-dir' y-dir'])) ; note both are nonzero only when line through segment passes through a corner, i.e. is equal to two boundaries
