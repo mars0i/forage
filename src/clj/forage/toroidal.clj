@@ -101,29 +101,23 @@
   (let [[pt1 pt2] seg
         [x1 y1] pt1
         [x2 y2] pt2
-        x-dir (cond (< x2 bound-min) -1 ; exceeds bound-min
-                    (> x2 bound-max) 1  ; exceeds bound-max
-                    :else 0)            ; exceeds neither
-        y-dir (cond (< y2 bound-min) -1 ; see above
-                    (> y2 bound-max) 1
-                    :else 0)]
+        x-dir (compare x2 bound-min)  ; -1 means seg goes past bound-min,
+        y-dir (compare y2 bound-min)] ; 1 goes past bound-max, 0 means neither
     (if (or (zero? x-dir) (zero? y-dir)) ; if no more than one boundary exceeded
       [(- x-dir) (- y-dir)] ; simple shift or no shift (INCLUDES VERTICAL SLOPE)
+      ;; If we're here, forward point of seg exceeds bounds in both dimensions,
+      ;; but we can work with the x bounds alone. See doc/exceedingboundaries1.pdf.
       (let [slope (m/slope-from-coords pt1 pt2) ; check whether exceeds beyond other bound
             intercept (m/intercept-from-slope slope [x1 y1])
-            x-bound (if (pos? x-dir) bound-min bound-max) ; x-dir = dir of needed shift: pos if seg crossed left bound
-            y-bound (if (pos? y-dir) bound-min bound-max) ; similar for y-dir
-            y-at-x-bound (+ (* slope x-bound) intercept)]
-        ;; THIS PROBABLY ISN'T RIGHT.  DIRECTION OF INEQUALITY SHOULD DEPEND ON x-dir.
-        (cond (< y-at-x-bound x-bound) [x-dir 0]
-              (> y-at-x-bound x-bound) [0 y-dir]
+            compare-fn (if (pos? x-dir) > <)
+            x-bound (if (pos? x-dir) bound-max bound-min)
+            y-bound (if (pos? y-dir) bound-max bound-min)
+            y-at-x-bound (+ (* slope x-bound) intercept)] ; y coord of line at x-bound
+        (cond (compare-fn y-at-x-bound x-bound) [0 (- y-dir)] ;; FIXME I DON'T THINK THIS IS RIGHT
+              (compare-fn x-bound y-at-x-bound) [(- x-dir) 0]
               (= y-at-x-bound y-bound) [x-dir y-dir]))))) ; rare case
 
 
-;; FIXME Bug: If a segment exceeds a boundary *only* beyond a boundary in
-;; the other direction, it's duplicated and shifted in the first direction,
-;; even though it shouldn't be.
-;; FIXME: This prelim version supposed to be equivalent to wrap-segs-old, but it's not.
 (defn wrap-segs
   "Given a sequence of line segments--pairs of pairs of numbers--representing
   a path connected by line segments, returns a transformed sequence in which
