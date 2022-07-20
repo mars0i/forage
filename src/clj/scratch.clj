@@ -6,6 +6,7 @@
    [cljplot.build :as cb]
    [cljplot.core :as cc]
    [cljplot.render :as cr]
+   ;[clojure2d.extra.utils :exclude [triangle-shape] :as c2u]
    ;[forage.mason.foodspot :as mf]
    [forage.walks :as w]
    [forage.toroidal :as t]
@@ -85,7 +86,9 @@
   ([display-boundary data-boundary data filename]
    (let [plotfn (fn [chart] (if filename
                               (cc/save chart filename)
-                              (cc/show chart )))]
+                              (cc/show chart)
+                              ;(c2u/show-image  chart)
+                              ))]
      (-> (cb/series [:grid] [:line (add-cljplot-path-breaks data)
                              {:color [0 0 255 150] ; fourth arg is opacity or brightness or something like that
                               :margins nil}]) 

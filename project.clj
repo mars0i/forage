@@ -19,6 +19,7 @@
 		;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
                  [metasoarous/oz "2.0.0-alpha5"]
                  [cljplot "0.0.2a-SNAPSHOT"]
+                 ;[clojure2d "1.4.4"] ; not required for cljplot, but allows additional choices
                  ;[metasoarous/darkstar "0.1.0"] ; require as applied-science.darkstar (fork of original applied-science/darkstar, which isn't on Clojars)
                  [mason "20"]] ; just for Continuous2D
 

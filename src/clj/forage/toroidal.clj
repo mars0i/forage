@@ -64,21 +64,22 @@
   (partition 2 1 points))
 
 
-(defn new-shift-dirs
+(defn seg-dirs
   "Returns a pair in which each element is -1, 0, or 1.  The first element
-  indicates the direction in which the x coordinates of seg must be shifted
-  in order for its forward point to be closer to being within
-  [bound-min bound-max].  The second element does the same for seg's
-  y coordinates.  (Note that the value returned is not the direction in which
-  a boundary is exceeded; it's the direction in which seg must be
-  \"corrected\" by shifting it back toward the standard region.)"
+  indicates the direction in which seg is going, from first point to second
+  point.  This indicates whether it crosses bound-min (-1), bound-max (1),
+  or neither (0).  Note that the resulting value will be the opposite of the 
+  direction in which the x coordinates of seg must be shifted for the forward
+  point of the shifted segment to be closer to within [bound-min bound-max].
+  The second element returned by this function reports the same relationship
+  for seg's y coordinates."
   [bound-min bound-max seg]
   (let [[_ [x2 y2]] seg]
-    [(cond (< x2 bound-min) 1
-           (> x2 bound-max) -1
+    [(cond (< x2 bound-min) -1
+           (> x2 bound-max) 1
            :else 0)
-     (cond (< y2 bound-min) 1
-           (> y2 bound-max) -1
+     (cond (< y2 bound-min) -1
+           (> y2 bound-max) 1
            :else 0)]))
 
 
@@ -94,25 +95,33 @@
   doc/exceedingboundaries1.pdf for an illustration in which the upper
   segment should be shifted down but not left, the lower segment should
   be shifted left but not down, and the dashed segment should be shifted
-  in both directions.)"
+  in both directions.)  Note that this functon assumes that the first 
+  point in the segment is within [bound-min bound-max] in both dimensions."
   [bound-min bound-max x-dir y-dir seg]
   (let [[pt1 pt2] seg
         [x1 y1] pt1
         [x2 y2] pt2
-        ;; WHAT ABOUT VERTICAL (or NEAR-VERTICAL) SLOPE?
-        slope (m/slope-from-coords pt1 pt2)]
-    (if (m/pos-inf? slope) ; vertical slope: special case (WHAT ABOUT NEARLY VERTICAL?)
-      (cond (and (neg? y-dir) (> y2 bound-max)) [0 y-dir] ; y-dir points in direction of needed shift,
-            (and (pos? y-dir) (< y2 bound-min)) [0 y-dir] ; i.e. opposite of dir that segment might exceed
-            :else [0 0]) ; should not happen
-      (let [intercept (m/intercept-from-slope slope [x1 y1])
-            x-bound (if (pos? x-dir) bound-min bound-max) ; x-dir = dir of needed shift: pos if seg crossed left bound
-            y-bound (if (pos? y-dir) bound-min bound-max) ; similar for y-dir
-            y-at-x-bound (+ (* slope x-bound) intercept)]
-        ;; THIS PROBABLY ISN'T RIGHT.  DIRECTION OF INEQUALITY SHOULD DEPEND ON x-dir.
-        (cond (< y-at-x-bound x-bound) [x-dir 0]
-              (> y-at-x-bound x-bound) [0 y-dir]
-              (= y-at-x-bound y-bound) [x-dir y-dir]))))) ; rare case
+        x-dir (cond (< x2 bound-min) -1 ; exceeds bound-min
+                    (> x2 bound-max) 1  ; exceeds bound-max
+                    :else 0)            ; exceeds neither
+        y-dir (cond (< y2 bound-min) -1
+                    (> y2 bound-max) 1
+                    :else 0)]
+        (if (or (zero? x-dir) (zero? y-dir)) ; if no more than one boundary exceeded
+          [(- x-dir) (- y-dir)] ; simple shift in one direction, or no shift
+          (let [slope (m/slope-from-coords pt1 pt2)] ; check whether exceed beyond other bound
+            (if (m/pos-inf? slope) ; vertical slope: special case (WHAT ABOUT NEARLY VERTICAL?)
+              (cond (and (neg? y-dir) (< y2 bound-max)) [0 y-dir] ; y-dir points in direction of needed shift,
+                    (and (pos? y-dir) (> y2 bound-min)) [0 y-dir] ; i.e. opposite of dir that segment might exceed
+                    :else [0 0])
+              (let [intercept (m/intercept-from-slope slope [x1 y1])
+                    x-bound (if (pos? x-dir) bound-min bound-max) ; x-dir = dir of needed shift: pos if seg crossed left bound
+                    y-bound (if (pos? y-dir) bound-min bound-max) ; similar for y-dir
+                    y-at-x-bound (+ (* slope x-bound) intercept)]
+                ;; THIS PROBABLY ISN'T RIGHT.  DIRECTION OF INEQUALITY SHOULD DEPEND ON x-dir.
+                (cond (< y-at-x-bound x-bound) [x-dir 0]
+                      (> y-at-x-bound x-bound) [0 y-dir]
+                      (= y-at-x-bound y-bound) [x-dir y-dir]))))))) ; rare case
 
 
 ;; FIXME Bug: If a segment exceeds a boundary *only* beyond a boundary in
@@ -135,11 +144,8 @@
       new-segs
       (let [seg (first segs)
               new-seg (shift-seg sh-x sh-y seg)
-              [x-dir y-dir] (new-shift-dirs bound-min bound-max new-seg) ; directions in which new shifts needed
-              [x-dir' y-dir'] (if (or (zero? x-dir) (zero? y-dir)) ; if no more than one boundary exceeded
-                                [x-dir y-dir] ; simple shift
-                                (choose-shifts bound-min bound-max x-dir y-dir seg)) ; else need to choose which count
-              [new-sh-x new-sh-y] [(+ sh-x (* x-dir' width)) (+ sh-y (* y-dir' width))]]
+              [x-sh-dir y-sh-dir] (choose-shifts bound-min bound-max seg)
+              [new-sh-x new-sh-y] [(+ sh-x (* x-sh-dir width)) (+ sh-y (* y-sh-dir width))]]
           (if (and (== new-sh-x sh-x)
                    (== new-sh-y sh-y))
             (recur (conj new-segs new-seg)
@@ -148,8 +154,8 @@
             (recur (conj new-segs new-seg nil)
                    new-sh-x new-sh-y
                    segs))))))) ; Add same seg after nil, but with new shifts;
-; and keep doing that until the forward end
-                            ; (new-x/y2) no longer goes beyond boundary.
+                               ; and keep doing that until the forward end
+                               ; (new-x2, new-y2) no longer goes beyond boundary.
 
 ;; DEPRECATED
 (defn wrap-segs-old
