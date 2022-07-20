@@ -104,24 +104,20 @@
         x-dir (cond (< x2 bound-min) -1 ; exceeds bound-min
                     (> x2 bound-max) 1  ; exceeds bound-max
                     :else 0)            ; exceeds neither
-        y-dir (cond (< y2 bound-min) -1
+        y-dir (cond (< y2 bound-min) -1 ; see above
                     (> y2 bound-max) 1
                     :else 0)]
-        (if (or (zero? x-dir) (zero? y-dir)) ; if no more than one boundary exceeded
-          [(- x-dir) (- y-dir)] ; simple shift in one direction, or no shift
-          (let [slope (m/slope-from-coords pt1 pt2)] ; check whether exceed beyond other bound
-            (if (m/pos-inf? slope) ; vertical slope: special case (WHAT ABOUT NEARLY VERTICAL?)
-              (cond (and (neg? y-dir) (< y2 bound-max)) [0 y-dir] ; y-dir points in direction of needed shift,
-                    (and (pos? y-dir) (> y2 bound-min)) [0 y-dir] ; i.e. opposite of dir that segment might exceed
-                    :else [0 0])
-              (let [intercept (m/intercept-from-slope slope [x1 y1])
-                    x-bound (if (pos? x-dir) bound-min bound-max) ; x-dir = dir of needed shift: pos if seg crossed left bound
-                    y-bound (if (pos? y-dir) bound-min bound-max) ; similar for y-dir
-                    y-at-x-bound (+ (* slope x-bound) intercept)]
-                ;; THIS PROBABLY ISN'T RIGHT.  DIRECTION OF INEQUALITY SHOULD DEPEND ON x-dir.
-                (cond (< y-at-x-bound x-bound) [x-dir 0]
-                      (> y-at-x-bound x-bound) [0 y-dir]
-                      (= y-at-x-bound y-bound) [x-dir y-dir]))))))) ; rare case
+    (if (or (zero? x-dir) (zero? y-dir)) ; if no more than one boundary exceeded
+      [(- x-dir) (- y-dir)] ; simple shift or no shift (INCLUDES VERTICAL SLOPE)
+      (let [slope (m/slope-from-coords pt1 pt2) ; check whether exceeds beyond other bound
+            intercept (m/intercept-from-slope slope [x1 y1])
+            x-bound (if (pos? x-dir) bound-min bound-max) ; x-dir = dir of needed shift: pos if seg crossed left bound
+            y-bound (if (pos? y-dir) bound-min bound-max) ; similar for y-dir
+            y-at-x-bound (+ (* slope x-bound) intercept)]
+        ;; THIS PROBABLY ISN'T RIGHT.  DIRECTION OF INEQUALITY SHOULD DEPEND ON x-dir.
+        (cond (< y-at-x-bound x-bound) [x-dir 0]
+              (> y-at-x-bound x-bound) [0 y-dir]
+              (= y-at-x-bound y-bound) [x-dir y-dir]))))) ; rare case
 
 
 ;; FIXME Bug: If a segment exceeds a boundary *only* beyond a boundary in
