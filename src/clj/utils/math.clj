@@ -55,8 +55,9 @@
     ##Inf ; infinity is what division below would give for the vertical slope
     (/ (- y2 y1) (- x2 x1))))
 
+;; y = mx + b  so  b = y - mx
 (defn intercept-from-slope
-  "Given a slope and a point on a line, return the line's x intercept."
+  "Given a slope and a point on a line, return the line's y intercept."
   [slope [x y]]
   (- y (* slope x)))
 
