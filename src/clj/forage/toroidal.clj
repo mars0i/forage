@@ -18,7 +18,7 @@
 ;;  3. What happened to the last point? (probably partition-all should be used)
 
 
-(defn sh-seg
+(defn shift-seg
   "Given a line segment seg (represented by its 2D endpoints as a pair
   of pairs of numbers), returns a version of the line segment in which
   the x-coordinates have been shifted by the addition of sh-x, and
@@ -63,6 +63,7 @@
   [points]
   (partition 2 1 points))
 
+
 (defn new-sh-dirs
   "Returns a pair in which each element is -1, 0, or 1.  The first element
   indicates the direction in which the x coordinates of seg must be shifted
@@ -79,6 +80,7 @@
      (cond (< y2 bound-min) 1
            (> y2 bound-max) -1
            :else 0)]))
+
 
 (defn yo-old-which-shifts
   "The forward point of seg is assumed to exceed boundaries in both 
@@ -108,24 +110,24 @@
 ;; FIXME DUMMY VALUES WITH PSEUDOCODE: currently simply returns [x-dir, y-dir] as is.
 ;; BE CAREFUL THOUGH ABOUT VERTICAL SLOPES.  MAYBE INVERT AND UNINVERT FIRST.
 (defn which-shifts
-  "The forward point of seg is assumed to exceed boundaries in both 
+  "The forward point of seg is assumed to exceed boundaries in both
   dimensions, so x-dir and y-dir are each either -1 or 1. Returns a pair
-  of shift values, for x and y, after
-  determining whether one of the forward coordinates exceeds a boundary
-  in dimension D at a location that is outside of a boundary in the other
-  dimension.  That would mean that seg should not be shifted in dimension
-  D, but only in the other dimension.  Shifts in both directions are
-  appropriate only when a line segment goes through a corner of the
-  standard region.  (See doc/exceedingboundaries1.pdf for an illustration
-  in which the upper segment should be shifted down but not left, the
-  lower segment should be shifted left but not down, and the dashed
-  segment should be shifted in both directions.)"
+  of shift values, for x and y, after determining whether one of the
+  forward coordinates exceeds a boundary in dimension D at a location
+  that is outside of a boundary in the other dimension.  That would mean
+  that seg should not be shifted in dimension D, but only in the other
+  dimension.  Shifts in both directions are appropriate only when a line
+  segment goes through a corner of the standard region.  (See
+  doc/exceedingboundaries1.pdf for an illustration in which the upper
+  segment should be shifted down but not left, the lower segment should
+  be shifted left but not down, and the dashed segment should be shifted
+  in both directions.)"
   [bound-min bound-max x-dir y-dir seg]
   ; PSEUDOCODE WITH DUMMY VALUES:
   (let [[[x1 y1] [x2 y2]] seg
         slope (m/slope-from-coords [x1 y1] [x2 y2]) ; calculate slope, i.e. vector direction of seg
-        x-bound (if (pos? x-dir) bound-max bound-min) ; x-dir should be either 1 or -1
-        y-bound (if (pos? y-dir) bound-max bound-min) ; ditto for y-dir
+        x-bound (if (pos? x-dir) bound-min bound-max) ; x-dir = dir of needed shift: pos if seg crossed left bound
+        y-bound (if (pos? y-dir) bound-min bound-max) ; similar for y-dir
         y-at-x-bound (+ (* slope x-bound) y1) ; TODO IS THIS RIGHT? use slope, first point of seg to calculate y position on line at relevant x boundary
         x-at-y-bound 0 ; use slope, first point of seg to calculate x position on line at relevant y boundary
         x-dir' (if true ; if x position at y boundary is within or equal to x boundaries,
@@ -166,7 +168,7 @@
     (if-not segs
       new-segs
       (let [seg (first segs)
-              new-seg (sh-seg sh-x sh-y seg)
+              new-seg (shift-seg sh-x sh-y seg)
               [x-dir y-dir] (new-sh-dirs bound-min bound-max new-seg) ; directions in which new shifts needed
               [x-dir' y-dir'] (if (or (zero? x-dir) (zero? y-dir)) ; if no more than one boundary exceeded
                                 [x-dir y-dir] ; simple shift
@@ -199,7 +201,7 @@
       (if-not segs
         new-segs
         (let [seg (first segs)
-              new-seg (sh-seg sh-x sh-y seg)
+              new-seg (shift-seg sh-x sh-y seg)
               [[new-x1 new-y1] [new-x2 new-y2]] new-seg
               new-sh-x (cond (< new-x2 bound-min)  (+ sh-x width)
                                 (> new-x2 bound-max) (- sh-x width)
