@@ -82,8 +82,8 @@
            (> y2 bound-max) 1
            :else 0)]))
 
-
-(defn choose-shifts
+;; Probably wrong
+(defn old-choose-shifts
   "The forward point of seg is assumed to exceed boundaries in both
   dimensions, so x-dir and y-dir should each be either -1 or 1. Returns a
   pair of shift values, for x and y, after determining whether one of the
@@ -116,6 +116,42 @@
         (cond (compare-fn y-at-x-bound x-bound) [0 (- y-dir)] ;; FIXME I DON'T THINK THIS IS RIGHT
               (compare-fn x-bound y-at-x-bound) [(- x-dir) 0]
               (= y-at-x-bound y-bound) [x-dir y-dir]))))) ; rare case
+
+
+(defn choose-shifts
+  "The forward point of seg is assumed to exceed boundaries in both
+  dimensions, so x-dir and y-dir should each be either -1 or 1. Returns a
+  pair of shift values, for x and y, after determining whether one of the
+  forward coordinates exceeds a boundary in dimension D at a location
+  that is outside of a boundary in the other dimension.  That would mean
+  that seg should not be shifted in dimension D, but only in the other
+  dimension.  Shifts in both directions are appropriate only when a line
+  segment goes through a corner of the standard region.  (See
+  doc/exceedingboundaries1.pdf for an illustration in which the upper
+  segment should be shifted down but not left, the lower segment should
+  be shifted left but not down, and the dashed segment should be shifted
+  in both directions.)  Note that this functon assumes that the first 
+  point in the segment is within [bound-min bound-max] in both dimensions."
+  [bound-min bound-max x-dir y-dir seg]
+  (let [[pt1 pt2] seg
+        [x1 y1] pt1
+        [x2 y2] pt2
+        x-dir (compare x2 bound-min)  ; -1 means seg goes past bound-min,
+        y-dir (compare y2 bound-min)] ; 1 goes past bound-max, 0 means neither
+    (if (or (zero? x-dir) (zero? y-dir)) ; if <= one boundary exceeded (includes vertical, horoizontal)
+      [(- x-dir) (- y-dir)] ; simple shift or no shift; at least one of those = 0
+      ;; Now forward point must exceed bounds in both dims (cf. doc/exceedingboundaries1.pdf):
+      (let [slope (m/slope-from-coords pt1 pt2)              ; prepare to calculate line
+            intercept (m/intercept-from-slope slope [x1 y1]) ;  function along seg
+            x-bound (if (pos? x-dir) bound-max bound-min)
+            y-bound (if (pos? y-dir) bound-max bound-min)
+            y-at-x-bound (+ (* slope x-bound) intercept)  ; y coord of line at x-bound
+            x-at-y-bound (/ (- y-bound intercept) slope)] ; x coord of line at y-bound
+        (cond (and (> y-at-x-bound bound-min)         ; if seg goes through x-bound edge
+                   (< y-at-x-bound bound-max)) [(- x-dir) 0] ; then shift horizontally back
+              (and (> x-at-y-bound bound-min)         ; if seg goes through y-bound
+                   (< x-at-y-bound bound-max)) [0 (- y-dir)] ; shift vertically back
+              :else [(- x-dir) (- y-dir)]))))) ; else seg runs through corner, so shift both
 
 
 (defn wrap-segs
