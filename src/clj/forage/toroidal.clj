@@ -18,7 +18,7 @@
 ;;  A: This is not a problem for me, but I have a stub function for a future solution.
 ;;
 ;;  2. What if jump is longer than range size? (apply proper wrapping/modulo)
-;;  A: Most of the below is to address this.
+;;  A: Most of the code below is to address this.
 ;;
 ;;  3. What happened to the last point? (probably partition-all should be used)
 ;;  A: No, this was never a problem.
@@ -77,15 +77,18 @@
         [x2 y2] pt2
         x-dir (compare x2 bound-min)  ; -1 means seg goes past bound-min,
         y-dir (compare y2 bound-min)] ; 1 goes past bound-max, 0 means neither
+    (println "x-dir:" x-dir, "y-dir", y-dir) ; DEBUG
     (if (or (zero? x-dir) (zero? y-dir)) ; if <= one boundary exceeded (includes vertical, horoizontal)
       [(- x-dir) (- y-dir)] ; simple shift or no shift; at least one of those = 0
       ;; Now forward point must exceed bounds in both dims (cf. doc/exceedingboundaries1.pdf):
-      (let [slope (m/slope-from-coords pt1 pt2)              ; prepare to calculate line
-            intercept (m/intercept-from-slope slope [x1 y1]) ;  function along seg
-            x-bound (if (pos? x-dir) bound-max bound-min)
+      (let [x-bound (if (pos? x-dir) bound-max bound-min)
             y-bound (if (pos? y-dir) bound-max bound-min)
+            slope (m/slope-from-coords pt1 pt2)              ; prepare to calculate line
+            intercept (m/intercept-from-slope slope [x1 y1]) ;  function along seg
             y-at-x-bound (+ (* slope x-bound) intercept)  ; y coord of line at x-bound
             x-at-y-bound (/ (- y-bound intercept) slope)] ; x coord of line at y-bound
+        (println "x-bound:" x-bound, "y-bound", y-bound) ; DEBUG
+        (println "slope:" slope, "intercept", intercept, "y-at-x-bound:" y-at-x-bound "x-at-y-bound:" x-at-y-bound) ; DEBUG
         (cond (and (> y-at-x-bound bound-min)         ; if seg goes through x-bound edge
                    (< y-at-x-bound bound-max)) [(- x-dir) 0] ; then shift horizontally back
               (and (> x-at-y-bound bound-min)         ; if seg goes through y-bound
