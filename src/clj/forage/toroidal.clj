@@ -28,6 +28,17 @@
 ;; WRAP-SEGS AND SUPPORT FUNCTIONS
 ;; Called by wrap-path.
 
+
+(defn shift-seg
+  "Given a line segment seg (represented by its 2D endpoints as a pair
+  of pairs of numbers), returns a version of the line segment in which
+  the x-coordinates have been shifted by the addition of sh-x, and
+  the y-coordinates have been shifted by the addition of sh-y."
+  [sh-x sh-y seg]
+  (let [[[x1 y1] [x2 y2]] seg]
+    [[(+ x1 sh-x) (+ y1 sh-y)]
+     [(+ x2 sh-x) (+ y2 sh-y)]]))
+
 ;; ALGORITHM:
 ;; Each segment treated by this function is assumed to have its
 ;; first point within bound-min and bound-max in both the x and y
@@ -77,7 +88,7 @@
         [x2 y2] pt2
         x-dir (compare x2 bound-min)  ; -1 means seg goes past bound-min,
         y-dir (compare y2 bound-min)] ; 1 goes past bound-max, 0 means neither
-    (println "x-dir:" x-dir, "y-dir", y-dir) ; DEBUG
+    (println "x-dir:" x-dir, "y-dir", y-dir)(flush) ; DEBUG
     (if (or (zero? x-dir) (zero? y-dir)) ; if <= one boundary exceeded (includes vertical, horoizontal)
       [(- x-dir) (- y-dir)] ; simple shift or no shift; at least one of those = 0
       ;; Now forward point must exceed bounds in both dims (cf. doc/exceedingboundaries1.pdf):
@@ -87,24 +98,12 @@
             intercept (m/intercept-from-slope slope [x1 y1]) ;  function along seg
             y-at-x-bound (+ (* slope x-bound) intercept)  ; y coord of line at x-bound
             x-at-y-bound (/ (- y-bound intercept) slope)] ; x coord of line at y-bound
-        (println "x-bound:" x-bound, "y-bound", y-bound) ; DEBUG
-        (println "slope:" slope, "intercept", intercept, "y-at-x-bound:" y-at-x-bound "x-at-y-bound:" x-at-y-bound) ; DEBUG
+        (println "x-bound:" x-bound, "y-bound", y-bound "slope:" slope, "intercept", intercept, "y-at-x-bound:" y-at-x-bound "x-at-y-bound:" x-at-y-bound)(flush) ; DEBUG
         (cond (and (> y-at-x-bound bound-min)         ; if seg goes through x-bound edge
                    (< y-at-x-bound bound-max)) [(- x-dir) 0] ; then shift horizontally back
               (and (> x-at-y-bound bound-min)         ; if seg goes through y-bound
                    (< x-at-y-bound bound-max)) [0 (- y-dir)] ; shift vertically back
               :else [(- x-dir) (- y-dir)]))))) ; else seg runs through corner, so shift both
-
-
-(defn shift-seg
-  "Given a line segment seg (represented by its 2D endpoints as a pair
-  of pairs of numbers), returns a version of the line segment in which
-  the x-coordinates have been shifted by the addition of sh-x, and
-  the y-coordinates have been shifted by the addition of sh-y."
-  [sh-x sh-y seg]
-  (let [[[x1 y1] [x2 y2]] seg]
-    [[(+ x1 sh-x) (+ y1 sh-y)]
-     [(+ x2 sh-x) (+ y2 sh-y)]]))
 
 
 (defn wrap-segs
@@ -125,14 +124,17 @@
               new-seg (shift-seg sh-x sh-y seg)
               [x-sh-dir y-sh-dir] (choose-shifts bound-min bound-max seg)
               [new-sh-x new-sh-y] [(+ sh-x (* x-sh-dir width)) (+ sh-y (* y-sh-dir width))]]
+          (println "sh-x:" sh-x, "sh-y:" sh-y, "new-sh-x:" new-sh-x, "new-sh-y:" new-sh-y) ; DEBUG
           (if (and (== new-sh-x sh-x)
                    (== new-sh-y sh-y))
+            (do (print "branch 1 ")(flush) ; DEBUG
             (recur (conj new-segs new-seg)
                    new-sh-x new-sh-y
-                   (next segs))
+                   (next segs)))
+            (do (print "branch 2 ")(flush) ; DEBUG
             (recur (conj new-segs new-seg nil)
                    new-sh-x new-sh-y
-                   segs))))))) ; Add same seg after nil, but with new shifts;
+                   segs)))))))) ; Add same seg after nil, but with new shifts;
                                ; and keep doing that until the forward end
                                ; (new-x2, new-y2) no longer goes beyond boundary.
 

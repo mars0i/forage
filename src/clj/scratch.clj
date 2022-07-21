@@ -156,7 +156,6 @@
   (plot-result 20 4 stops "unmod.jpg")
 
 
-  ;; FIXME
   ;; this:
   (def stops [[0 0] [19 -2] [10 31]])
   ;; produces this:
