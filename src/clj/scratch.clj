@@ -110,15 +110,18 @@
 
 (comment
 
-  (def rng (r/make-well19937))
+  (def seed (r/make-seed))
+  (def seed -6115745044562722228)
+  (def rng (r/make-well19937 seed))
   (def len-dist (r/make-powerlaw rng 1 2))
-  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 300)))
-  (def stops (w/walk-stops [0 0] (w/vecs-upto-len 500 step-vector-pool)))
+  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 3000)))
+  (def stops (w/walk-stops [0 0] (w/vecs-upto-len 900 step-vector-pool)))
   (count stops)
+  ;(def stops (cons [10 15] (rest stops)))
 
-  (plot-result 75 50 stops "unmod.jpg")
-  (plot-result 75 50 (t/wrap-path -50 50 stops) "loose.jpg")
-  (plot-result 50 50 (t/wrap-path -50 50 stops) "tight.jpg")
+  (plot-result 400 50 stops "unmod.jpg")
+  (plot-result 400 50 (t/wrap-path -50 50 stops) "loose.jpg")
+  (plot-result 51 50 (t/wrap-path -50 50 stops) "tight.jpg")
 
 
   (def stops [[0 0] [3 2.5]])
@@ -148,58 +151,18 @@
   (def stops [[0 0] [19 -2] [10 11]])
   (def stops [[0 0] [19 -2] [10 31]])
 
-  (def p4 (t/wrap-path -4 4 stops))
-  (def p4+ (segs-to-points (t/wrap-segs -4 4 (points-to-segs stops))))
-  (add-cljplot-path-breaks (t/wrap-path -4 4 stops))
-  (= p1 (butlast p3))
+  (require '[utils.math :as m])
+  (m/slope-from-coords [-2 -1] [5 -9/2]) ; => -1/2
+  (m/slope-from-coords [-2 -1] [10 -7])  ; => -1/2
+  (m/slope-from-coords [-2 -1] [20 -12])  ; => -1/2
+  (def stops [[-2 -1] [5 -9/2]])
+  (def stops [[-2 -1] [10 -7]])
+  (def stops [[-2 -1] [20 -12]])
 
+  (plot-result 30 4 stops "unmod.jpg")
   (plot-result 4 4  (t/wrap-path -4 4 stops) "tight.jpg")
-  (plot-result 20 4 (t/wrap-path -4 4 stops) "loose.jpg")
-  (plot-result 20 4 stops "unmod.jpg")
+  (plot-result 30 4 (t/wrap-path -4 4 stops) "loose.jpg")
 
-
-  ;; this:
-  (def stops [[0 0] [19 -2] [10 31]])
-  ;; produces this:
-  (def actual [[[0.0 0.0] [19.0 -2.0]]
-               nil
-               [[-8.0 0.0] [11.0 -2.0]]
-               nil
-               [[-16.0 0.0] [3.0 -2.0]]
-               [[3.0 -2.0] [-6.0 11.0]]
-               nil
-               [[11.0 -10.0] [2.0 3.0]]])
-  ;; but it seems like the following is what it should be:
-  (def hacked [[[0.0 0.0] [19.0 -2.0]]
-               nil
-               [[-8.0 0.0] [11.0 -2.0]]
-               nil
-               [[-16.0 0.0] [3.0 -2.0]]
-               [[3.0 -2.0] [-6.0 11.0]]
-               nil
-               [[3.0 -10.0] [-6.0 3.0]]  ; I modified or added rest of lines by hand
-               nil
-               [[11.0 -10.0] [2.0 3.0]]])
-  ;; Note that [[3.0 -10.0] [-6.0 3.0]] is shifted down from the previous version, 
-  ;; but [[11.0 -10.0] [2.0 3.0]] is shifted right from the previous version.
-  ;; This is because the segment that's shifted down because its predecessor went
-  ;; through the upper boundary, then goes out through the left boundary, so it's
-  ;; successor should be shifted right.  [In hackedtight.jpg (see below), you can
-  ;; see that the original line goes out through the top, comes back in at the
-  ;; same x coordinate at the bottom, goes out through the left, and then comes
-  ;; back in at the same y coordinate on the right.]
-
-
-  ;; TODO I think the problem may be that the diagonal-up line that's being modified
-  ;; *does* end outside the left boundary (as well as the upper boundary)
-  ;; but *it doesn't do so within the vertical boundaries*, so the fact that
-  ;; the forward point is beyond the left bound is irrelevant; below the upper
-  ;; bound, it's within the horizontal bounds.
-  ;; This problem doesn't occur with the first seg in the sequence, because
-  ;; though it exeeds the right boundary, it never exceeds vertical boundaries.
-
-  (plot-result 20 4 (t/segs-to-points hacked) "hackedloose.jpg")
-  (plot-result 4  4 (t/segs-to-points hacked) "hackedtight.jpg")
 
   (def square [[-4 -4] [-4 4] [4 4] [4 -4] [-4 -4]])
   (plot-result 5 4 square "square.jpg")
