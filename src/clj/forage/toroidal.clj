@@ -1,7 +1,9 @@
-;; Functions to manipulate search paths as if in a toroidal environment,
-;; i.e. one with periodic boundary conditions.
+;; Functions to manipulate search paths so that they "wrap" as if 
+;; in a toroidal environment, i.e. one with periodic boundary conditions.
 (ns forage.toroidal
   (:require [utils.math :as m]))
+
+
 
 ;; NOTATION:
 ;;  - "seg" means line segment, i.e. a pair of coordinate pairs.
@@ -11,21 +13,14 @@
 ;;  - "dir" means "direction".
 ;;  - sequences of points (coordinate pairs) are called either "points" or "pts".
 
-;; generateme asked (about the original version of this code--nearly the same):
-;; The problems to solve:
-;;
-;;  1. What is start is not inside a range? (figure out starting offset)
-;;  A: This is not a problem for me, but I have a stub function for a future solution.
-;;
-;;  2. What if jump is longer than range size? (apply proper wrapping/modulo)
-;;  A: Most of the code below is to address this.
-;;
-;;  3. What happened to the last point? (probably partition-all should be used)
-;;  A: No, this was never a problem.
+
+;; I recommend that one begin reading at function wrap-segs or wrap-paths,
+;; which is a (yes) wrapper for wrap-segs, converting from point sequences
+;; to segment sequences and back.
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; WRAP-SEGS AND SUPPORT FUNCTIONS
+;; WRAP-SEGS AND ITS SUPPORT FUNCTIONS
 ;; Called by wrap-path.
 
 
@@ -50,7 +45,7 @@
            (> y2 bound-max) 1
            :else 0)]))
 
-;; ALGORITHM:
+;; choose-shifts algorithm
 ;; Each segment treated by this function is assumed to have its
 ;; first point within bound-min and bound-max in both the x and y
 ;; dimensions.  Then the segment either:
@@ -125,6 +120,11 @@
      [(+ x2 sh-x) (+ y2 sh-y)]]))
 
 
+;; This algorithm and the one in seg-dirs (called by choose-shifts) above
+;; were derived from generateme's correct-path function at 
+;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
+;; or
+;; https://github.com/generateme/cljplot/blob/f272932c0228273f293a834e6c19c50d0374d3da/sketches/examples.clj#L572
 (defn wrap-segs
   "Given a sequence of line segments--pairs of pairs of numbers--representing
   a path connected by line segments, returns a transformed sequence in which
@@ -135,35 +135,37 @@
   and so on, until there is a duplicate that ends within the boundaries.
   \"Duplicate\" segments are separated by nils."
   [bound-min bound-max segments]
-  (loop [new-segs [], sh-x 0.0, sh-y 0.0, segs segments]
-    (if-not segs
-      new-segs
-      (let [new-seg (shift-seg sh-x sh-y (first segs))
-            [x-sh-dir y-sh-dir] (choose-shifts bound-min bound-max new-seg)
-            width (- bound-max bound-min)
-            [new-sh-x new-sh-y] [(+ sh-x (* x-sh-dir width))
-                                 (+ sh-y (* y-sh-dir width))]]
-        (if (and (== new-sh-x sh-x)
-                 (== new-sh-y sh-y))
-          (recur (conj new-segs new-seg)
-                 new-sh-x new-sh-y
-                 (next segs))
-          (recur (conj new-segs new-seg nil)
-                 new-sh-x new-sh-y
-                 segs)))))) ; Add same seg after nil, but with new shifts;
-                            ; keep doing that until the forward end
-                            ; (new-x2, new-y2) no longer goes beyond boundary.
+  (let [width (- bound-max bound-min)]
+    (loop [new-segs [], sh-x 0.0, sh-y 0.0, segs segments]
+      (if-not segs
+        new-segs
+        (let [new-seg (shift-seg sh-x sh-y (first segs))
+              [x-sh-dir y-sh-dir] (choose-shifts bound-min bound-max new-seg)
+              [new-sh-x new-sh-y] [(+ sh-x (* x-sh-dir width))
+                                   (+ sh-y (* y-sh-dir width))]]
+          (if (and (== new-sh-x sh-x)
+                   (== new-sh-y sh-y))
+            (recur (conj new-segs new-seg)
+                   new-sh-x new-sh-y
+                   (next segs))
+            (recur (conj new-segs new-seg nil)
+                   new-sh-x new-sh-y
+                   segs))))))) ; This will result in the next iteration adding 
+                               ; the same seg after nil, but with new shifts.
+                               ; We'll keep doing that until the forward end
+                               ; (new-x2, new-y2) no longer goes beyond boundary.
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; WRAP-PATH AND SUPPORT FUNCTIONS
+;; WRAP-PATH AND ITS SUPPORT FUNCTIONS (except for wrap-segs, which is above)
 ;;
 ;; Takes a sequence of points, turns it into a sequence of segments,
 ;; passes that to wrap-segs, and takes the output and turns it into a
 ;; sequence of points with delimiters between shifted sequences.
 
-;; The algorithm is:
+
+;; segs-to-points algorithm is:
 ;; Always take only the second point of each segment (which is normally the
 ;; first point of the next segment), except:
 ;; At the beginning, we need to add on the first point in the first segment,
