@@ -136,23 +136,23 @@
   \"Duplicate\" segments are separated by nils."
   [bound-min bound-max segments]
   (loop [new-segs [], sh-x 0.0, sh-y 0.0, segs segments]
-  (let [width (- bound-max bound-min)]
     (if-not segs
       new-segs
-      (let [seg (first segs)
-              new-seg (shift-seg sh-x sh-y seg)
-              [x-sh-dir y-sh-dir] (choose-shifts bound-min bound-max new-seg)
-              [new-sh-x new-sh-y] [(+ sh-x (* x-sh-dir width)) (+ sh-y (* y-sh-dir width))]]
-          (if (and (== new-sh-x sh-x)
-                   (== new-sh-y sh-y))
-            (recur (conj new-segs new-seg)
-                   new-sh-x new-sh-y
-                   (next segs))
-            (recur (conj new-segs new-seg nil)
-                   new-sh-x new-sh-y
-                   segs))))))) ; Add same seg after nil, but with new shifts;
-                               ; and keep doing that until the forward end
-                               ; (new-x2, new-y2) no longer goes beyond boundary.
+      (let [new-seg (shift-seg sh-x sh-y (first segs))
+            [x-sh-dir y-sh-dir] (choose-shifts bound-min bound-max new-seg)
+            width (- bound-max bound-min)
+            [new-sh-x new-sh-y] [(+ sh-x (* x-sh-dir width))
+                                 (+ sh-y (* y-sh-dir width))]]
+        (if (and (== new-sh-x sh-x)
+                 (== new-sh-y sh-y))
+          (recur (conj new-segs new-seg)
+                 new-sh-x new-sh-y
+                 (next segs))
+          (recur (conj new-segs new-seg nil)
+                 new-sh-x new-sh-y
+                 segs)))))) ; Add same seg after nil, but with new shifts;
+                            ; keep doing that until the forward end
+                            ; (new-x2, new-y2) no longer goes beyond boundary.
 
 
 
