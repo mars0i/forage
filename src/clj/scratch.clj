@@ -112,12 +112,14 @@
 
   (def rng (r/make-well19937))
   (def len-dist (r/make-powerlaw rng 1 2))
-  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 500)))
-  (def stops (w/walk-stops [0 0] 
-                           (w/vecs-upto-len 1000 step-vector-pool)))
+  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 300)))
+  (def stops (w/walk-stops [0 0] (w/vecs-upto-len 500 step-vector-pool)))
   (count stops)
 
-  (= (t/wrap-path -4 4 stops) (t/wrap-path-old -4 4 stops))
+  (plot-result 75 50 stops "unmod.jpg")
+  (plot-result 75 50 (t/wrap-path -50 50 stops) "loose.jpg")
+  (plot-result 50 50 (t/wrap-path -50 50 stops) "tight.jpg")
+
 
   (def stops [[0 0] [3 2.5]])
   (def stops [[0 0] [7 6.5]])
