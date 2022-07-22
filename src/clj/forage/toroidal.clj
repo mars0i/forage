@@ -24,14 +24,14 @@
 ;;  A: No, this was never a problem.
 
 
-
-(defn noop [& _] nil) ; for debugging--can replace a print statement
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WRAP-SEGS AND SUPPORT FUNCTIONS
 ;; Called by wrap-path.
 
 
+;; Note: the two parts of this function can't be replaced by 
+;; clojure.core/compare in any simple way, because the comparison
+;; should return 0 for any values in the range [bound-min bound-max].
 (defn seg-dirs
   "Returns a pair in which each element is -1, 0, or 1.  The first element
   indicates the direction in which seg is going, from first point to second
@@ -43,7 +43,6 @@
   for seg's y coordinates."
   [bound-min bound-max seg]
   (let [[_ [x2 y2]] seg]
-    (println "seg-dirs:" "x2,y2:" x2 y2)
     [(cond (< x2 bound-min) -1
            (> x2 bound-max) 1
            :else 0)
@@ -95,15 +94,12 @@
   in both directions.)  Note that this functon assumes that the first 
   point in the segment is within [bound-min bound-max] in both dimensions."
   [bound-min bound-max seg]
-  (println "c-s:" seg)
   (let [[pt1 pt2] seg
         [x1 y1] pt1
         [x2 y2] pt2
         [x-dir y-dir] (seg-dirs bound-min bound-max seg)]
-    (println "c-s:" "x-dir:" x-dir, "y-dir", y-dir)(flush) ; DEBUG
     (if (or (zero? x-dir) (zero? y-dir)) ; if <= one boundary exceeded (includes vertical, horoizontal)
-      (do (println "c-s branch 1")(flush)
-      [(- x-dir) (- y-dir)]) ; simple shift or no shift; at least one of those = 0
+      [(- x-dir) (- y-dir)] ; simple shift or no shift; at least one of those = 0
       ;; Now forward point must exceed bounds in both dims (cf. doc/exceedingboundaries1.pdf):
       (let [x-bound (if (pos? x-dir) bound-max bound-min)
             y-bound (if (pos? y-dir) bound-max bound-min)
@@ -111,7 +107,6 @@
             intercept (m/intercept-from-slope slope [x1 y1]) ;  function along seg
             y-at-x-bound (+ (* slope x-bound) intercept)  ; y coord of line at x-bound
             x-at-y-bound (/ (- y-bound intercept) slope)] ; x coord of line at y-bound
-        (println "c-s:" "x-bound:" x-bound, "y-bound", y-bound "slope:" slope, "intercept", intercept, "y-at-x-bound:" y-at-x-bound "x-at-y-bound:" x-at-y-bound)(flush) ; DEBUG
         (cond (and (> y-at-x-bound bound-min)         ; if seg goes through x-bound edge
                    (< y-at-x-bound bound-max)) [(- x-dir) 0] ; then shift horizontally back
               (and (> x-at-y-bound bound-min)         ; if seg goes through y-bound
@@ -141,7 +136,6 @@
   \"Duplicate\" segments are separated by nils."
   [bound-min bound-max segments]
   (loop [new-segs [], sh-x 0.0, sh-y 0.0, segs segments]
-    (println)(flush)
   (let [width (- bound-max bound-min)]
     (if-not segs
       new-segs
@@ -149,17 +143,14 @@
               new-seg (shift-seg sh-x sh-y seg)
               [x-sh-dir y-sh-dir] (choose-shifts bound-min bound-max new-seg)
               [new-sh-x new-sh-y] [(+ sh-x (* x-sh-dir width)) (+ sh-y (* y-sh-dir width))]]
-          (println "sh-x:" sh-x, "sh-y:" sh-y, "new-sh-x:" new-sh-x, "new-sh-y:" new-sh-y) ; DEBUG
           (if (and (== new-sh-x sh-x)
                    (== new-sh-y sh-y))
-            (do (println "branch 1 ")(flush) ; DEBUG
             (recur (conj new-segs new-seg)
                    new-sh-x new-sh-y
-                   (next segs)))
-            (do (println "branch 2 ")(flush) ; DEBUG
+                   (next segs))
             (recur (conj new-segs new-seg nil)
                    new-sh-x new-sh-y
-                   segs)))))))) ; Add same seg after nil, but with new shifts;
+                   segs))))))) ; Add same seg after nil, but with new shifts;
                                ; and keep doing that until the forward end
                                ; (new-x2, new-y2) no longer goes beyond boundary.
 
