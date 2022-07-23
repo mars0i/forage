@@ -5,7 +5,9 @@
 
 
 ;; SEE doc/ToroidalAlgorithms.md for explanation of the less obvious
-;; algorithms below.
+;; algorithms below.  It might also be helpful to look at
+;; doc/exceedingboundaries1.pdf, although that only represents certain cases.
+
 
 ;; VOCABULARY AND NOTATION:
 ;;
