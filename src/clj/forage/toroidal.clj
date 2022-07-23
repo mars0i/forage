@@ -180,6 +180,10 @@
   [points]
   (partition 2 1 points))
 
+;; TODO Maybe a trick would be to add a fake segment at the beginning
+;; that goes from [0,0] to the start point of the real first segment.
+;; Then remove that fake segment, and any other segments that got
+;; created for it, at the end.
 (defn fix-first-seg
   "If first segment begins outside the boundaries, shifts it in."
   [bound-min bound-max points]
