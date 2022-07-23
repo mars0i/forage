@@ -12,11 +12,12 @@
 ;;  - "sh" means "shifted".
 ;;  - "dir" means "direction".
 ;;  - sequences of points (coordinate pairs) are called either "points" or "pts".
+;;  - "wrap" as in "wrap around": cause a line that leaves the main region on one
+;;    side to come back in on the other side.
 
 
-;; I recommend that one begin reading at function wrap-segs or wrap-paths,
-;; which is a (yes) wrapper for wrap-segs, converting from point sequences
-;; to segment sequences and back.
+;; I recommend that one begin reading at either wrap-segs or wrap-paths.
+;; The second is a wrapper (different sense) for the first.
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
