@@ -4,9 +4,9 @@
   (:require [utils.math :as m]))
 
 
-;; SEE doc/ToroidalAlgorithms.md for explanation of the less obvious
+;; SEE doc/ToroidalAlgorithms.md for explanation of less obvious
 ;; algorithms below.  It might also be helpful to look at
-;; doc/exceedingboundaries1.pdf, although that only represents certain cases.
+;; doc/exceedingboundaries1.pdf, although that only illustrates certain cases.
 
 
 ;; VOCABULARY AND NOTATION:
@@ -41,14 +41,19 @@
 ;; clojure.core/compare in any simple way, because the comparison
 ;; should return 0 for any values in the range [bound-min bound-max].
 (defn seg-dirs
-  "Returns a pair in which each element is -1, 0, or 1.  The first element
-  indicates the direction in which seg is going, from first point to second
-  point.  This indicates whether it crosses bound-min (-1), bound-max (1),
-  or neither (0).  Note that the resulting value will be the opposite of the 
-  direction in which the x coordinates of seg must be shifted for the forward
-  point of the shifted segment to be closer to within [bound-min bound-max].
-  The second element returned by this function reports the same relationship
-  for seg's y coordinates."
+  "Returns a pair in which each element is -1, 0, or 1.  The first
+  element concerns the horizontal dimension; the second concerns the
+  vertical dimension.  The value of the element for a given dimension
+  indicates whether, in going from inside the region to the segment's
+  end point, the segment crosses bound-min (-1), bound-max (1), or
+  neither (0).  For example, the first element of the return value
+  specifies whether the segment crosses the left (-1) boundary of the
+  region, the right boundary (1), or ends within the region (0).  Note
+  that whether the *start point* is in our out of the standard region
+  makes no difference to this function.  (The resulting value will be
+  the opposite of the direction in which the x coordinates of seg must
+  be shifted for the forward point of the shifted segment to be closer
+  to within [bound-min bound-max].)"
   [bound-min bound-max seg]
   (let [[_ [x2 y2]] seg]
     [(cond (< x2 bound-min) -1
@@ -61,18 +66,17 @@
 
 ;; SEE doc/ToroidalAlgorithms.md for explanation
 (defn choose-shifts
-  "Returns a
-  pair of shift values, for x and y, after determining whether one of the
-  forward coordinates exceeds a boundary in dimension D at a location
-  that is outside of a boundary in the other dimension.  That would mean
-  that seg should not be shifted in dimension D, but only in the other
-  dimension.  Shifts in both directions are appropriate only when a line
-  segment goes through a corner of the standard region.  (See
-  doc/exceedingboundaries1.pdf for an illustration in which the upper
-  segment should be shifted down but not left, the lower segment should
-  be shifted left but not down, and the dashed segment should be shifted
-  in both directions.)  Note that this functon assumes that the first 
-  point in the segment is within [bound-min bound-max] in both dimensions."
+  "Returns a pair in which each element is -1, 0, or 1, If no boundary
+  is exceeded, no shift is needed, so [0 0] is returned.  If only one
+  boundary is exceeded, -1 is returned if it's bound-min, or 1 if it's
+  bound-max; the other element of the pair will be zero.  If both
+  boundaries are exceeded, and the line segment went exactly through a
+  corner of the region, both elements of the returned pair will be
+  nonzero.  Otherwise, the end point of the segment exceeds one boundary
+  at a location that is beyond both boundaries in the other dimension.
+  Only one element of the returned pair will be nonzero: the one
+  corresponding to the boundary that was crossed between the boundaries
+  in the other dimension.  See doc/exceedingboundaries1.pdf."
   [bound-min bound-max seg]
   (let [[pt1 pt2] seg
         [x1 y1] pt1
@@ -112,14 +116,15 @@
 ;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
 ;; https://github.com/generateme/cljplot/blob/f272932c0228273f293a834e6c19c50d0374d3da/sketches/examples.clj#L572
 (defn wrap-segs
-  "Given a sequence of line segments--pairs of pairs of numbers--representing
-  a path connected by line segments, returns a transformed sequence in which
-  segments whose second point that would go beyond the boundaries are
-  \"duplicated\" with a new segment that is the previous version shifted so
-  that, if it's short enough, the duplicate ends within boundaries.  If it
-  doesn't, then another \"duplicate\" will be created that's further shifted,
-  and so on, until there is a duplicate that ends within the boundaries.
-  \"Duplicate\" segments are separated by nils."
+  "Given a sequence of line segments (pairs of pairs of numbers)
+  representing a path connected by line segments, returns a transformed
+  sequence in which segments whose second point that would go beyond the
+  boundaries are \"duplicated\" with a new segment that is like the
+  previous version, but shifted so that, if it's short enough, the
+  duplicate ends within boundaries.  If it doesn't end within the
+  boundaries, another \"duplicate\" will be created that's further
+  shifted, and so on, until there is a duplicate that ends within the
+  boundaries.  \"Duplicate\" segments are separated by nils."
   [bound-min bound-max segments]
   (let [width (- bound-max bound-min)]
     (loop [new-segs [], sh-x 0.0, sh-y 0.0, segs segments]
