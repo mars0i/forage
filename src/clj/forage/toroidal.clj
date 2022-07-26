@@ -103,21 +103,23 @@
      [(+ x2 sh-x) (+ y2 sh-y)]]))
 
 
-(let [xmin 10 xmax 15 width 5 v -3 v' (- xmax v) iters (quot v' width)] [v v' iters])
-(let [xmin 10 xmax 15 width 5 v 23 v' (- 23 xmin) iters (quot v' width)] iters)
-
-
-(defn first-seg-shifts
-  "Returns a pair of values that would shift a segment so that its start
-  point falls within the standard region."
-  [bound-min bound-max seg]
+;; FIXME NOT RIGHT
+(defn first-seg-shift
+  [bound-min bound-max v]
   (let [width (- bound-max bound-min)
-        [[x1 y1] _] seg
-        x-dir (outside-dir bound-min bound-max x1)
-        y-dir (outside-dir bound-min bound-max y1)]
-
-
+        dir (outside-dir bound-min bound-max v)
+        v' (- v bound-min) ; treat bound-min as zero
+        q (quot v' width)
+        r (rem v' width)
+        ]
+    (cond (pos? dir) (- r v)
+          (neg? dir) (- v r)
+          :else 0)
     ))
+
+(comment
+  (let [v -2, fss (first-seg-shift 5 10 v)] [v fss (+ v fss)])
+)
 
 
 
