@@ -27,6 +27,12 @@
 ;; In this version of this code, the standard region must be a square that
 ;; lies between bound-min and bound-max in each of the two dimensions.
 
+;; Many of the functions operate on segments, i.e. pairs of pairs of coordinates,
+;; which have to be repeatedly decomposed and reconstructed.   Although this is 
+;; slightly inefficient, it made the code easier to understand, I felt.  If the
+;; inefficiency really matters (seems unlikely), the code could be rewrite in terms
+;; of points or raw coordinates.
+
 
 ;; I recommend that one begin reading at either wrap-segs or wrap-paths.
 ;; The second is a wrapper (different sense) for the first.
@@ -37,31 +43,18 @@
 ;; Called by wrap-path.
 
 
-;; Note: the two parts of this function can't be replaced by 
-;; clojure.core/compare in any simple way, because the comparison
-;; should return 0 for any values in the range [bound-min bound-max].
-(defn seg-dirs
-  "Returns a pair in which each element is -1, 0, or 1.  The first
-  element concerns the horizontal dimension; the second concerns the
-  vertical dimension.  The value of the element for a given dimension
-  indicates whether, in going from inside the region to the segment's
-  end point, the segment crosses bound-min (-1), bound-max (1), or
-  neither (0).  For example, the first element of the return value
-  specifies whether the segment crosses the left (-1) boundary of the
-  region, the right boundary (1), or ends within the region (0).  Note
-  that whether the *start point* is in our out of the standard region
-  makes no difference to this function.  (The resulting value will be
-  the opposite of the direction in which the x coordinates of seg must
-  be shifted for the forward point of the shifted segment to be closer
-  to within [bound-min bound-max].)"
-  [bound-min bound-max seg]
-  (let [[_ [x2 y2]] seg]
-    [(cond (< x2 bound-min) -1
-           (> x2 bound-max) 1
-           :else 0)
-     (cond (< y2 bound-min) -1
-           (> y2 bound-max) 1
-           :else 0)]))
+;; Note this can't be replaced by clojure.core/compare in any simple
+;; way, because the comparison should return 0 for any values in the range
+;; [bound-min bound-max].
+(defn outside-dir
+  "Returns -1, 0, or 1, indicating whether v strictly below bound-min (-1),
+  strictly above bound-max (1), or between them, inclusive (0).  For example,
+  if v is a coordinate in the end point of a segment, the value indicates
+  which boundary, if any, the segment crosses in the given dimension."
+  [bound-min bound-max v]
+  (cond (< v bound-min) -1
+         (> v bound-max) 1
+         :else 0))
 
 
 ;; SEE doc/ToroidalAlgorithms.md for explanation
@@ -81,7 +74,8 @@
   (let [[pt1 pt2] seg
         [x1 y1] pt1
         [x2 y2] pt2
-        [x-dir y-dir] (seg-dirs bound-min bound-max seg)]
+        x-dir (outside-dir bound-min bound-max x2)
+        y-dir (outside-dir bound-min bound-max y2)]
     (if (or (zero? x-dir) (zero? y-dir)) ; if <= one boundary exceeded (includes vertical, horoizontal)
       [(- x-dir) (- y-dir)] ; simple shift or no shift; at least one of those = 0
       ;; Now forward point must exceed bounds in both dims (cf. doc/exceedingboundaries1.pdf):
@@ -109,9 +103,27 @@
      [(+ x2 sh-x) (+ y2 sh-y)]]))
 
 
+(let [xmin 10 xmax 15 width 5 v -3 v' (- xmax v) iters (quot v' width)] [v v' iters])
+(let [xmin 10 xmax 15 width 5 v 23 v' (- 23 xmin) iters (quot v' width)] iters)
+
+
+(defn first-seg-shifts
+  "Returns a pair of values that would shift a segment so that its start
+  point falls within the standard region."
+  [bound-min bound-max seg]
+  (let [width (- bound-max bound-min)
+        [[x1 y1] _] seg
+        x-dir (outside-dir bound-min bound-max x1)
+        y-dir (outside-dir bound-min bound-max y1)]
+
+
+    ))
+
+
+
 ;; SEE doc/ToroidalAlgorithms.md for explanation
 ;;
-;; This algorithm and the one in seg-dirs are derived from generateme's
+;; This algorithm and the one in outside-dirs are derived from generateme's
 ;; correct-path function at 
 ;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
 ;; https://github.com/generateme/cljplot/blob/f272932c0228273f293a834e6c19c50d0374d3da/sketches/examples.clj#L572
@@ -185,16 +197,6 @@
   [points]
   (partition 2 1 points))
 
-;; TODO Maybe a trick would be to add a fake segment at the beginning
-;; that goes from [0,0] to the start point of the real first segment.
-;; Then remove that fake segment, and any other segments that got
-;; created for it, at the end.
-(defn fix-first-seg
-  "If first segment begins outside the boundaries, shifts it in."
-  [bound-min bound-max points]
-  ;; TODO
-  points)
-
 (defn wrap-path
   "Given a sequence of points representing a path connected by line
   segments, returns a transformed path in which segments that would go
@@ -204,6 +206,48 @@
   are returned, where \"duplicates\" are by nils."
   [bound-min bound-max points]
   (->> (points-to-segs points)
-       ;(fix-first-seg bound-min bound-max)
        (wrap-segs bound-min bound-max)
        (segs-to-points)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; OBSOLETE VERSIONS:
+
+(defn old-outside-dirs
+  "Returns a pair in which each element is -1, 0, or 1.  The first
+  element concerns the horizontal dimension; the second concerns the
+  vertical dimension.  The value of the element for a given dimension
+  indicates whether, in going from inside the region to the segment's
+  end point, the segment crosses bound-min (-1), bound-max (1), or
+  neither (0).  For example, the first element of the return value
+  specifies whether the segment crosses the left (-1) boundary of the
+  region, the right boundary (1), or ends within the region (0).  Note
+  that whether the *start point* is in our out of the standard region
+  makes no difference to this function.  (The resulting value will be
+  the opposite of the direction in which the x coordinates of seg must
+  be shifted for the forward point of the shifted segment to be closer
+  to within [bound-min bound-max].)"
+  [bound-min bound-max seg]
+  (let [[_ [x2 y2]] seg]
+    [(cond (< x2 bound-min) -1
+           (> x2 bound-max) 1
+           :else 0)
+     (cond (< y2 bound-min) -1
+           (> y2 bound-max) 1
+           :else 0)]))
+
+(defn new-outside-dirs
+  "Returns a pair in which each element is -1, 0, or 1.  The first
+  element concerns the horizontal dimension; the second concerns the
+  vertical dimension.  The value of the element for a given dimension
+  indicates whether the element is strictly below bound-min (-1),
+  strictly above bound-max (1), or between them, inclusive (0).  For
+  example, if [x y] is the end point of a segment, the returned pair
+  indicates which boundaries the segment crosses, and in which directions."
+  [bound-min bound-max [x y]]
+  [(cond (< x bound-min) -1
+         (> x bound-max) 1
+         :else 0)
+   (cond (< y bound-min) -1
+         (> y bound-max) 1
+         :else 0)])
