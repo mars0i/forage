@@ -53,8 +53,41 @@
   which boundary, if any, the segment crosses in the given dimension."
   [bound-min bound-max v]
   (cond (< v bound-min) -1
-        (> v bound-max) 1
+        (> v bound-max)  1
         :else 0))
+
+
+;; TODO QUESTION:
+;; Note there's a sort of assymetry: 
+;; Does not return nonzero shift if coord is equal to either boundary (a consequence 
+;; of the def of outside-dir).
+;; So the first set of outside shifts is smaller than the rest.
+;; Is that right?  Should I be using non-strict inequality somewhere?
+;; Note that the two boundaries are kind of logically equal.  Should one
+;; be favored over the other?
+(defn full-shift
+  [bound-min bound-max coord]
+  (let [dir (outside-dir bound-min bound-max coord)]
+    (if (zero? dir)
+      (do (println coord dir 0 coord) ; DEBUG
+      0)
+      (let [width (- bound-max bound-min)
+            bound (if (pos? dir) bound-max bound-min)
+            dist-from-region (if (pos? dir)  ; n-widths will be < 0 if dividend is
+                               (- coord bound-max) ; how far outside bound is coord?
+                               (- bound-min coord)) ; ditto
+            n-widths (quot dist-from-region width)
+            shift-dir (- dir)]
+        (println coord dir dist-from-region n-widths shift-dir
+                 (* shift-dir (inc n-widths) width) 
+                 (+ coord (* shift-dir (inc n-widths) width))) ; DEBUG
+        (* shift-dir (inc n-widths) width)))))
+
+(comment
+  (map (partial full-shift 3 7) (range -9 20 0.5))
+  (map (partial full-shift -7 -3) (range -20 10 0.5))
+  (map (partial full-shift -2 2) (range -10 11 0.5))
+)
 
 
 ;; SEE doc/ToroidalAlgorithms.md for explanation
@@ -101,73 +134,6 @@
   (let [[[x1 y1] [x2 y2]] seg]
     [[(+ x1 sh-x) (+ y1 sh-y)]
      [(+ x2 sh-x) (+ y2 sh-y)]]))
-
-
-;; FIXME NOT RIGHT
-(defn bad-first-seg-shift
-  [bound-min bound-max v]
-  (let [width (- bound-max bound-min)
-        dir (outside-dir bound-min bound-max v)
-        v' (- v bound-min) ; treat bound-min as zero
-        q (quot v' width)
-        r (rem v' width)
-        ]
-    (cond (pos? dir) (- r v)
-          (neg? dir) (- v r)
-          :else 0)
-    ))
-
-(defn maybe-first-seg-shift
-  [bound-min bound-max v]
-  (let [width (- bound-max bound-min)
-        dist-from-min (abs (- v bound-min)) 
-        shift (rem dist-from-min width)]
-    (cond (< v bound-min) (- bound-max shift)
-          (> v bound-max) (+ bound-min shift)
-          :else v)))
-
-(defn ok-shift-coord-in
-  [bound-min bound-max coord]
-  (let [dir (outside-dir bound-min bound-max coord)]
-    (if (zero? dir)
-      coord
-      (let [width (- bound-max bound-min)
-            bound (if (neg? dir) bound-min bound-max)
-            dist-from-bound (abs (- coord bound)) 
-            shift (rem dist-from-bound width)]
-        (if (neg? dir)
-          shift
-          (- shift))))))
-
-
-(defn shift-coord-in
-  [bound-min bound-max coord]
-  (let [dir (outside-dir bound-min bound-max coord)]
-    (if (zero? dir)
-      coord
-      (let [width (- bound-max bound-min)
-            bound (if (neg? dir) bound-min bound-max)
-            shift (rem (if (neg? dir)
-                         (- bound-min coord)
-                         (- coord bound-max))
-                       width)]
-        (* dir shift)))))
-
-(comment
-  (let [v -21 fss (shift-coord-in -3 10 v)] fss)
-
-  (mod 21 13)
-
-  (let [x -4 mn
-        5 mx
-        11 w (- mx mn)
-        sh (rem (Math/abs (- x mn)) w)]
-    (cond (< x mn) (- mx sh)
-          (> x mx) (+ mn sh)
-          :else x))
-
-)
-
 
 
 ;; SEE doc/ToroidalAlgorithms.md for explanation
@@ -300,3 +266,54 @@
    (cond (< y bound-min) -1
          (> y bound-max) 1
          :else 0)])
+
+
+;; FIXME NOT RIGHT
+(defn bad-first-seg-shift
+  [bound-min bound-max v]
+  (let [width (- bound-max bound-min)
+        dir (outside-dir bound-min bound-max v)
+        v' (- v bound-min) ; treat bound-min as zero
+        q (quot v' width)
+        r (rem v' width)
+        ]
+    (cond (pos? dir) (- r v)
+          (neg? dir) (- v r)
+          :else 0)
+    ))
+
+(defn maybe-first-seg-shift
+  [bound-min bound-max v]
+  (let [width (- bound-max bound-min)
+        dist-from-min (abs (- v bound-min)) 
+        shift (rem dist-from-min width)]
+    (cond (< v bound-min) (- bound-max shift)
+          (> v bound-max) (+ bound-min shift)
+          :else v)))
+
+(defn ok-shift-coord-in
+  [bound-min bound-max coord]
+  (let [dir (outside-dir bound-min bound-max coord)]
+    (if (zero? dir)
+      coord
+      (let [width (- bound-max bound-min)
+            bound (if (neg? dir) bound-min bound-max)
+            dist-from-bound (abs (- coord bound)) 
+            shift (rem dist-from-bound width)]
+        (if (neg? dir)
+          shift
+          (- shift))))))
+
+
+(defn shift-coord-in
+  [bound-min bound-max coord]
+  (let [dir (outside-dir bound-min bound-max coord)]
+    (if (zero? dir)
+      coord
+      (let [width (- bound-max bound-min)
+            bound (if (neg? dir) bound-min bound-max)
+            shift (rem (if (neg? dir)
+                         (- bound-min coord)
+                         (- coord bound-max))
+                       width)]
+        (* dir shift)))))
