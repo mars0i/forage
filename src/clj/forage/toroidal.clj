@@ -65,12 +65,22 @@
 ;; Is that right?  Should I be using non-strict inequality somewhere?
 ;; Note that the two boundaries are kind of logically equal.  Should one
 ;; be favored over the other?
+;;
+;; Note: This differs from the numbers returned by choose-shifts because
+;; the return value of full-shift will immediately shift into the region,
+;; while choose-shifts returns numbers for incrementally shifting, one
+;; segment at a time.
 (defn full-shift
+  "coord is a number representing one coordinate of a point.  Returns a
+  number that when added to coord, shifts it into a correct relative
+  location within [bound-min bound-max].  (This differs from the numbers
+  returned by choose-shifts because the return value of full-shift can be
+  used to immediately shift into the region, while choose-shifts returns 
+  numbers for incrementally shifting, one \"duplicated\" segment at a time.)"
   [bound-min bound-max coord]
   (let [dir (outside-dir bound-min bound-max coord)]
     (if (zero? dir)
-      (do (println coord dir 0 coord) ; DEBUG
-      0)
+      0
       (let [width (- bound-max bound-min)
             bound (if (pos? dir) bound-max bound-min)
             dist-from-region (if (pos? dir)  ; n-widths will be < 0 if dividend is
@@ -78,9 +88,6 @@
                                (- bound-min coord)) ; ditto
             n-widths (quot dist-from-region width)
             shift-dir (- dir)]
-        (println coord dir dist-from-region n-widths shift-dir
-                 (* shift-dir (inc n-widths) width) 
-                 (+ coord (* shift-dir (inc n-widths) width))) ; DEBUG
         (* shift-dir (inc n-widths) width)))))
 
 (comment
@@ -91,6 +98,11 @@
 
 
 ;; SEE doc/ToroidalAlgorithms.md for explanation
+;;
+;; Note: The numbers returned by this function differ from the number
+;; returned by full-shift, which immediately shifts into the region,
+;; while choose-shifts returns numbers for incrementally shifting, one
+;; segment at a time.
 (defn choose-shifts
   "Returns a pair in which each element is -1, 0, or 1, If no boundary
   is exceeded, no shift is needed, so [0 0] is returned.  If only one
@@ -102,7 +114,11 @@
   at a location that is beyond both boundaries in the other dimension.
   Only one element of the returned pair will be nonzero: the one
   corresponding to the boundary that was crossed between the boundaries
-  in the other dimension.  See doc/exceedingboundaries1.pdf."
+  in the other dimension.  See doc/exceedingboundaries1.pdf.  (The numbers
+  returned by this function differ from the number returned by full-shift,
+  which can be used to immediately shift into the region, while 
+  choose-shifts returns numbers for incrementally shifting, one
+  \"duplicated\" segment at a time.)"
   [bound-min bound-max seg]
   (let [[pt1 pt2] seg
         [x1 y1] pt1
