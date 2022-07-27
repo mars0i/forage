@@ -20,53 +20,10 @@
 ;;  3. What happened to the last point? (probably partition-all should be used)
 
 
-;; ORIGINAL BY GENERATEME (with minor changes) from
-;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
-;; Also at
-;; https://github.com/generateme/cljplot/blob/f272932c0228273f293a834e6c19c50d0374d3da/sketches/examples.clj#L572
-;; See notes.forage/toroidal/correctpath.clj for a version with comments
-;; and a description of the algorithm.
-;; SUPERSEDED BY wrap-path and wrap-segment in forage.toroidal.
-;; comments highlighted.
-(defn original-correct-path
-  "Given a sequence of points representing a path connected by line
-  segments, returns a transformed path in which segments that would go
-  beyond the boundaries are \"duplicated\" with a new segment that is
-  the previous version shifted so that, if it is short enough, it will
-  end within the boundaries.  A sequence of points from such segments
-  are returned, where \"duplicates\" are by nils."
-  [boundary-left boundary-right path]
-  (let [width (- boundary-right boundary-left)]
-    (first (reduce (fn [[new-path shift-x shift-y] [[curr-x curr-y] [next-x next-y]]]
-                     (let [s-curr-x (+ shift-x curr-x)
-                           s-curr-y (+ shift-y curr-y)
-                           s-next-x (+ shift-x next-x)
-                           s-next-y (+ shift-y next-y)
-                           new-shift-x (cond
-                                         (< s-next-x boundary-left)  (+ shift-x width)
-                                         (> s-next-x boundary-right) (- shift-x width)
-                                         :else shift-x)
-                           new-shift-y (cond
-                                         (< s-next-y boundary-left)  (+ shift-y width)
-                                         (> s-next-y boundary-right) (- shift-y width)
-                                         :else shift-y)]
-                       [(if (and (== new-shift-x shift-x)
-                                 (== new-shift-y shift-y))
-                          (conj new-path [s-curr-x s-curr-y])
-                          (conj new-path
-                                [s-curr-x s-curr-y] [s-next-x s-next-y]
-                                nil
-                                [(+ curr-x new-shift-x) (+ curr-y new-shift-y)]))
-                        new-shift-x
-                        new-shift-y]))
-                   [[] 0.0 0.0]
-                   (partition 2 1 path)))))
-
 
 (defn add-cljplot-path-breaks
   [pts]
-  (map (fn [pt] (if-not pt [##NaN ##NaN] pt))
-       pts))
+  (replace {nil [##NaN ##NaN]} pts))
 
 
 ;; FIXME Temporary: should be revised and moved away from the preceding
@@ -81,47 +38,64 @@
 ;; Fourth element in the :color option seems to be transparency or darkness or something
 ;;    [:grid nil {:position [0 1]}] I don't understand; squashes plot somewhere other than gridlines
 (defn plot-result
-  ([display-boundary data-boundary data]
-   (plot-result display-boundary data-boundary data nil))
-  ([display-boundary data-boundary data filename]
-   (let [plotfn (fn [chart] (if filename
+  ([display-bound data-bound data]
+   (plot-result display-bound data-bound data nil))
+  ([display-bound data-bound data filename]
+   (plot-result (- display-bound) display-bound
+                (- data-bound) data-bound data filename))
+  ([display-bound-min display-bound-max
+    data-bound-min data-bound-max ; only used to make box
+    data filename]
+   (let [box-segs [[data-bound-min data-bound-min]
+                   [data-bound-min data-bound-max]
+                   [data-bound-max data-bound-max]
+                   [data-bound-max data-bound-min]
+                   [data-bound-min data-bound-min]
+                   [##NaN ##NaN]]
+         plotfn (fn [chart] (if filename
                               (cc/save chart filename)
                               (cc/show chart)
                               ;(c2u/show-image  chart)
                               ))]
-     (-> (cb/series [:grid] [:line (add-cljplot-path-breaks data)
+     (-> (cb/series [:grid] [:line (concat box-segs (add-cljplot-path-breaks data))
                              {:color [0 0 255 150] ; fourth arg is opacity or brightness or something like that
                               :margins nil}]) 
          (cb/preprocess-series)
-         (cb/update-scale :x :domain [(- display-boundary) display-boundary])
-         (cb/update-scale :y :domain [(- display-boundary) display-boundary])
+         (cb/update-scale :x :domain [display-bound-min display-bound-max])
+         (cb/update-scale :y :domain [display-bound-min display-bound-max])
          (cb/add-axes :bottom)
          (cb/add-axes :left)
          (cr/render-lattice {:width 800 :height 800 :border 10})
          (plotfn)))))
 
-         ;; trying to add a box where the data boundary is, but it's not working:
-         ;(cb/series [:grid] [:line [[(- data-boundary) (- data-boundary)]
-         ;                           [(- data-boundary) data-boundary]
-         ;                           [data-boundary data-boundary]
-         ;                           [data-boundary (- data-boundary)]
-         ;                           [(- data-boundary) (- data-boundary)]]
+         ;; trying to add a box where the data bound is, but it's not working:
+         ;(cb/series [:grid] [:line [[(- data-bound) (- data-bound)]
+         ;                           [(- data-bound) data-bound]
+         ;                           [data-bound data-bound]
+         ;                           [data-bound (- data-bound)]
+         ;                           [(- data-bound) (- data-bound)]]
          ;                    {:color [0 255 0 0] :margins nil}])
 
 (comment
+
+  (defn three-plots
+    ([outer inner data] (three-plots outer (- inner) inner data))
+    ([outer inner- inner+ data]
+     (plot-result (- outer) outer inner- inner+ data "unmod.jpg")
+     (plot-result (- outer) outer inner- inner+ (t/wrap-path inner- inner+ data) "loose.jpg")
+     (plot-result (dec inner-) (inc inner+)
+                  inner- inner+
+                  (t/wrap-path inner- inner+ data) "tight.jpg")))
 
   (def seed (r/make-seed))
   (def seed -6115745044562722228)
   (def rng (r/make-well19937 seed))
   (def len-dist (r/make-powerlaw rng 1 2))
-  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 3000)))
-  (def stops (w/walk-stops [0 0] (w/vecs-upto-len 900 step-vector-pool)))
+  (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 500)))
+  (def stops (w/walk-stops [0 0] (w/vecs-upto-len 450 step-vector-pool)))
   (count stops)
-  ;(def stops (cons [10 15] (rest stops)))
 
-  (plot-result 400 50 stops "unmod.jpg")
-  (plot-result 400 50 (t/wrap-path -50 50 stops) "loose.jpg")
-  (plot-result 51 50 (t/wrap-path -50 50 stops) "tight.jpg")
+  (three-plots 250 50 stops)
 
 
   (def stops [[0 0] [3 2.5]])
@@ -159,9 +133,10 @@
   (def stops [[-2 -1] [10 -7]])
   (def stops [[-2 -1] [20 -12]])
 
-  (plot-result 30 4 stops "unmod.jpg")
-  (plot-result 4 4  (t/wrap-path -4 4 stops) "tight.jpg")
-  (plot-result 30 4 (t/wrap-path -4 4 stops) "loose.jpg")
+  (three-plots 30 4 [[-2 -1] [20 -12]])
+
+  (three-plots 30 3 10 [[-2 -1] [10 -5]])
+  (three-plots 30 3 10 [[0 0] [2 1]])
 
 
   (def square [[-4 -4] [-4 4] [4 4] [4 -4] [-4 -4]])
