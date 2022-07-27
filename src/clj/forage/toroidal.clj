@@ -153,8 +153,11 @@
   shifted, and so on, until there is a duplicate that ends within the
   boundaries.  \"Duplicate\" segments are separated by nils."
   [bound-min bound-max segments]
-  (let [width (- bound-max bound-min)]
-    (loop [new-segs [], sh-x 0.0, sh-y 0.0, segs segments]
+  (let [width (- bound-max bound-min)
+        [first-coord-x first-coord-y] (first (first segments))    ; If start point of first seg
+        init-sh-x (full-shift bound-min bound-max first-coord-x)  ;  is outside boundaries, shift
+        init-sh-y (full-shift bound-min bound-max first-coord-y)] ;  it in; shift whole sequence.
+    (loop [new-segs [], sh-x init-sh-x, sh-y init-sh-y, segs segments]
       (if-not segs
         new-segs
         (let [new-seg (shift-seg sh-x sh-y (first segs))
