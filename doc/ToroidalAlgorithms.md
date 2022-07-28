@@ -63,7 +63,16 @@ linearly shifted (by `shift-segs`).  Whenever there's a shift, it will
 persist and be applied to all subsequent segments (unless a later shift
 undoes previous shifts).
 
-#### Logic:
+#### Initial shifting:
+
+If the first point of the first segment is outside the standard region,
+it will be shifted into the region by an amount equal to the width/height
+of the region.  That is, it's "wrapped" before anything starts.  This
+also means that everything else in the sequence after that should be shifted
+by the same amounts, initially.  After that, other shifts may occur.
+
+
+#### Logic of rest of function:
 
 ##### If after applying the current shift, the end point of a segment *is* within the region:
 
