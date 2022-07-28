@@ -92,10 +92,13 @@
   (def rng (r/make-well19937 seed))
   (def len-dist (r/make-powerlaw rng 1 2))
   (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 500)))
-  (def stops (w/walk-stops [0 0] (w/vecs-upto-len 450 step-vector-pool)))
+  (def stops (w/walk-stops [0 0] (w/vecs-upto-len 100 step-vector-pool)))
   (count stops)
+  (def stops- (drop 7 (butlast stops)))
+  (count stops-)
+  (first stops-)
 
-  (three-plots 250 50 stops)
+  (three-plots 35 6 stops-)
 
 
   (def stops [[0 0] [3 2.5]])
@@ -134,14 +137,18 @@
   (def stops [[-2 -1] [20 -12]])
 
   (three-plots 30 4 [[-2 -1] [20 -12]])
-
   (three-plots 30 3 10 [[-2 -1] [10 -5]])
   (three-plots 30 3 10 [[0 0] [2 1]])
 
+  (plot-result 30 4 [[0 0] [1 -3]])
+  (plot-result 30 4 [[-2 6] [0 0]])
+  (plot-result 30 4 (t/wrap-path -4 4 [[-2 6] [0 0]]))
 
-  (def square [[-4 -4] [-4 4] [4 4] [4 -4] [-4 -4]])
-  (plot-result 5 4 square "square.jpg")
-
+  (let [stops [[6.5 0] [5 -3.5] [5 3.5]
+               [12.5 2.75] [5.5 1] [8 6]]]
+    (plot-result 15 4 stops "unwrapped.jpg")
+    (plot-result 15 4 (t/wrap-path -4 4 stops) "wrapped.jpg")
+    (plot-result 4 4 (t/wrap-path -4 4 stops) "tight.jpg"))
 
 
 )
