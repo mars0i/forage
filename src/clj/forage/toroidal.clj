@@ -57,7 +57,6 @@
         :else 0))
 
 
-;; TODO QUESTION:
 ;; Note there's a sort of assymetry: 
 ;; Does not return nonzero shift if coord is equal to either boundary (a consequence 
 ;; of the def of outside-dir).
@@ -172,7 +171,7 @@
   (let [width (- bound-max bound-min)
         [first-coord-x first-coord-y] (first (first segments))    ; If start point of first seg
         init-sh-x (full-shift bound-min bound-max first-coord-x)  ;  is outside boundaries, shift
-        init-sh-y (full-shift bound-min bound-max first-coord-y)] ;  it in; shift whole sequence.
+        init-sh-y (full-shift bound-min bound-max first-coord-y)] ;  it in (and entire sequence).
     (loop [new-segs [], sh-x init-sh-x, sh-y init-sh-y, segs segments]
       (if-not segs
         new-segs
