@@ -4,35 +4,11 @@
   (:require [utils.math :as m]))
 
 
-;; SEE doc/ToroidalAlgorithms.md for explanation of less obvious
-;; algorithms below.  It might also be helpful to look at
+;; SEE doc/ToroidalAlgorithms.md for vocabulary, notation, and
+;; explanation of less obvious algorithms below.
+
+;; It might also be helpful to look at
 ;; doc/exceedingboundaries1.pdf, although that only illustrates certain cases.
-
-
-;; VOCABULARY AND NOTATION:
-;;
-;;  - The "standard region" or "region" is the area that counts--it's what 
-;;    would be displayed, or it's the environment in which agents move.  The
-;;    result we want is that we can at least display lines as "wrapping" back
-;;    to the other side of the region if they exist out at one side.
-;;  - "seg" means line segment, i.e. a pair of coordinate pairs.
-;;  - "bound-" means "boundary-", or as in "upper bound". 
-;;     (It has nothing to do with binding.)
-;;  - "sh" means "shifted".
-;;  - "dir" means "direction".
-;;  - sequences of points (coordinate pairs) are called either "points" or "pts".
-;;  - "wrap" as in "wrap around": cause a line that leaves the standard region 
-;;    on one side to come back in on the other side.
-
-;; In this version of this code, the standard region must be a square that
-;; lies between bound-min and bound-max in each of the two dimensions.
-
-;; Many of the functions operate on segments, i.e. pairs of pairs of coordinates,
-;; which have to be repeatedly decomposed and reconstructed.   Although this is 
-;; slightly inefficient, it made the code easier to understand, I felt.  If the
-;; inefficiency really matters (seems unlikely), the code could be rewrite in terms
-;; of points or raw coordinates.
-
 
 ;; I recommend that one begin reading at either wrap-segs or wrap-paths.
 ;; The second is a wrapper (different sense) for the first.
