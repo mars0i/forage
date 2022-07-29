@@ -1,5 +1,6 @@
 Algorithms used in forage/toroidal.clj
 ==
+Marshall Abrams
 
 **These are algorithms that implement a toroidal environment, i.e.
 one with periodic boundary conditions.**
@@ -33,6 +34,17 @@ later, perhaps by external display routines.
 
 In this version of this code, the standard region must be a square that
 lies between bound-min and bound-max in each of the two dimensions.
+
+Many of the functions operate on segments, i.e. pairs of pairs of
+coordinates, which have to be repeatedly decomposed and reconstructed.
+Although this is slightly inefficient, it made the code easier to
+understand, I felt.  If the inefficiency really matters (seems
+unlikely), the code could be rewrite in terms of points or raw
+coordinates.
+
+**I recommend that one begin reading at either wrap-segs or wrap-paths.
+The second is a wrapper (different sense) for the first.**
+
 
 --- 
 
