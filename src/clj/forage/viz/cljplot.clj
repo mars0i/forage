@@ -4,7 +4,10 @@
    [forage.toroidal :as t]  ; temporary for testing in three-plots. remove when possible.
    [cljplot.build :as cb]
    [cljplot.core :as cc]
-   [cljplot.render :as cr]))
+   [cljplot.render :as cr]
+   ;[clojure2d.core :refer [get-image canvas show-window with-canvas-> width height image]]
+   [clojure2d.core :as c2] ; how is this working without including clojure2d as a dep in project.clj??
+   ))
 
 
 (defn add-cljplot-path-breaks
@@ -13,6 +16,24 @@
   cljplot separators [#NaN ##NaN]."
   [pts]
   (replace {nil [##NaN ##NaN]} pts))
+
+
+;; TODO Oh wait--can I use the verson of this in latest dev version of clojure2d
+;; By generateme, from 
+;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/Options.20for.20displaying.20a.20plot.3F/near/289959227
+(defn show-image
+  "Show image" ; FIXME
+  ([img] (show-image img {}))
+  ([img args]
+   (let [img (c2/get-image img)
+         c (c2/canvas (c2/width img) (c2/height img))]
+     (c2/with-canvas-> c
+       (c2/image img))
+     (let [w (c2/show-window (merge args {:canvas c}))]
+       (when-let [[x y] (:position args)]
+         (.setLocation (:frame w) (int x) (int y)))
+       w))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Functions below are not in final form, and might not exist in the
@@ -56,8 +77,8 @@
                    [##NaN ##NaN]]
          plotfn (fn [chart] (if filename
                               (cc/save chart filename)
-                              (cc/show chart)
-                              ;(c2u/show-image  chart)
+                              ;(cc/show chart)
+                              (show-image  chart)
                               ))]
      (-> (cb/series [:grid] [:line (concat box-segs (add-cljplot-path-breaks data))
                              {:color [0 0 255 150] ; fourth arg is opacity or brightness or something like that
