@@ -35,11 +35,13 @@
   plot-dim x plot-dim.  Lines will be plotted with thickness stroke-width,
   or 1.0 if stroke-width is falsey.  If there are additional Vega-Lite specs
   to add, they can be entered in a map as an additional argument."
-  [plot-dim data-dim stroke-width data & colorscheme-seq]
+  ([plot-dim data-dim stroke-width data]
+   (vega-walk-plot plot-dim 0 data-dim stroke-width data))
+  ([plot-dim data-bound-min data-bound-max stroke-width data & colorscheme-seq]
   (-> (hc/xform ht/line-chart
                 :DATA data
-                :XSCALE {"domain" [0 data-dim]}
-                :YSCALE {"domain" [0 data-dim]}
+                :XSCALE {"domain" [data-bound-min data-bound-max]}
+                :YSCALE {"domain" [data-bound-min data-bound-max]}
                 :COLOR (if colorscheme-seq
                          {:field "label" :type "nominal"
                           :scale {:scheme (first colorscheme-seq)}}
@@ -48,7 +50,7 @@
                 :HEIGHT plot-dim)
       (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
       (assoc-in [:encoding :order :type] "ordinal") ; gets rid of warning on :order
-      (assoc-in [:mark :strokeWidth] (or stroke-width 1.0)))) 
+      (assoc-in [:mark :strokeWidth] (or stroke-width 1.0)))))
 
 (defn add-point-labels
   "Given a sequence of pairs representing x,y coordinates, returns a
