@@ -81,7 +81,7 @@
                               ;(cc/show chart)
                               (show-image  chart)
                               ))]
-     (-> (cb/series [:grid] [:line (concat box-segs (add-cljplot-path-breaks data))
+     (-> (cb/series [:grid] [:line (concat box-segs (t/toroidal-to-vega-lite data))
                              {:color [0 0 255 150] ; fourth arg is opacity or brightness or something like that
                               :margins nil}]) 
          (cb/preprocess-series)
