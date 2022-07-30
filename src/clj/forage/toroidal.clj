@@ -231,12 +231,6 @@
   [pts]
   (replace {nil [##NaN ##NaN]} pts))
 
-;(defn nil-delimited-to-ptseqs
-;  [pts]
-;  (-> pts
-;      (partition-by nil?)
-;      (remove (fn [ptseq] (= '(nil))))))
-
 (defn nil-delimited-to-ptseqs
   "Convert a sequence of nil-delimited coordinates to a sequence of 
   sequences (of points between the nils)."
