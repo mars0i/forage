@@ -47,7 +47,9 @@
                           :scale {:scheme (first colorscheme-seq)}}
                          "label")
                 :WIDTH  plot-dim
-                :HEIGHT plot-dim)
+                :HEIGHT plot-dim
+                ;:autosize {:type "none"}
+                 )
       (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
       (assoc-in [:encoding :order :type] "ordinal") ; gets rid of warning on :order
       (assoc-in [:mark :strokeWidth] (or stroke-width 1.0)))))
