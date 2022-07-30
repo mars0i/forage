@@ -256,33 +256,12 @@
   (map (fn [[x y] n] {"x" x, "y" y, "ord" n, "label" label})
        pts (range)))
 
-(defn old-toroidal-to-vega-lite
-  [base-label pts]
-  (let [ptseqs (nil-delimited-to-ptseqs pts)
-        ptseq-labels (map (partial str base-label) (range))]
-    (flatten
-     (map add-walk-labels ptseq-labels ptseqs))))
-
 (defn toroidal-to-vega-lite
   [base-label pts]
   (let [ptseqs (nil-delimited-to-ptseqs pts)
         ptseq-labels (map (partial str base-label) (range))]
     (flatten
      (map add-walk-labels ptseq-labels ptseqs))))
-
-(defn alt-toroidal-to-vega-lite
-  [base-label pts]
-  (loop [subseq-num 0, pt-num 0, ps pts, vlpts []]
-    (cond (empty? ps) vlpts
-          (nil? (first ps)) (recur (inc subseq-num) 0 (rest ps) vlpts)
-          :else (let [[x y] (first ps)]
-                  (recur subseq-num
-                         (inc pt-num) 
-                         (rest ps)
-                         (conj vlpts 
-                               {"x" x, "y" y, "ord" pt-num,
-                                "label" (str base-label subseq-num)}))))))
-
 
 
 (comment

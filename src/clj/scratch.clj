@@ -4,9 +4,20 @@
    [utils.random :as r]
    [forage.walks :as w]
    [forage.toroidal :as t]
-   [forage.viz.cljplot :as cp]))
+   [forage.viz.hanami :as h]   ; don't load with cljplot
+   ;[forage.viz.cljplot :as cp] ; don't load with hanami
+   [oz.core :as oz]
+   ))
 
 (comment
+
+  (def walk1 (h/add-walk-labels "segs1" [[5 5] [5 6] [8 1] [9 4]]))
+  (def walk2 (h/add-walk-labels "segs2" [[9 3] [3 2] [4 6] [7 8]]))
+  (def walk2 [{"x" 9, "y" 3, "ord" 4, "label" "segs2"}
+              {"x" 3, "y" 2, "ord" 5, "label" "segs2"}
+              {"x" 4, "y" 6, "ord" 6, "label" "segs2"}
+              {"x" 7, "y" 8, "ord" 7, "label" "segs2"}])
+  (oz/view! (h/vega-walk-plot 400 10 1 (concat walk1 walk2)))
 
   (def seed (r/make-seed))
   (def seed 7790000679590803178)
