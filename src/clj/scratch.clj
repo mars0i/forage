@@ -23,12 +23,16 @@
   (def seed 7790000679590803178)
   (def rng (r/make-well19937 seed))
   (def len-dist (r/make-powerlaw rng 1 2))
-  (def len-dist (r/make-powerlaw rng 1 2.5))
   (def step-vector-pool (repeatedly (w/step-vector-fn rng len-dist 1 1000)))
   (def stops (w/walk-stops [0 0] (w/vecs-upto-len 4000 step-vector-pool)))
   (def stops- (drop 200 stops))
+  (def wrapped-stops- (t/wrap-path -200 200 stops-))
   (count stops)
   (count stops-)
+
+  (oz/view! (h/vega-walk-plot 400 -200 200 1 (t/add-walk-labels "segs" stops-)))
+  (oz/view! (h/vega-walk-plot 400 -200 200 1 (t/toroidal-to-vega-lite "segs" wrapped-stops-)))
+  (oz/view! (h/vega-walk-plot 200 -200 200 1 (t/toroidal-to-vega-lite "segs" wrapped-stops-)))
 
   (cp/three-plots 500 200 stops-)
   (first stops-)
