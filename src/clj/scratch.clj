@@ -5,7 +5,7 @@
    [forage.walks :as w]
    [forage.toroidal :as t]
    [forage.viz.hanami :as h]   ; don't load with cljplot
-   ;[forage.viz.cljplot :as cp] ; don't load with hanami
+   [forage.viz.cljplot :as cp] ; don't load with hanami
    [oz.core :as oz]
    ))
 
@@ -30,11 +30,19 @@
   (count stops)
   (count stops-)
 
-  (oz/view! (h/vega-walk-plot 400 -200 200 1 (t/add-walk-labels "segs" stops-)))
-  (oz/view! (h/vega-walk-plot 400 -200 200 1 (t/toroidal-to-vega-lite "segs" wrapped-stops-)))
+  (oz/view!   (h/vega-walk-plot 400 -200 200 1 (t/add-walk-labels "segs" stops-)))
+  (oz/export! (h/vega-walk-plot 400 -200 200 1 (t/add-walk-labels "segs" stops-))
+              "unmod7790000679590803178.svg")
+
+  (oz/view!   (h/vega-walk-plot 400 -200 200 1 (t/toroidal-to-vega-lite "segs" wrapped-stops-)))
+  (oz/export! (h/vega-walk-plot 400 -200 200 1 (t/toroidal-to-vega-lite "segs" wrapped-stops-))
+              "loose7790000679590803178.svg")
+
   (oz/view! (h/vega-walk-plot 200 -200 200 1 (t/toroidal-to-vega-lite "segs" wrapped-stops-)))
 
-  (cp/three-plots 500 200 stops-)
+  (cp/plot-walk 725 200 wrapped-stops- "loose.jpg")
+
+  (cp/three-plots 600 200 stops-)
   (first stops-)
   (cp/three-plots 500 200 stops)
 
