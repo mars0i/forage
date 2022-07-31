@@ -1,4 +1,4 @@
-Algorithms used in forage/toroidal.clj
+Usage notes and code notes for forage/toroidal.clj
 ==
 Marshall Abrams
 
@@ -8,6 +8,30 @@ one with periodic boundary conditions.**
 Not every function is discussed here--only the ones whose operation
 seems less obvious to me.
 
+---
+
+### Simple usage examples:
+
+```clojure
+(toroidal-to-cljplot (wrap-path -100 100 path))
+```
+```clojure
+(-> (wrap-path bound-min bound-max path)
+    (toroidal-to-vega-lite "subpath"))
+```
+*  `path`: A sequence of 2D points, i.e. a sequence of pairs of numbers.
+*  `-100`: Value of lower/left boundary of the region to wrap to, in both
+        dimensions.
+*  `100`:  Value of upper/right value of the region to wrap to, in both
+        dimensions.
+*  `"subpath"`: initial string for values of `"label"` key, which are used
+             to distinguish different sub-paths.
+The result will be a sequence that can be used in cljplot or Vega-Lite, 
+respectively in a plot of a random walk (or something similar), where 
+the line segments representing the walk may go outside the official 
+boundaries.  Segments that cross a boundary will be duplicated so that
+they come back in at the opposite side, and the walk plot continues
+from there.
 
 ---
 

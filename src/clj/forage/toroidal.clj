@@ -4,7 +4,7 @@
   (:require [utils.math :as m]))
 
 
-;; SEE doc/ToroidalAlgorithms.md for vocabulary, notation, and
+;; SEE doc/Toroidal.md for usage, vocabulary, notation, and
 ;; explanation of less obvious algorithms below.
 
 ;; It might also be helpful to look at
@@ -72,7 +72,7 @@
 )
 
 
-;; SEE doc/ToroidalAlgorithms.md for explanation
+;; SEE doc/Toroidal.md for explanation
 ;;
 ;; Note: The numbers returned by this function differ from the number
 ;; returned by full-shift, which immediately shifts into the region,
@@ -127,7 +127,7 @@
      [(+ x2 sh-x) (+ y2 sh-y)]]))
 
 
-;; SEE doc/ToroidalAlgorithms.md for explanation
+;; SEE doc/Toroidal.md for explanation
 ;;
 ;; This algorithm and the one in outside-dirs are derived from generateme's
 ;; correct-path function at 
@@ -177,7 +177,7 @@
 ;; sequence of points with delimiters between shifted sequences.
 
 
-;; SEE doc/ToroidalAlgorithms.md for explanation
+;; SEE doc/Toroidal.md for explanation
 (defn segs-to-points
   "segs is a sequence of line segments (pairs of pairs representing 2D
   coordinates), possibly separated by nils, where each second coordinate
