@@ -1,2 +1,6 @@
-Notes that were in this directory have been moved out of the repo.
-I'll add proper documentation at some future time.
+doc
+===
+
+At present, this directory doesn't contain any attempt at proper
+documentation.  There are a few things that might be helpful for
+understanding something.
