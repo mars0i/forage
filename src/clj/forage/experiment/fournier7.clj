@@ -68,6 +68,7 @@
 
 ;; Fournier env with center cluster but no center foodspot:
 
+;; Center points of Fournier clusters:
 (def base-env
   (mf/make-env (params :env-discretization)
                (params :env-size)
@@ -77,6 +78,7 @@
                 [-init-food -init-food] [-init-food init-food] ; corners
                 [init-food -init-food] [init-food init-food]]))
 
+;; Adds Fournier clusters:
 (def env 
   (mf/make-env (params :env-discretization) (params :env-size)
                (f/remove-center
@@ -119,7 +121,7 @@
   ;; EXPLORATORY:
 
   ;; plot the foodspots alone:
-  (oz/view! (h/vega-env-plot env 1100 370))
+  (oz/view! (h/vega-env-plot env 1100 1000))
   (oz/view! (h/vega-env-plot base-env 1100 5000))
 
   ;; plot walks:

@@ -46,6 +46,7 @@
 
 ;; Fournier env with center cluster but no center foodspot:
 
+;; Center points of Fournier clusters:
 (def base-env
   (mf/make-env (params :env-discretization)
                (params :env-size)
@@ -53,6 +54,7 @@
                 [init-food  init-food]  [-init-food init-food]
                 [init-food -init-food] [-init-food -init-food]]))
 
+;; Adds Fournier clusters:
 (def env 
   (mf/make-env (params :env-discretization) (params :env-size)
                (f/remove-center
