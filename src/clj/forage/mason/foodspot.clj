@@ -13,8 +13,6 @@
 ;; NOTE DON'T USE .getNeighborsWithinDistance .
 ;; It can return foodspots that are too far away.
 
-;; Possible TODO: Add toroidal foodspot perception
-
 (deftype Foodspot [x y nutrition])
 
 (defn make-foodspot
