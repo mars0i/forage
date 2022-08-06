@@ -165,6 +165,8 @@
             :DATA foodspots
             :X "x"
             :Y "y"
+            :XSCALE {"domain" [0 env-sz]} ; Forces internal dimensions to this
+            :YSCALE {"domain" [0 env-sz]} ; size, rather than min needed for data.
             :COLOR (if colorscheme-seq
                      {:field "label" :type "nominal"
                       :scale {:scheme (first colorscheme-seq)}}
