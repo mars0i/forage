@@ -74,12 +74,19 @@
    [(- x offset) y] [x (- y offset)]])
 
 (defn fournierize-points
+  "Applies fournier-children with offset as first parameter to each point,
+  the results in a sequence."
   [offset points]
   (map (partial fournier-children offset) points))
 
+;; FIXME not right that offset is fixed.  It should be a multiplier that
+;; changes at each level.  Or maybe the change should be in fournier-children.
 (defn fournierize2d
-  [n offset initial-points]
-  (ifs-iterate n [fournierize-points] initial-points))
+  "Given a set of points, recursively applies fournierize-points--with
+  offset as first parameter--iters times to points, starting with 
+  initial-points."
+  [iters offset initial-points]
+  (ifs-iterate iters [(partial fournierize-points offset)] initial-points))
                       
 
 ;; FIXME ?  I'm using huge values for sep.  Maybe this is the wrong
