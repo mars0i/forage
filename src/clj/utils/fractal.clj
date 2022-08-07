@@ -66,28 +66,34 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FOURNIER UNIVERSES (see Mandelbrot's books)
 
-(defn fournier-children
-  "Given a coordinate pair, return four coordinate pairs that are
-  shifted by offset up, down, left, and right from the original point."
-  [offset [x y]]
-  [[(+ x offset) y] [x (+ y offset)]
-   [(- x offset) y] [x (- y offset)]])
+(comment
+  ;; FIXME this is a mess.  not right.
 
-(defn fournierize-points
-  "Applies fournier-children with offset as first parameter to each point,
-  the results in a sequence."
-  [offset points]
-  (map (partial fournier-children offset) points))
+  (defn fournier-children
+    "Given a coordinate pair, return four coordinate pairs that are
+    shifted by offset up, down, left, and right from the original point."
+    [offset [x y]]
+    [[(+ x offset) y] [x (+ y offset)]
+     [(- x offset) y] [x (- y offset)]])
 
-;; FIXME not right that offset is fixed.  It should be a multiplier that
-;; changes at each level.  Or maybe the change should be in fournier-children.
-(defn fournierize2d
-  "Given a set of points, recursively applies fournierize-points--with
-  offset as first parameter--iters times to points, starting with 
-  initial-points."
-  [iters offset initial-points]
-  (ifs-iterate iters [(partial fournierize-points offset)] initial-points))
-                      
+  (defn fournierize-points
+    "Applies fournier-children with offset as first parameter to each point,
+    the results in a sequence."
+    [offset-mult offset points]
+    (mapcat (partial fournier-children offset) points))
+
+  ;; FIXME not right that offset is fixed.  It should be a multiplier that
+  ;; changes at each level.  Or maybe the change should be in fournier-children.
+  (defn fournierize2d
+    "Given a set of points, recursively applies fournierize-points--with
+    offset as first parameter--iters times to points, starting with 
+    initial-points."
+    [iters offset-mult init-offset initial-points]
+    (ifs-iterate iters 
+                 [(partial fournierize-points offset-mult)]
+                 initial-points))
+
+)
 
 ;; FIXME ?  I'm using huge values for sep.  Maybe this is the wrong
 ;; approach.  cf. Mandelbrot's way of constructing Cantor dusts, including
@@ -97,8 +103,7 @@
 ;; See Mandelbrot's _The Fractal Geometry of Nature_ pp. 86-87 and 95-96,
 ;; or one of its predecessor books.
 (defn fournierize
-  "DEPRECATED: Use fournierize2d.
-  Given a sequence of coordinate pairs (points), returns a sequence containing
+  "Given a sequence of coordinate pairs (points), returns a sequence containing
   those points and \"fournier children\", i.e. points that are (* sep multiplier)
   up, down, left, and to the right of each original point.  Then iterates,
   performing the same operation on all of the points at a smaller scale, levels
