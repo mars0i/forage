@@ -66,15 +66,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FOURNIER UNIVERSES (see Mandelbrot's books)
 
-(comment
-  ;; FIXME this is a mess.  not right.
-
   (defn fournier-children
     "Given a coordinate pair, return four coordinate pairs that are
     shifted by offset up, down, left, and right from the original point."
     [offset [x y]]
     [[(+ x offset) y] [x (+ y offset)]
      [(- x offset) y] [x (- y offset)]])
+
+(comment
+  ;; FIXME this is a mess.  not right.
 
   (defn fournierize-points
     "Applies fournier-children with offset as first parameter to each point,
