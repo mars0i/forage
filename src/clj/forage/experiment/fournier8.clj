@@ -21,37 +21,41 @@
 (comment
   ;; Example Fournier foodspot configurations
 
+  ;; Smallest horizontal/vertical gap: 111 units.
+  ;; Largest horizontal/vertical gap: 2449 units.
+  ;; Nearest horizontal/vertical distance from outer point to border: 537 units.
+  ;; So the shortest horizontal/vertical toroidally across a border: 1074 units.
   ;;;;;;;;
-  (def half-size 10000) ; half the full width of the env
+  (def half-size 10000)
   (def fournier-init-offset 28500)
   (def fournier-mult 0.25)
   (def fournier-lvls 4)
 
   ;;;;;;;;
-  ;; Smallest horizontal/vertical gap between points is 219 units.
-  ;; Largest horizontal/vertical gap is 952.5 units.
-  ;; Nearest horizontal/vertical distance from outer point to border is 406 units.
-  ;; So the shortest horizontal/vertical toroidally across a border is 812 units.
-  (def half-size 5000) ; half the full width of the env
+  ;; Smallest horizontal/vertical gap: 219 units.
+  ;; Largest horizontal/vertical gap: 952.5 units.
+  ;; Nearest horizontal/vertical distance from outer point to border: 406 units.
+  ;; So the shortest horizontal/vertical toroidally across a border: 812 units.
+  (def half-size 5000)
   (def fournier-init-offset 14000)
   (def fournier-mult 0.25)
   (def fournier-lvls 3)
 
   ;;;;;;;;
-  ;; Smallest horizontal/vertical gap between points is 39 units.
-  ;; Largest horizontal/vertical gap is 234 units.
-  ;; Nearest horizontal/vertical distance from outer point to border is 180 units.
-  ;; So the shortest horizontal/vertical toroidally across a border is 360 units.
+  ;; Smallest horizontal/vertical gap: 39 units.
+  ;; Largest horizontal/vertical gap: 234 units.
+  ;; Nearest horizontal/vertical distance from outer point to border: 180 units.
+  ;; So the shortest horizontal/vertical toroidally across a border: 360 units.
   (def half-size 1000)
   (def fournier-init-offset 2500)
   (def fournier-mult 0.25) ; above 0.25, not really fractal: outer points too close
   (def fournier-lvls 3)
 
   ;;;;;;;;
-  ;; Smallest horizontal/vertical gap between points is 10 units.
-  ;; Largest horizontal/vertical gap is 215 units.
-  ;; Nearest horizontal/vertical distance from outer point to border is 170 units.
-  ;; So the shortest horizontal/vertical toroidally across a border is 340 units.
+  ;; Smallest horizontal/vertical gap: 10 units.
+  ;; Largest horizontal/vertical gap: 215 units.
+  ;; Nearest horizontal/vertical distance from outer point to border: 170 units.
+  ;; So the shortest horizontal/vertical toroidally across a border: 340 units.
   (def half-size 1000)
   (def fournier-init-offset 2500)
   (def fournier-mult 0.25)
@@ -81,6 +85,12 @@
                                fournier-init-offset
                                fournier-mult
                                fournier-lvls)))
+(def eight-env 
+  (mf/make-env (params :env-discretization) (params :env-size)
+               (uf/eight-fournierize [[half-size half-size]]
+                                     fournier-init-offset
+                                     fournier-mult
+                                     fournier-lvls)))
 
 ;(f/remove-center (params :env-size) (params :env-size)  ... )
 
@@ -98,7 +108,9 @@
 
   ;; plot the foodspots alone:
   (oz/start-server!)
-  (oz/view! (h/vega-env-plot env 600 50))
+  (oz/view! (h/vega-env-plot env 600 70))
+  (oz/view! (h/vega-env-plot eight-env 600 70))
+  (oz/export! (h/vega-env-plot eight-env 600 70) "yo.svg")
   (oz/view! (h/vega-env-plot env 600 25))
   (oz/view! (h/vega-env-plot env 600 10))
   (oz/view! (h/vega-env-plot env 600 5))
