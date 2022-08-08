@@ -4,7 +4,8 @@
             [clojure.set :as s]
             [flatland.ordered.set :as os]
             [fastmath.complex :as c]
-            [fastmath.vector :as v]))
+            [fastmath.vector :as v]
+            [utils.math :as m]))
 
 ;; Switched my earlier naming convention for atoms (final "$") to Peter Taoussanis's
 ;; better known and equally good convention from taoensso.encore (final "_"):
@@ -66,22 +67,68 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FOURNIER UNIVERSES (see Mandelbrot's books)
 
-  (defn fournier-children
-    "Given a coordinate pair, return four coordinate pairs that are
-    shifted by offset up, down, left, and right from the original point."
-    [offset [x y]]
-    [[(+ x offset) y] [x (+ y offset)]
-     [(- x offset) y] [x (- y offset)]])
+(defn fournier-children
+  "Given a coordinate pair, return four coordinate pairs that are
+  shifted by offset up, down, left, and right from the original point."
+  [offset [x y]]
+  [[(+ x offset) y] [x (+ y offset)]
+   [(- x offset) y] [x (- y offset)]])
+
+;; FIXME Points are appearing in the wrong locations.
+(defn eight-fournier-children
+  "Given a coordinate pair, return eight coordinate pairs that are
+  shifted by offset up, down, left, and right from the original point, 
+  along with points that are rotated 45 degrees from those points."
+  [offset [x y]]
+  (let [four-children (fournier-children offset [x y])]
+    (into four-children (map (partial m/rotate (/ m/pi 4))
+                             four-children))))
+
+(defn fournierizer
+  "Returns a fournierize function usng children-fn.  See doc for
+  fournierize for case using fournier-children."
+  [children-fn]
+  (fn [points sep multiplier levels]
+    (loop [pts points, offset sep, iters levels]
+      (if (<= iters 0)
+        pts
+        (let [new-offset (* offset multiplier)
+              new-pts (mapcat (partial children-fn new-offset) pts)]
+          (recur (into pts new-pts) new-offset (dec iters)))))))
+
+;; Inspired by Mandelbrot's description of Fournier d'Albe's model universe.
+;; See Mandelbrot's _The Fractal Geometry of Nature_ pp. 86-87 and 95-96,
+;; or one of its predecessor books.
+(def fournierize
+  "Given a sequence of coordinate pairs (points), returns a sequence
+  containing those points and \"fournier children\", i.e. points that
+  are (* sep multiplier) up, down, left, and to the right of each
+  original point.  Then iterates, performing the same operation on all
+  of the points at a smaller scale, levels times.  multiplier should be
+  < 1.  (Note that the number of points is increased exponentially,
+  multiplying by 5 each time.)"
+  (fournierizer fournier-children))
+
+(def eight-fournierize
+  "Given a sequence of coordinate pairs (points), returns a sequence
+  containing those points and \"fournier children\", i.e. points that
+  are (* sep multiplier) up, down, left, and to the right of each
+  original point, as well as points rotated 45 degreess from those.
+  Then iterates, performing the same operation on all of the points at a
+  smaller scale, levels times.  multiplier should be < 1.  (Note that
+  the number of points is increased exponentially, multiplying by 9 each
+  time.)"
+  (fournierizer eight-fournier-children))
+
 
 (comment
+  ;; Attempt to use IFS to implement fournierization.
   ;; FIXME this is a mess.  not right.
-
   (defn fournierize-points
     "Applies fournier-children with offset as first parameter to each point,
     the results in a sequence."
     [offset-mult offset points]
     (mapcat (partial fournier-children offset) points))
-
   ;; FIXME not right that offset is fixed.  It should be a multiplier that
   ;; changes at each level.  Or maybe the change should be in fournier-children.
   (defn fournierize2d
@@ -92,30 +139,8 @@
     (ifs-iterate iters 
                  [(partial fournierize-points offset-mult)]
                  initial-points))
-
 )
 
-;; FIXME ?  I'm using huge values for sep.  Maybe this is the wrong
-;; approach.  cf. Mandelbrot's way of constructing Cantor dusts, including
-;; the infinitely large ones.
-;;
-;; Inspired by Mandelbrot's description of Fournier d'Albe's model universe.
-;; See Mandelbrot's _The Fractal Geometry of Nature_ pp. 86-87 and 95-96,
-;; or one of its predecessor books.
-(defn fournierize
-  "Given a sequence of coordinate pairs (points), returns a sequence containing
-  those points and \"fournier children\", i.e. points that are (* sep multiplier)
-  up, down, left, and to the right of each original point.  Then iterates,
-  performing the same operation on all of the points at a smaller scale, levels
-  times.  multiplier should be < 1.  (Note that the number of points is increased
-  exponentially, multiplying by 5 each time.)"
-  [points sep multiplier levels]
-  (loop [pts points, offset sep, iters levels]
-    (if (<= iters 0)
-      pts
-      (let [new-offset (* offset multiplier)
-            new-pts (mapcat (partial fournier-children new-offset) pts)]
-        (recur (into pts new-pts) new-offset (dec iters))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
