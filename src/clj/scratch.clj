@@ -62,4 +62,35 @@
 
   (oz/start-server!)
   (oz/view! example {:port 10667} )
+
+    (require '[aerial.hanami.common :as hc])
+  (require '[aerial.hanami.templates :as ht])
+
+  (def vlspec (-> (hc/xform ht/line-chart
+                            :DATA stops-
+                            :XSCALE {"domain" [-200 200]}
+                            :YSCALE {"domain" [-200 200]}
+                            :WIDTH  400
+                            :HEIGHT 400
+                            ;:autosize {:type "none"}
+                            )
+                  (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
+                  (assoc-in [:encoding :order :type] "ordinal") ; gets rid of warning on :order
+                  (assoc-in [:mark :strokeWidth] 1.0)))
+  (oz/view! (h/vega-walk-plot 400 -200 200 1 vlspec))
+
+  (first vlspec)
+  (second vlspec)
+  (take 3 vlspec)
+  (take 4 vlspec)
+  (take 5 vlspec)
+  (take 6 vlspec)
+
+  (cp/plot-walk 725 200 wrapped-stops- "loose.jpg")
+
+  (cp/three-plots 600 200 stops-)
+  (first stops-)
+  (cp/three-plots 500 200 stops)
+
+
 )
