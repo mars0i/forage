@@ -1,5 +1,5 @@
 ;; Started from fournier7.clj, but this one will have only a single
-;; Fournier universe, but it will be toroidal.
+;; Fournier "universe", though embedded in a toroidal environment
 (ns forage.experiment.fournier8
   (:require [forage.run :as fr]
             [forage.food :as f]
@@ -13,13 +13,33 @@
 
 (def walks-per-combo 1000)
 
-(def half-size 10000) ; half the full width of the env
-(def fournier-init-offset 28500)
+(def half-size 75000) ; half the full width of the env
+(def fournier-init-offset 200000)
 (def fournier-mult 0.25)
-(def fournier-lvls 4)
+(def fournier-lvls 5)
 
 (comment
   ;; Example Fournier foodspot configurations
+
+  ;; 5-LEVEL:
+
+  ;; Smallest horizontal/vertical gap: 195 units.
+  ;; Largest horizontal/vertical gap: 16796 units.
+  ;; Nearest horizontal/vertical distance from outer point to border: 3398.5 units.
+  ;; So the shortest horizontal/vertical toroidally across a border: 6797 units.
+  (def half-size 70000)
+  (def fournier-init-offset 200000)
+  (def fournier-mult 0.25)
+  (def fournier-lvls 5)
+  ;; Or if half-size is changed to 75000,
+  (def half-size 75000) ; then 
+  ;; nearest horizontal/vertical distance from outer point to border: 8398.5 units.
+  ;; So the shortest horizontal/vertical toroidally across a border: 16797 units,
+  ;; i.e. same as internal largest gap.
+
+
+
+  ;; 4-LEVEL:
 
   ;; Smallest horizontal/vertical gap: 111 units.
   ;; Largest horizontal/vertical gap: 2449 units.
@@ -30,6 +50,18 @@
   (def fournier-init-offset 28500)
   (def fournier-mult 0.25)
   (def fournier-lvls 4)
+
+  ;;;;;;;;
+  ;; Smallest horizontal/vertical gap: 10 units.
+  ;; Largest horizontal/vertical gap: 215 units.
+  ;; Nearest horizontal/vertical distance from outer point to border: 170 units.
+  ;; So the shortest horizontal/vertical toroidally across a border: 340 units.
+  (def half-size 1000)
+  (def fournier-init-offset 2500)
+  (def fournier-mult 0.25)
+  (def fournier-lvls 4)
+
+  ;; 3-LEVEL:
 
   ;;;;;;;;
   ;; Smallest horizontal/vertical gap: 219 units.
@@ -50,16 +82,6 @@
   (def fournier-init-offset 2500)
   (def fournier-mult 0.25) ; above 0.25, not really fractal: outer points too close
   (def fournier-lvls 3)
-
-  ;;;;;;;;
-  ;; Smallest horizontal/vertical gap: 10 units.
-  ;; Largest horizontal/vertical gap: 215 units.
-  ;; Nearest horizontal/vertical distance from outer point to border: 170 units.
-  ;; So the shortest horizontal/vertical toroidally across a border: 340 units.
-  (def half-size 1000)
-  (def fournier-init-offset 2500)
-  (def fournier-mult 0.25)
-  (def fournier-lvls 4)
 )
 
 (def perc-radius 1)
@@ -85,6 +107,7 @@
                                fournier-init-offset
                                fournier-mult
                                fournier-lvls)))
+
 (def eight-env 
   (mf/make-env (params :env-discretization) (params :env-size)
                (uf/eight-fournierize [[half-size half-size]]
@@ -101,22 +124,18 @@
 (comment
 
   (require '[forage.viz.hanami :as h] :reload)
-  (require '[utils.hanami :as uh])
-  (require '[aerial.hanami.common :as hc])
-  (require '[aerial.hanami.templates :as ht])
   (require '[oz.core :as oz])
 
   ;; plot the foodspots alone:
   (oz/start-server!)
+  (oz/view! (h/vega-env-plot env 2000 300))
+  (oz/view! (h/vega-env-plot env 600 235))
+  (oz/export! (h/vega-env-plot env 600 500) "yo.svg")
   (oz/view! (h/vega-env-plot env 600 70))
   (oz/view! (h/vega-env-plot eight-env 600 70))
   (oz/export! (h/vega-env-plot eight-env 600 70) "yo.svg")
   (oz/view! (h/vega-env-plot env 600 25))
   (oz/view! (h/vega-env-plot env 600 10))
   (oz/view! (h/vega-env-plot env 600 5))
-
-  (require '[utils.fractal :as uf])
-  (require '[utils.random :as r])
-  (require '[forage.run :as fr])
 
 )
