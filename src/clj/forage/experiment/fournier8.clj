@@ -11,6 +11,15 @@
 ;(def all-exponents [1.001 1.5 2.0 2.5 3.0])
 ;(comment (count all-exponents) )
 
+  ;; NOTE that if the gap over the border is the right size, then considering only
+  ;; the wrapping directly west/east/south/north, what you have is in effect a
+  ;; much larger Fournier universe, i.e. one with an additional level.
+  ;; But when you take into account the diagonals, there is something there that's
+  ;; not in a pure Fournier universe.
+  ;; Which also points out that one kind of way to supplement a Fournier universe
+  ;; with diagonal elements is to make it small and let the wrapping give you 
+  ;; additional diagonal "components" of the universe.
+
 (def walks-per-combo 1000)
 
 (def half-size 75000) ; half the full width of the env
@@ -36,8 +45,6 @@
   ;; nearest horizontal/vertical distance from outer point to border: 8398.5 units.
   ;; So the shortest horizontal/vertical toroidally across a border: 16797 units,
   ;; i.e. same as internal largest gap.
-
-
 
   ;; 4-LEVEL:
 
