@@ -11,14 +11,23 @@
 ;(def all-exponents [1.001 1.5 2.0 2.5 3.0])
 ;(comment (count all-exponents) )
 
-  ;; NOTE that if the gap over the border is the right size, then considering only
-  ;; the wrapping directly west/east/south/north, what you have is in effect a
-  ;; much larger Fournier universe, i.e. one with an additional level.
-  ;; But when you take into account the diagonals, there is something there that's
-  ;; not in a pure Fournier universe.
-  ;; Which also points out that one kind of way to supplement a Fournier universe
-  ;; with diagonal elements is to make it small and let the wrapping give you 
-  ;; additional diagonal "components" of the universe.
+
+;; NOTE that if the gap over the border is the right size, then considering only
+;; the wrapping directly west/east/south/north, what you have is in effect a
+;; much larger Fournier universe, i.e. one with an additional level.
+;; But when you take into account the diagonals, there is something there that's
+;; not in a pure Fournier universe.
+;; Which also points out that one kind of way to supplement a Fournier universe
+;; with diagonal elements is to make it small and let the wrapping give you 
+;; additional diagonal "components" of the universe.
+
+;; NOTE: If you have (e.g.) five levels, but they are sufficiently
+;; spread out, and your maxpathlen and trunclen params are not too large,
+;; then it's as if you're searching in a 3-level or 4-level world, but
+;; but with fractal repetitions at a higher level (and without diagonal
+;; repetitions until farther out).
+
+
 
 (def walks-per-combo 1000)
 
