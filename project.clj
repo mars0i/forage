@@ -16,7 +16,7 @@
                  [techascent/tech.viz "6.00-beta-16-2"]
                  [io.github.nextjournal/clerk "0.5.346"]
                  [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
-		;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
+                 ;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
                  [metasoarous/oz "2.0.0-alpha5"]
                  [cljplot "0.0.2a-SNAPSHOT"]
                  ;[clojure2d "1.4.4"] ; not required for cljplot, but allows additional choices
@@ -24,6 +24,8 @@
                  [mason "20"]] ; just for Continuous2D
 
   :source-paths ["src/clj"]
+
+  ; :plugins [[cider/cider-nrepl "0.24.0"]] ; FOR CONJURE
 
   ;; TIP:
   ;; Use (into [] (.getInputArguments (java.lang.management.ManagementFactory/getRuntimeMXBean)))
@@ -43,10 +45,11 @@
                                forage.mason.GUI
                                forage.mason.core]}
 
-	     ;; -Xss specifies per-thread max stack size.  If you set it too 
+
+             ;; -Xss specifies per-thread max stack size.  If you set it too 
              ;; small (< 144K) or too large (> 1G), java won't run.
 
-;; Usage tip: lein with-profile +production
+             ;; Usage tip: lein with-profile +production
              :production {;:dependencies [[generateme/fastmath "2.1.8"]
                           :jvm-opts ["-Xms4g"  ; initial heap
                                      "-Xmx18g" ; max heap
