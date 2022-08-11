@@ -53,7 +53,7 @@
   (def half-size 75000) ; then 
   ;; nearest horizontal/vertical distance from outer point to border: 8398.5 units.
   ;; So the shortest horizontal/vertical toroidally across a border: 16797 units,
-  ;; i.e. same as internal largest gap.
+  ;; i.e. almost same as internal largest gap.
 
   ;; 4-LEVEL:
 
