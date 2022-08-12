@@ -142,9 +142,12 @@
   (require '[forage.viz.hanami :as h] :reload)
   (require '[oz.core :as oz])
 
+  (+ 3 (* 3 40))
+
   ;; plot the foodspots alone:
   (oz/start-server!)
-  (oz/view! (h/vega-env-plot env 2000 300))
+  (oz/view! (h/vega-env-plot env 2000 150))
+  (oz/export! (h/vega-env-plot env 2000 125) "yo.svg")
   (oz/view! (h/vega-env-plot env 600 235))
   (oz/export! (h/vega-env-plot env 600 500) "yo.svg")
   (oz/view! (h/vega-env-plot env 600 70))
@@ -154,4 +157,6 @@
   (oz/view! (h/vega-env-plot env 600 10))
   (oz/view! (h/vega-env-plot env 600 5))
 
-)
+) ; nil
+; nil
+; nil
