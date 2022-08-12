@@ -38,9 +38,7 @@ from there.
 ### General notes, vocabulary and notation
 
 - The "standard region" or "region" is the area that counts--it's what 
-  would be displayed, or it's the environment in which agents move.  The
-  result we want is that we can at least display lines as "wrapping" back
-  to the other side of the region if they exist out at one side.
+  would be displayed, or it's the environment in which agents move.  
 - "seg" means line segment, i.e. a pair of coordinate pairs.
 - "bound-" means "boundary-", or as in "upper bound". 
   (It has nothing to do with binding.)
