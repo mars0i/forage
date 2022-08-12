@@ -10,7 +10,7 @@
 ;; It might also be helpful to look at
 ;; doc/exceedingboundaries1.pdf, although that only illustrates certain cases.
 
-;; I recommend that one begin reading at either wrap-segs or wrap-paths.
+;; I recommend that one begin reading below at either wrap-segs or wrap-paths.
 ;; The second is a wrapper (different sense) for the first.
 
 
