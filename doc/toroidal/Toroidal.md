@@ -2,8 +2,12 @@ Usage notes and code notes for forage/toroidal.clj
 ==
 Marshall Abrams
 
-**These are algorithms that implement a toroidal environment, i.e.
-one with periodic boundary conditions.**
+**These are algorithms that help to implement a toroidal environment,
+i.e.  one with periodic boundary conditions, for paths composed of line
+segments.**  This code is primarily oriented toward *display* of paths,
+but could be used in modeling, i.e. prior to display, with some
+additional steps.
+
 
 Not every function is discussed here--only the ones whose operation
 seems less obvious to me.
@@ -26,12 +30,12 @@ seems less obvious to me.
         dimensions.
 *  `"subpath"`: initial string for values of `"label"` key, which are used
              to distinguish different sub-paths.
-The result will be a sequence that can be used in cljplot or Vega-Lite, 
-respectively in a plot of a random walk (or something similar), where 
-the line segments representing the walk may go outside the official 
-boundaries.  Segments that cross a boundary will be duplicated so that
-they come back in at the opposite side, and the walk plot continues
-from there.
+The result will be a sequence that can be used in a library like cljplot
+or Vega-Lite, respectively in a plot of a random walk (or something
+similar), where the line segments representing the walk may go outside
+the official boundaries.  Segments that cross a boundary will be
+duplicated so that they come back in at the opposite side, and the walk
+plot continues from there.
 
 ---
 
