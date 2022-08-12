@@ -66,8 +66,9 @@ understand, I felt.  If the inefficiency really matters (seems
 unlikely), the code could be rewrite in terms of points or raw
 coordinates.
 
-**I recommend that one begin reading at either wrap-segs or wrap-paths.
-The second is a wrapper (different sense) for the first.**
+**I recommend that one begin reading the code at either `wrap-segs` or
+`wrap-paths`. The second is a wrapper (in a different sense) for the
+first.**
 
 
 --- 
@@ -91,55 +92,55 @@ point of the next.
 The first point in a segment is its start point; the second is its
 ending point or "forward point".
 
-We assume that the start point of the first segment is inside the
-standard region.
-
 As we walk through the segments, some segments will have their position
-linearly shifted (by `shift-segs`).  Whenever there's a shift, it will
-persist and be applied to all subsequent segments (unless a later shift
-undoes previous shifts).
+linearly shifted.  This occurs in `wrap-segs` if the first point in the
+path is outside the standard region.  After that it, it might occur in
+`shift-segs`, which is called by `wrap-segs`.  Whenever there's a shift,
+this shift persists and will be applied to all subsequent segments (unless a
+later shift undoes previous shifts).
 
 #### Initial shifting:
 
 If the first point of the first segment is outside the standard region,
-it will be shifted into the region by an amount equal to the width/height
-of the region.  That is, it's "wrapped" before anything starts.  This
-also means that everything else in the sequence after that should be shifted
-by the same amounts, initially.  After that, other shifts may occur.
+it will be shifted into the region by an amount equal to the
+width/height of the region.  That is, it's "wrapped" before anything
+starts.  This also means that everything else in the sequence after that
+should be shifted by the same amounts, initially.  And then after that,
+other shifts may occur.
 
 
 #### Logic of rest of function:
 
 ##### If after applying the current shift, the end point of a segment *is* within the region:
 
-We recurse with shifted segment (`new-seg`) is `conj`ed onto the end of
-output vector `new-segs`, the current shifts are passed as is (in
-`new-sh-x` and `new-sh-y`), and we drop the first segment in the input
-sequence so that we can process the rest of it.
+We recurse with shifted segment (`new-seg`), which is `conj`ed onto the
+end of output vector `new-segs`, the current shifts are passed as is (in
+the variables `new-sh-x` and `new-sh-y`), and we drop the first segment
+in the input sequence so that we can process the rest of it.
 
-Note that it is the call to the `choose-shifts` function that determines
-that the current shifts will be passed on as is.  When the end point of
-the (shifted) segment is within the boundaries, it returns `[0, 0]`, so
-that both `x-sh-dir` and `y-sh-dir` will be equal to 0.  This causes the
-new shift values, `new-sh-x` and `new-sh-y`, to be equal to the old
-values passed in `sh-x` and `sh-y.
+Note that it is the call to the `choose-shifts` that determines that
+the current shifts will be passed on as is.  When the end point of the
+(shifted) segment is within the boundaries, it returns `[0, 0]`, so
+that both `x-sh-dir` and `y-sh-dir` will be equal to 0.  This causes
+the new shift values, `new-sh-x` and `new-sh-y`, to be equal to the
+old values passed in `sh-x` and `sh-y`.
 
 
 ##### If after applying the current shift, the end point is *not* within the region, then:
 
 * We still add the shifted segment `new-seg` onto the end of the
   output sequence `new-segs`, but
-* we also `conj` on a delimiter (`nil`, but other choices could be used), and
+* we also `conj` on a delimiter (`nil`), and
 * as before, we pass on `new-sh-x` and `new-sh-y`, but
 * we *do not remove the current segment from the input sequence*
   to be processed next.
 
-Because the end point of the current segment (after applyng the current
-shifts) is not within the region, we are going to "duplicate" it, but
-with additional shifts.  The goal is to shift it the width of the region
-in one direction or both, so that the new, additionally-shifted segment
-will emerge on the opposite side from where the current segment exited
-the region.
+Because the end point of the current segment (after applying the current
+shifts) is not within the region, we are going to "duplicate" the
+segment, but with additional shifts.  The goal is to shift it the width
+of the region in one direction or both, so that the new,
+additionally-shifted segment will emerge on the opposite side from where
+the current segment exited the region.
 
 As above, the new shift values in `new-sh-x` and `new-sh-y` are a
 function of the return value of `choose-shifts`.  In this case, at
@@ -152,7 +153,7 @@ instead of the first one.
 
 We may have to apply this procedure multiple times, until the last
 added, "duplicate" segment has its end point within the region.  Later,
-the segments will be cut at the boundaries of the region (perhaps only
+the segments may be cut at the boundaries of the region (perhaps only
 by a display routine), and this will create the effect of lines
 "wrapping" around toroidally, i.e. with periodic boundary conditions.
 
@@ -161,38 +162,42 @@ by a display routine), and this will create the effect of lines
 ### `choose-shifts` algorithm
 
 It may be helpful to look at doc/exceedingboundaries1.pdf, which
-illustrates the third case below, but might also help one to think
+illustrates the third case below, and might also help one to think
 through the other two cases.
 
 Each segment treated by this function is assumed to have its
-first point within bound-min and bound-max in both the x and y
+first point within `bound-min` and `bound-max` in both the x and y
 dimensions.  Then the segment either:
-  1. Does not exceed the boundaries at bound-min and bound-max
-     in any direction.  Then [x-dir,y-dir] in the code = [0,0]
-     In this case the shift directions to be returned are [0,0].
+  1. Does not exceed the boundaries at `bound-min` and `bound-max`
+     in any direction.  Then `[x-dir,y-dir]` in the code = `[0,0]`
+     In this case the shift directions to be returned are `[0,0]`.
   2. Exceeds one but not the other; i.e. the segment crosses one
-     boundary. [x-dir,y-dir] = [d,0] or [0,e], where d, e = -1 or 1.
-     Shift direction to be returned is [-d,0] or [0,-e], respectively.
-  3. Exceeds both boundaries: [x-dir,y-dir] = [d,e].
+     boundary. Then `[x-dir,y-dir]` will be = `[d,0]` or `[0,e]`, where
+     `d`, `e` are -1 or 1.  The shift direction to be returned will be
+     `[-d,0]` or `[0,-e]`, respectively.
+  3. Exceeds both boundaries: `[x-dir,y-dir]` = `[d,e]`.
      Then either:
+
      a. The segment crosses through one boundary, and exceeds the other
         simply because after crossing the boundary, it goes so far
-        in a diagonal direction that its endpoint is past bound-min
-        or bound-max in that second dimension.  Then we want to shift
+        in a diagonal direction that its endpoint is past `bound-min`
+        or `bound-max` in that second dimension.  Then we want to shift
         in the first dimensionm but not the second.
         *(See doc/exceedingboundaries1.pdf for a graphical illustration.)*
-        To determine whether to return [-d,0] or [0,-e], we generate
+        To determine whether to return `[-d,0]` or `[0,-e]`, we generate
         the formula for a line running through the segment, and see
-        whether the value of the line function at bound-min, or bound-max
+        whether the value of the line function at `bound-min`, or `bound-max`
         (depending on which is relevant) in one dimension is between
-        bound-min and bound-max in the other dimension.  If so, then
+        `bound-min` and `bound-max` in the other dimension.  If so, then
         the segment crosses through the first border, and should be
         shifted back so that the next variant of the segment is less
         likely (so to speak) to cross the border.  This test may have
         to be done in both dimensions.
+	Or:
+
      b. The segment crosses through both boundaries where they meet,
         i.e. at a corner.  Then we shift in both dimensions, returning
-        [-d,-e].
+        `[-d,-e]`.
 
 ---
 
