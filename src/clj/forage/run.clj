@@ -72,32 +72,47 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; THE IMPORTANT STUFF ...
 
+;; This can be passed as the value of init-loc-fn in order to cause
+;; each foodwalk to start where the previous one ended.
 (defn end-of-walk
-  "Given a three-element foodwalk, if one or more foodspots were found,
-  returns the coordinates of the first one found, assuming that that is
-  where the forager ended up.  If no foodspot was found, returns the
-  last element in the walk.  Note that if geometry is toroidal/periodic,
-  and the walk went outside of the original boundaries, then with
-  no foodspot found, the coordinates will be the actual, un\"wrapped\"
-  coordinates, while if a foodspot was found, it will have the \"wrapped\"
-  coordinates within the original boundaries."
-  [fw]
-  (let [found (first fw)]
-    (if found
-      (mf/foodspot-coords (first (first found))) ; if two or more found, ignore others
-      (last (second fw))))) ; could also use third
+  "If fw is falsey, returns default-loc.  Given a three-element foodwalk
+  fw, if one or more foodspots were found, returns the coordinates of
+  the first one found, assuming that that is where the forager ended up.
+  If no foodspot was found, returns the last element in the walk.  Note
+  that if geometry is toroidal/periodic, and the walk went outside of
+  the original boundaries, then with no foodspot found, the coordinates
+  will be the actual, un\"wrapped\" coordinates, while if a foodspot was
+  found, it will have the \"wrapped\" coordinates within the original
+  boundaries.  
+  A recommended use is to pass (partial end-of-walk some-initial-loc) as
+  the value of init-loc-fn in run-and-collect, possibly via the
+  :init-loc-fn value in params."
+  [default-loc fw]
+  (if fw
+    (if-let [found (first fw)]
+      (mf/foodspot-coords (first found)) ; if two or more found, ignore others
+      (last (second fw))) ; could also use third
+    default-loc))
 
+;; This can be passed as the value of init-loc-fn in order to cause
+;; each foodwalk to start where the previous one ended.
 (defn end-of-walk-if-found
-  "Given a three-element foodwalk, if one or more foodspots were found,
-  returns the coordinates of the first one found, assuming that that is
-  where the forager ended up.  If no foodspot was found, returns nil.
-  If geometry is toroidal/periodic, and the walk went outside of
-  the original boundaries, the coordinates returned will have the
-  \"wrapped\" coordinates within the original boundaries."
-  [fw]
-  (if-let [found (first fw)]
-    (mf/foodspot-coords (first (first found))) ; if two or more found, ignore others
-    nil))
+  "If fw is falsey, returns default-loc.  Given a three-element foodwalk
+  fw, if one or more foodspots were found, returns the coordinates of
+  the first one found, assuming that that is where the forager ended up.
+  If no foodspot was found, returns nil.  If geometry is
+  toroidal/periodic, and the walk went outside of the original
+  boundaries, the coordinates returned will have the \"wrapped\"
+  coordinates within the original boundaries.
+  A recommended use is to pass (partial end-of-walk some-initial-loc) as
+  the value of init-loc-fn in run-and-collect, possibly via the
+  :init-loc-fn value in params."
+  [default-loc fw]
+  (if fw
+    (if-let [found (first fw)]
+      (mf/foodspot-coords (first found)) ; if two or more found, ignore others
+      nil)
+    default-loc))
 
 
 ;; We allow passing init-loc separately to allow chains of runs 
