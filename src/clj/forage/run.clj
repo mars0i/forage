@@ -362,7 +362,8 @@
    (conj (vec prev-rows) values)))
 
 (defn append-labels
-  "Appends a new row of labels.  param-names is a sequence containing
+  "Appends a new row of labels, i.e. param-names.  If prev-rows is not
+  given, it defaults to [].  param-names is a sequence containing
   strings, keywords, or symbols, which will be converted to strings as
   needed."
   ([param-names]
