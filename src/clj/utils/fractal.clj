@@ -100,13 +100,14 @@
 ;; See Mandelbrot's _The Fractal Geometry of Nature_ pp. 86-87 and 95-96,
 ;; or one of its predecessor books.
 (def fournierize
-  "Given a sequence of coordinate pairs (points), returns a sequence
+  "([points sep multiplier levels])
+  Given a sequence of coordinate pairs (points), returns a sequence
   containing those points and \"fournier children\", i.e. points that
   are (* sep multiplier) up, down, left, and to the right of each
-  original point.  Then iterates, performing the same operation on all
-  of the points at a smaller scale, levels times.  multiplier should be
-  < 1.  (Note that the number of points is increased exponentially,
-  multiplying by 5 each time.)"
+  original point.  Then the function iterates, performing the same 
+  operation on all of the points at a smaller scale, levels times.  
+  multiplier should be < 1.  (Note that the number of points is increased
+  exponentially, multiplying by 5 each time.)"
   (fournierizer fournier-children))
 
 (def eight-fournierize
