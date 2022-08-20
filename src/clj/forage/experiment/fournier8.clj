@@ -6,7 +6,8 @@
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
             [utils.fractal :as uf]
-            [utils.math :as m]))
+            [utils.math :as m]
+            [clojure.math.numeric-tower :as nt :refer [expt]]))
 
 ;(def all-exponents [1.001 1.5 2.0 2.5 3.0])
 ;(comment (count all-exponents) )
@@ -32,15 +33,23 @@
 (def walks-per-combo 1000)
 
 (def half-size 75000) ; half the full width of the env
-(def fournier-init-offset 200000)
+
 (def fournier-mult 0.25)
-(def fournier-lvls 5)
+(def fournier-levels 5)
+;; With above params, minimum distance between foodspots = 976.5625:
+(def fournier-init-offset 1000000) 
+;(def fournier-init-offset 200000) ; min dist = 195.3125
+
+(comment
+  ;; Minimium distance between foodspots
+  (* fournier-init-offset (nt/expt fournier-mult fournier-levels))
+)
 
 (def perc-radius 1)
 
 (def params (sorted-map ; sort so labels match values
              :env-size            (* 2 half-size)
-             :env-discretization  (* fournier-init-offset (reduce * (repeat fournier-lvls fournier-mult)))
+             :env-discretization  (* fournier-init-offset (reduce * (repeat fournier-levels fournier-mult)))
              :powerlaw-min        perc-radius ; s/b >= per-radius (Viswanathan et al typically make them equal)
              :maxpathlen          (* 5 half-size)  ; for straight walks, don't go too far
              :perc-radius         perc-radius ; distance that an animal can "see" in searching for food
@@ -57,7 +66,7 @@
                (uf/fournierize [[half-size half-size]]
                                fournier-init-offset
                                fournier-mult
-                               fournier-lvls)))
+                               fournier-levels)))
 
 ;(f/remove-center (params :env-size) (params :env-size)  ... )
 
@@ -70,8 +79,8 @@
   (require '[forage.viz.hanami :as h] :reload)
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (oz/view! (h/vega-env-plot env 2000 150))
-  (oz/export! (h/vega-env-plot env 2000 125) "yo.svg")
+  (oz/view! (h/vega-env-plot env 5000 150))
+  (oz/export! (h/vega-env-plot env 5000 150) "yo.svg")
 )
 
 (comment
