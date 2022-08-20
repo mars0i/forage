@@ -204,10 +204,11 @@
          data-filename (str base-filename "data.csv")
          base-state-filename (str base-filename "state") ; for PRNG state files
          sorted-params (into (sorted-map) params) ; for writing param file
-         param-labels (append-labels (cons "seed" (keys sorted-params)))
+         param-labels (append-labels (concat ["namespace" "seed"] (keys sorted-params)))
          param-data (append-row param-labels
-                                (cons (str "\"" seed "\"") ; keep Excel from making it a float
-                                      (vals sorted-params)))
+                                (cons (str *ns*)
+                                      (cons (str "\"" seed "\"") ; keep Excel from making it a float
+                                            (vals sorted-params))))
          data$ (atom (append-labels (into       ; header row for data csv
                                      ["initial dir" "exponent" "segments"
                                       "found" "efficency" "total path len"]
