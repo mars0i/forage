@@ -29,10 +29,16 @@
 ;; repetitions until farther out).
 
 
+;; TODO:
+;; Try both with start in center (which is what I did before in ForagePSA)
+;; and start from end of last walk.
+;; Q: Do I need to do multiple start-from-last-walk runs?  Cap their max length?
+
+
 (def fournier-mult 0.25)
 (def fournier-levels 5)
 ;; With above params, minimum distance between foodspots is:
-(def fournier-init-offset 2000000) ; min dist = 1953.125
+(def fournier-init-offset 2000000) ; min distance = 1953.125
 ;(def fournier-init-offset 1000000) ; min dist = 976.5625:
 ;(def fournier-init-offset 200000) ; min dist = 195.3125
 
