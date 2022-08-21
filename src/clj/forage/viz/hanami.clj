@@ -190,7 +190,9 @@
                   env-sz plot-dim 0))
 
 (defn vega-env-plot
-  "Plot foodspot display radii on where foodspots from env are."
+  "Plot foodspot display radii on where foodspots from env are.  plot-dim
+  is the Vega-Lite dimension.  display-radius is the Vega-Lite size for
+  foodspots."
   [env plot-dim display-radius]
   (vega-food-plot (add-point-labels "food" (mf/env-foodspot-coords env))
                   (mf/env-size env)
