@@ -222,7 +222,7 @@
      (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
        (cl-format true "~{~c~}group ~d [exponent ~f, init-dir ~a] ..."   ; ~{~c~} means stuff all chars (~c) in sequence arg here
-                  (if (misc/iced-jackin?) nil (repeat 80 \backspace)) ; don't use BS in dumb terminal
+                  nil ; (if (misc/iced-jackin?) nil (repeat 80 \backspace)) ; don't use BS in dumb terminal
                   (swap! iter-num$ inc) exponent init-dir) ; backspaces over prev version of this line
        (flush)
        (r/write-state (str base-state-filename
