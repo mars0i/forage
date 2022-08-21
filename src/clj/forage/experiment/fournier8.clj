@@ -29,20 +29,25 @@
 ;; repetitions until farther out).
 
 
-
-(def walks-per-combo 1000)
-
-(def half-size 75000) ; half the full width of the env
-
 (def fournier-mult 0.25)
 (def fournier-levels 5)
-;; With above params, minimum distance between foodspots = 976.5625:
-(def fournier-init-offset 1000000) 
+;; With above params, minimum distance between foodspots is:
+(def fournier-init-offset 2000000) ; min dist = 1953.125
+;(def fournier-init-offset 1000000) ; min dist = 976.5625:
 ;(def fournier-init-offset 200000) ; min dist = 195.3125
+
+(def half-size (* 0.375 fournier-init-offset)) ; for offset 2M, this makes dist to edge 1/2 dist between outer points of largest strus
+;(def half-size 75000) ; half the full width of the env
+
+(comment
+(apply min (map first (mf/env-foodspot-coords env))) ; 83984.375
+(* 2 (apply min (map first (mf/env-foodspot-coords env)))) ; 167968.75
+(- 583984.375 416015.625) ; 167968.75
+)
 
 (comment
   ;; Minimium distance between foodspots
-  (* fournier-init-offset (nt/expt fournier-mult fournier-levels))
+  (* fournier-init-offset (nt/expt fournier-mult fournier-levels)) ; 1953.125
 )
 
 (def perc-radius 1)
@@ -79,14 +84,14 @@
   (require '[forage.viz.hanami :as h] :reload)
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (oz/view! (h/vega-env-plot env 5000 150))
+  (oz/view! (h/vega-env-plot env 2000 2000))
   (oz/export! (h/vega-env-plot env 5000 150) "yo.svg")
 )
 
 (comment
   (def seed (r/make-seed))
   (def data (time (fr/levy-experiments fr/default-file-prefix env params
-                                       [1.8 2.0 2.5 3.0] 
+                                       [1.5 2.0 2.5] 
                                        ; [1.001 1.5 1.8 2.0 2.5 3.0] 
                                        100 seed look-fn)))
-  )
+ )
