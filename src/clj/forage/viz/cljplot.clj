@@ -41,6 +41,7 @@
 ;; future.  They're primarily for testing.
 
 
+;; TODO Add foodspots
 ;; Based on https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288501054
 ;; Notes on cljplot usage:
 ;;    in arg to cb/series :
