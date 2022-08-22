@@ -62,9 +62,9 @@
              :env-size            (* 2 half-size)
              :env-discretization  (* fournier-init-offset (reduce * (repeat fournier-levels fournier-mult)))
              :powerlaw-min        perc-radius ; s/b >= per-radius (Viswanathan et al typically make them equal)
-             :maxpathlen          (* 10 half-size)  ; for straight walks, don't go too far
+             :maxpathlen          (* 20 half-size)  ; for straight walks, don't go too far
              :perc-radius         perc-radius ; distance that an animal can "see" in searching for food
-             :trunclen            (* 1 half-size) ; max length of any line segment
+             :trunclen            (* 2 half-size) ; max length of any line segment
              :init-loc-fn         (partial fr/end-of-walk [half-size half-size]) ; start from end of previous foodwalk, after starting in center.
              ;; Always start in center:
              ;:init-loc-fn         (constantly [half-size half-size])
@@ -94,13 +94,15 @@
   (oz/export! (h/vega-env-plot env 5000 150) "yo.svg")
 
   (def seed (r/make-seed))
-  (def rng (r/make-well19937 seed))
   (def data (time (fr/levy-experiments fr/default-file-prefix env params
                                        [1.5 2.0 2.5] 
                                        ; [1.001 1.5 1.8 2.0 2.5 3.0] 
                                        100 seed look-fn)))
 
-  (let [fw (time (fr/levy-run rng look-fn nil params 2 [half-size half-size]))]
-    (oz/view! (h/vega-envwalk-plot env 2000 1 2000 [fw])))
+  (def rng (r/make-well19937 seed))
 
- )
+  (time
+    (let [fw (time (fr/levy-run rng look-fn nil params 2 [half-size half-size]))]
+      (oz/view! (h/vega-envwalk-plot env 2000 1 2000 [fw]))))
+
+)
