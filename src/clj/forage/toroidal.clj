@@ -4,7 +4,7 @@
   (:require [utils.math :as m]))
 
 
-;; SEE doc/Toroidal.md for usage, vocabulary, notation, and
+;; SEE doc/toroidal/Toroidal.md for usage, vocabulary, notation, and
 ;; explanation of less obvious algorithms below.
 
 ;; It might also be helpful to look at
