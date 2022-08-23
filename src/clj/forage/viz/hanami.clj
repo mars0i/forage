@@ -8,6 +8,7 @@
             [forage.mason.foodspot :as mf]
             [forage.food :as f]
             [forage.walks :as w]
+            [forage.toroidal :as tor]
             [utils.math :as m]))
 
 ;; Note field names have to be strings, not keywords, in order
@@ -199,6 +200,20 @@
                   plot-dim
                   display-radius))
 
+;; TODO add a nice header
+(defn vega-envwalk-plot
+  "Simple plot that plots whatever foodspots are in env and then
+  plots foodwalks and their hypothetical extensions."
+  [env plot-dim stroke-width display-radius raw-walk]
+  (let [env-plot (vega-env-plot env plot-dim display-radius)
+        data-dim (mf/env-size env)
+        toroidal-walk (tor/toroidal-to-vega-lite "walk"
+                        (tor/wrap-path 0 data-dim raw-walk))
+        walk-plot (vega-walk-plot plot-dim data-dim stroke-width toroidal-walk)]
+    (hc/xform
+      ht/layer-chart
+      :LAYER (cons env-plot walk-plot))))
+
 (defn did-couldve-walk-plot
   "Given a single foodwalk consisting of a sequence of found foodspots,
   a food walk (a sequence of coordinates until the point at which food was 
@@ -211,7 +226,7 @@
        (vega-walk-plot plot-dim data-dim stroke-width (add-walk-labels "walk" walk))]))
 
 ;; TODO add a nice header
-(defn vega-envwalk-plot
+(defn vega-didcould-envwalk-plot
   "Simple plot that plots whatever foodspots are in env and then
   plots foodwalks and their hypothetical extensions."
   [env plot-dim stroke-width display-radius foodwalks]
