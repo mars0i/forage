@@ -1,6 +1,6 @@
 ;; Functions to manipulate search paths so that they "wrap" as if 
 ;; in a toroidal environment, i.e. one with periodic boundary conditions.
-(ns forage.toroidal
+(ns utils.toroidal
   (:require [utils.math :as m]))
 
 
