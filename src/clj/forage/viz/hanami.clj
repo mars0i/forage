@@ -207,7 +207,7 @@
   [env plot-dim stroke-width display-radius raw-walk]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
         data-dim (mf/env-size env)
-        toroidal-walk (add-walk-labels "walk" raw-walk) ; DEBUG
+        toroidal-walk (tor/toroidal-to-vega-lite "walk" (tor/wrap-path 0 data-dim raw-walk))
         walk-plot (vega-walk-plot plot-dim data-dim stroke-width toroidal-walk)]
     (hc/xform
       ht/layer-chart

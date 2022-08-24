@@ -36,12 +36,13 @@
 
 
 (def fournier-mult 0.25)
-(def fournier-levels 5)
+(def fournier-levels 5) ; <-- THIS ONE 
+;(def fournier-levels 4) ; FOR TESTING
 ;; With above params, minimum distance between foodspots is:
 ;(def fournier-init-offset 2000000) ; min distance = 1953.125
-(def fournier-init-offset  1500000) ; min distance = 1464.84375
+(def fournier-init-offset  1500000) ; min distance = 1464.84375   <-- THIS ONE
 ;(def fournier-init-offset 1000000) ; min dist = 976.5625:
-;(def fournier-init-offset 200000) ; min dist = 195.3125
+;(def fournier-init-offset 200000) ; min dist = 195.3125  ; FOR TESTING
 
 (def half-size (* 0.375 fournier-init-offset)) ; for offset 2M, this makes dist to edge 1/2 dist between outer points of largest strus
 ;(def half-size 75000) ; half the full width of the env
@@ -61,9 +62,10 @@
              :env-size            (* 2 half-size)
              :env-discretization  (* fournier-init-offset (reduce * (repeat fournier-levels fournier-mult)))
              :powerlaw-min        perc-radius ; s/b >= per-radius (Viswanathan et al typically make them equal)
+ ; THIS ONE ->   :maxpathlen          (* 40 half-size)  ; for straight walks, don't go too far
              :maxpathlen          (* 40 half-size)  ; for straight walks, don't go too far
              :perc-radius         perc-radius ; distance that an animal can "see" in searching for food
-             :trunclen            (* 1 half-size) ; max length of any line segment
+             :trunclen            (* 5 half-size) ; max length of any line segment
              :init-loc-fn         (partial fr/end-of-walk [half-size half-size]) ; start from end of previous foodwalk, after starting in center.
              ;; Always start in center:
              ;:init-loc-fn         (constantly [half-size half-size])
@@ -88,28 +90,33 @@
   ;; Display foodspot plots
   (require '[forage.viz.hanami :as h] :reload)
   (require '[oz.core :as oz])
-  (require '[forage.toroidal :as tor])
+  (require '[utils.toroidal :as tor])
 
   (oz/start-server!)
   (oz/view! (h/vega-env-plot env 2000 1500))
   (oz/export! (h/vega-env-plot env 5000 150) "yo.svg")
 
   (def seed (r/make-seed))
+  (def rng (r/make-well19937 seed))
+
+  ;(-> (wrap-path bound-min bound-max path)
+  ;    (toroidal-to-vega-lite "subpath"))
+
+  (def fw (time (fr/levy-run rng look-fn nil params 2 [half-size half-size])))
+  (class (first fw))
+  (count (nth fw 1))
+  (count (nth fw 2))
+  (time (oz/view! (h/vega-didcould-envwalk-plot env 2000 1 1000 [fw])))
+  (time (oz/view! (h/vega-envwalk-plot env 2000 2 1000 (nth fw 1)))) ; did
+  (time (oz/view! (h/vega-envwalk-plot env 2000 2 1000 (nth fw 2)))) ; couldve
+  (def yo (h/vega-envwalk-plot env 2000 1 2000 (nth fw 1))) ; did
+  (count yo)
+  (map count yo)
+  (time (oz/view! yo))
+
   (def data (time (fr/levy-experiments fr/default-file-prefix env params
                                        [1.5 2.0 2.5] 
                                        ; [1.001 1.5 1.8 2.0 2.5 3.0] 
                                        100 seed look-fn)))
-
-  (def rng (r/make-well19937 seed))
-
-;(-> (wrap-path bound-min bound-max path)
-;    (toroidal-to-vega-lite "subpath"))
-
-  ;; Includes counterfactual path after food, but not toroidal:
-    (def fw (time (fr/levy-run rng look-fn nil params 2 [half-size half-size])))
-    (class (first fw))
-    (time (oz/view! (h/vega-didcould-envwalk-plot env 2000 1 2000 [fw])))
-    (time (oz/view! (h/vega-envwalk-plot env 2000 1 2000 (nth fw 2)))) ; couldve
-    (time (oz/view! (h/vega-envwalk-plot env 2000 1 2000 (nth fw 1)))) ; did
 
 )
