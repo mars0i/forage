@@ -13,10 +13,71 @@
 ;; I recommend that one begin reading below at either wrap-segs or wrap-paths.
 ;; The second is a wrapper (different sense) for the first.
 
+(declare add-walk-labels choose-shifts full-shift nil-delimited-to-ptseqs 
+         outside-dir points-to-segs segs-to-points shift-seg 
+         toroidal-to-cljplot toroidal-to-vega-lite wrap-path wrap-segs)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; WRAP-PATH
+;; Takes a sequence of points, turns it into a sequence of segments,
+;; passes that to wrap-segs, and takes the output and turns it into a
+;; sequence of points with delimiters between shifted sequences.
+
+(defn wrap-path
+  "Given a sequence of points representing a path connected by line
+  segments, returns a transformed path in which segments that would go
+  beyond the boundaries are \"duplicated\" with new segments shifted
+  so that all parts of the original segment would get displayed
+  within the boundaries.  A sequence of points from such segments
+  are returned, where \"duplicates\" are by nils."
+  [bound-min bound-max points]
+  (->> (points-to-segs points)
+       (wrap-segs bound-min bound-max)
+       (segs-to-points)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; WRAP-SEGS AND ITS SUPPORT FUNCTIONS
 ;; Called by wrap-path.
+
+;; SEE doc/Toroidal.md for explanation
+;;
+;; This algorithm and the one in outside-dirs are derived from generateme's
+;; correct-path function at 
+;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
+;; https://github.com/generateme/cljplot/blob/f272932c0228273f293a834e6c19c50d0374d3da/sketches/examples.clj#L572
+(defn wrap-segs
+  "Given a sequence of line segments (pairs of pairs of numbers)
+  representing a path connected by line segments, returns a transformed
+  sequence in which segments whose second point that would go beyond the
+  boundaries are \"duplicated\" with a new segment that is like the
+  previous version, but shifted so that, if it's short enough, the
+  duplicate ends within boundaries.  If it doesn't end within the
+  boundaries, another \"duplicate\" will be created that's further
+  shifted, and so on, until there is a duplicate that ends within the
+  boundaries.  \"Duplicate\" segments are separated by nils."
+  [bound-min bound-max segments]
+  (let [width (- bound-max bound-min)
+        [first-coord-x first-coord-y] (first (first segments))    ; If start point of first seg
+        init-sh-x (full-shift bound-min bound-max first-coord-x)  ;  is outside boundaries, shift
+        init-sh-y (full-shift bound-min bound-max first-coord-y)] ;  it in (and entire sequence).
+    (loop [new-segs [], sh-x init-sh-x, sh-y init-sh-y, segs segments]
+      (if-not segs
+        new-segs
+        (let [new-seg (shift-seg sh-x sh-y (first segs))
+              [x-sh-dir y-sh-dir] (choose-shifts bound-min bound-max new-seg)
+              [new-sh-x new-sh-y] [(+ sh-x (* x-sh-dir width))
+                                   (+ sh-y (* y-sh-dir width))]]
+          (if (and (== new-sh-x sh-x)
+                   (== new-sh-y sh-y))
+            (recur (conj new-segs new-seg)
+                   new-sh-x new-sh-y
+                   (next segs))
+            (recur (conj new-segs new-seg nil)
+                   new-sh-x new-sh-y
+                   segs))))))) ; This will result in the next iteration adding 
+                               ; the same seg after nil, but with new shifts.
+                               ; We'll keep doing that until the forward end
+                               ; (new-x2, new-y2) no longer goes beyond boundary.
 
 
 ;; Note this can't be replaced by clojure.core/compare in any simple
@@ -127,55 +188,10 @@
      [(+ x2 sh-x) (+ y2 sh-y)]]))
 
 
-;; SEE doc/Toroidal.md for explanation
-;;
-;; This algorithm and the one in outside-dirs are derived from generateme's
-;; correct-path function at 
-;; https://clojurians.zulipchat.com/#narrow/stream/197967-cljplot-dev/topic/periodic.20boundary.20conditions.2Ftoroidal.20world.3F/near/288499104
-;; https://github.com/generateme/cljplot/blob/f272932c0228273f293a834e6c19c50d0374d3da/sketches/examples.clj#L572
-(defn wrap-segs
-  "Given a sequence of line segments (pairs of pairs of numbers)
-  representing a path connected by line segments, returns a transformed
-  sequence in which segments whose second point that would go beyond the
-  boundaries are \"duplicated\" with a new segment that is like the
-  previous version, but shifted so that, if it's short enough, the
-  duplicate ends within boundaries.  If it doesn't end within the
-  boundaries, another \"duplicate\" will be created that's further
-  shifted, and so on, until there is a duplicate that ends within the
-  boundaries.  \"Duplicate\" segments are separated by nils."
-  [bound-min bound-max segments]
-  (let [width (- bound-max bound-min)
-        [first-coord-x first-coord-y] (first (first segments))    ; If start point of first seg
-        init-sh-x (full-shift bound-min bound-max first-coord-x)  ;  is outside boundaries, shift
-        init-sh-y (full-shift bound-min bound-max first-coord-y)] ;  it in (and entire sequence).
-    (loop [new-segs [], sh-x init-sh-x, sh-y init-sh-y, segs segments]
-      (if-not segs
-        new-segs
-        (let [new-seg (shift-seg sh-x sh-y (first segs))
-              [x-sh-dir y-sh-dir] (choose-shifts bound-min bound-max new-seg)
-              [new-sh-x new-sh-y] [(+ sh-x (* x-sh-dir width))
-                                   (+ sh-y (* y-sh-dir width))]]
-          (if (and (== new-sh-x sh-x)
-                   (== new-sh-y sh-y))
-            (recur (conj new-segs new-seg)
-                   new-sh-x new-sh-y
-                   (next segs))
-            (recur (conj new-segs new-seg nil)
-                   new-sh-x new-sh-y
-                   segs))))))) ; This will result in the next iteration adding 
-                               ; the same seg after nil, but with new shifts.
-                               ; We'll keep doing that until the forward end
-                               ; (new-x2, new-y2) no longer goes beyond boundary.
-
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; WRAP-PATH AND ITS SUPPORT FUNCTIONS (except for wrap-segs, which is above)
-;;
-;; Takes a sequence of points, turns it into a sequence of segments,
-;; passes that to wrap-segs, and takes the output and turns it into a
-;; sequence of points with delimiters between shifted sequences.
-
+;; WRAP-PATH SUPPORT FUNCTIONS (except for wrap-segs)
 
 ;; SEE doc/Toroidal.md for explanation
 (defn segs-to-points
@@ -206,18 +222,6 @@
   [points]
   (partition 2 1 points))
 
-(defn wrap-path
-  "Given a sequence of points representing a path connected by line
-  segments, returns a transformed path in which segments that would go
-  beyond the boundaries are \"duplicated\" with new segments shifted
-  so that all parts of the original segment would get displayed
-  within the boundaries.  A sequence of points from such segments
-  are returned, where \"duplicates\" are by nils."
-  [bound-min bound-max points]
-  (->> (points-to-segs points)
-       (wrap-segs bound-min bound-max)
-       (segs-to-points)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; CONVERSION/ADAPTER FUNCTIONS
@@ -231,24 +235,6 @@
   [pts]
   (replace {nil [##NaN ##NaN]} pts))
 
-(defn nil-delimited-to-ptseqs
-  "Convert a sequence of nil-delimited coordinates to a sequence of 
-  sequences (of points between the nils)."
-  [pts]
-  (remove (fn [ptseq] (= '(nil) ptseq))
-          (partition-by nil? pts)))
-
-;; Copied from forage/viz/hanami.clj
-(defn add-walk-labels
-  "Given a sequence of pairs representing x,y coordinates, returns a
-  Vega-Lite data specification in the form of a sequence of maps,
-  where the coordinates are values for keys \"x\" and \"x\", and the 
-  same \"label\" key and value is added to each map.  In addition,
-  each map is given an \"ord\" key with increasing integers as values.
-  This can be used with the Vega-Lite \"order\" key."
-  [label pts]
-  (map (fn [[x y] n] {"x" x, "y" y, "ord" n, "label" label})
-       pts (range)))
 
 (defn toroidal-to-vega-lite
   "Given a path generated by toroidal/wrap-path in pts, in which
@@ -263,4 +249,24 @@
         ptseq-labels (map (partial str base-label) (range))]
     (flatten
      (map add-walk-labels ptseq-labels ptseqs))))
+
+
+(defn nil-delimited-to-ptseqs
+  "Convert a sequence of nil-delimited coordinates to a sequence of 
+  sequences (of points between the nils)."
+  [pts]
+  (remove (fn [ptseq] (= '(nil) ptseq))
+          (partition-by nil? pts)))
+
+
+(defn add-walk-labels
+  "Given a sequence of pairs representing x,y coordinates, returns a
+  Vega-Lite data specification in the form of a sequence of maps,
+  where the coordinates are values for keys \"x\" and \"x\", and the 
+  same \"label\" key and value is added to each map.  In addition,
+  each map is given an \"ord\" key with increasing integers as values.
+  This can be used with the Vega-Lite \"order\" key."
+  [label pts]
+  (map (fn [[x y] n] {"x" x, "y" y, "ord" n, "label" label})
+       pts (range)))
 
