@@ -110,7 +110,7 @@
   (count (nth fw 1))
   (count (nth fw 2))
   (time (oz/view! (h/vega-didcould-envwalk-plot env 2000 1 1000 [fw])))
-  (time (oz/view! (h/vega-didcould-envwalk-plot env 2000 1 400 [fw])))
+  (time (oz/view! (h/vega-didcould-envwalk-plot env 2000 1 100 [fw])))
   (time (oz/view! (h/vega-envwalk-plot env 2000 2 100 (nth fw 1)))) ; did
   (time (oz/view! (h/vega-envwalk-plot env 2000 2 1000 (nth fw 2)))) ; couldve
   (def yo (h/vega-envwalk-plot env 2000 1 2000 (nth fw 1))) ; did
