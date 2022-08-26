@@ -34,11 +34,11 @@
   "Constructs a Vega-Lite random walk plot from (vega-lite-ified) data
   over the range (2*quadrant-sz x 2*quandrant-sz), with physical size 
   plot-dim x plot-dim.  Lines will be plotted with thickness stroke-width,
-  or 1.0 if stroke-width is falsey.  If there are additional Vega-Lite specs
-  to add, they can be entered in a map as an additional argument."
+  or 1.0 if stroke-width is falsey.  clip? is a boolean that determines 
+  whether lines that go beyond the boundaries are clipped at the boundary."
   ([plot-dim data-dim stroke-width data]
-   (vega-walk-plot plot-dim 0 data-dim stroke-width data))
-  ([plot-dim data-bound-min data-bound-max stroke-width data & colorscheme-seq]
+   (vega-walk-plot plot-dim 0 data-dim stroke-width true data))
+  ([plot-dim data-bound-min data-bound-max stroke-width clip? data & colorscheme-seq]
   (-> (hc/xform ht/line-chart
                 :DATA data
                 :XSCALE {"domain" [data-bound-min data-bound-max]}
@@ -53,6 +53,7 @@
                  )
       (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
       (assoc-in [:encoding :order :type] "ordinal") ; gets rid of warning on :order
+      (assoc-in [:mark :clip] (if clip? "true" "false"))
       (assoc-in [:mark :strokeWidth] (or stroke-width 1.0)))))
 
 (defn add-point-labels
