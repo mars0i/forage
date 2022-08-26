@@ -36,9 +36,9 @@
 
 
 (def fournier-mult 0.25)
-;(def fournier-levels 5) ; <-- THIS ONE 
-;(def fournier-levels 4) ; FOR TESTING
-(def fournier-levels 3) ; FOR TESTING
+;(def fournier-levels 5) 
+;(def fournier-levels 4)
+(def fournier-levels 3)
 ;; With above params, minimum distance between foodspots is:
 ;(def fournier-init-offset 2000000) ; min distance = 1953.125
 ;(def fournier-init-offset  1500000) ; min distance = 1464.84375   <-- THIS ONE
@@ -66,9 +66,9 @@
              :env-discretization  (* fournier-init-offset (reduce * (repeat fournier-levels fournier-mult)))
              :powerlaw-min        perc-radius ; s/b >= per-radius (Viswanathan et al typically make them equal)
  ; THIS ONE ->   :maxpathlen          (* 40 half-size)  ; for straight walks, don't go too far
-             :maxpathlen          (* 50 half-size)  ; for straight walks, don't go too far
+             :maxpathlen          (* 100 half-size)  ; for straight walks, don't go too far
              :perc-radius         perc-radius ; distance that an animal can "see" in searching for food
-             :trunclen            (* 2 half-size) ; max length of any line segment
+             :trunclen            (* 1 half-size) ; max length of any line segment
              :init-loc-fn         (partial fr/end-of-walk [half-size half-size]) ; start from end of previous foodwalk, after starting in center.
              ;; Always start in center:
              ;:init-loc-fn         (constantly [half-size half-size])
@@ -96,7 +96,7 @@
   (require '[utils.toroidal :as tor])
 
   (oz/start-server!)
-  (oz/view! (h/vega-env-plot env 2000 1500))
+  (oz/view! (h/vega-env-plot env 800 150))
   (oz/export! (h/vega-env-plot env 5000 150) "yo.svg")
 
   (def seed (r/make-seed))
@@ -107,13 +107,12 @@
 
   (def fw (time (fr/levy-run rng look-fn nil params 2 [half-size half-size])))
   (class (first fw))
+  (mf/foodspot-coords (first (first fw)))
   (count (nth fw 1))
   (count (nth fw 2))
-  (time (oz/view! (h/vega-didcould-envwalk-plot env 2000 1 1000 [fw])))
-  (time (oz/view! (h/vega-didcould-envwalk-plot env 2000 1 100 [fw])))
-  (time (oz/view! (h/vega-envwalk-plot env 2000 2 100 (nth fw 1)))) ; did
+  (time (oz/view! (h/vega-envwalk-plot env 800 0.5 100 (nth fw 1)))) ; did
   (time (oz/view! (h/vega-envwalk-plot env 2000 2 1000 (nth fw 2)))) ; couldve
-  (def yo (h/vega-envwalk-plot env 2000 1 2000 (nth fw 1))) ; did
+  (time (oz/view! (h/vega-didcould-envwalk-plot env 800 1 100 [fw])))
   (count yo)
   (map count yo)
   (time (oz/view! yo))
