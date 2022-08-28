@@ -114,6 +114,12 @@
       nil)
     default-loc))
 
+(defn random-foodspot
+  [env fw]
+  (let [foodspots (mf/env-foodspot-coords env)]
+    ))
+
+
 
 ;; We allow passing init-loc separately to allow chains of runs 
 ;; representing the foraging behavior of a single individual that
