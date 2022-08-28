@@ -108,8 +108,8 @@
   (time (oz/view! (h/vega-didcould-envwalk-plot env 800 1 100 [fw])))
 
   (def data (time (fr/levy-experiments fr/default-file-prefix env params
-                                       [1.5 2.0 2.5] 
-                                       ; [1.001 1.5 2.0 2.5 3.0] 
-                                       100 seed look-fn)))
+                                       ;[1.5 2.0 2.5] 
+                                       [1.001 1.5 2.0 2.5 3.0] 
+                                       1000 seed look-fn)))
 
 )
