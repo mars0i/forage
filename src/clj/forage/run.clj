@@ -114,6 +114,8 @@
       nil)
     default-loc))
 
+;; This can be passed as the value of init-loc-fn in order to cause
+;; each foodwalk to at a random foodspot in env
 (defn random-foodspot
   [env fw]
   (let [foodspots (mf/env-foodspot-coords env)]
@@ -227,7 +229,7 @@
                 walks-per-combo)
      (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
-       (cl-format true "~{~c~}group ~d [exponent ~f, init-dir ~a] ..."   ; ~{~c~} means stuff all chars (~c) in sequence arg here
+       (cl-format true "~{~c~}group ~d [exponent ~f, init-dir ~a] ...\n"   ; ~{~c~} means stuff all chars (~c) in sequence arg here
                   nil ; (if (misc/iced-jackin?) nil (repeat 80 \backspace)) ; don't use BS in dumb terminal
                   (swap! iter-num$ inc) exponent init-dir) ; backspaces over prev version of this line
        (flush)
