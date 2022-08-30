@@ -15,6 +15,7 @@
            [org.apache.commons.rng.simple RandomSource] ; 1.4
            [org.apache.commons.rng.core RandomProviderDefaultState] ; 1.4
            [org.apache.commons.rng.core.source32 AbstractWell Well19937c Well44497b] ; 1.4
+           [org.apache.commons.rng.sampling ListSampler] ; 1.4
            [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler SamplerBase] ; 1.4
            ;[org.apache.commons.statistics.distribution ParetoDistribution] ; 1.4, I think, but not Mavenized yet
            [java.io
@@ -234,22 +235,7 @@
 
 
 (defn next-int
-  ([rng] (.nextInt rng))
-  ([rng high] (loop [x (next-int rng)] ; FIXME
-                (if (< x high)
-                  x
-                  (recur (next-int rng)))))
-  ([rng low high] (loop [x (next-int rng)] ; FIXME
-                    (if (and (< x high) (>= x low))
-                      x
-                      (recur (next-int rng))))))
-
-(comment
-  (def rng (make-well19937))
-  (next-int rng)
-  (next-int rng 10)
-  (next-int rng 10 20)
-)
+  ([rng] (.next rng)))
 
 ;; Apparently, the specializers have to be concrete classes; interfaces and 
 ;; abstract classes don't seem to work.  Too bad--it would save duplication.
@@ -368,3 +354,14 @@
   values outside of it."
   ([dist x] (.cumulativeProbability dist x))
   ([dist low high x] (trunc-cumulative dist low high x)))
+
+(defn sample-from-coll
+  "Returns num-samples elements randomly selected without replacement 
+  from collection xs."
+  [rng xs num-samples]
+  (ListSampler/sample rng xs num-samples))
+
+(comment
+  (def rng (make-well19937 42))
+  (sample-from-coll rng (range 50) 5)
+)
