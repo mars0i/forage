@@ -15,7 +15,7 @@
            [org.apache.commons.rng.simple RandomSource] ; 1.4
            [org.apache.commons.rng.core RandomProviderDefaultState] ; 1.4
            [org.apache.commons.rng.core.source32 AbstractWell Well19937c Well44497b] ; 1.4
-           [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler] ; 1.4
+           [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler SamplerBase] ; 1.4
            ;[org.apache.commons.statistics.distribution ParetoDistribution] ; 1.4, I think, but not Mavenized yet
            [java.io
             ByteArrayOutputStream ObjectOutputStream FileOutputStream
@@ -232,6 +232,25 @@
     [this]
     [this low high]))
 
+
+(defn next-int
+  ([rng] (.nextInt rng))
+  ([rng high] (loop [x (next-int rng)] ; FIXME
+                (if (< x high)
+                  x
+                  (recur (next-int rng)))))
+  ([rng low high] (loop [x (next-int rng)] ; FIXME
+                    (if (and (< x high) (>= x low))
+                      x
+                      (recur (next-int rng))))))
+
+(comment
+  (def rng (make-well19937))
+  (next-int rng)
+  (next-int rng 10)
+  (next-int rng 10 20)
+)
+
 ;; Apparently, the specializers have to be concrete classes; interfaces and 
 ;; abstract classes don't seem to work.  Too bad--it would save duplication.
 ;; (Note that when truncating, I test the high limit first because that's
@@ -246,6 +265,7 @@
                              (if (and (<= x high) (>= x low))
                                x
                                (recur (.sample this))))))
+
   ; PRNGS:
   Well19937c
     (next-double
@@ -254,6 +274,7 @@
                              (if (and (<= x high) (>= x low))
                                x
                                (recur (.nextDouble this))))))
+
   Well44497b
     (next-double
       ([this] (.nextDouble this))
@@ -274,9 +295,7 @@
 ;; Don't name this 'doubles'; that's a Clojure built-in.
 ;; Not including the (repeatedly n f) form, because that would make
 ;; multiple arities confusing.  I can use 'take' instead.
-(defn next-doubles
-  "Returns a lazy infinite sequence of random doubles from distribution 
-  dist, which may be a PRNG, in which case it's a uniform distribution."
+(defn next-doubles "Returns a lazy infinite sequence of random doubles from distribution dist, which may be a PRNG, in which case it's a uniform distribution."
   ([dist] (repeatedly (next-double-fn dist)))
   ([dist low high] (repeatedly (next-double-fn dist low high))))
 
