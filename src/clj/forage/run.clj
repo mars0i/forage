@@ -116,10 +116,10 @@
 
 ;; This can be passed as the value of init-loc-fn in order to cause
 ;; each foodwalk to at a random foodspot in env
-(defn random-foodspot
-  [env fw]
-  (let [foodspots (mf/env-foodspot-coords env)]
-    ))
+(defn rand-foodspot-coords
+  "Returns the coordinates of a random foodspot in env."
+  [rng env]
+  (r/sample-from-coll rng (mf/env-foodspot-coords env) 1))
 
 
 
