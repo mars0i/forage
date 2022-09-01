@@ -90,7 +90,7 @@
   ;; Display foodspot plots
   (require '[forage.viz.hanami :as h] :reload)
   (require '[oz.core :as oz])
-  (require '[utils.toroidal :as tor])
+  ;(require '[utils.toroidal :as tor])
 
   (oz/start-server!)
   (oz/view! (h/vega-env-plot env 800 150))
@@ -98,7 +98,13 @@
 
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
+
+  (def rand-init-params
+    (assoc params :init-loc-fn (partial fr/rand-foodspot-coord-pair rng env)))
+
   (def fw (time (fr/levy-run rng look-fn nil params 2 [half-size half-size])))
+  (def fw (time (fr/levy-run rng look-fn nil params 2 (fr/rand-foodspot-coord-pair rng env nil)))) ; override start
+  (first (nth fw 1))
   (class (first fw)) ; did we find food?
   (count (nth fw 1)) ; length of did path
   (count (nth fw 2)) ; length of couldve path
@@ -107,7 +113,9 @@
   (time (oz/view! (h/vega-envwalk-plot env 2000 2 1000 (nth fw 2)))) ; couldve
   (time (oz/view! (h/vega-didcould-envwalk-plot env 800 1 100 [fw])))
 
-  (def data (time (fr/levy-experiments fr/default-file-prefix env params
+  (def my-params params)
+  (def my-params rand-init-params)
+  (def data (time (fr/levy-experiments fr/default-file-prefix env my-params
                                        ;[1.5 2.0 2.5] 
                                        [1.001 1.5 2.0 2.5 3.0] 
                                        1000 seed look-fn)))
