@@ -64,9 +64,9 @@
              :env-size            (* 2 half-size)
              :env-discretization  (* fournier-init-offset (reduce * (repeat fournier-levels fournier-mult)))
              :powerlaw-min        perc-radius ; s/b >= per-radius (Viswanathan et al typically make them equal)
-             :maxpathlen          (* 20 half-size)
+             :maxpathlen          (* 50 half-size)
              :perc-radius         perc-radius ; distance that an animal can "see" in searching for food
-             :trunclen            (* 1 half-size) ; max length of any line segment
+             :trunclen            (* 0.5 half-size) ; max length of any line segment
              :init-loc-fn         (partial fr/end-of-walk [half-size half-size]) ; start from end of previous foodwalk, after starting in center.
              ;:init-loc-fn         (constantly [half-size half-size]) ; always start in center
              :init-pad            (* 5 perc-radius) ; if truthy, initial loc offset by this in rand dir
@@ -104,10 +104,10 @@
 
   (def fw (time (fr/levy-run rng look-fn nil params 2 [half-size half-size])))
   (def fw (time (fr/levy-run rng look-fn nil params 2 (fr/rand-foodspot-coord-pair rng env nil)))) ; override start
-  (first (nth fw 1))
   (class (first fw)) ; did we find food?
   (count (nth fw 1)) ; length of did path
   (count (nth fw 2)) ; length of couldve path
+  (first (nth fw 1))
   (mf/foodspot-coords (first (first fw))) ; where'd we find food?
   (time (oz/view! (h/vega-envwalk-plot env 800 0.5 100 (nth fw 1)))) ; did
   (time (oz/view! (h/vega-envwalk-plot env 2000 2 1000 (nth fw 2)))) ; couldve
@@ -118,6 +118,6 @@
   (def data (time (fr/levy-experiments fr/default-file-prefix env my-params
                                        ;[1.5 2.0 2.5] 
                                        [1.001 1.5 2.0 2.5 3.0] 
-                                       1000 seed look-fn)))
+                                       100 seed look-fn)))
 
 )
