@@ -57,6 +57,7 @@
                                      "-XX:TieredStopAtLevel=4"]} ; 3X improvement
 
              ;; For use with my MBA:
+             ;; Usage tip: lein with-profile +smallproduction
              :smallproduction {;:dependencies [[generateme/fastmath "2.1.8"]
                                :jvm-opts ["-Xms4g" ; initial heap
                                           "-Xmx8g" ; max heap
