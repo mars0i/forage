@@ -13,6 +13,16 @@
 ;(comment (count all-exponents) )
 
 
+  ;; ONE THING THAT'S WEIRD ABOUT MY ENVS WRT RANDOM ENVS IS THAT THE MIN FOOD
+  ;; DIST IS SO CONSISTENT.  NO MATTER WHERE YOU START, IF YOU START FROM A FOODSPOT,
+  ;; THE NEAREST FOODSPOTS ARE EQUALLY DISTANT (though the number of such foodspots
+  ;; varies depending on which element of a cluster you are at);.
+  ;; So it's not that sometimes there's a near one that can be found readily with mu=3 
+  ;; style short steps, and sometimes there's not, so that the best strategies would 
+  ;; include long jumps. The consistency of small distances provides an advantage to
+  ;; short steps.
+
+
 ;; NOTE that if the gap over the border is the right size, then considering only
 ;; the wrapping directly west/east/south/north, what you have is in effect a
 ;; much larger Fournier universe, i.e. one with an additional level.
@@ -40,11 +50,13 @@
 ;(def fournier-levels 4)
 (def fournier-levels 3)
 ;; With above params, minimum distance between foodspots is:
-;(def fournier-init-offset 2000000) ; min distance = 1953.125
-;(def fournier-init-offset  1500000) ; min distance = 1464.84375   <-- THIS ONE
-;(def fournier-init-offset 1000000) ; min dist = 976.5625:
-;(def fournier-init-offset 50000) ; min dist = 1171.875
-(def fournier-init-offset 25000) ; min dist = 390.625
+;(def fournier-init-offset 2000000) ; min dist = 
+;(def fournier-init-offset  1500000) ; min dist = 
+;(def fournier-init-offset 1000000) ; min dist = 
+;(def fournier-init-offset 100000) ; min dist = 1562.5
+(def fournier-init-offset 75000) ; min dist = 1171.875
+;(def fournier-init-offset 50000) ; min dist = 781.25
+;(def fournier-init-offset 25000) ; min dist = 390.625
 ;(def fournier-init-offset 200000) ; min dist = 195.3125  ; FOR TESTING
 
 (def half-size (* 0.375 fournier-init-offset)) ; ?: this makes dist to edge 1/2 dist between outer points of largest strus
@@ -55,7 +67,8 @@
 
   (apply min (map first (mf/env-foodspot-coords env))) ; min from foodspot to boundary
   (* 2 (apply min (map first (mf/env-foodspot-coords env)))) ; min dist tween foodspots across boundaries
-  (- 7421.875 5078.125) ; min dist between clusters within boundaries
+  ;; min dist between clusters within boundaries:
+  (- 22265.625 15235.375)
 )
 
 (def perc-radius 1)
@@ -64,9 +77,9 @@
              :env-size            (* 2 half-size)
              :env-discretization  (* fournier-init-offset (reduce * (repeat fournier-levels fournier-mult)))
              :powerlaw-min        perc-radius ; s/b >= per-radius (Viswanathan et al typically make them equal)
-             :maxpathlen          (* 50 half-size)
+             :maxpathlen          (* 400 half-size)
              :perc-radius         perc-radius ; distance that an animal can "see" in searching for food
-             :trunclen            (* 0.5 half-size) ; max length of any line segment
+             :trunclen            (* 5 half-size) ; max length of any line segment
              :init-loc-fn         (partial fr/end-of-walk [half-size half-size]) ; start from end of previous foodwalk, after starting in center.
              ;:init-loc-fn         (constantly [half-size half-size]) ; always start in center
              :init-pad            (* 5 perc-radius) ; if truthy, initial loc offset by this in rand dir
@@ -93,7 +106,7 @@
   ;(require '[utils.toroidal :as tor])
 
   (oz/start-server!)
-  (oz/view! (h/vega-env-plot env 800 150))
+  (oz/view! (h/vega-env-plot env 800 250))
   (oz/export! (h/vega-env-plot env 5000 150) "yo.svg")
 
   (def seed (r/make-seed))
@@ -109,9 +122,18 @@
   (count (nth fw 2)) ; length of couldve path
   (first (nth fw 1))
   (mf/foodspot-coords (first (first fw))) ; where'd we find food?
-  (time (oz/view! (h/vega-envwalk-plot env 800 0.5 100 (nth fw 1)))) ; did
+  (time (oz/view! (h/vega-envwalk-plot env 800 0.5 250 (nth fw 1)))) ; did
   (time (oz/view! (h/vega-envwalk-plot env 2000 2 1000 (nth fw 2)))) ; couldve
   (time (oz/view! (h/vega-didcould-envwalk-plot env 800 1 100 [fw])))
+
+  ;; ONE THING THAT'S WEIRD ABOUT MY ENVS WRT RANDOM ENVS IS THAT THE MIN FOOD
+  ;; DIST IS SO CONSISTENT.  NO MATTER WHERE YOU START, IF YOU START FROM A FOODSPOT,
+  ;; THE NEAREST FOODSPOTS ARE EQUALLY DISTANT (though the number of such foodspots
+  ;; varies depending on which element of a cluster you are at);.
+  ;; So it's not that sometimes there's a near one that can be found readily with mu=3 
+  ;; style short steps, and sometimes there's not, so that the best strategies would 
+  ;; include long jumps. The consistency of small distances provides an advantage to
+  ;; short steps.
 
   (def my-params params)
   (def my-params rand-init-params)
