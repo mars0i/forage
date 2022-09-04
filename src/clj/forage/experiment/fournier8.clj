@@ -21,6 +21,9 @@
   ;; style short steps, and sometimes there's not, so that the best strategies would 
   ;; include long jumps. The consistency of small distances provides an advantage to
   ;; short steps.
+  ;; ALSO:
+  ;; Note that long maxlens means that a mu=3 walk will have a chance to find food
+  ;; with short steps.  So shorter walks might favor lower mu's.
 
 
 ;; NOTE that if the gap over the border is the right size, then considering only
@@ -134,6 +137,9 @@
   ;; style short steps, and sometimes there's not, so that the best strategies would 
   ;; include long jumps. The consistency of small distances provides an advantage to
   ;; short steps.
+  ;; ALSO:
+  ;; Note that long maxlens means that a mu=3 walk will have a chance to find food
+  ;; with short steps.  So shorter walks might favor lower mu's.
 
   (def my-params params)
   (def my-params rand-init-params)
