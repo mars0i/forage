@@ -80,11 +80,11 @@
              :env-size            (* 2 half-size)
              :env-discretization  (* fournier-init-offset (reduce * (repeat fournier-levels fournier-mult)))
              :powerlaw-min        perc-radius ; s/b >= per-radius (Viswanathan et al typically make them equal)
-             :maxpathlen          (* 400 half-size)
+             :maxpathlen          (* 10 half-size)
              :perc-radius         perc-radius ; distance that an animal can "see" in searching for food
-             :trunclen            (* 5 half-size) ; max length of any line segment
-             :init-loc-fn         (partial fr/end-of-walk [half-size half-size]) ; start from end of previous foodwalk, after starting in center.
-             ;:init-loc-fn         (constantly [half-size half-size]) ; always start in center
+             :trunclen            (* 3 half-size) ; max length of any line segment
+             ;:init-loc-fn         (partial fr/end-of-walk [half-size half-size]) ; start from end of previous foodwalk, after starting in center.
+             :init-loc-fn         (constantly [half-size half-size]) ; always start in center
              :init-pad            (* 5 perc-radius) ; if truthy, initial loc offset by this in rand dir
              :look-eps            0.1    ; increment within segments for food check
             ))
@@ -115,9 +115,6 @@
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
 
-  (def rand-init-params
-    (assoc params :init-loc-fn (partial fr/rand-foodspot-coord-pair rng env)))
-
   (def fw (time (fr/levy-run rng look-fn nil params 2 [half-size half-size])))
   (def fw (time (fr/levy-run rng look-fn nil params 2 (fr/rand-foodspot-coord-pair rng env nil)))) ; override start
   (class (first fw)) ; did we find food?
@@ -141,11 +138,12 @@
   ;; Note that long maxlens means that a mu=3 walk will have a chance to find food
   ;; with short steps.  So shorter walks might favor lower mu's.
 
-  (def my-params params)
-  (def my-params rand-init-params)
-  (def data (time (fr/levy-experiments fr/default-file-prefix env my-params
+  (def rand-init-params
+    (assoc params :init-loc-fn (partial fr/rand-foodspot-coord-pair rng env)))
+
+  (def data (time (fr/levy-experiments fr/default-file-prefix env params
                                        ;[1.5 2.0 2.5] 
                                        [1.001 1.5 2.0 2.5 3.0] 
-                                       100 seed look-fn)))
+                                       500 seed look-fn)))
 
 )
