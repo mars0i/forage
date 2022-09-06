@@ -82,7 +82,7 @@
              :powerlaw-min        perc-radius ; s/b >= per-radius (Viswanathan et al typically make them equal)
              :maxpathlen          (* 10 half-size)
              :perc-radius         perc-radius ; distance that an animal can "see" in searching for food
-             :trunclen            (* 3 half-size) ; max length of any line segment
+             :trunclen            (* 6 half-size) ; max length of any line segment
              ;:init-loc-fn         (partial fr/end-of-walk [half-size half-size]) ; start from end of previous foodwalk, after starting in center.
              :init-loc-fn         (constantly [half-size half-size]) ; always start in center
              :init-pad            (* 5 perc-radius) ; if truthy, initial loc offset by this in rand dir
@@ -140,6 +140,8 @@
 
   (def rand-init-params
     (assoc params :init-loc-fn (partial fr/rand-foodspot-coord-pair rng env)))
+
+  (def seed (r/make-seed))
 
   (def data (time (fr/levy-experiments fr/default-file-prefix env params
                                        ;[1.5 2.0 2.5] 
