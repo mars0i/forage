@@ -85,7 +85,7 @@
                              four-children))))
 
 (defn fournierizer
-  "Returns a fournierize function usng children-fn.  See doc for
+  "Returns a fournierize function using children-fn.  See doc for
   fournierize for case using fournier-children."
   [children-fn]
   (fn [points sep multiplier levels]
