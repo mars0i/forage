@@ -50,8 +50,8 @@
 
 (def fournier-mult 0.25)
 ;(def fournier-levels 5) 
-;(def fournier-levels 4)
-(def fournier-levels 3)
+(def fournier-levels 4)
+;(def fournier-levels 3)
 ;; With above params, minimum distance between foodspots is:
 ;(def fournier-init-offset 2000000) ; min dist = 
 ;(def fournier-init-offset  1500000) ; min dist = 
@@ -96,6 +96,13 @@
                                fournier-mult
                                fournier-levels)))
 
+(def eightenv 
+  (mf/make-env (params :env-discretization) (params :env-size)
+               (uf/eight-fournierize [[half-size half-size]]
+                               fournier-init-offset
+                               fournier-mult
+                               fournier-levels)))
+
 ;(f/remove-center (params :env-size) (params :env-size)  ... )
 
 ;; NOTE TOROIDAL LOOK-FN:
@@ -109,7 +116,8 @@
   ;(require '[utils.toroidal :as tor])
 
   (oz/start-server!)
-  (oz/view! (h/vega-env-plot env 800 250))
+  (oz/view! (h/vega-env-plot env 800 300))
+  (oz/view! (h/vega-env-plot eightenv 800 100))
   (oz/export! (h/vega-env-plot env 5000 150) "yo.svg")
 
   (def seed (r/make-seed))
