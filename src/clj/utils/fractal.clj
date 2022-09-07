@@ -85,6 +85,19 @@
     (map (fn [[child-x child-y]] [(+ child-x x) (+ child-y y)])
          all-centered-children)))
 
+(defn selected-eightnier-children
+  "Runs eightnier-children with offset and center point, then returns
+  a sequence containing only those returned points elements at the
+  (zero-based) indexes in idxs.  Indexes may range from 0 through 7, 
+  inclusive, and specify points in these directions: 0 east, 1 north,
+  2 west, 3 south, 4 northeast, 5 northwest, 6 southwest, 7 southeast.
+  (Suggested usage: Use partial to wrap the indexes into a new function,
+  and pass that to fournierizer.)"
+  [idxs offset center-pt]
+  (let [children-vec (vec (eightnier-children offset center-pt))
+        subchilds (map children-vec idxs)] ; vecs are maps, so you can apply them to keys, i.e. indexes 
+    subchilds))
+
 (defn fournierizer
   "Returns a fournierize function using children-fn.  See doc for
   fournierize for case using fournier-children."
@@ -112,8 +125,9 @@
   (fournierizer fournier-children))
 
 (def eightnierize
-  "Given a sequence of coordinate pairs (points), returns a sequence
-  containing those points and \"fournier children\", i.e. points that
+  "([points sep multiplier levels])
+  Given a sequence of coordinate pairs (points), returns a sequence
+  containing those points and \"eightnier children\", i.e. points that
   are (* sep multiplier) up, down, left, and to the right of each
   original point, as well as points rotated 45 degreess from those.
   Then iterates, performing the same operation on all of the points at a
@@ -121,6 +135,15 @@
   the number of points is increased exponentially, multiplying by 9 each
   time.)"
   (fournierizer eightnier-children))
+
+(defn selected-eightnierize
+  "Like eightnierize, but at each level, selects only those points
+  at indices in idxs in the sequence of points at that level.  Indexes 
+  may range from 0 through 7, inclusive, and specify points in these
+  directions: 0 east, 1 north, 2 west, 3 south, 4 northeast, 5 northwest,
+  6 southwest, 7 southeast."
+  [idxs points sep multiplier levels]
+  ((fournierizer (partial selected-eightnier-children idxs)) points sep multiplier levels))
 
 
 (comment
