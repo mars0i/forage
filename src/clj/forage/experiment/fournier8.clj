@@ -8,7 +8,6 @@
             [utils.fractal :as uf]
             [utils.math :as m]
             [clojure.math.numeric-tower :as nt :refer [expt]]))
-
 ;(def all-exponents [1.001 1.5 2.0 2.5 3.0])
 ;(comment (count all-exponents) )
 
@@ -98,7 +97,14 @@
 
 (def eightenv 
   (mf/make-env (params :env-discretization) (params :env-size)
-               (uf/eight-fournierize [[half-size half-size]]
+               (uf/eightnierize [[half-size half-size]]
+                               fournier-init-offset
+                               fournier-mult
+                               fournier-levels)))
+
+(def subeightenv 
+  (mf/make-env (params :env-discretization) (params :env-size)
+               (uf/selected-eightnierize [2 3 5] [[half-size half-size]]
                                fournier-init-offset
                                fournier-mult
                                fournier-levels)))
@@ -118,6 +124,7 @@
   (oz/start-server!)
   (oz/view! (h/vega-env-plot env 800 300))
   (oz/view! (h/vega-env-plot eightenv 800 100))
+  (oz/view! (h/vega-env-plot subeightenv 800 150))
   (oz/export! (h/vega-env-plot env 5000 150) "yo.svg")
 
   (def seed (r/make-seed))
