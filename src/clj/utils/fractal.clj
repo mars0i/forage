@@ -74,19 +74,16 @@
   [[(+ x offset) y] [x (+ y offset)]
    [(- x offset) y] [x (- y offset)]])
 
-
-(defn eight-fournier-children
+(defn eightnier-children
   "Given a coordinate pair, return eight coordinate pairs that are
   shifted by offset up, down, left, and right from the original point, 
   along with points that are rotated 45 degrees from those points."
   [offset [x y]]
   (let [four-centered-children (fournier-children offset [0 0])
         rotated-children (map (partial m/rotate (/ m/pi 4)) four-centered-children)
-        all-centered-children (concat four-centered-children rotated-children)
-        all-new-children (map (fn [[child-x child-y]] [(+ child-x x) (+ child-y y)])
-                              all-centered-children)]
-    all-new-children))
-
+        all-centered-children (concat four-centered-children rotated-children)]
+    (map (fn [[child-x child-y]] [(+ child-x x) (+ child-y y)])
+         all-centered-children)))
 
 (defn fournierizer
   "Returns a fournierize function using children-fn.  See doc for
@@ -114,7 +111,7 @@
   exponentially, multiplying by 5 each time.)"
   (fournierizer fournier-children))
 
-(def eight-fournierize
+(def eightnierize
   "Given a sequence of coordinate pairs (points), returns a sequence
   containing those points and \"fournier children\", i.e. points that
   are (* sep multiplier) up, down, left, and to the right of each
@@ -123,7 +120,7 @@
   smaller scale, levels times.  multiplier should be < 1.  (Note that
   the number of points is increased exponentially, multiplying by 9 each
   time.)"
-  (fournierizer eight-fournier-children))
+  (fournierizer eightnier-children))
 
 
 (comment
