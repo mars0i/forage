@@ -74,6 +74,7 @@
   [[(+ x offset) y] [x (+ y offset)]
    [(- x offset) y] [x (- y offset)]])
 
+
 (defn eight-fournier-children
   "Given a coordinate pair, return eight coordinate pairs that are
   shifted by offset up, down, left, and right from the original point, 
@@ -84,8 +85,6 @@
         all-centered-children (concat four-centered-children rotated-children)
         all-new-children (map (fn [[child-x child-y]] [(+ child-x x) (+ child-y y)])
                               all-centered-children)]
-    (println "centered:" all-centered-children)
-    (println "new:" all-new-children)
     all-new-children))
 
 
@@ -106,7 +105,7 @@
 ;; or one of its predecessor books.
 (def fournierize
   "([points sep multiplier levels])
-  Given a sequence of coordinate pairs (points), returns a sequence
+  Given a sequence of nate pairs (points), returns a sequence
   containing those points and \"fournier children\", i.e. points that
   are (* sep multiplier) up, down, left, and to the right of each
   original point.  Then the function iterates, performing the same 
