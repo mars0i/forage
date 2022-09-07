@@ -74,15 +74,20 @@
   [[(+ x offset) y] [x (+ y offset)]
    [(- x offset) y] [x (- y offset)]])
 
-;; FIXME Points are appearing in the wrong locations.
 (defn eight-fournier-children
   "Given a coordinate pair, return eight coordinate pairs that are
   shifted by offset up, down, left, and right from the original point, 
   along with points that are rotated 45 degrees from those points."
   [offset [x y]]
-  (let [four-children (fournier-children offset [x y])]
-    (into four-children (map (partial m/rotate (/ m/pi 4))
-                             four-children))))
+  (let [four-centered-children (fournier-children offset [0 0])
+        rotated-children (map (partial m/rotate (/ m/pi 4)) four-centered-children)
+        all-centered-children (concat four-centered-children rotated-children)
+        all-new-children (map (fn [[child-x child-y]] [(+ child-x x) (+ child-y y)])
+                              all-centered-children)]
+    (println "centered:" all-centered-children)
+    (println "new:" all-new-children)
+    all-new-children))
+
 
 (defn fournierizer
   "Returns a fournierize function using children-fn.  See doc for
