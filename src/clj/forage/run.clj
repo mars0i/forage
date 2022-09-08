@@ -245,7 +245,7 @@
                            ".bin")
                       (r/get-state rng))
        (let [sim-fn (partial levy-run rng look-fn init-dir params exponent) ; remaining arg is initial location
-             [segments found lengths] (run-and-collect sim-fn init-loc-fn walks-per-combo)
+             [segments found lengths] (time (run-and-collect sim-fn init-loc-fn walks-per-combo))
              total-length (reduce + lengths)
              efficiency (/ found total-length)] ; lengths start as doubles and remain so--this is double div
          (cl-format true "found=~f, efficiency=~f\n" found efficiency)
