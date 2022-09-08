@@ -12,6 +12,14 @@
 ;(comment (count all-exponents) )
 
 
+
+;; I THINK THE WHOLE FOURNIER THING IS PROBLEMATIC.  IT'S GOT POINTS RELATIVELY CLOSE
+;; TO PREVIOUS POINTS, SO THAT mu=3 DOES PRETTY WELL, BUT OVERALL, IT'S VERY SPARSE,
+;; SO mu=2 AND ABOVE DON'T DO WELL.  A PARTIAL EIGHT-FOURNIER IS WORSE, BECAUSE
+;; THERE ARE VAST REGIONS THAT ARE EMPTY. 
+;; SO THE PROBLEM IS DUE TO THE FRACTAL CONSISTENCY OF THE FOURNIER SCHEME.
+
+
   ;; ONE THING THAT'S WEIRD ABOUT MY ENVS WRT RANDOM ENVS IS THAT THE MIN FOOD
   ;; DIST IS SO CONSISTENT.  NO MATTER WHERE YOU START, IF YOU START FROM A FOODSPOT,
   ;; THE NEAREST FOODSPOTS ARE EQUALLY DISTANT (though the number of such foodspots
@@ -48,15 +56,15 @@
 
 
 (def fournier-mult 0.25)
-;(def fournier-levels 5) 
-(def fournier-levels 4)
+(def fournier-levels 5) 
+;(def fournier-levels 4)
 ;(def fournier-levels 3)
 ;; With above params, minimum distance between foodspots is:
-;(def fournier-init-offset 2000000) ; min dist = 
+(def fournier-init-offset 2000000) ; min dist = 
 ;(def fournier-init-offset  1500000) ; min dist = 
 ;(def fournier-init-offset 1000000) ; min dist = 
 ;(def fournier-init-offset 100000) ; min dist = 1562.5
-(def fournier-init-offset 75000) ; min dist = 1171.875
+;(def fournier-init-offset 75000) ; min dist = 1171.875
 ;(def fournier-init-offset 50000) ; min dist = 781.25
 ;(def fournier-init-offset 25000) ; min dist = 390.625
 ;(def fournier-init-offset 200000) ; min dist = 195.3125  ; FOR TESTING
@@ -79,9 +87,9 @@
              :env-size            (* 2 half-size)
              :env-discretization  (* fournier-init-offset (reduce * (repeat fournier-levels fournier-mult)))
              :powerlaw-min        perc-radius ; s/b >= per-radius (Viswanathan et al typically make them equal)
-             :maxpathlen          (* 10 half-size)
+             :maxpathlen          (* 50 half-size)
              :perc-radius         perc-radius ; distance that an animal can "see" in searching for food
-             :trunclen            (* 6 half-size) ; max length of any line segment
+             :trunclen            (* 2 half-size) ; max length of any line segment
              ;:init-loc-fn         (partial fr/end-of-walk [half-size half-size]) ; start from end of previous foodwalk, after starting in center.
              :init-loc-fn         (constantly [half-size half-size]) ; always start in center
              :init-pad            (* 5 perc-radius) ; if truthy, initial loc offset by this in rand dir
@@ -104,7 +112,7 @@
 
 (def subeightenv 
   (mf/make-env (params :env-discretization) (params :env-size)
-               (uf/selected-eightnierize [2 3 5] [[half-size half-size]]
+               (uf/selected-eightnierize [2 3 4 5] [[half-size half-size]]
                                fournier-init-offset
                                fournier-mult
                                fournier-levels)))
@@ -124,7 +132,7 @@
   (oz/start-server!)
   (oz/view! (h/vega-env-plot env 800 300))
   (oz/view! (h/vega-env-plot eightenv 800 100))
-  (oz/view! (h/vega-env-plot subeightenv 800 150))
+  (oz/view! (h/vega-env-plot subeightenv 800 1900))
   (oz/export! (h/vega-env-plot env 5000 150) "yo.svg")
 
   (def seed (r/make-seed))
@@ -141,26 +149,16 @@
   (time (oz/view! (h/vega-envwalk-plot env 2000 2 1000 (nth fw 2)))) ; couldve
   (time (oz/view! (h/vega-didcould-envwalk-plot env 800 1 100 [fw])))
 
-  ;; ONE THING THAT'S WEIRD ABOUT MY ENVS WRT RANDOM ENVS IS THAT THE MIN FOOD
-  ;; DIST IS SO CONSISTENT.  NO MATTER WHERE YOU START, IF YOU START FROM A FOODSPOT,
-  ;; THE NEAREST FOODSPOTS ARE EQUALLY DISTANT (though the number of such foodspots
-  ;; varies depending on which element of a cluster you are at);.
-  ;; So it's not that sometimes there's a near one that can be found readily with mu=3 
-  ;; style short steps, and sometimes there's not, so that the best strategies would 
-  ;; include long jumps. The consistency of small distances provides an advantage to
-  ;; short steps.
-  ;; ALSO:
-  ;; Note that long maxlens means that a mu=3 walk will have a chance to find food
-  ;; with short steps.  So shorter walks might favor lower mu's.
-
   (def rand-init-params
     (assoc params :init-loc-fn (partial fr/rand-foodspot-coord-pair rng env)))
 
   (def seed (r/make-seed))
 
-  (def data (time (fr/levy-experiments fr/default-file-prefix env params
+  (def data (time (fr/levy-experiments fr/default-file-prefix 
+                                       subeightenv
+                                       params
                                        ;[1.5 2.0 2.5] 
                                        [1.001 1.5 2.0 2.5 3.0] 
-                                       500 seed look-fn)))
+                                       1000 seed look-fn)))
 
 )
