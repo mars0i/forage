@@ -41,8 +41,8 @@
 
 ;; PARAMS FOR NON-DESTRUCTIVE SEARCH
 ;(def nondestr-params (assoc params :init-pad (+ (* 2 (params :look-eps)) (params :perc-radius))))
-;(def nondestr-params (assoc params :init-pad (* 2 (params :perc-radius))))
-(def nondestr-params (assoc params :init-pad (* 5 (params :perc-radius))))
+(def nondestr-params (assoc params :init-pad (* 2 (params :perc-radius))))
+;(def nondestr-params (assoc params :init-pad (* 5 (params :perc-radius))))
 ;(def nondestr-params (assoc params :init-pad (* 10 (params :perc-radius))))
 ;(def nondestr-params (assoc params :init-pad (* 50 (params :perc-radius))))
 
@@ -88,6 +88,11 @@
 
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 1500))
   (def data-and-rng-1500  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+
+  (def data-and-rng-1500  (time (fr/levy-experiments
+                                  fr/default-file-prefix 
+                                  centered-env nondestr-params-shorttrunclen
+                                  [1.5 2.0 2.5 3.0] 100 seed ctrd-look-fn)))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Plotting
