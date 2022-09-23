@@ -359,10 +359,15 @@
 
 (defn pareto-cumulative
   "FIXME" ; FIXME
-  [k mu x] 
-  (let [alpha (dec mu)]
-    (- 1 (/ (nt/expt k alpha)
-            (nt/expt x alpha)))))
+  ([minval maxval mu x]
+   (let [alpha (dec mu)
+        minval-alpha (nt/expt minval alpha)]
+     (/ (- minval-alpha (nt/expt x alpha))
+        (- minval-alpha (nt/expt maxval alpha)))))
+  ([minval mu x] 
+   (let [alpha (dec mu)]
+     (- 1 (/ (nt/expt minval alpha)
+             (nt/expt x alpha))))))
 
 (defn sample-from-coll
   "Returns num-samples elements randomly selected without replacement 
