@@ -324,6 +324,7 @@
   [dist low high]
    (.probability dist low high))
 
+;; FIXME
 ;; Easiest to keep this as a separate definition that can be called
 ;; via arity-selection from cumulative.  This makes it easy to memoize
 ;; using a closure.  Note that it's still a slightly faster to use this
@@ -346,14 +347,22 @@
                                        newprob))]
                     (/ (.cumulativeProbability dist x) tot-prob))))))
 
-(defn cumulative
-  "Return the value of the cumulative probability distribution at x for
-  (Apache Commons Math3) distribution dist.  If low and high are provided,
-  returns the the cumulative probability for the truncated distribution 
-  corresponding to for x in (low,high] but assigning zero probability to 
-  values outside of it."
-  ([dist x] (.cumulativeProbability dist x))
-  ([dist low high x] (trunc-cumulative dist low high x)))
+;; Worked with old 1.3, not 1.4 (?)
+;(defn cumulative
+;  "Return the value of the cumulative probability distribution at x for
+;  (Apache Commons Math3) distribution dist.  If low and high are provided,
+;  returns the the cumulative probability for the truncated distribution 
+;  corresponding to for x in (low,high] but assigning zero probability to 
+;  values outside of it."
+;  ([dist x] (.cumulativeProbability dist x))
+;  ([dist low high x] (trunc-cumulative dist low high x)))
+
+(defn pareto-cumulative
+  "FIXME" ; FIXME
+  [k mu x] 
+  (let [alpha (dec mu)]
+    (- 1 (/ (nt/expt k alpha)
+            (nt/expt x alpha)))))
 
 (defn sample-from-coll
   "Returns num-samples elements randomly selected without replacement 
