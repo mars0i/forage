@@ -54,7 +54,9 @@
       (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
       (assoc-in [:encoding :order :type] "ordinal") ; gets rid of warning on :order
       (assoc-in [:mark :clip] (if clip? "true" "false"))
-      (assoc-in [:mark :strokeWidth] (or stroke-width 1.0)))))
+      (assoc-in [:mark :strokeWidth] (or stroke-width 1.0))
+      (assoc-in [:mark :strokeCap] "round") ; doesn't seem to work
+      )))
 
 (defn add-point-labels
   "Given a sequence of pairs representing x,y coordinates, returns a
