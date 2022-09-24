@@ -89,9 +89,9 @@
 (defn gridwalk-plot 
   [plot-dim walks]
   (-> (h/vega-gridwalk-plot
-       perceptual-radius maxpathlen powerlaw-scale n-steps
+       "N/A" maxpathlen powerlaw-scale n-steps
        []
-       (h/vega-walk-plot plot-dim env-size 1 walks)) ; "category20"
+       (h/vega-walk-plot plot-dim env-size 1.5 walks)) ; "category20"
       (assoc :background "white")))
 
 
