@@ -357,7 +357,7 @@
 ;  ([dist x] (.cumulativeProbability dist x))
 ;  ([dist low high x] (trunc-cumulative dist low high x)))
 
-(defn pareto-cumulative
+(defn powerlaw-cumulative
   "FIXME" ; FIXME
   ([minval maxval mu x]
    (let [alpha (dec mu)
@@ -368,6 +368,10 @@
    (let [alpha (dec mu)]
      (- 1 (/ (nt/expt minval alpha)
              (nt/expt x alpha))))))
+
+(comment
+  (powerlaw-cumulative 0.5285 16.18435699 2.1706 7.55453491) ; => 0.3989374083781279
+)
 
 (defn sample-from-coll
   "Returns num-samples elements randomly selected without replacement 
