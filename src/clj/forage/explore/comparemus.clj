@@ -96,11 +96,21 @@
                      perceptual-radius maxpathlen powerlaw-scale n-steps
                      (h/vega-foodgrid-plot env-size plot-dim
                                            food-distance perceptual-radius)
-                     (h/vega-walk-plot plot-dim walks)))
+                     (h/vega-walk-plot plot-dim plot-dim 1 walks)))
 
 
 ;; Now view gridwalk as vega-lite, e.g. with
 (comment
   (require '[oz.core :as oz])
   (oz/view! gridwalk-plot)
+
+  (def dist (r/make-powerlaw rng 100 2))
+  (def min100max1000xs (repeatedly #(r/next-double dist 100 1000)))
+  (def ys (take 500000 min100max1000xs))
+  (def zs (map (partial r/powerlaw-cumulative 100 1000 2) ys))
+  (def zsmean (/ (reduce + zs) 500000))
+
+
+
+
 )
