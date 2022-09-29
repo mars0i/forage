@@ -31,13 +31,15 @@
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  (oz/view! (hist (take 100000 trunc-levy-nums)))
-  (oz/view! (hist (take 100000 trunc-inverse-nums)))
-  (m/mean (take 100000 trunc-inverse-nums))
+  (def n 100000)
 
-  (oz/view! (hist (take 1000 pure-levy-nums)))
-  (oz/view! (hist (take 100000 pure-inverse-nums)))
-  (m/mean (take 10000 pure-inverse-nums))
+  (oz/view! (hist (take n trunc-levy-nums)))
+  (oz/view! (hist (take n trunc-inverse-nums)))
+  (m/mean (take n trunc-inverse-nums))
+
+  (oz/view! (hist (take n pure-levy-nums)))
+  (oz/view! (hist (take n pure-inverse-nums)))
+  (m/mean (take n pure-inverse-nums))
 
 )
 
