@@ -361,14 +361,14 @@
 (defn powerlaw-cumulative
   "FIXME" ; FIXME: add docstring
   ([mu minval x] 
-   (let [alpha (dec mu)]
-     (- 1 (/ (nt/expt minval alpha)
-             (nt/expt x alpha)))))
+   (let [-alpha (- 1 mu)]
+     (- 1 (/ (nt/expt x -alpha)
+             (nt/expt minval -alpha)))))
   ([mu minval maxval x]
-   (let [neg-alpha (- 1 mu)
-        minval-pow (nt/expt minval neg-alpha)]
-     (/ (- minval-pow (nt/expt x neg-alpha))
-        (- minval-pow (nt/expt maxval neg-alpha))))))
+   (let [-alpha (- 1 mu)
+        minval-pow (nt/expt minval -alpha)]
+     (/ (- minval-pow (nt/expt x -alpha))
+        (- minval-pow (nt/expt maxval -alpha))))))
 
 (comment
   (powerlaw-cumulative 0.5285 16.18435699 2.1706 7.55453491) ; => 0.3989374083781279
