@@ -7,8 +7,8 @@
             [utils.random :as r]))
 
 (def mu 2)
-(def minval 1)
-(def maxval 100) ; for truncated Lévy walk
+(def minval 10)
+(def maxval 1500) ; for truncated Lévy walk
 
 (def seed (r/make-seed))
 (def rng (r/make-well19937 seed))
@@ -30,9 +30,10 @@
 (comment
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (oz/view! (hist (take 10000 trunc-levy-nums)))
-  (oz/view! (hist (take 10000 trunc-inverse-nums)))
-  (m/mean (take 10000 trunc-inverse-nums))
+
+  (oz/view! (hist (take 100000 trunc-levy-nums)))
+  (oz/view! (hist (take 100000 trunc-inverse-nums)))
+  (m/mean (take 100000 trunc-inverse-nums))
 
   (oz/view! (hist (take 1000 pure-levy-nums)))
   (oz/view! (hist (take 100000 pure-inverse-nums)))
