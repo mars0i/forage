@@ -228,7 +228,8 @@
 
 (defprotocol RandDist
   "Provides a common interface to some functionality shared by Math3 PRNG 
-  and distribution classes."
+  and distribution classes.  If low and high are provided, numbers outside
+  this range (inclusive) are rejected."
   (next-double 
     [this]
     [this low high]))
@@ -358,16 +359,16 @@
 ;  ([dist low high x] (trunc-cumulative dist low high x)))
 
 (defn powerlaw-cumulative
-  "FIXME" ; FIXME
-  ([minval maxval mu x]
-   (let [alpha (dec mu)
-        minval-alpha (nt/expt minval alpha)]
-     (/ (- minval-alpha (nt/expt x alpha))
-        (- minval-alpha (nt/expt maxval alpha)))))
-  ([minval mu x] 
+  "FIXME" ; FIXME: add docstring
+  ([mu minval x] 
    (let [alpha (dec mu)]
      (- 1 (/ (nt/expt minval alpha)
-             (nt/expt x alpha))))))
+             (nt/expt x alpha)))))
+  ([mu minval maxval x]
+   (let [neg-alpha (- 1 mu)
+        minval-pow (nt/expt minval neg-alpha)]
+     (/ (- minval-pow (nt/expt x neg-alpha))
+        (- minval-pow (nt/expt maxval neg-alpha))))))
 
 (comment
   (powerlaw-cumulative 0.5285 16.18435699 2.1706 7.55453491) ; => 0.3989374083781279
