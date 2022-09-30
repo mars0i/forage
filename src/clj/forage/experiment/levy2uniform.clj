@@ -1,7 +1,7 @@
 ;; Demonstration that a cumulative pareto distribution
 ;; function transforms a Lévy distribution into a uniform
 ;; distribution.  (Originally, this was a copy of tips/techviz.clj)
-(ns experiment.levy2uniform
+(ns forage.experiment.levy2uniform
   (:require [tech.viz.vega :as tv]
             [utils.math :as m]
             [utils.random :as r]))
@@ -28,6 +28,12 @@
   ([xs bins] (tv/histogram xs "x" {:bin-count bins})))
 
 (comment
+
+  (def unifnums (repeatedly #(r/next-double rng)))
+  (def unifrecs (map vector unifnums)) ; wrap each number in a vector
+  (require 'forage.run :reload)
+  (run/spit-csv "data.txt" (take 10000000 unifrecs))
+
   (require '[oz.core :as oz])
   (oz/start-server!)
 
