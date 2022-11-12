@@ -11,7 +11,8 @@
 (def maxval 1500) ; for truncated Lévy walk
 
 (def seed (r/make-seed))
-(def rng (r/make-well19937 seed))
+;; (def rng (r/make-well19937 seed))
+(def rng (r/make-well44497 seed))
 (def dist (r/make-powerlaw rng minval mu))
 
 (def pure-levy-nums (repeatedly #(r/next-double dist)))
@@ -29,10 +30,10 @@
 
 (comment
 
-  (def unifnums (repeatedly #(r/next-double rng)))
-  (def unifrecs (map vector unifnums)) ; wrap each number in a vector
+  ;(def unifnums (repeatedly #(r/next-double rng)))
+  ;(def unifrecs (map vector unifnums)) ; wrap each number in a vector
   (require 'forage.run :reload)
-  (run/spit-csv "data.txt" (take 10000000 unifrecs))
+  (forage.run/spit-csv "data.txt" (take 100000000 (map vector (repeatedly #(r/next-double rng)))))
 
   (require '[oz.core :as oz])
   (oz/start-server!)
