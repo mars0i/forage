@@ -75,10 +75,20 @@
   (def data-and-rng  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 5000))
-  (def data-and-rng-short  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-5000 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 2500))
-  (def data-and-rng-short  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+
+  (def data-and-rng-2500-1.001 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500-1.5 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.5] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500-2.0 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500-2.5 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.5] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500-3.0 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [3.0] 1000 seed ctrd-look-fn)))
+
+(count data-and-rng-2500-2.0)
+
 
   (def rng (:rng data-and-rng))
   (def data-and-rng2 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params [1.001 1.5] 1000 seed ctrd-look-fn rng)))
