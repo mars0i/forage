@@ -86,6 +86,10 @@
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 2000))
   (def data-and-rng-2000  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
+  ;; For use with parallel nrepl sessions from within nvim/conjure.  (Don't use the same seed with the same parameters, since that will do exactly the same thing twice.)
+  (def data-and-rng1 (time (fr/levy-experiments (str fr/default-file-prefix "1stRuns") centered-env nondestr-params-shorttrunclen [2.0] 1000 (r/make-seed) ctrd-look-fn)))
+  (def data-and-rng2 (time (fr/levy-experiments (str fr/default-file-prefix "2ndRuns") centered-env nondestr-params-shorttrunclen [2.0] 1000 (r/make-seed) ctrd-look-fn)))
+
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 1500))
   (def data-and-rng-1500  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
