@@ -9,6 +9,8 @@
    [oz.core :as oz]
    ))
 
+"test"
+
 (comment
 
   (def walk1 (h/add-walk-labels "segs1" [[5 5] [5 6] [8 1] [9 4]]))
