@@ -134,8 +134,8 @@
   "Perform one Levy run using walks/levy-foodwalk using the given rng,
   look-fn, init-dir, and exponent, and other arguments including init-loc
   taken from params if not provided. Returns a triple containing found
-  food (if any), the walk until where food was found, and the remaining
-  steps (if any) that would have occurred after food was found."
+  food (nil if none), the walk until where food was found, and the remaining
+  steps (nil if none) that would have occurred after food was found."
   ([rng look-fn init-dir params exponent] ; deprecated case
    (levy-run rng look-fn init-dir params exponent ((params :init-loc-fn) nil)))
   ([rng look-fn init-dir params exponent init-loc]
@@ -172,32 +172,34 @@
   allow it to determine the initial location--the starting point for
  the walk--that's passed as sim-fn's only argument.  n-walks must be >= 0."
   [sim-fn init-loc-fn n-walks]
-  (loop [n n-walks, prev-fw nil, segments 0, found 0, lengths nil]
+  (loop [n n-walks, prev-fw nil, n-segments 0, found nil, lengths nil]
     (if (zero? n)
-      [segments found lengths]
+      [found n-segments lengths]
       (let [fw (sim-fn (init-loc-fn prev-fw))]
         (recur (dec n)
                fw
-               (+ segments (w/count-segments-until-found fw))
-               (+ found (count (first fw)))
+               (+ n-segments (w/count-segments-until-found fw))
+               (cons (first fw) found)
                (cons (w/path-until-found-length fw) lengths))))))
 
 
 (defn levy-experiments
-  "Uses seed to seed a PRNG unless rng is provided, in which case seed 
-  is only used for informational purposes in file output.  Uses parameters
-  in the params map.  Then for each exponent in exponents, creates a 
-  powerlaw (Pareto) distribution using that exponent.  Then runs 
-  walks-per-combo Levy-walk style food searches using that combination of
-  parameters and look-fn for each direction in init-dirs.  Creates two data
-  files, one containing the fixed parameters of the run, and the other 
-  containing the results listed for each varying parameter combination.  
-  Filenames include seed as an id.  Also creates one PRNG state file per
-  combination of exponent (mu) and direction. (This should allow recreating
-  (by hand) the runs with the runs with that combination using the
-  same PRNG state.  Use utils.random/read-state and set-state.)  Returns
-  a map containing keys :data for the generated summary data, and :rng for
-  the rng with its current state."
+
+  "Uses seed to seed a PRNG unless rng is provided, in which case seed
+  is only used for informational purposes in file output.  Uses
+  parameters in the params map.  Then for each exponent in exponents,
+  creates a powerlaw (Pareto) distribution using that exponent, and runs
+  walks-per-combo Levy-walk style food searches using the parameters,
+  look-fn for each direction in init-dirs.  Creates two data files, one
+  containing the fixed parameters of the run, and the other containing
+  the results listed for each varying parameter combination.  Filenames
+  include seed as an id.  Also creates one PRNG state file per
+  combination of exponent (mu) and direction. (This should allow
+  recreating runs with that combination using the same PRNG state.  Use
+  utils.random/read-state and set-state.)  Returns a map containing keys
+  :data for the generated summary data, and :rng for the rng with its
+  current state."
+
   ([file-prefix env params exponents walks-per-combo seed]
    (levy-experiments file-prefix env params exponents walks-per-combo seed 
                      (partial mf/perc-foodspots-exactly env (params :perc-radius))))
@@ -233,24 +235,16 @@
                 walks-per-combo)
      (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
-       (cl-format true "~{~c~}group ~d [exponent ~f, init-dir ~a] ... "   ; ~{~c~} means stuff all chars (~c) in sequence arg here
-                  nil ; (if (misc/iced-jackin?) nil (repeat 80 \backspace)) ; don't use BS in dumb terminal
-                  (swap! iter-num$ inc) exponent init-dir)
+       (cl-format true "~{~c~}group ~d [exponent ~f, init-dir ~a] ... " nil (swap! iter-num$ inc) exponent init-dir)  ; ~{~c~} means stuff all chars (~c) in sequence arg here
        (flush)
-       (r/write-state (str base-state-filename
-                           "_mu" (double-to-dotless exponent) 
-                           "_dir" (if init-dir
-                                    (double-to-dotless init-dir)
-                                    "Rand")
-                           ".bin")
-                      (r/get-state rng))
+       (r/write-state (str base-state-filename "_mu" (double-to-dotless exponent) "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin") (r/get-state rng))
        (let [sim-fn (partial levy-run rng look-fn init-dir params exponent) ; remaining arg is initial location
-             [segments found lengths] (time (run-and-collect sim-fn init-loc-fn walks-per-combo))
+             [found n-segments lengths] (time (run-and-collect sim-fn init-loc-fn walks-per-combo))
+             n-found (reduce (fn [tot fs] (+ tot (count fs))) found)
              total-length (reduce + lengths)
-             efficiency (/ found total-length)] ; lengths start as doubles and remain so--this is double div
-         (cl-format true "found=~f, efficiency=~f\n" found efficiency)
-         (swap! data$ conj (into [init-dir exponent segments 
-                                  found efficiency total-length] lengths))))
+             efficiency (/ n-found total-length)] ; lengths start as doubles and remain so--this is double div
+         (cl-format true "num found=~f, efficiency=~f\n" n-found efficiency)
+         (swap! data$ conj (into [init-dir exponent n-segments n-found efficiency total-length] lengths))))
      (spit-csv data-filename @data$)
      (println " done.")
      {:data @data$ :rng rng}))) ; data is not very large; should be OK to return it.

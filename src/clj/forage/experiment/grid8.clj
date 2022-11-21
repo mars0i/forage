@@ -96,6 +96,19 @@
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 2000))
   (def data-and-rng-2000  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
+  ;; ...............................................................
+  ;; ILLUSTRATIONS OF CODE FOR RUNNING IN PARALLEL NREPL SESSIONS
+  ;; 
+  ;; For use with parallel nrepl sessions from within nvim/conjure.  The change in the filename prevents one session's data from clobbering
+  ;; the other's.  Note you must use different params if you're using the same seed; otherwise you're just doing the same thing twice:
+  (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 2000))
+  (def data-and-rng1 (time (fr/levy-experiments (str fr/default-file-prefix "1stRuns") centered-env nondestr-params-shorttrunclen [2.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng2 (time (fr/levy-experiments (str fr/default-file-prefix "2ndRuns") centered-env nondestr-params-shorttrunclen [3.0] 1000 seed ctrd-look-fn)))
+  ;; If you use different seeds--which you ought to do to run the same parameters--you don't have to change the file prefix:
+  (def data-and-rng1 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.0] 1000 (r/make-seed) ctrd-look-fn)))
+  (def data-and-rng2 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.0] 1000 (r/make-seed) ctrd-look-fn)))
+  ;; ...............................................................
+
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 1500))
   (def data-and-rng-1500  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
