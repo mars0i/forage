@@ -165,26 +165,27 @@
 ;; foodwalk food-and-paths structure at a time, and then throws out the 
 ;; foodwalk, retaining and returning only the summary data from foodwalks.
 (defn run-and-collect
-  "Generates n-walks foodwalks using sim-fn and init-loc-fn and returns 
-  statistics from them: total number of segments, total number of foodspots
-  found, and a sequence of lengths of paths until foodspots were found.
-  nil or the previous foodwalk result will be passed to init-loc-fn to
-  allow it to determine the initial location--the starting point for
- the walk--that's passed as sim-fn's only argument.  n-walks must be >= 0."
+  "Generates n-walks foodwalks using sim-fn and init-loc-fn and returns
+  information from them: total number of segments, a sequence of lengths
+  of paths until foodspots were found, and sequence of found foodspots
+  or nil when not found.  Corresponding path lengths and found foodspots
+  are in the same (reversed execution) order.  nil or the previous
+  foodwalk result will be passed to init-loc-fn to allow it to determine
+  the initial location--the starting point for the walk--that's passed
+  as sim-fn's only argument.  n-walks must be >= 0."
   [sim-fn init-loc-fn n-walks]
   (loop [n n-walks, prev-fw nil, n-segments 0, found nil, lengths nil]
     (if (zero? n)
-      [found n-segments lengths]
+      [n-segments lengths found]
       (let [fw (sim-fn (init-loc-fn prev-fw))]
         (recur (dec n)
                fw
                (+ n-segments (w/count-segments-until-found fw))
-               (cons (first fw) found)
+               (cons (first (first fw)) found)  ; assumes at most one foodspot found and not found rep'ed by nil
                (cons (w/path-until-found-length fw) lengths))))))
 
 
 (defn levy-experiments
-
   "Uses seed to seed a PRNG unless rng is provided, in which case seed
   is only used for informational purposes in file output.  Uses
   parameters in the params map.  Then for each exponent in exponents,
@@ -199,7 +200,6 @@
   utils.random/read-state and set-state.)  Returns a map containing keys
   :data for the generated summary data, and :rng for the rng with its
   current state."
-
   ([file-prefix env params exponents walks-per-combo seed]
    (levy-experiments file-prefix env params exponents walks-per-combo seed 
                      (partial mf/perc-foodspots-exactly env (params :perc-radius))))
@@ -240,14 +240,17 @@
        (r/write-state (str base-state-filename "_mu" (double-to-dotless exponent) "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin") (r/get-state rng))
        (let [sim-fn (partial levy-run rng look-fn init-dir params exponent) ; remaining arg is initial location
              [found n-segments lengths] (time (run-and-collect sim-fn init-loc-fn walks-per-combo))
-             n-found (reduce (fn [tot fs] (+ tot (count fs))) found)
+             n-found (count (keep identity found))
              total-length (reduce + lengths)
              efficiency (/ n-found total-length)] ; lengths start as doubles and remain so--this is double div
          (cl-format true "num found=~f, efficiency=~f\n" n-found efficiency)
          (swap! data$ conj (into [init-dir exponent n-segments n-found efficiency total-length] lengths))))
      (spit-csv data-filename @data$)
      (println " done.")
-     {:data @data$ :rng rng}))) ; data is not very large; should be OK to return it.
+     ;; BUG found is not defined in the outer let; it's from the let inside the
+     ;; doseq through different exponent and direction combinations.  What
+     ;; I need is a per-paramter combo sequence of found foodspot sequences.
+     {:data @data$ :found found :rng rng}))) ; data is not very large; should be OK to return it.
 
 
 ;; TODO Modify further for new :init-loc-fn parameter?  
