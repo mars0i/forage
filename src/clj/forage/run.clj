@@ -167,12 +167,13 @@
 (defn run-and-collect
   "Generates n-walks foodwalks using sim-fn and init-loc-fn and returns
   information from them: total number of segments, a sequence of lengths
-  of paths until foodspots were found, and sequence of found foodspots
-  or nil when not found.  Corresponding path lengths and found foodspots
-  are in the same (reversed execution) order.  nil or the previous
-  foodwalk result will be passed to init-loc-fn to allow it to determine
-  the initial location--the starting point for the walk--that's passed
-  as sim-fn's only argument.  n-walks must be >= 0."
+  of paths until foodspots were found, and sequence of coordinates of
+  found foodspots, or nil when not found.  Corresponding path lengths
+  and foodspots coordinates (or nil) are in the same (reversed
+  execution) order.  nil or the previous foodwalk result will be passed
+  to init-loc-fn to allow it to determine the initial location--the
+  starting point for the walk--that's passed as sim-fn's only argument.
+  n-walks must be >= 0."
   [sim-fn init-loc-fn n-walks]
   (loop [n n-walks, prev-fw nil, n-segments 0, found nil, lengths nil]
     (if (zero? n)
@@ -181,7 +182,7 @@
         (recur (dec n)
                fw
                (+ n-segments (w/count-segments-until-found fw))
-               (cons (first (first fw)) found)  ; assumes at most one foodspot found and not found rep'ed by nil
+               (cons (mf/foodspot-coords-if-found (first fw)) found)
                (cons (w/path-until-found-length fw) lengths))))))
 
 
@@ -223,11 +224,13 @@
                                 (cons (str *ns*)
                                       (cons (str "\"" seed "\"") ; keep Excel from making it a float
                                             (vals sorted-params))))
+         runids (range 1 (inc walks-per-combo))
+         path-labels (map #(str "path " %) runids)   ; labels for path lengths until found or gave up
+         found-labels (map #(str "found " %) runids) ; labels for found foodspots coords
          data$ (atom (append-labels (into       ; header row for data csv
                                      ["initial dir" "exponent" "segments"
                                       "found" "efficency" "total path len"]
-                                     (map #(str "path " %)
-                                          (range 1 (inc walks-per-combo))))))
+                                     (concat path-labels found-labels))))
          iter-num$ (atom 0)]
      (spit-csv param-filename param-data) ; write out fixed parameters
      (cl-format true "Performing ~d runs in groups of ~d ...~%" 
@@ -239,18 +242,15 @@
        (flush)
        (r/write-state (str base-state-filename "_mu" (double-to-dotless exponent) "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin") (r/get-state rng))
        (let [sim-fn (partial levy-run rng look-fn init-dir params exponent) ; remaining arg is initial location
-             [found n-segments lengths] (time (run-and-collect sim-fn init-loc-fn walks-per-combo))
+             [n-segments lengths found] (time (run-and-collect sim-fn init-loc-fn walks-per-combo))
              n-found (count (keep identity found))
              total-length (reduce + lengths)
              efficiency (/ n-found total-length)] ; lengths start as doubles and remain so--this is double div
          (cl-format true "num found=~f, efficiency=~f\n" n-found efficiency)
-         (swap! data$ conj (into [init-dir exponent n-segments n-found efficiency total-length] lengths))))
+         (swap! data$ conj (into [init-dir exponent n-segments n-found efficiency total-length] (concat lengths found)))))
      (spit-csv data-filename @data$)
      (println " done.")
-     ;; BUG found is not defined in the outer let; it's from the let inside the
-     ;; doseq through different exponent and direction combinations.  What
-     ;; I need is a per-paramter combo sequence of found foodspot sequences.
-     {:data @data$ :found found :rng rng}))) ; data is not very large; should be OK to return it.
+     {:data @data$ :rng rng}))) ; data is not very large; should be OK to return it.
 
 
 ;; TODO Modify further for new :init-loc-fn parameter?  
