@@ -126,8 +126,9 @@
                                   perc-radius coords))
 
 (defn foodspot-coords-if-found
-  "Given a triple returned by walks/levy-foodwalk or walks/straight-foodwalk,
-  returns the coordinates of the first found foodspot, or nil if there are none."
+  "Given a sequence of foodspots returned by walks/levy-foodwalk or
+  walks/straight-foodwalk, returns the coordinates of the first found
+  foodspot, or nil if there are none."
   [found-foodspot-seq]
   (if found-foodspot-seq
     (foodspot-coords (first found-foodspot-seq))
