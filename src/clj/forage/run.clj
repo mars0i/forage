@@ -167,21 +167,21 @@
   information from them: total number of segments, a sequence of lengths
   of paths until foodspots were found, and sequence of coordinates of
   found foodspots, or nil when not found.  Corresponding path lengths
-  and foodspots coordinates (or nil) are in the same (reversed
-  execution) order.  nil or the previous foodwalk result will be passed
-  to init-loc-fn to allow it to determine the initial location--the
-  starting point for the walk--that's passed as sim-fn's only argument.
-  n-walks must be >= 0."
+  and foodspots coordinates (or nil) are in the same (execution) order.
+  nil or the previous foodwalk result will be passed to init-loc-fn to
+  allow it to determine the initial location--the starting point for the
+  walk--that's passed as sim-fn's only argument.  n-walks must be >= 0."
   [sim-fn init-loc-fn n-walks]
-  (loop [n n-walks, prev-fw nil, n-segments 0, found nil, lengths nil]
+  (loop [n n-walks, prev-fw nil, n-segments 0, found [], lengths [] ]
     (if (zero? n)
       [n-segments lengths found]
       (let [fw (sim-fn (init-loc-fn prev-fw))]
         (recur (dec n)
                fw
                (+ n-segments (w/count-segments-until-found fw))
-               (cons (mf/foodspot-coords-if-found (first fw)) found)
-               (cons (w/path-until-found-length fw) lengths))))))
+               (conj found (mf/foodspot-coords-if-found (first fw))) ; (cons (mf/foodspot-coords-if-found (first fw)) found)
+               (conj lengths (w/path-until-found-length fw)) ; (cons (w/path-until-found-length fw) lengths)
+               )))))
 
 
 (defn levy-experiments
