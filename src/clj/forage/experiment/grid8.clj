@@ -78,9 +78,11 @@
   (def data-and-rng-5000 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 2500))
-  (def data-and-rng-2500 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 2.0] 10 seed ctrd-look-fn)))
   (def data-and-rng-2500 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
   (def data-and-rng-2500 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+
+  (def data-and-rng-2500 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 2.0] 10 seed ctrd-look-fn)))
+  (:found-coords data-and-rng-2500)
 
   (def data-and-rng-2500-1.001 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001] 1000 seed ctrd-look-fn)))
   (def data-and-rng-2500-1.5 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.5] 1000 seed ctrd-look-fn)))
