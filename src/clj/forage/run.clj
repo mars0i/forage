@@ -125,8 +125,6 @@
     coords))
 
 
-
-
 ;; We allow passing init-loc separately to allow chains of runs 
 ;; representing the foraging behavior of a single individual that
 ;; encounters targets multiple times.
@@ -200,7 +198,26 @@
   recreating runs with that combination using the same PRNG state.  Use
   utils.random/read-state and set-state.)  Returns a map containing keys
   :data for the generated summary data, and :rng for the rng with its
-  current state."
+  current state.
+  Output:
+  * Writes informational messages to stdout.
+  * Writes one random number generator state file *.bin per parameter 
+    combo (indicated in filename). Allows restart with that combo.
+  * Writes file *params.csv listing parameters used by runs.
+  * Writes file *data.csv containing summary data about runs:
+       - initial direction (empty if random)
+       - powerlaw exponent, if used
+       - total segments in runs with that combination of parameters
+       - number of foodspots found
+       - efficiency of parameter combo (num found / total path length)
+       - total path length
+       - a series of fields containing path lengths from individual runs
+  * Returns map with keys:
+       - :data; value is data in CSV file:
+       - :found-coords; value is sequence of per-parameter-combo sequences
+         of found foodspot coords (or nil if not found), in combo order.
+       - :rng; value is PRNG object with state as it was at end of runs.
+         (Note seed was passed in and can be used for a full re-run.)"
   ([file-prefix env params exponents walks-per-combo seed]
    (levy-experiments file-prefix env params exponents walks-per-combo seed 
                      (partial mf/perc-foodspots-exactly env (params :perc-radius))))
@@ -226,11 +243,12 @@
                                             (vals sorted-params))))
          runids (range 1 (inc walks-per-combo))
          path-labels (map #(str "path " %) runids)   ; labels for path lengths until found or gave up
-         found-labels (map #(str "found " %) runids) ; labels for found foodspots coords
+         ; found-labels (map #(str "found " %) runids) ; labels for found foodspots coords
          data$ (atom (append-labels (into       ; header row for data csv
                                      ["initial dir" "exponent" "segments"
                                       "found" "efficency" "total path len"]
-                                     (concat path-labels found-labels))))
+                                     path-labels)))
+         found-coords$ (atom [])
          iter-num$ (atom 0)]
      (spit-csv param-filename param-data) ; write out fixed parameters
      (cl-format true "Performing ~d runs in groups of ~d ...~%" 
@@ -247,10 +265,11 @@
              total-length (reduce + lengths)
              efficiency (/ n-found total-length)] ; lengths start as doubles and remain so--this is double div
          (cl-format true "num found=~f, efficiency=~f\n" n-found efficiency)
-         (swap! data$ conj (into [init-dir exponent n-segments n-found efficiency total-length] (concat lengths found)))))
+         (swap! found-coords$ conj found)
+         (swap! data$ conj (into [init-dir exponent n-segments n-found efficiency total-length] lengths))))
      (spit-csv data-filename @data$)
      (println " done.")
-     {:data @data$ :rng rng}))) ; data is not very large; should be OK to return it.
+     {:data @data$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
 
 ;; TODO Modify further for new :init-loc-fn parameter?  
