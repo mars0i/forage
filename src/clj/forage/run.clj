@@ -283,6 +283,9 @@
 
 ;; TODO Modify further for new :init-loc-fn parameter?  
 ;; Currently always ;; passes nil to the init-loc-fn.
+;; TODO Is data written same as in levy-experiments?
+;; TODO Return data?
+;; TODO Return foodspots?
 (defn straight-experiments
   "Runs straight-segment food searches using parameters in params for each
   specified there. Creates two files, one containing the fixed parameters
