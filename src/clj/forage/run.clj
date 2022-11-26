@@ -210,7 +210,7 @@
   * Returns map with keys:
        - :data; value is data in CSV file.
        - :found-coords; value is sequence of per-parameter-combo sequences
-         of found foodspot coords (or nil if not found), in combo order.
+         of found foodspot coord pairs (nil if not found), in combo order.
        - :rng; value is PRNG object with state as it was at end of runs."
   ([file-prefix env params exponents walks-per-combo seed]
    (levy-experiments file-prefix env params exponents walks-per-combo seed 
