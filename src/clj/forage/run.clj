@@ -179,9 +179,8 @@
         (recur (dec n)
                fw
                (+ n-segments (w/count-segments-until-found fw))
-               (conj found (mf/foodspot-coords-if-found (first fw))) ; (cons (mf/foodspot-coords-if-found (first fw)) found)
-               (conj lengths (w/path-until-found-length fw)) ; (cons (w/path-until-found-length fw) lengths)
-               )))))
+               (conj found (mf/foodspot-coords-if-found (first fw)))
+               (conj lengths (w/path-until-found-length fw)))))))
 
 
 (defn levy-experiments
