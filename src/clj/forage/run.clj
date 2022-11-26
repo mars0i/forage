@@ -189,34 +189,29 @@
   parameters in the params map.  Then for each exponent in exponents,
   creates a powerlaw (Pareto) distribution using that exponent, and runs
   walks-per-combo Levy-walk style food searches using the parameters,
-  look-fn for each direction in init-dirs.  Creates two data files, one
-  containing the fixed parameters of the run, and the other containing
-  the results listed for each varying parameter combination.  Filenames
-  include seed as an id.  Also creates one PRNG state file per
-  combination of exponent (mu) and direction. (This should allow
-  recreating runs with that combination using the same PRNG state.  Use
-  utils.random/read-state and set-state.)  Returns a map containing keys
-  :data for the generated summary data, and :rng for the rng with its
-  current state.
+  look-fn for each direction in init-dirs.  A new PRNG is created using
+  seed unless a PRNG is passed in for parameter rng, in which case the
+  seed is just used as an id number. Output filenames (see below) 
+  are constructed using file-prefix and seed.
   Output:
   * Writes informational messages to stdout.
   * Writes one random number generator state file *.bin per parameter 
-    combo (indicated in filename). Allows restart with that combo.
-  * Writes file *params.csv listing parameters used by runs.
+    combo (indicated in filename). Allows restart with that combo and
+    the same PRNG state using utils.random/read-state and set-state.
+  * Writes file *params.csv listing fixed parameters used by all runs.
   * Writes file *data.csv containing summary data about runs:
-       - initial direction (empty if random)
-       - powerlaw exponent, if used
-       - total segments in runs with that combination of parameters
-       - number of foodspots found
-       - efficiency of parameter combo (num found / total path length)
-       - total path length
-       - a series of fields containing path lengths from individual runs
+       - initial direction (empty if random).
+       - powerlaw exponent, if used.
+       - total segments in runs with that combination of parameters.
+       - number of foodspots found.
+       - efficiency of parameter combo (num found / total path length).
+       - total path length.
+       - a series of fields containing path lengths from individual runs.
   * Returns map with keys:
-       - :data; value is data in CSV file:
+       - :data; value is data in CSV file.
        - :found-coords; value is sequence of per-parameter-combo sequences
          of found foodspot coords (or nil if not found), in combo order.
-       - :rng; value is PRNG object with state as it was at end of runs.
-         (Note seed was passed in and can be used for a full re-run.)"
+       - :rng; value is PRNG object with state as it was at end of runs."
   ([file-prefix env params exponents walks-per-combo seed]
    (levy-experiments file-prefix env params exponents walks-per-combo seed 
                      (partial mf/perc-foodspots-exactly env (params :perc-radius))))
