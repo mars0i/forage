@@ -1,7 +1,7 @@
 ;; Functions for plotting things in 2D spatial coordinates using cljplot
 (ns forage.viz.cljplot
   (:require
-   [forage.toroidal :as t]  ; temporary for testing in three-plots. remove when possible.
+   [utils.toroidal :as t]  ; temporary for testing in three-plots. remove when possible.
    [cljplot.build :as cb]
    [cljplot.core :as cc]
    [cljplot.render :as cr]
