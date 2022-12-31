@@ -2,27 +2,40 @@
 (ns scratch
   (:require
    [utils.random :as r]
+   [utils.toroidal :as t]
    [forage.walks :as w]
-   [forage.toroidal :as t]
    [forage.viz.hanami :as h]   ; don't load with cljplot
    [forage.viz.cljplot :as cp] ; don't load with hanami
    [oz.core :as oz]
+   [clojure.math.numeric-tower :as m]
    ))
 
-"test3"
+"loaded"
+
+;; By John Collins at https://stackoverflow.com/a/68476365/1455243
+(defn irange
+  "Inclusive range function: end element is included."
+  ([start end step]
+   (take-while (if (pos? step) #(<= % end) #(>= % end)) (iterate #(+ % step) start)))
+  ([start end]
+   (irange start end 1))
+  ([end]
+   (irange 0 end))
+  ([] (range)))
 
 (comment
 
-  (def walk1 (h/add-walk-labels "segs1" [[5 5] [5 6] [8 1] [9 4]]))
-  (def walk2 (h/add-walk-labels "segs2" [[9 3] [3 2] [4 6] [7 8]]))
-  (def walk2 [{"x" 9, "y" 3, "ord" 4, "label" "segs2"}
-              {"x" 3, "y" 2, "ord" 5, "label" "segs2"}
-              {"x" 4, "y" 6, "ord" 6, "label" "segs2"}
-              {"x" 7, "y" 8, "ord" 7, "label" "segs2"}])
 
   (def seed (r/make-seed))
-  (def seed 7790000679590803178)
   (def rng (r/make-well19937 seed))
+
+  (def lambda 4.3)
+  (defn logistic [x] (* lambda x (- 1 x)))
+  (def a (+ 1/2 (m/sqrt (- 1/4 (/ lambda)))))
+  (def lower (irange 0 a 0.01))
+  (def upper (irange (- 1 a) 1 0.01))
+  (map logistic lower)
+  (map logistic upper)
 
   (oz/start-server!)
   (oz/view! example {:port 10667} )
