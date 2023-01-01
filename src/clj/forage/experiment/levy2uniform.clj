@@ -21,16 +21,17 @@
 (def trunc-levy-nums (repeatedly #(r/next-double dist minval maxval)))
 (def trunc-inverse-nums (map (partial r/powerlaw-cumulative mu minval maxval) trunc-levy-nums))
 
+(def unif-nums (repeatedly #(r/next-double rng)))
+
 (defn hist
-  "Slightly more convenient than tv/histogram, but with limitations.
-  Example usage:
+  "Slightly more convenient wrapper of tech.viz.vega/histogram, but
+  with limitations. Example usage:
      (hist (take xs 1000) 100)"
   ([xs] (hist xs 50))
   ([xs bins] (tv/histogram xs "x" {:bin-count bins})))
 
 (comment
 
-  ;(def unifnums (repeatedly #(r/next-double rng)))
   ;(def unifrecs (map vector unifnums)) ; wrap each number in a vector
   (require 'forage.run :reload)
   (forage.run/spit-csv "data.txt" (take 100000000 (map vector (repeatedly #(r/next-double rng)))))
@@ -39,12 +40,22 @@
   (oz/start-server!)
 
   (def n 100000)
+  (def m 10000)
 
-  (oz/view! (hist (take n trunc-levy-nums)))
-  (oz/view! (hist (take n trunc-inverse-nums)))
+  (def trunchist (hist (take 400000 trunc-levy-nums)))
+  (oz/view! trunchist)
+  (count (:values (first (:data trunchist)))) ;=> 50 by default
+  ;; Extract heights from histogram bin data:
+  (def bincounts (map :count (:values (first (:data trunchist)))))
+  ;; There's probably a more direct method, but this works
+
+  (oz/view! (hist (take m trunc-levy-nums)))
+  (oz/view! (hist (take m trunc-inverse-nums)))
   (m/mean (take n trunc-inverse-nums))
+  (oz/view! (hist (take n unif-nums)))
+  (m/mean (take n unif-nums))
 
-  (oz/view! (hist (take n pure-levy-nums)))
+  (oz/view! (hist (take m pure-levy-nums)))
   (oz/view! (hist (take n pure-inverse-nums)))
   (m/mean (take n pure-inverse-nums))
 
