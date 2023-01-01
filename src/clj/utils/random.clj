@@ -359,7 +359,10 @@
 ;  ([dist low high x] (trunc-cumulative dist low high x)))
 
 (defn powerlaw-cumulative
-  "FIXME" ; FIXME: add docstring
+  "Given an input value x, returns the cumulative probability of x for
+  a power law distribution with exponent mu, minimum value minval, and
+  if provided, maximum value maxval.  Also transforms values generated 
+  by a power law distribution into uniformly distributed values."
   ([mu minval x] 
    (let [-alpha (- 1 mu)]
      (- 1 (/ (nt/expt x -alpha)
