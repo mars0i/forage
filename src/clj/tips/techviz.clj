@@ -2,12 +2,14 @@
   (:require [tech.viz.vega :as tv]
             [utils.random :as r]))
 
+;; See levy2uniform.clj for a more detailed application of the same ideas.
+
 (def seed (r/make-seed))
 (def rng (r/make-well19937 seed))
 (def dist (r/make-powerlaw rng 1 2))
 
 (def levy-nums (repeatedly #(r/next-double dist)))
-(def inverse-nums (map (partial r/pareto-cumulative 1 2) levy-nums))
+(def inverse-nums (map (partial r/powerlaw-cumulative 1 2) levy-nums))
 
 ;; obsolete I think--worked with earlier version Apache libs I was using:
 ;(def inverse-nums (map #(.cumulativeProbability dist %) levy-nums))
