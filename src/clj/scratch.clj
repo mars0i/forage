@@ -4,10 +4,12 @@
    [utils.random :as r]
    [utils.toroidal :as t]
    [forage.walks :as w]
-   [forage.viz.hanami :as h]   ; don't load with cljplot
-   [forage.viz.cljplot :as cp] ; don't load with hanami
+   ;[forage.viz.hanami :as h]   ; don't load with cljplot
+   ;[forage.viz.cljplot :as cp] ; don't load with hanami
    [oz.core :as oz]
    [clojure.math.numeric-tower :as m]
+   [aerial.hanami.common :as hc]
+   [aerial.hanami.templates :as ht]
    ))
 
 "loaded"
@@ -24,6 +26,9 @@
   ([] (range)))
 
 (comment
+
+  (def plot (hc/xform ht/line-chart :UDATA [{"x" 0 "y" 1} {"x" 1 "y" 0} {"x" 2 "y" 2}]))
+  (oz/export! plot "yo.svg")
 
 
   (def seed (r/make-seed))
