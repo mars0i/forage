@@ -45,7 +45,13 @@
 ;; PRNGS and DISTS:
 
 (def seed (inc (r/make-seed)))
-;(def seed -2925834069415719830)
+;(def seed 6588465356956694642) ; version "500"
+;(def seed -3481899242910030715) ; version "501"
+;(def seed 3606716751769783334) ; version "600"
+;(def seed -8570974758410904124) ; version "601"
+;(def seed -3499416562441271185) ; version "602"
+(def seed -5280359680172809672) ; version "603"
+
 (def rng (r/make-well19937 seed))
 
 (def dists (map (fn [mu] (r/make-powerlaw rng 1 mu)) mus))
@@ -114,7 +120,7 @@
   (oz/view! (gridwalk-plot plot-dim all-walks))
   (oz/view! (gridwalk-plot plot-dim (nth each-walk 0)))
   (oz/view! (gridwalk-plot plot-dim (nth each-walk 1)))
-  (oz/view! (gridwalk-plot plot-dim (nth each-walk 2)))
+  ;(oz/view! (gridwalk-plot plot-dim (nth each-walk 2)))
 
   (oz/view! (multiplot 500 each-walk))
 
