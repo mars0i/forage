@@ -98,9 +98,10 @@
 (defn gridwalk-plot 
   [plot-dim walks]
   (-> (h/vega-gridwalk-plot
-       "N/A" maxpathlen powerlaw-scale n-steps
+     "N/A" maxpathlen powerlaw-scale n-steps
        []
-       (h/vega-walk-plot plot-dim env-size 1.5 walks "category20")) ; "category20"
+       ;(h/vega-walk-plot plot-dim env-size 1.5 walks)) 
+       (h/vega-walk-plot plot-dim 800 3500 1.0 false walks "greys"))
       (assoc :background "white")))
 
 
@@ -118,6 +119,18 @@
 
 ;; Now view gridwalk as vega-lite, e.g. with
 (comment
+
+;  (defn kludgewalk-plot 
+;    [plot-dim walks]
+;    (let [walk0 (list (first walks))
+;          walk1 (list (second walks))]
+;      (-> (h/vega-gridwalk-plot
+;            "N/A" maxpathlen powerlaw-scale n-steps
+;            []
+;            (h/vega-walk-plot plot-dim 800 3500 1.0 false walk0))
+;          (assoc :background "white"))))
+
+
   (require '[oz.core :as oz])
   (oz/start-server!)
   (oz/view! (gridwalk-plot plot-dim all-walks))
