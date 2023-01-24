@@ -41,24 +41,24 @@
   ([plot-dim data-dim stroke-width data]
    (vega-walk-plot plot-dim 0 data-dim stroke-width true data))
   ([plot-dim data-bound-min data-bound-max stroke-width clip? data & colorscheme-seq]
-  (-> (hc/xform ht/line-chart
-                :DATA data
-                :XSCALE {"domain" [data-bound-min data-bound-max]}
-                :YSCALE {"domain" [data-bound-min data-bound-max]}
-                :COLOR (if colorscheme-seq
-                         {:field "label" :type "nominal"
-                          :scale {:scheme (first colorscheme-seq)}}
-                         "label")
-                :WIDTH  plot-dim
-                :HEIGHT plot-dim
-                ;:autosize {:type "none"}
+   (-> (hc/xform ht/line-chart
+                 :DATA data
+                 :XSCALE {"domain" [data-bound-min data-bound-max]}
+                 :YSCALE {"domain" [data-bound-min data-bound-max]}
+                 :COLOR (if colorscheme-seq
+                          {:field "label" :type "nominal"
+                           :scale {:scheme (first colorscheme-seq)}}
+                          "label")
+                 :WIDTH  plot-dim
+                 :HEIGHT plot-dim
+                 ;:autosize {:type "none"}
                  )
-      (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
-      (assoc-in [:encoding :order :type] "ordinal") ; gets rid of warning on :order
-      (assoc-in [:mark :clip] (if clip? "true" "false"))
-      (assoc-in [:mark :strokeWidth] (or stroke-width 1.0))
-      (assoc-in [:mark :strokeCap] "round") ; doesn't seem to work
-      )))
+       (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
+       (assoc-in [:encoding :order :type] "ordinal") ; gets rid of warning on :order
+       (assoc-in [:mark :clip] (if clip? "true" "false"))
+       (assoc-in [:mark :strokeWidth] (or stroke-width 1.0))
+       (assoc-in [:mark :strokeCap] "round") ; doesn't seem to work
+       )))
 
 (defn add-point-labels
   "Given a sequence of pairs representing x,y coordinates, returns a
