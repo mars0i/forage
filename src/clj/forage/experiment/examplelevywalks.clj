@@ -8,7 +8,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANAMI SPACE PARAMETERS:
 
-(def env-size 5000)
+;(def env-size 5000)
+(def env-size 3000)
 (def half-size (/ env-size 2))
 (def plot-dim 700)
 
@@ -31,7 +32,8 @@
 
 ;(def maxpathlen half-size)
 ;(def maxpathlen env-size)
-(def maxpathlen (* 4 env-size)) ; good for larger mus
+;(def maxpathlen (* 4 env-size)) ; good for larger mus
+(def maxpathlen 20000)
 (def trunclen maxpathlen)
 (def perceptual-radius 20) 
 (def food-distance 200)
@@ -73,7 +75,8 @@
 
 ;; Infinite sequences of steps that result from the step vectors
 (def stop-seqs (map (fn [step-seq]
-                      (w/walk-stops [half-size half-size] step-seq))
+                      ;(w/walk-stops [half-size half-size] step-seq))
+                      (w/walk-stops [2500 2500] step-seq))
                     step-seqs))
 
 ;; Infinite sequences of stops labeled for Hanami/Vega-Lite:
@@ -97,7 +100,7 @@
   (-> (h/vega-gridwalk-plot
        "N/A" maxpathlen powerlaw-scale n-steps
        []
-       (h/vega-walk-plot plot-dim env-size 1.5 walks)) ; "category20"
+       (h/vega-walk-plot plot-dim env-size 1.5 walks "category20")) ; "category20"
       (assoc :background "white")))
 
 
