@@ -35,7 +35,9 @@
   over the range (2*quadrant-sz x 2*quandrant-sz), with physical size 
   plot-dim x plot-dim.  Lines will be plotted with thickness stroke-width,
   or 1.0 if stroke-width is falsey.  clip? is a boolean that determines 
-  whether lines that go beyond the boundaries are clipped at the boundary."
+  whether lines that go beyond the boundaries are clipped at the boundary.
+  The optional argument is a string naming a Vega color scheme from 
+  https://vega.github.io/vega/docs/schemes."
   ([plot-dim data-dim stroke-width data]
    (vega-walk-plot plot-dim 0 data-dim stroke-width true data))
   ([plot-dim data-bound-min data-bound-max stroke-width clip? data & colorscheme-seq]
