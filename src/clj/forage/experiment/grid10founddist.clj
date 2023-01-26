@@ -67,9 +67,13 @@
 
   (def seed (r/make-seed))
   ;; nondestructive/assymetric:
-  (def data-rng-assym (time (fr/levy-experiments fr/default-file-prefix centered-env assym-params [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  (def data-rng-assym
+    (time (fr/levy-experiments fr/default-file-prefix centered-env assym-params
+                               [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
   ;; destructive/symetric:
-  (def data-rng-symm  (time (fr/levy-experiments fr/default-file-prefix nocenter-env params       [1.001 1.5 2.0 2.5 3.0] 1000 seed noctr-look-fn)))
+  (def data-rng-symm
+    (time (fr/levy-experiments fr/default-file-prefix nocenter-env params
+                               [1.001 1.5 2.0 2.5 3.0] 1000 seed noctr-look-fn)))
 
   ;; Use :found-coords on the result to get a sequence containing one sequence
   ;; of found coordinates for each of the mu values.
