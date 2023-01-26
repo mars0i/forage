@@ -70,8 +70,6 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Data-file-generating exeriment: nondestructive foraging
 
-  (def seed (r/make-seed))
-
   (def data-and-rng  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 5000))
@@ -119,6 +117,8 @@
                                   fr/default-file-prefix 
                                   centered-env nondestr-params-shorttrunclen
                                   [1.5 2.0 2.5 3.0] 100 seed ctrd-look-fn)))
+
+  (map count (:found-coords data-and-rng-1500))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Plotting

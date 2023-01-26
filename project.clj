@@ -21,7 +21,7 @@
                  [cljplot "0.0.2a-SNAPSHOT"]
                  ;[clojure2d "1.4.4"] ; not required for cljplot, but allows additional choices
                  ;[metasoarous/darkstar "0.1.0"] ; require as applied-science.darkstar (fork of original applied-science/darkstar, which isn't on Clojars)
-                 [mason "20"]] ; just for Continuous2D
+                 [mason "21"]] ; just for Continuous2D
 
   :source-paths ["src/clj"]
 
@@ -72,21 +72,17 @@
                           :jvm-opts ["-Djdk.attach.allowAttachSelf"   ; for clj-async-profile: needed for JDK9+
                                      "-XX:+UnlockDiagnosticVMOptions" ; for clj-async-profiler
                                      "-XX:+DebugNonSafepoints"]}}     ; for clj-async-profiler
-)
-
-
-;             :notespace {:dependencies [[scicloj/notespace "4-alpha-21"]
-;                                        [org.scicloj/tempfiles "1-alpha2"]
-;                                        [org.scicloj/kindly "1-alpha3"]]
-;                         :repl-options {:nrepl-middleware [scicloj.notespace.v4.nrepl/middleware]}}
-
-;:repl-options {:init-ns forage.core}
-  ;:global-vars {*warn-on-reflection* true}
-  ;:aot [forage.Sim forage.GUI]
-  ; SEE pasta/project.clj for other lines here I might want to include
 
   ;; TO INSTALL A NON-MAVENIZED JAR LOCALLY, uncomment lein-localrepo
   ;; below, run 
   ;;    lein localrepo install <jarfilename> <libname> <version num>'
   ;:plugins [[lein-localrepo "0.5.3"]
   ;          [lein-expand-resource-paths "0.0.1"]] ; allows wildcards in resource-paths (https://github.com/dchelimsky/lein-expand-resource-paths)
+
+)
+
+
+;:repl-options {:init-ns forage.core}
+  ;:global-vars {*warn-on-reflection* true}
+  ;:aot [forage.Sim forage.GUI]
+  ; SEE pasta/project.clj for other lines here I might want to include
