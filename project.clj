@@ -71,13 +71,14 @@
                                          [com.clojure-goes-fast/clj-async-profiler "0.5.1"]]
                           :jvm-opts ["-Djdk.attach.allowAttachSelf"   ; for clj-async-profile: needed for JDK9+
                                      "-XX:+UnlockDiagnosticVMOptions" ; for clj-async-profiler
-                                     "-XX:+DebugNonSafepoints"]}      ; for clj-async-profiler
+                                     "-XX:+DebugNonSafepoints"]}}     ; for clj-async-profiler
+)
 
-             :notespace {:dependencies [[scicloj/notespace "4-alpha-21"]
-                                        [org.scicloj/tempfiles "1-alpha2"]
-                                        [org.scicloj/kindly "1-alpha3"]]
-                         :repl-options {:nrepl-middleware [scicloj.notespace.v4.nrepl/middleware]}}})
 
+;             :notespace {:dependencies [[scicloj/notespace "4-alpha-21"]
+;                                        [org.scicloj/tempfiles "1-alpha2"]
+;                                        [org.scicloj/kindly "1-alpha3"]]
+;                         :repl-options {:nrepl-middleware [scicloj.notespace.v4.nrepl/middleware]}}
 
 ;:repl-options {:init-ns forage.core}
   ;:global-vars {*warn-on-reflection* true}
