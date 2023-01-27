@@ -11,7 +11,10 @@
             [utils.math :as m]))
 
 
-(def half-size 5000) ; half the full width of the env
+;; NON-TOROIDAL PLAN:
+;; CREATE ENV SO LARGE THAT PATH FROM CENTER CANNOT ESCAPE
+(def half-size (* 2000 5000)) ; half the full width of the env
+(def maxpathlen half-size) ; note that
 (def init-food 1000)
 
 ;; Initial default params, with:
@@ -25,7 +28,8 @@
              :env-discretization  5 ; for Continuous2D; see foodspot.clj
              :init-loc-fn         (constantly [half-size half-size]) ; function to return initial location given nil or prev foodwalk
              :init-pad            nil ; if truthy, initial loc offset by this in rand dir
-             :maxpathlen          (* 2000 half-size) ; max total length of search path
+             ;:maxpathlen          (* 2000 half-size) ; max total length of search path
+             :maxpathlen          maxpathlen
              ;; A trunclen not enormously larger than the grid spacing is optimal:
              :trunclen            1500 ; max length of any line segment
              :look-eps            0.2    ; increment within segments for food check
@@ -47,7 +51,8 @@
                                                      (params :env-size)
                                                      (params :env-size))))
 
-(def noctr-look-fn (partial mf/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
+(def noctr-toroidal-look-fn (partial mf/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
+(def noctr-nontoroidal-look-fn (partial mf/perc-foodspots-exactly nocenter-env (params :perc-radius)))
 
 
 ;; PARAMS FOR NON-DESTRUCTIVE/ASSYMETRIC SEARCH
@@ -60,7 +65,8 @@
                                                      (params :env-size)
                                                      (params :env-size))))
 
-(def ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
+(def ctrd-toroidal-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
+(def ctrd-nontoroidal-look-fn (partial mf/perc-foodspots-exactly centered-env (params :perc-radius)))
 
 
 (comment
