@@ -66,11 +66,34 @@
 (comment
 
   (def seed (r/make-seed))
-  ;; nondestructive/assymetric:
+
+  ;; NOT WORKING FOR PURPOSE OF EXAMINING DISTRIBUTION OF FOUND FOODSPOTS:
+  ;; IT APPEARS THAT WHAT I'M GETTING BACK ARE TOROIDAL, I.E. WRAPPED
+  ;; COORDINATES.
+  ;; Which makes sense: The search goes through MASON's Continuous2D and
+  ;; asked for toroidal lookup.  So it's just returning the wrapped coordinate.
+  ;; SO EITHER I NEED TO USE A LARGER FIELD, AND DON'T MAKE IT TOROIDAL,
+  ;; OR: Do it toroidally but keep track of how many times there's been a wrap,
+  ;; so I can reconstruct the actual coordinates.
+  ;; OR: WHEN FOOD IS FOUND VIA Continuous2D's toroidal lookup, return information
+  ;; from the walk in addition, or instead.  (For this purpose, I'm not sure I
+  ;; need the foodspot coordinate.)
+
+  ;; NONDESTRUCTIVE/ASSYMETRIC:
   (def data-rng-assym
     (time (fr/levy-experiments fr/default-file-prefix centered-env assym-params
                                [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
-  ;; destructive/symetric:
+  ;; Write the found coordinates to csv files for later analysis:
+  (def found-coords (:found-coords data-rng-assym))
+  (map (fn [xs] (count (filter identity xs))) found-coords)
+  (fr/spit-csv "foundcoords1001.csv" (nth found-coords 0))
+  (fr/spit-csv "foundcoords15.csv"   (nth found-coords 1))
+  (fr/spit-csv "foundcoords20.csv"   (nth found-coords 2))
+  (fr/spit-csv "foundcoords25.csv"   (nth found-coords 3))
+  (fr/spit-csv "foundcoords30.csv"   (nth found-coords 4))
+
+
+  ;; DESTRUCTIVE/SYMMETRIC:
   (def data-rng-symm
     (time (fr/levy-experiments fr/default-file-prefix nocenter-env params
                                [1.001 1.5 2.0 2.5 3.0] 1000 seed noctr-look-fn)))
