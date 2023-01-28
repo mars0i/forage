@@ -90,6 +90,9 @@
 ;; Construct walk data for Hanami/Vega-Lite:
 (def each-walk (doall (map take n-steps vl-stop-seqs))) ; three seqs, one for each mu
 (def all-walks (apply concat each-walk)) ; all mus together in one seq
+(def reverse-all-walks (apply concat (reverse each-walk)))
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -101,8 +104,9 @@
      "N/A" maxpathlen powerlaw-scale n-steps
        []
        ;(h/vega-walk-plot plot-dim env-size 1.5 walks)) 
-       ;(h/vega-walk-plot plot-dim 750 3400 1.25 false walks "greys")) ;; ZoomOut setting used for version 603
-       (h/vega-walk-plot plot-dim 2000 2700 0.75 false walks "greys")) ;; ZoomIn settting used for version 603
+       (h/vega-walk-plot plot-dim 750 3400 1.25 false walks "greys")) ;; ZoomOut setting used for version 603
+       ;(h/vega-walk-plot plot-dim 2000 2700 0.75 false walks "greys")) ;; ZoomIn settting used for version 603
+       ;(h/vega-walk-plot plot-dim 2250 2700 0.5 false walks "grays")) ;; ZoomIn for Brownian walk alone
       (assoc :background "white")))
 
 
@@ -131,10 +135,12 @@
 ;            (h/vega-walk-plot plot-dim 800 3500 1.0 false walk0))
 ;          (assoc :background "white"))))
 
+(class all-walks)
 
   (require '[oz.core :as oz])
   (oz/start-server!)
   (oz/view! (gridwalk-plot plot-dim all-walks))
+  ;(oz/view! (gridwalk-plot plot-dim reverse-all-walks))
   ;(oz/view! (gridwalk-plot plot-dim (nth each-walk 0)))
   ;(oz/view! (gridwalk-plot plot-dim (nth each-walk 1)))
 

@@ -21,7 +21,9 @@
                  [cljplot "0.0.2a-SNAPSHOT"]
                  ;[clojure2d "1.4.4"] ; not required for cljplot, but allows additional choices
                  ;[metasoarous/darkstar "0.1.0"] ; require as applied-science.darkstar (fork of original applied-science/darkstar, which isn't on Clojars)
-                 [mason "21"]] ; just for Continuous2D
+                 ;[mason "20"]
+                 [mason "21"]
+                ]
 
   :source-paths ["src/clj"]
 

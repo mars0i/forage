@@ -11,10 +11,15 @@
             [utils.math :as m]))
 
 
+;; MODEST TOROIDAL VERSION:
+; (def half-size 5000) ; half the full width of the env
+; (def maxpathlen (* 2000 half-size)) ; max total length of search path
+
 ;; NON-TOROIDAL PLAN:
-;; CREATE ENV SO LARGE THAT PATH FROM CENTER CANNOT ESCAPE
-(def half-size (* 2000 5000)) ; half the full width of the env
+;; CREATE LARGE ENV that is larger than maxpathlen
+(def half-size (* 200 5000)) ; half the full width of the env
 (def maxpathlen half-size) ; note that
+
 (def init-food 1000)
 
 ;; Initial default params, with:
@@ -28,7 +33,6 @@
              :env-discretization  5 ; for Continuous2D; see foodspot.clj
              :init-loc-fn         (constantly [half-size half-size]) ; function to return initial location given nil or prev foodwalk
              :init-pad            nil ; if truthy, initial loc offset by this in rand dir
-             ;:maxpathlen          (* 2000 half-size) ; max total length of search path
              :maxpathlen          maxpathlen
              ;; A trunclen not enormously larger than the grid spacing is optimal:
              :trunclen            1500 ; max length of any line segment
@@ -88,7 +92,7 @@
   ;; NONDESTRUCTIVE/ASSYMETRIC:
   (def data-rng-assym
     (time (fr/levy-experiments fr/default-file-prefix centered-env assym-params
-                               [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+                               [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-nontoroidal-look-fn)))
   ;; Write the found coordinates to csv files for later analysis:
   (def found-coords (:found-coords data-rng-assym))
   (map (fn [xs] (count (filter identity xs))) found-coords)
@@ -97,6 +101,25 @@
   (fr/spit-csv "foundcoords20.csv"   (nth found-coords 2))
   (fr/spit-csv "foundcoords25.csv"   (nth found-coords 3))
   (fr/spit-csv "foundcoords30.csv"   (nth found-coords 4))
+
+  (def coords20
+    (with-open [reader
+                (clojure.java.io/reader
+                  "../../data.foraging/forage/grid10nondestructive-8162424797271973385/foundcoords20.csv")]
+      (doall (clojure.data.csv/read-csv reader))))
+  (nth coords20 26)
+  (def coords20map (map (fn [[x y]] {:x (clojure.edn/read-string x)
+                                     :y (clojure.edn/read-string y)}) coords20))
+
+  (count coords20map)
+  (def coords20map-nonil (filter (fn [[xy]] (= xy "")) coords20))
+  (count coords20map-nonil)
+  (nth coords20map 1)
+
+  (def heatmap20
+    {:data coords20map
+     :transform [{:filter 
+
 
 
   ;; DESTRUCTIVE/SYMMETRIC:

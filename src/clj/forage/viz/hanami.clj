@@ -45,6 +45,7 @@
                  :DATA data
                  :XSCALE {"domain" [data-bound-min data-bound-max]}
                  :YSCALE {"domain" [data-bound-min data-bound-max]}
+                 ;:MCOLOR "black"
                  :COLOR (if colorscheme-seq
                           {:field "label" :type "nominal"
                            :scale {:scheme (first colorscheme-seq)}}
