@@ -52,7 +52,6 @@
    (vega-walk-plot plot-dim 0 data-dim stroke-width true data))
   ([plot-dim data-bound-min data-bound-max stroke-width clip? data
     & {:keys [mark-color color-scheme color-field]}]
-   (prn :mark-color mark-color :color-scheme color-scheme :color-field color-field) ; DEBUG
    (-> (hc/xform ht/line-chart
                  :DATA data
                  :XSCALE {"domain" [data-bound-min data-bound-max]}
