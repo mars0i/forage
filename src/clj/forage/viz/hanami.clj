@@ -37,16 +37,17 @@
   stroke-width, or 1.0 if stroke-width is falsey.  clip? is a boolean
   that determines whether lines that go beyond the boundaries are
   clipped at the boundary.  If :mark-color key and value is provided,
-  the value will be treated as a Vega-Lite color string.  If :mark-color
-  is not provided, but :color-scheme is, then the value of
-  :colors-scheme will be treated as a Vega color scheme.  (This changes
-  the automatic mapping of colors to different plot elements.)  If
-  neither :mark-color nor :color-scheme is provided, then Hanami's
-  default color scheme is used.  If any color scheme is used, and
-  :color-field is provided, its value should be a string that specifies
-  a field name in the data that will be used to choose colors for data
-  elements.  If :color-field is not provided, the field \"label\" is
-  used as the default."
+  the value will be treated as a Vega-Lite color string to be added as
+  the value of :color in the :mark specification.  If :mark-color is not
+  provided, but :color-scheme is, then the value of :colors-scheme will
+  be treated as a Vega color scheme to be added in the value of :color
+  in :encoding.  (This changes the automatic mapping of colors to
+  different plot elements.)  If neither :mark-color nor :color-scheme is
+  provided, then Hanami's default color scheme is used.  If any color
+  scheme is used, and :color-field is provided, its value should be a
+  string that specifies a field name in the data that will be used to
+  choose colors for data elements.  If :color-field is not provided, the
+  field \"label\" is used as the default."
   ([plot-dim data-dim stroke-width data]
    (vega-walk-plot plot-dim 0 data-dim stroke-width true data))
   ([plot-dim data-bound-min data-bound-max stroke-width clip? data
