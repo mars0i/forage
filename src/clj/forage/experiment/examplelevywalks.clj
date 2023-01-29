@@ -127,12 +127,11 @@
 (def mu2mu3plot
   (hc/xform
     ht/layer-chart
-    :BACKGROUND "white"
+    :BACKGROUND "white" ; will get overridden if used in a layer plot with its own bg
     :LAYER [(h/vega-walk-plot plot-dim 750 3400 1.25 false (nth each-walk 0) :mark-color "#808080")
             (h/vega-walk-plot plot-dim 750 3400 1.25 false (nth each-walk 1) :mark-color "black")]))
 
-;; Zoom in for Brownian walk alone:
-;; FIXME Make background white
+;; FIXME If I'm displaying this alone in a paper, I need to make the bg white
 (def mu3plot
   (h/vega-walk-plot plot-dim 2250 2700 0.5 false (nth each-walk 1) :mark-color "black"))
 
@@ -148,7 +147,9 @@
 (def mu2mu3-concat-mu3
   (hc/xform
     uh/grid-chart
+    :BACKGROUND "white" ; overrides bg in subplots
     :COLUMNS 2
+    ;:config {:concat {:spacing 50}} ; trying to put more space between plots https://vega.github.io/vega-lite/docs/concat.html#config
     :CONCAT [mu2mu3plot mu3plot]))
 
 
