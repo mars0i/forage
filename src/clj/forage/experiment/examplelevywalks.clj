@@ -3,7 +3,8 @@
             [utils.random :as r]
             [aerial.hanami.templates :as ht]
             [aerial.hanami.common :as hc]
-            [forage.viz.hanami :as h]))
+            [forage.viz.hanami :as h]
+            [utils.hanami :as uh]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANAMI SPACE PARAMETERS:
@@ -121,18 +122,38 @@
   (hc/xform ht/layer-chart :LAYER gridwalk-plots))
 
 
+;; Zoomed-out, two-mu plot with black mu=3 and a middle, clear gray for mu=2.
+;; Doing this with layers allows explicit, separate control of each path's color.
+(def mu2mu3plot
+  (hc/xform
+    ht/layer-chart
+    :BACKGROUND "white"
+    :LAYER [(h/vega-walk-plot plot-dim 750 3400 1.25 false (nth each-walk 0) :mark-color "#808080")
+            (h/vega-walk-plot plot-dim 750 3400 1.25 false (nth each-walk 1) :mark-color "black")]))
+
+;; Zoom in for Brownian walk alone:
+;; FIXME Make background white
+(def mu3plot
+  (h/vega-walk-plot plot-dim 2250 2700 0.5 false (nth each-walk 1) :mark-color "black"))
+
+
+;; FIXME Not working--It's producing a top-level vector with no starting point for Vega-Lite.
+;; I don't understand why.
+(def mu2mu3-hconcat-mu3
+  (hc/xform
+    (ht/hconcat-chart :HCONCAT [mu2mu3plot mu3plot])))
+
+;; THIS WORKS
+;; Same thing, but using my utils/hanami full concat trick:
+(def mu2mu3-concat-mu3
+  (hc/xform
+    uh/grid-chart
+    :COLUMNS 2
+    :CONCAT [mu2mu3plot mu3plot]))
+
+
 ;; Now view gridwalk as vega-lite, e.g. with
 (comment
-
-  ;  (defn kludgewalk-plot 
-  ;    [plot-dim walks]
-  ;    (let [walk0 (list (first walks))
-  ;          walk1 (list (second walks))]
-  ;      (-> (h/vega-gridwalk-plot
-  ;            "N/A" maxpathlen powerlaw-scale n-steps
-  ;            []
-  ;            (h/vega-walk-plot plot-dim 800 3500 1.0 false walk0))
-  ;          (assoc :background "white"))))
 
   (def all-walks-plot (gridwalk-plot plot-dim all-walks))
 
@@ -143,15 +164,20 @@
   (oz/view! (gridwalk-plot plot-dim (nth each-walk 0)))
   (oz/view! (gridwalk-plot plot-dim (nth each-walk 1)))
 
-  ;; Zoomed-out, two-mu plot with black mu=3 and a middle, clear gray for mu=2:
-  (oz/view!
-    (hc/xform
-      ht/layer-chart
-      :LAYER 
-      [(h/vega-walk-plot plot-dim 750 3400 1.25 false (nth each-walk 0) :mark-color "#808080")
-       (h/vega-walk-plot plot-dim 750 3400 1.25 false (nth each-walk 1) :mark-color "black")]))
-
-
+  (oz/view! mu2mu3plot)
+  (oz/view! mu3plot)
+  (oz/view! mu2mu3-hconcat-mu3) ; broken
+  (oz/view! mu2mu3-concat-mu3)
 
 
 )
+
+  ;  (defn kludgewalk-plot 
+  ;    [plot-dim walks]
+  ;    (let [walk0 (list (first walks))
+  ;          walk1 (list (second walks))]
+  ;      (-> (h/vega-gridwalk-plot
+  ;            "N/A" maxpathlen powerlaw-scale n-steps
+  ;            []
+  ;            (h/vega-walk-plot plot-dim 800 3500 1.0 false walk0))
+  ;          (assoc :background "white"))))
