@@ -98,28 +98,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HANAMI/VEGA-LITE
 
+;; This works OK, but for the path coloring, you're at the mercy of
+;; whatever colorschemes you can choose.  This is because h/vega-walk-plot
+;; uses Hanami's :COLOR, which puts a color expression in the encoding
+;; block in a way that automatically assigns colors.  The alternative is
+;; to specific colors more rigidly and explicitly in the mark blocks.
+;; The Hanami version of this is :MCOLOR.
 (defn gridwalk-plot 
   [plot-dim walks]
   (-> (h/vega-gridwalk-plot
      "N/A" maxpathlen powerlaw-scale n-steps
        []
        ;(h/vega-walk-plot plot-dim env-size 1.5 walks)) 
-       (h/vega-walk-plot plot-dim 750 3400 1.25 false walks "greys")) ;; ZoomOut setting used for version 603
+       (h/vega-walk-plot plot-dim 750 3400 1.25 false walks :color-scheme "greys")) ;; ZoomOut setting used for version 603
        ;(h/vega-walk-plot plot-dim 2000 2700 0.75 false walks "greys")) ;; ZoomIn settting used for version 603
        ;(h/vega-walk-plot plot-dim 2250 2700 0.5 false walks "grays")) ;; ZoomIn for Brownian walk alone
       (assoc :background "white")))
 
 
-;; FIXME Doesn't work
-(defn multiplot
-  [plot-dim walks]
-  (hc/xform
-    ht/hconcat-chart
-      :TITLE "Two walks"
-      :TOFFSET 10 ; Space between overall title and the individual plot regions
-      :DATA walks
-      :HCONCAT [(hc/xform (gridwalk-plot plot-dim [first walks]))
-                (hc/xform (gridwalk-plot plot-dim [second walks]))]))
+(defn gridwalk-layered-plot
+  [plot-dim gridwalk-plots]
+  (hc/xform ht/layer-chart :LAYER gridwalk-plots))
 
 
 ;; Now view gridwalk as vega-lite, e.g. with
@@ -135,16 +134,21 @@
 ;            (h/vega-walk-plot plot-dim 800 3500 1.0 false walk0))
 ;          (assoc :background "white"))))
 
-(class all-walks)
-
   (require '[oz.core :as oz])
   (oz/start-server!)
   (oz/view! (gridwalk-plot plot-dim all-walks))
-  ;(oz/view! (gridwalk-plot plot-dim reverse-all-walks))
-  ;(oz/view! (gridwalk-plot plot-dim (nth each-walk 0)))
-  ;(oz/view! (gridwalk-plot plot-dim (nth each-walk 1)))
+  (oz/view! (gridwalk-plot plot-dim reverse-all-walks))
+  (oz/view! (gridwalk-plot plot-dim (nth each-walk 0)))
+  (oz/view! (gridwalk-plot plot-dim (nth each-walk 1)))
 
-  (oz/view! (multiplot 500 each-walk)) ; doesn't work
+  ;; Zoomed-out, two-mu plot with black mu=3 and a middle, clear gray for mu=2:
+  (oz/view!
+    (hc/xform
+      ht/layer-chart
+      :LAYER 
+      [(h/vega-walk-plot plot-dim 750 3400 1.25 false (nth each-walk 0) :mark-color "#808080")
+       (h/vega-walk-plot plot-dim 750 3400 1.25 false (nth each-walk 1) :mark-color "black")]))
+
 
 
 
