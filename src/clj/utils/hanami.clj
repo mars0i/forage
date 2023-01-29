@@ -14,7 +14,8 @@
       (dissoc :encoding)
       (assoc :concat :CONCAT 
              :columns :COLUMNS 
-             :resolve :RESOLVE)))
+             :resolve :RESOLVE
+             :config ht/default-config)))
 
 (comment
   (def grid-example
