@@ -32,34 +32,44 @@
 ;; TODO let user add to the xform expression instead of Vega-Lite directly
 (defn vega-walk-plot
   "Constructs a Vega-Lite random walk plot from (vega-lite-ified) data
-  over the range (2*quadrant-sz x 2*quandrant-sz), with physical size 
-  plot-dim x plot-dim.  Lines will be plotted with thickness stroke-width,
-  or 1.0 if stroke-width is falsey.  clip? is a boolean that determines 
-  whether lines that go beyond the boundaries are clipped at the boundary.
-  The optional argument is a string naming a Vega color scheme from 
-  https://vega.github.io/vega/docs/schemes."
+  over the range (2*quadrant-sz x 2*quandrant-sz), with physical size
+  plot-dim x plot-dim.  Lines will be plotted with thickness
+  stroke-width, or 1.0 if stroke-width is falsey.  clip? is a boolean
+  that determines whether lines that go beyond the boundaries are
+  clipped at the boundary.  If :mark-color key and value is provided,
+  the value will be treated as a Vega-Lite color string to be added as
+  the value of :color in the :mark specification.  If :mark-color is not
+  provided, but :color-scheme is, then the value of :colors-scheme will
+  be treated as a Vega color scheme to be added in the value of :color
+  in :encoding.  (This changes the automatic mapping of colors to
+  different plot elements.)  If neither :mark-color nor :color-scheme is
+  provided, then Hanami's default color scheme is used.  If any color
+  scheme is used, and :color-field is provided, its value should be a
+  string that specifies a field name in the data that will be used to
+  choose colors for data elements.  If :color-field is not provided, the
+  field \"label\" is used as the default."
   ([plot-dim data-dim stroke-width data]
    (vega-walk-plot plot-dim 0 data-dim stroke-width true data))
-  ([plot-dim data-bound-min data-bound-max stroke-width clip? data & colorscheme-seq]
+  ([plot-dim data-bound-min data-bound-max stroke-width clip? data
+    & {:keys [mark-color color-scheme color-field]}]
+   (prn :mark-color mark-color :color-scheme color-scheme :color-field color-field) ; DEBUG
    (-> (hc/xform ht/line-chart
                  :DATA data
                  :XSCALE {"domain" [data-bound-min data-bound-max]}
                  :YSCALE {"domain" [data-bound-min data-bound-max]}
-                 ;:MCOLOR "black"
-                 :COLOR (if colorscheme-seq
-                          {:field "label" :type "nominal"
-                           :scale {:scheme (first colorscheme-seq)}}
-                          "label")
+                 :MCOLOR (or mark-color hc/RMV) ; RMV removes this Hanami field
+                 :COLOR  (cond mark-color hc/RMV
+                               color-scheme {:field (or color-field "label")
+                                             :type "nominal"
+                                             :scale {:scheme color-scheme}}
+                               :else (or color-field "label"))
                  :WIDTH  plot-dim
-                 :HEIGHT plot-dim
-                 ;:autosize {:type "none"}
-                 )
+                 :HEIGHT plot-dim)
        (assoc-in [:encoding :order :field] "ord") ; walk through lines in order not L-R
        (assoc-in [:encoding :order :type] "ordinal") ; gets rid of warning on :order
        (assoc-in [:mark :clip] (if clip? "true" "false"))
        (assoc-in [:mark :strokeWidth] (or stroke-width 1.0))
-       (assoc-in [:mark :strokeCap] "round") ; doesn't seem to work
-       )))
+       (assoc-in [:mark :strokeCap] "round"))))
 
 (defn add-point-labels
   "Given a sequence of pairs representing x,y coordinates, returns a
@@ -163,6 +173,7 @@
   (map make-foodspot 
        (f/centerless-rectangular-grid sep env-width env-height))))
 
+;; TODO Generalize the color specification as in vega-walk-plot
 (defn vega-food-plot
   "Plot foodspot display radii where foodspots are.  If a fifth argument
   is passed, it will be interpreted as a colorscheme name string from 
