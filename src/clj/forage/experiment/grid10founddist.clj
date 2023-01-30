@@ -22,13 +22,13 @@
 (def half-size (* 200 5000)) ; half the full width of the env
 (def maxpathlen half-size) ; note that
 
-(def init-food 1000)
+(def food-distance 1000)
 
 ;; Initial default params, with:
 ;; (a) Search starts in a random initial direction
 ;; (b) Search starts exactly from init-loc (e.g. for destructive search)
 (def params (sorted-map ; sort so labels match values
-             :food-distance       init-food
+             :food-distance       food-distance
              :perc-radius         1  ; distance that an animal can "see" in searching for food
              :powerlaw-min        1
              :env-size            (* 2 half-size)
