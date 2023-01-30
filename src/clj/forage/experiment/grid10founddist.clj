@@ -116,10 +116,8 @@
   (count coords20map-nonil)
   (nth coords20map 1)
 
-  (def heatmap20
-    {:data coords20map
-     :transform [{:filter 
 
+  ;; NOTE Hanami has hanami.templates/heatmap-chart and corr-heatmap
 
 
   ;; DESTRUCTIVE/SYMMETRIC:
