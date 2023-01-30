@@ -8,7 +8,9 @@
             [forage.walks :as w]
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
-            [utils.math :as m]))
+            [utils.math :as m]
+            [aerial.hanami.common :as hc]
+            [aerial.hanami.templates :as ht]))
 
 
 ;; MODEST TOROIDAL VERSION:
@@ -105,16 +107,28 @@
   (def coords20
     (with-open [reader
                 (clojure.java.io/reader
-                  "../../data.foraging/forage/grid10nondestructive-8162424797271973385/foundcoords20.csv")]
+     "../../data.foraging/forage/grid10nondestructive-8162424797271973385/foundcoords20.csv")]
       (doall (clojure.data.csv/read-csv reader))))
-  (nth coords20 26)
+  (count coords20)
   (def coords20map (map (fn [[x y]] {:x (clojure.edn/read-string x)
                                      :y (clojure.edn/read-string y)}) coords20))
-
   (count coords20map)
-  (def coords20map-nonil (filter (fn [[xy]] (= xy "")) coords20))
+  (def coords20map-nonil (doall (filter (fn [{x :x, y :y}] (or x y))
+                                        coords20map)))
   (count coords20map-nonil)
   (nth coords20map 1)
+
+  ;; TODO Not working:
+;  (def heatmap20
+;    (hc/xform
+;      (ht/heatmap-chart
+;        :DATA coords20map-nonil
+;        :X "x"
+;        :Y "y"
+;        :WIDTH 200
+;        :HEIGHT 200
+;        )))
+
 
 
   ;; NOTE Hanami has hanami.templates/heatmap-chart and corr-heatmap
