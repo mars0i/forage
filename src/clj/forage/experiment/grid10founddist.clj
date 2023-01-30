@@ -110,26 +110,37 @@
      "../../data.foraging/forage/grid10nondestructive-8162424797271973385/foundcoords20.csv")]
       (doall (clojure.data.csv/read-csv reader))))
   (count coords20)
-  (def coords20map (map (fn [[x y]] {:x (clojure.edn/read-string x)
-                                     :y (clojure.edn/read-string y)}) coords20))
+  (def coords20map (map (fn [[x y]] {"x" (clojure.edn/read-string x)
+                                     "y" (clojure.edn/read-string y)}) coords20))
   (count coords20map)
-  (def coords20map-nonil (doall (filter (fn [{x :x, y :y}] (or x y))
+  (def coords20map-nonil (doall (filter (fn [{x "x", y "y"}] (or x y))
                                         coords20map)))
   (count coords20map-nonil)
-  (nth coords20map 1)
+
+  (require '[oz.core :as oz])
+  (oz/start-server!)
 
   ;; TODO Not working:
-;  (def heatmap20
-;    (hc/xform
-;      (ht/heatmap-chart
-;        :DATA coords20map-nonil
-;        :X "x"
-;        :Y "y"
-;        :WIDTH 200
-;        :HEIGHT 200
-;        )))
-
-
+  (def heatmap20
+    (hc/xform ht/heatmap-chart
+        :DATA coords20map-nonil
+        :X "x"
+        :Y "y"
+        :XBIN {:maxbins 50}
+        :YBIN {:maxbins 50}
+        :COLOR {:aggregate "count"
+                :type "quantitative"
+                ;:scheme "reds" ; not right--ignored
+                }
+        ;; Was this the Hanami way? Doesn't work:
+        ;:COLOR true
+        ;:CTYPE "quantitative"
+        ;:AGG "count"
+        ;:CSCALE :COLORSCALE
+        ;:COLORSCALE {:scheme "redgrey" :reverse true}
+        :WIDTH  400
+        :HEIGHT 400))
+  (oz/view! heatmap20)
 
   ;; NOTE Hanami has hanami.templates/heatmap-chart and corr-heatmap
 
@@ -153,6 +164,6 @@
      (fr/write-foodwalk-plots 
       (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
       :svg seed env 800 1 1 100 500 mu params (take n-to-plot (w/sort-foodwalks fws)))))
-  ;:svg seed env 800 12 3 nil 50 mu params (take n-to-plot (w/sort-foodwalks fws)))
+  ;:svg seed env 800 12 3 nil 50 mu params (take n-to-plot (w/sort-foodwalks fws))
 
 )
