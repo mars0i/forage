@@ -79,18 +79,6 @@
 
   (def seed (r/make-seed))
 
-  ;; NOT WORKING FOR PURPOSE OF EXAMINING DISTRIBUTION OF FOUND FOODSPOTS:
-  ;; IT APPEARS THAT WHAT I'M GETTING BACK ARE TOROIDAL, I.E. WRAPPED
-  ;; COORDINATES.
-  ;; Which makes sense: The search goes through MASON's Continuous2D and
-  ;; asked for toroidal lookup.  So it's just returning the wrapped coordinate.
-  ;; SO EITHER I NEED TO USE A LARGER FIELD, AND DON'T MAKE IT TOROIDAL,
-  ;; OR: Do it toroidally but keep track of how many times there's been a wrap,
-  ;; so I can reconstruct the actual coordinates.
-  ;; OR: WHEN FOOD IS FOUND VIA Continuous2D's toroidal lookup, return information
-  ;; from the walk in addition, or instead.  (For this purpose, I'm not sure I
-  ;; need the foodspot coordinate.)
-
   ;; NONDESTRUCTIVE/ASSYMETRIC:
   (def data-rng-assym
     (time (fr/levy-experiments fr/default-file-prefix centered-env assym-params
@@ -120,7 +108,6 @@
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  ;; TODO Not working:
   (def heatmap20
     (hc/xform ht/heatmap-chart
         :DATA coords20map-nonil
@@ -141,17 +128,6 @@
         :WIDTH  400
         :HEIGHT 400))
   (oz/view! heatmap20)
-
-  ;; NOTE Hanami has hanami.templates/heatmap-chart and corr-heatmap
-
-
-  ;; DESTRUCTIVE/SYMMETRIC:
-  (def data-rng-symm
-    (time (fr/levy-experiments fr/default-file-prefix nocenter-env params
-                               [1.001 1.5 2.0 2.5 3.0] 1000 seed noctr-look-fn)))
-
-  ;; Use :found-coords on the result to get a sequence containing one sequence
-  ;; of found coordinates for each of the mu values.
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
