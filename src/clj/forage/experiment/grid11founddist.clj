@@ -108,28 +108,37 @@
   (def coords20map-nonil (doall (map (fn [[x y]] {"x" x "y" y}) coords20)))
 
   ;; Restore some coordinates from a csv file:
-  (def coords20
+  (def coords
     (with-open [reader
                 (clojure.java.io/reader
-     "../../data.foraging/forage/FILENAME.csv")]
+     "../../data.foraging/forage/grid11destructive-7253525328864205396/foundcoords30.csv")]
       (doall (clojure.data.csv/read-csv reader))))
-  (count coords20)
-  (def coords20map (doall (map (fn [[x y]] {"x" (clojure.edn/read-string x)
-                                            "y" (clojure.edn/read-string y)}) coords20)))
-  (count coords20map)
-  (def coords20map-nonil (doall (filter (fn [{x "x", y "y"}] (or x y)) coords20map)))
-  (count coords20map-nonil)
+  (count coords)
+  (def coordsmap (doall (map (fn [[x y]] {"x" (clojure.edn/read-string x)
+                                          "y" (clojure.edn/read-string y)}) coords)))
+  (count coordsmap)
+  (def coordsmap-nonil (doall (filter (fn [{x "x", y "y"}] (or x y)) coordsmap)))
+  (count coordsmap-nonil)
+
+  (defn count-at
+    [data x y]
+    (count 
+      (filter (fn [{x' "x", y' "y"}]
+                (and (= x x') (= y y')))
+              data)))
+
+  (count-at coordsmap-nonil 1001000 1001000 )
 
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  (def heatmap20
+  (def heatmap
     (hc/xform ht/heatmap-chart
-        :DATA coords20map-nonil
+        :DATA coordsmap-nonil
         :X "x"
         :Y "y"
-        :XBIN {:maxbins 50}
-        :YBIN {:maxbins 50}
+        :XBIN {:maxbins 10}
+        :YBIN {:maxbins 10}
         :COLOR {:aggregate "count"
                 :type "quantitative"
                 ;:scheme "reds" ; not right--ignored
@@ -142,7 +151,10 @@
         ;:COLORSCALE {:scheme "redgrey" :reverse true}
         :WIDTH  400
         :HEIGHT 400))
-  (oz/view! heatmap20)
+  (oz/view! heatmap)
+
+  (sort (fn [{x1 "x", y1 "y"} {x2 "x", y2 "y"}] (compare [x1 y1] [x2 y2])) 
+        (:values (:data heatmap)))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Plotting
