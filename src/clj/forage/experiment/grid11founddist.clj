@@ -104,6 +104,9 @@
   (fr/spit-csv "foundcoords25.csv"   (nth found-coords 3))
   (fr/spit-csv "foundcoords30.csv"   (nth found-coords 4))
 
+  (def coords20 (filter identity (nth found-coords 2)))
+  (def coords20map-nonil (doall (map (fn [[x y]] {"x" x "y" y}) coords20)))
+
   ;; Restore some coordinates from a csv file:
   (def coords20
     (with-open [reader
@@ -111,8 +114,8 @@
      "../../data.foraging/forage/FILENAME.csv")]
       (doall (clojure.data.csv/read-csv reader))))
   (count coords20)
-  (def coords20map (map (fn [[x y]] {"x" (clojure.edn/read-string x)
-                                     "y" (clojure.edn/read-string y)}) coords20))
+  (def coords20map (doall (map (fn [[x y]] {"x" (clojure.edn/read-string x)
+                                            "y" (clojure.edn/read-string y)}) coords20)))
   (count coords20map)
   (def coords20map-nonil (doall (filter (fn [{x "x", y "y"}] (or x y)) coords20map)))
   (count coords20map-nonil)
