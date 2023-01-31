@@ -1,0 +1,21 @@
+{:paths ["src/clj"] 
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        org.clojure/math.numeric-tower {:mvn/version "0.0.5"}
+        org.apache.commons/commons-math3 {:mvn/version "3.6.1"}    ; NOTE USING DIFFERENT INCOMPATIBLE
+        org.apache.commons/commons-rng-core {:mvn/version "1.4"}   ; VERSIONS OF Apache Commons math
+        org.apache.commons/commons-rng-simple {:mvn/version "1.4"} ; libs because of nonoverlapping features
+        org.apache.commons/commons-rng-client-api {:mvn/version "1.4"}
+        org.apache.commons/commons-rng-sampling {:mvn/version "1.4"}
+        generateme/fastmath {:mvn/version "2.1.8"}
+        org.flatland/ordered {:mvn/version "1.15.10"} ; for ordered-set
+        cljplot/cljplot {:mvn/version "0.0.2a-SNAPSHOT"} ; also by generateme
+        aerial.hanami/aerial.hanami {:mvn/version "0.17.0"}
+        techascent/tech.viz {:mvn/version "6.00-beta-16-2"}
+        io.github.nextjournal/clerk {:mvn/version "0.5.346"}
+        ;com.taoensso/nippy {:mvn/version "3.1.1"} ; for preventing a problem with clerk's use of nippy
+        metasoarous/oz {:mvn/version "2.0.0-alpha5"}
+        mason/mason {:mvn/version "21"}}
+ :aliases {:nrepl-server {:extra-deps {nrepl/nrepl {:mvn/version "1.0.0"}} ; see note above
+                          :main-opts  ["-m" "nrepl.cmdline"]}}
+}
+
