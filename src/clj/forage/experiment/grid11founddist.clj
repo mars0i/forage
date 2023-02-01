@@ -104,6 +104,13 @@
   (fr/spit-csv "foundcoords25.csv"   (nth found-coords 3))
   (fr/spit-csv "foundcoords30.csv"   (nth found-coords 4))
 
+  ;; Use the data directly
+  (def coords1001 (doall (map (fn [[x y]] {"x" x "y" y}) (filter identity (nth found-coords 0)))))
+  (def coords15 (doall (map (fn [[x y]] {"x" x "y" y}) (filter identity (nth found-coords 1)))))
+  (def coords20 (doall (map (fn [[x y]] {"x" x "y" y}) (filter identity (nth found-coords 2)))))
+  (def coords25 (doall (map (fn [[x y]] {"x" x "y" y}) (filter identity (nth found-coords 3)))))
+  (def coords30 (doall (map (fn [[x y]] {"x" x "y" y}) (filter identity (nth found-coords 4)))))
+
   (def coords20 (filter identity (nth found-coords 2)))
   (def coords20map-nonil (doall (map (fn [[x y]] {"x" x "y" y}) coords20)))
 
@@ -111,7 +118,9 @@
   (def coords
     (with-open [reader
                 (clojure.java.io/reader
-     "../../data.foraging/forage/grid11destructive-7253525328864205396/foundcoords30.csv")]
+                  "../../data.foraging/forage/grid11destructive-7253525328864205396/foundcoords1001.csv")]
+                  ;"../../data.foraging/forage/grid11destructive-7253525328864205396/foundcoords20.csv")]
+                  ;"../../data.foraging/forage/grid11destructive-7253525328864205396/foundcoords30.csv")]
       (doall (clojure.data.csv/read-csv reader))))
   (count coords)
   (def coordsmap (doall (map (fn [[x y]] {"x" (clojure.edn/read-string x)
@@ -129,32 +138,43 @@
 
   (count-at coordsmap-nonil 1001000 1001000 )
 
+  (def sorted-coordsmap
+    (sort (fn [{x1 "x", y1 "y"} {x2 "x", y2 "y"}] (compare [x1 y1] [x2 y2])) 
+          coordsmap-nonil))
+
+
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  (def heatmap
-    (hc/xform ht/heatmap-chart
-        :DATA coordsmap-nonil
-        :X "x"
-        :Y "y"
-        :XBIN {:maxbins 10}
-        :YBIN {:maxbins 10}
-        :COLOR {:aggregate "count"
-                :type "quantitative"
-                ;:scheme "reds" ; not right--ignored
-                }
-        ;; Was this the Hanami way? Doesn't work:
-        ;:COLOR true
-        ;:CTYPE "quantitative"
-        ;:AGG "count"
-        ;:CSCALE :COLORSCALE
-        ;:COLORSCALE {:scheme "redgrey" :reverse true}
-        :WIDTH  400
-        :HEIGHT 400))
-  (oz/view! heatmap)
 
-  (sort (fn [{x1 "x", y1 "y"} {x2 "x", y2 "y"}] (compare [x1 y1] [x2 y2])) 
-        (:values (:data heatmap)))
+  (defn heatmap
+    "Note that maxbins is just that--a maximum number of bins along one dimension.
+    The actual number of bins may be different."
+    [maxbins data]
+    (hc/xform ht/heatmap-chart
+              :DATA data
+              :X "x"
+              :Y "y"
+              :XBIN {:maxbins maxbins}
+              :YBIN {:maxbins maxbins}
+              :COLOR {:aggregate "count"
+                      :type "quantitative"
+                      :scale {:scheme "yelloworangered" :reverse false}}
+              :WIDTH  400
+              :HEIGHT 400))
+
+
+  ;; NOTE
+  ;; THESE ARE NOT THE SAME.  The tooltip apparently causes filtering.  
+  ;; I think it causes only counting at a single coordinate.
+  (oz/view! (heatmap 100 (take 1000 sorted-coordsmap)))
+  ;; Same thing, but REMOVE THE TOOLTIPS:
+  (oz/view! (update-in 
+              (heatmap 100 (take 1000 sorted-coordsmap))
+              [:encoding] dissoc :tooltip))
+  ;; (Note tooltips are added by Hanami; Vega-Lite doesn't add them automatically.)
+
+
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Plotting
@@ -163,9 +183,44 @@
         mu 2.0
         n-to-plot 1]
     (time
-     (fr/write-foodwalk-plots 
-      (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
-      :svg seed env 800 1 1 100 500 mu params (take n-to-plot (w/sort-foodwalks fws)))))
+      (fr/write-foodwalk-plots 
+        (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
+        :svg seed env 800 1 1 100 500 mu params (take n-to-plot (w/sort-foodwalks fws)))))
   ;:svg seed env 800 12 3 nil 50 mu params (take n-to-plot (w/sort-foodwalks fws))
+
+
+  ;; Why doesn't this work?
+  (def yo
+    {:encoding {:y {:field "y", :type "quantitative", :bin {:maxbins 20}},
+                :x {:field "x", :type "quantitative", :bin {:maxbins 20}},
+                :color {:aggregate "count",
+                        :type "quantitative",
+                        :scale {:scheme "yelloworangered", :reverse false}},
+                :tooltip [{:field "x", :type "quantitative"}
+                          {:field "y", :type "quantitative"}]},
+     :width 400,
+     :height 400,
+     :background "floralwhite",
+     :layer [{:mark {:type "rect"},
+              :encoding
+              {:color
+               {:aggregate "count",
+                :type "quantitative",
+                :scale {:scheme "yelloworangered", :reverse false}}}}
+             {:mark {:type "text"}}],
+     :data {:values
+            ({"x" 994000, "y" 998000}
+             {"x" 995000, "y" 999000}
+             {"x" 996000, "y" 995000}
+             {"x" 996000, "y" 998000}
+             {"x" 996000, "y" 999000}
+             {"x" 996000, "y" 999000}
+             {"x" 996000, "y" 999000}
+             {"x" 996000, "y" 1000000}
+             {"x" 997000, "y" 993000}
+             {"x" 997000, "y" 998000})}})
+
+
+
 
 )
