@@ -180,7 +180,7 @@
                                             (* y-dist y-dist)))
                  normalized-x (/ x dist-from-init)  ; is this what I want?
                  normalized-y (/ y dist-from-init)]
-             {:x normalized-x, :y normalized-y}))
+             {"x" normalized-x, "y" normalized-y}))
          coordsmap))
 
   (take 5 cmap1001)
