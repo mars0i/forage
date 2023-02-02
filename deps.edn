@@ -16,6 +16,11 @@
         cljplot/cljplot {:mvn/version "0.0.2a-SNAPSHOT"} ; also by generateme
         mason/mason {:mvn/version "21"}}
  :aliases {:nrepl-server {:extra-deps {nrepl/nrepl {:mvn/version "1.0.0"}} ; see note above
-                          :main-opts  ["-m" "nrepl.cmdline"]}}
+                          :main-opts  ["-m" "nrepl.cmdline"]}
+           :smallproduction {:jvm-opts ["-Xms4g" ; initial heap
+                                        "-Xmx8g" ; max heap
+                                        "-Xss1g" ; max per-thread stack size (s/b smaller?)
+                                        "-XX:TieredStopAtLevel=4"]} ; 3X improvement
+          }
 }
 
