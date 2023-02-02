@@ -1,7 +1,7 @@
 ;; grid11founddist.clj is a modified version of grid10founddist.clj.
 ;; Primary differences:
 ;;    trunclen is now equal to maxpathlen, rather than 1.5 x food-distance = 1500.
-;;    The experiment (in comments) uses destructive searchs.
+;;    The experiment (in comments) uses destructive searches.
 ;; (Originally based on grid9, which was based on grid8, from grid7.)
 (ns forage.experiment.grid11founddist
   (:require [forage.run :as fr]
@@ -10,8 +10,12 @@
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
             [utils.math :as m]
+            ;; note difference: e.g. numeric-tower/sqrt returns integer if args are
+            [clojure.math.numeric-tower :as nm]
+            [clojure.math :as cm] ; new in Clojure 1.11 
             [aerial.hanami.common :as hc]
-            [aerial.hanami.templates :as ht]))
+            [aerial.hanami.templates :as ht]
+            ))
 
 
 ;; MODEST TOROIDAL VERSION:
@@ -85,6 +89,23 @@
 (def ctrd-toroidal-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
 (def ctrd-nontoroidal-look-fn (partial mf/perc-foodspots-exactly centered-env (params :perc-radius)))
 
+(defn make-heatmap
+  "Create a Vega-Lite heatmap of counts in bins, with extent 
+  [bin-min bin-max] in both dimensions, and step bin-step."
+  [bin-min bin-max bin-step data]
+  (hc/xform ht/heatmap-chart
+            :DATA data
+            :X "x"
+            :Y "y"
+            :XBIN {:extent [bin-min bin-max] :step bin-step}
+            :YBIN {:extent [bin-min bin-max] :step bin-step}
+            :COLOR {:aggregate "count"
+                    :type "quantitative"
+                    :scale {:scheme "yelloworangered" :reverse false}}
+            :TOOLTIP ht/RMV ; remove problematic Hanami tooltip that V-L interprets as filter
+            :WIDTH  800
+            :HEIGHT 800))
+
 
 (comment
 
@@ -118,8 +139,8 @@
   (def coords
     (with-open [reader
                 (clojure.java.io/reader
-                  "../../data.foraging/forage/grid11destructive-7253525328864205396/foundcoords1001.csv")]
-                  ;"../../data.foraging/forage/grid11destructive-7253525328864205396/foundcoords20.csv")]
+                  ;"../../data.foraging/forage/grid11destructive-7253525328864205396/foundcoords1001.csv")]
+                  "../../data.foraging/forage/grid11destructive-7253525328864205396/foundcoords20.csv")]
                   ;"../../data.foraging/forage/grid11destructive-7253525328864205396/foundcoords30.csv")]
       (doall (clojure.data.csv/read-csv reader))))
   (count coords)
@@ -139,40 +160,50 @@
   (count-at coordsmap-nonil 1001000 1001000 )
 
   (def sorted-coordsmap
-    (sort (fn [{x1 "x", y1 "y"} {x2 "x", y2 "y"}] (compare [x1 y1] [x2 y2])) 
-          coordsmap-nonil))
+    (sort (fn [{x1 "x", y1 "y"} {x2 "x", y2 "y"}] (compare [x1 y1] [x2 y2]))
+	  coordsmap-nonil))
 
+  (def cmap1001 coordsmap-nonil)
+  (def cmap30 coordsmap-nonil)
+  (def cmap20 coordsmap-nonil)
+
+  (take 5 cmap1001)
+
+  ;; Experiment with normalizing distances.
+  ;; FIXME This is definitely not doing what I intended
+  (defn normalize-linear
+    [init-x init-y coordsmap]
+    (map (fn [{x "x", y "y", :as coords}] ; note vega-lite keys are strings
+           (let [x-dist (- x init-x)
+                 y-dist (- y init-y)
+                 dist-from-init (cm/sqrt (+ (* x-dist x-dist)
+                                            (* y-dist y-dist)))
+                 normalized-x (/ x dist-from-init)  ; is this what I want?
+                 normalized-y (/ y dist-from-init)]
+             {:x normalized-x, :y normalized-y}))
+         coordsmap))
+
+  (take 5 cmap1001)
+  (def cmap1001linear (normalize-linear half-size half-size cmap1001))
+  (take 5 cmap1001linear)
 
   (require '[oz.core :as oz])
   (oz/start-server!)
 
 
-  (defn heatmap
-    "Note that maxbins is just that--a maximum number of bins along one dimension.
-    The actual number of bins may be different."
-    [maxbins data]
-    (hc/xform ht/heatmap-chart
-              :DATA data
-              :X "x"
-              :Y "y"
-              :XBIN {:maxbins maxbins}
-              :YBIN {:maxbins maxbins}
-              :COLOR {:aggregate "count"
-                      :type "quantitative"
-                      :scale {:scheme "yelloworangered" :reverse false}}
-              :WIDTH  400
-              :HEIGHT 400))
-
 
   ;; NOTE
   ;; THESE ARE NOT THE SAME.  The tooltip apparently causes filtering.  
   ;; I think it causes only counting at a single coordinate.
-  (oz/view! (heatmap 100 (take 1000 sorted-coordsmap)))
-  ;; Same thing, but REMOVE THE TOOLTIPS:
-  (oz/view! (update-in 
-              (heatmap 100 (take 1000 sorted-coordsmap))
-              [:encoding] dissoc :tooltip))
-  ;; (Note tooltips are added by Hanami; Vega-Lite doesn't add them automatically.)
+  (oz/view! (make-heatmap 0 (* 2 half-size) 10000 cmap1001))
+  (oz/view! (make-heatmap 0 (* 2 half-size) 10000 cmap20))
+  (oz/view! (make-heatmap 0 (* 2 half-size) 10000 cmap30))
+
+  (oz/view! (make-heatmap 0 (int (cm/sqrt (* 2 half-size))) 30 cmap1001linear))
+
+  (oz/view! (make-heatmap 600000 1400000 5000 cmap20))
+
+  (oz/view! (make-heatmap 990000 1010000 500 cmap30))
 
 
 
@@ -188,37 +219,6 @@
         :svg seed env 800 1 1 100 500 mu params (take n-to-plot (w/sort-foodwalks fws)))))
   ;:svg seed env 800 12 3 nil 50 mu params (take n-to-plot (w/sort-foodwalks fws))
 
-
-  ;; Why doesn't this work?
-  (def yo
-    {:encoding {:y {:field "y", :type "quantitative", :bin {:maxbins 20}},
-                :x {:field "x", :type "quantitative", :bin {:maxbins 20}},
-                :color {:aggregate "count",
-                        :type "quantitative",
-                        :scale {:scheme "yelloworangered", :reverse false}},
-                :tooltip [{:field "x", :type "quantitative"}
-                          {:field "y", :type "quantitative"}]},
-     :width 400,
-     :height 400,
-     :background "floralwhite",
-     :layer [{:mark {:type "rect"},
-              :encoding
-              {:color
-               {:aggregate "count",
-                :type "quantitative",
-                :scale {:scheme "yelloworangered", :reverse false}}}}
-             {:mark {:type "text"}}],
-     :data {:values
-            ({"x" 994000, "y" 998000}
-             {"x" 995000, "y" 999000}
-             {"x" 996000, "y" 995000}
-             {"x" 996000, "y" 998000}
-             {"x" 996000, "y" 999000}
-             {"x" 996000, "y" 999000}
-             {"x" 996000, "y" 999000}
-             {"x" 996000, "y" 1000000}
-             {"x" 997000, "y" 993000}
-             {"x" 997000, "y" 998000})}})
 
 
 
