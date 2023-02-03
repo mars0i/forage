@@ -16,6 +16,29 @@
 
 ;; TODO Rationalize parameter lists.
 
+
+;; TODO Allow other color schemes.
+(defn make-heatmap
+  "Create a Vega-Lite heatmap of counts in bins, with extent [bin-min
+  bin-max] in both dimensions, and step bin-step.  Plot dimensions are
+  plot-dim x plot-dim.  Input data should be a sequence of maps with keys
+  \"x\" and \"y\"."
+  [plot-dim bin-min bin-max bin-step data]
+  (hc/xform ht/heatmap-chart
+            :DATA data
+            :X "x"
+            :Y "y"
+            :XBIN {:extent [bin-min bin-max] :step bin-step}
+            :YBIN {:extent [bin-min bin-max] :step bin-step}
+            :COLOR {:aggregate "count"
+                    :type "quantitative"
+                    :scale {:scheme "yelloworangered"
+                            :reverse false}} ; :reverse false is the default; including it to show that true is an option.
+            :TOOLTIP {:aggregate "count"}
+            ;:TOOLTIP ht/RMV ; if not using tooltips, include this to remove accidental Hanami tooltip
+            :WIDTH  800
+            :HEIGHT 800))
+
 (defn vega-gridwalk-plot
   "Configure a Vega-Lite plot to be filled with search path(s) for foodspots 
   represented by circles with size equal to the perceptual radius.  (Doesn't put 
