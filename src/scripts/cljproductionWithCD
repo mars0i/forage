@@ -1,0 +1,5 @@
+#!/bin/sh
+set -x
+cd ~/cloj/forage
+clj -M:nrepl-server:production "$@"
+
