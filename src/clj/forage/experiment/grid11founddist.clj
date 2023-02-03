@@ -102,7 +102,8 @@
             :COLOR {:aggregate "count"
                     :type "quantitative"
                     :scale {:scheme "yelloworangered" :reverse false}}
-            :TOOLTIP ht/RMV ; remove problematic Hanami tooltip that V-L interprets as filter
+            :TOOLTIP {:aggregate "count"}
+            ;:TOOLTIP ht/RMV ; remove problematic Hanami tooltip that V-L interprets as filter
             :WIDTH  800
             :HEIGHT 800))
 
@@ -197,6 +198,7 @@
   ;; I think it causes only counting at a single coordinate.
   (oz/view! (make-heatmap 0 (* 2 half-size) 10000 cmap1001))
   (oz/view! (make-heatmap 0 (* 2 half-size) 10000 cmap20))
+  (oz/view! (make-heatmap 800000  1200000   10000 cmap20))
   (oz/view! (make-heatmap 0 (* 2 half-size) 10000 cmap30))
 
   (oz/view! (make-heatmap 0 (int (cm/sqrt (* 2 half-size))) 30 cmap1001linear))
