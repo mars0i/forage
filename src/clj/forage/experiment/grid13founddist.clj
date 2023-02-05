@@ -101,30 +101,34 @@
 
   (def seed (r/make-seed))
 
+  (params :trunclen) ;=> 2250.0
+
   ;; DESTRUCTIVE/SYMMETRIC:
   (def data-rng-symm
     (time (fr/levy-experiments fr/default-file-prefix nocenter-env params
                                [1.001 1.5 1.75 2.0 2.25 2.5 3.0] 2500
                                seed noctr-nontoroidal-look-fn)))
 
+  (fr/save-found-coords [1.001 1.5 1.75 2.0 2.25 2.5 3.0] data-rng-symm)
 
   ;; NONDESTRUCTIVE/ASYMMETRIC:
   (def data-rng-asymm
     (time (fr/levy-experiments fr/default-file-prefix centered-env params
                                [1.001 1.5 2.0 2.5 3.0] 2500 seed ctrd-nontoroidal-look-fn)))
 
+  (fr/save-found-coords [1.001 1.5 2.0 2.5 3.0] data-rng-asymm)
 
 
-
-  ;; Write the found coordinates to csv files for later analysis:
-  (def found-coords (:found-coords data-rng-symm))
-  (def found-coords (:found-coords data-rng-asymm))
-  (map (fn [xs] (count (filter identity xs))) found-coords)
   (fr/spit-csv "foundcoords1001.csv" (nth found-coords 0))
   (fr/spit-csv "foundcoords15.csv"   (nth found-coords 1))
   (fr/spit-csv "foundcoords20.csv"   (nth found-coords 2))
   (fr/spit-csv "foundcoords25.csv"   (nth found-coords 3))
   (fr/spit-csv "foundcoords30.csv"   (nth found-coords 4))
+
+  ;; Write the found coordinates to csv files for later analysis:
+  (def found-coords (:found-coords data-rng-symm))
+  (def found-coords (:found-coords data-rng-asymm))
+  (map (fn [xs] (count (filter identity xs))) found-coords)
 
   ;; Use the data directly
   (def coords1001 (doall (map (fn [[x y]] {"x" x "y" y}) (filter identity (nth found-coords 0)))))
