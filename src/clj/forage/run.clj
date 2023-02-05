@@ -370,6 +370,30 @@
         (println "written.") (flush)))))
 
 
+(defn write-found-coords
+  "Given a data-rng structure produced by levy-experiments and a
+  sequence of exponents, i.e. mu values, used for the runs, writes out
+  one csv file per exponent containing coordinates of found foodspots
+  generated with that exponent.  If file-prefix is provided, it is
+  appended to the beginning of each filename.  (The filename after
+  this prefix is \"founddords<exponent>.csv\".)"
+  ([exponents data-rng]
+   (write-found-coords exponents data-rng ""))
+  ([exponents data-rng file-prefix]
+   (let [found-coords (:found-coords data-rng)]
+     (if (not= (count found-coords) (count exponents))
+       (println "Number of exponents != number of coordinate sequences.") ; and exit
+       (loop [exps exponents
+              all-coords found-coords]
+         (if exps
+           (let [exponent (first exps)
+                 coords (first all-coords)]
+             (println "Writing coords csv for mu=" exponent ".")
+             (spit-csv (str file-prefix "foundcoords" exponent ".csv")
+                       coords)
+             (recur (next exponent) (next all-coords)))
+           (println "Done.")))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SMALL UTILITY FUNCTIONS
 (defn ignore-food
