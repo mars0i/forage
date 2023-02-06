@@ -1,5 +1,5 @@
-;; Same as grid12founddist.clj but with a short trunclen Wondering if that
-;; restores the advantage of mu=2, as I expect it will.
+;; Same as grid12founddist.clj but with a short trunclen 
+;; Wondering if that restores the advantage of mu=2, as I expect it will.
 ;; grid12founddist which began as grid11founddist modified with larger food-distance.
 ;; grid11founddist.clj is a modified version of grid10founddist.clj.
 ;; Primary differences:
@@ -101,22 +101,34 @@
 
   (def seed (r/make-seed))
 
-  (params :trunclen) ;=> 2250.0
+  ; check: s/b 2250
+  (params :trunclen)
+
+  (def five-exponents [1.001 1.5 2.0 2.5 3.0])
+  (def seven-exponents [1.001 1.5 1.75 2.0 2.25 2.5 3.0])
 
   ;; DESTRUCTIVE/SYMMETRIC:
   (def data-rng-symm
     (time (fr/levy-experiments fr/default-file-prefix nocenter-env params
-                               [1.001 1.5 1.75 2.0 2.25 2.5 3.0] 2500
+                               seven-exponents 2500
                                seed noctr-nontoroidal-look-fn)))
-
-  (fr/save-found-coords [1.001 1.5 1.75 2.0 2.25 2.5 3.0] data-rng-symm)
+  ;; I ran this 2/4/2023 with trunclen=2250; see grid13destructive-8342272769251098070.
+  ;; The result was that the ballistic mu=1.001 was best, with monotonically decreasing
+  ;; efficiencies as mu increased.  1.5 was very close to 1.001, though, and 1.75 and 2.0
+  ;; were not far.  
+  ;;
+  ;; [The monotonoic decrease was like the grid12 simulations (with trunclen=1,000,000),
+  ;; but the ballistic-ish efficiences were higher in those simulations.]
+  ;;
+  ;; But I didn't save the found spots due to a mistake on my part:
+  (fr/save-found-coords seven=exponents data-rng-symm)
 
   ;; NONDESTRUCTIVE/ASYMMETRIC:
   (def data-rng-asymm
     (time (fr/levy-experiments fr/default-file-prefix centered-env params
-                               [1.001 1.5 2.0 2.5 3.0] 2500 seed ctrd-nontoroidal-look-fn)))
+                                five-exponents 2500 seed ctrd-nontoroidal-look-fn)))
 
-  (fr/save-found-coords [1.001 1.5 2.0 2.5 3.0] data-rng-asymm)
+  (fr/save-found-coords five-exponents data-rng-asymm)
 
 
   (fr/spit-csv "foundcoords1001.csv" (nth found-coords 0))
@@ -179,52 +191,5 @@
   (oz/view! (h/make-heatmap 800 0 (int (cm/sqrt (* 2 half-size))) 30 cmap1001linear))
 
   (oz/view! (h/make-heatmap 800 600000 1400000 5000 cmap20))
-
-
-
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Plotting
-  ;; The mu's here are merely used for informational output.
-  (let [env nocenter-env
-        mu 2.0
-        n-to-plot 1]
-    (time
-      (fr/write-foodwalk-plots 
-        (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
-        :svg seed env 800 1 1 100 500 mu params (take n-to-plot (w/sort-foodwalks fws)))))
-  ;:svg seed env 800 12 3 nil 50 mu params (take n-to-plot (w/sort-foodwalks fws))
-
-
-
-  (defn count-at
-    [data x y]
-    (count 
-      (filter (fn [{x' "x", y' "y"}]
-                (and (= x x') (= y y')))
-              data)))
-
-  (count-at coordsmap-nonil 1001000 1001000 )
-
-
-  (def sorted-coordsmap
-    (sort (fn [{x1 "x", y1 "y"} {x2 "x", y2 "y"}] (compare [x1 y1] [x2 y2]))
-	  coordsmap-nonil))
-
-
-  ;; Experiment with normalizing distances.
-  ;; FIXME This is definitely not doing what I intended
-  (defn normalize-linear
-    [init-x init-y coordsmap]
-    (map (fn [{x "x", y "y", :as coords}] ; note vega-lite keys are strings
-           (let [x-dist (- x init-x)
-                 y-dist (- y init-y)
-                 dist-from-init (cm/sqrt (+ (* x-dist x-dist)
-                                            (* y-dist y-dist)))
-                 normalized-x (/ x dist-from-init)  ; is this what I want?
-                 normalized-y (/ y dist-from-init)]
-             {"x" normalized-x, "y" normalized-y}))
-         coordsmap))
-
 )
 
