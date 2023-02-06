@@ -384,15 +384,17 @@
      (if (not= (count found-coords) (count exponents))
        (println "Number of exponents != number of coordinate sequences.") ; and exit
        (loop [exps exponents
-              all-coords found-coords]
+              found found-coords]
          (if exps
            (let [exponent (first exps)
-                 coords (first all-coords)]
-             (println "Writing coords csv for mu=" exponent ".")
-             (spit-csv (str file-prefix "foundcoords" exponent ".csv")
+                 coords (first found)
+                 exponent-string (m/remove-decimal-pt exponent)]
+             (println "Writing coords csv for mu =" exponent)
+             (spit-csv (str file-prefix "foundcoords" exponent-string ".csv")
                        coords)
-             (recur (next exponent) (next all-coords)))
+             (recur (next exps) (next found)))
            (println "Done.")))))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SMALL UTILITY FUNCTIONS
