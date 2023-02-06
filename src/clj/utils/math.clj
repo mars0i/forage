@@ -1,5 +1,6 @@
 (ns utils.math
-    (:require [clojure.math.numeric-tower :as nt]))
+    (:require [clojure.math.numeric-tower :as nt]
+              [clojure.string :as st]))
 
 ; [fastmath.core :as fm]
 ; (use-primitive-operators)
@@ -10,6 +11,15 @@
 ;; https://clojure.org/news/2022/03/22/clojure-1-11-0
 ;; https://clojure.github.io/clojure/clojure.math-api.html
 
+
+(defn remove-decimal-pt
+  "Given a number, returns a (base-10) string representation of the
+  number, but with any decimal point removed.  Also works on existing
+  string representations of numbers."
+  [x]
+  (apply str 
+         (st/split (str x) #"\.")))
+  
 
 ;; Make my code a little prettier, and allow passing as functions:
 (def pi Math/PI)
