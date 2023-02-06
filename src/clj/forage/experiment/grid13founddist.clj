@@ -116,26 +116,35 @@
   ;; The result was that the ballistic mu=1.001 was best, with monotonically decreasing
   ;; efficiencies as mu increased.  1.5 was very close to 1.001, though, and 1.75 and 2.0
   ;; were not far.  
-  ;;
   ;; [The monotonoic decrease was like the grid12 simulations (with trunclen=1,000,000),
   ;; but the ballistic-ish efficiences were higher in those simulations.]
   ;;
   ;; But I didn't save the found spots due to a mistake on my part:
-  (fr/save-found-coords seven=exponents data-rng-symm)
+  (fr/write-found-coords seven=exponents data-rng-symm)
 
   ;; NONDESTRUCTIVE/ASYMMETRIC:
   (def data-rng-asymm
     (time (fr/levy-experiments fr/default-file-prefix centered-env params
                                 five-exponents 2500 seed ctrd-nontoroidal-look-fn)))
+  ;; Here we see a similar pattern in nondestructive searches, although the ballistic
+  ;; efficiency is better than with destructive searches:
+  ; seed: 6960730684407014749
+  ; --------------------------------------------------------------------------------
+  ; eval (effective-root-form): (def data-rng-asymm (time (fr/l...
+  ; (out) Performing 12500 runs in groups of 2500 ...
+  ; (out) group 1 [exponent 1.001, init-dir nil] ... "Elapsed time: 658097.0146 msecs"
+  ; (out) num found=1483.0, efficiency=0.0000009017563743971059
+  ; (out) group 2 [exponent 1.5, init-dir nil] ... "Elapsed time: 647209.184287 msecs"
+  ; (out) num found=1419.0, efficiency=0.0000008365363624912765
+  ; (out) group 3 [exponent 2.0, init-dir nil] ... "Elapsed time: 922089.271155 msecs"
+  ; (out) num found=1306.0, efficiency=0.0000007440206122092969
+  ; (out) group 4 [exponent 2.5, init-dir nil] ... "Elapsed time: 1502193.352514 msecs"
+  ; (out) num found=1041.0, efficiency=0.0000005388248492187302
+  ; (out) group 5 [exponent 3.0, init-dir nil] ... "Elapsed time: 2079123.225964 msecs"
+  ; (out) num found=721.0, efficiency=0.0000003348378227143443
+  ; (out) "Elapsed time: 5808782.417053 msecs"
 
-  (fr/save-found-coords five-exponents data-rng-asymm)
-
-
-  (fr/spit-csv "foundcoords1001.csv" (nth found-coords 0))
-  (fr/spit-csv "foundcoords15.csv"   (nth found-coords 1))
-  (fr/spit-csv "foundcoords20.csv"   (nth found-coords 2))
-  (fr/spit-csv "foundcoords25.csv"   (nth found-coords 3))
-  (fr/spit-csv "foundcoords30.csv"   (nth found-coords 4))
+(fr/write-found-coords five-exponents data-rng-asymm)
 
   ;; Write the found coordinates to csv files for later analysis:
   (def found-coords (:found-coords data-rng-symm))
@@ -181,12 +190,14 @@
   (oz/view! (h/make-heatmap 800 0 (* 2 half-size) 10000 cmap1001n))
   (oz/view! (h/make-heatmap 800 0 (* 2 half-size) 10000 cmap15n))
   (oz/view! (h/make-heatmap 800 0 (* 2 half-size) 10000 cmap20n))
-  (oz/view! (h/make-heatmap 800 990000 1010000 100 cmap20n))
   (oz/view! (h/make-heatmap 800 0 (* 2 half-size) 10000 cmap25n))
-  (oz/view! (h/make-heatmap 800 950000 1050000 500 cmap25n))
   (oz/view! (h/make-heatmap 800 0 (* 2 half-size) 10000 cmap30n))
-  (oz/view! (h/make-heatmap 800 990000 1010000 200 cmap30))
-  (oz/view! (h/make-heatmap 800 995000 1005000 50 cmap30))
+
+  (oz/view! (h/make-heatmap 800 900000 1100000 1500 cmap1001n))
+  (oz/view! (h/make-heatmap 800 900000 1100000 1500 cmap15n))
+  (oz/view! (h/make-heatmap 800 900000 1100000 1500 cmap20n))
+  (oz/view! (h/make-heatmap 800 900000 1100000 1500 cmap25n))
+  (oz/view! (h/make-heatmap 800 900000 1100000 1500 cmap30n))
 
   (oz/view! (h/make-heatmap 800 0 (int (cm/sqrt (* 2 half-size))) 30 cmap1001linear))
 
