@@ -114,10 +114,35 @@
   (def data-rng-asymm
     (time (fr/levy-experiments fr/default-file-prefix centered-env params
                                 seven-exponents 2500 seed ctrd-nontoroidal-look-fn)))
-  ;; Accidentally ran this with bad-seven-exponents.  That means that the second
-  ;; mu=2.5 set of runs overwrote the first.  The only record of the first is in
-  ;; the stdout report from the runs.
+  ;; Accidentally ran this with bad-seven-exponents.  (That's what seven-exponents
+  ;; was at the time I started the run.)  That means that the second mu=2.5;
+  ;; set of runs overwrote the first dirRand.bin file.  I think both
+  ;; runs will appear in the data.csv file and in data-rng-asymm, but I had to
+  ;; special-case writing the found foodspots csvs:.
   (fr/write-found-coords bad-seven-exponents data-rng-asymm)
+  (fr/write-found-coords [2.5]
+                         (update data-rng-asymm :found-coords #(vector (nth % 3))))
+  ;; SO EVEN WITH perc-radius=5, BALLISTIC WINS, ETC. (even though the efficiency
+  ;; and number of targets found is higher).
+  ;; seed = 1988300103740787779 
+  ; eval (effective-root-form): (def data-rng-asymm (time (fr...
+  ; (out) Performing 17500 runs in groups of 2500 ...
+  ; (out) group 1 [exponent 1.001, init-dir nil] ... "Elapsed time: 260055.318954 msecs"
+  ; (out) num found=2474.0, efficiency=0.000004963980613495479
+  ; (out) group 2 [exponent 1.5, init-dir nil] ... "Elapsed time: 254361.777953 msecs"
+  ; (out) num found=2474.0, efficiency=0.000004729070536225475
+  ; (out) group 3 [exponent 2.0, init-dir nil] ... "Elapsed time: 462852.304381 msecs"
+  ; (out) num found=2437.0, efficiency=0.0000037458681598323473
+  ; (out) group 4 [exponent 2.5, init-dir nil] ... "Elapsed time: 1366716.12469 msecs"
+  ; (out) num found=2019.0, efficiency=0.0000016163531617998555
+  ; (out) group 5 [exponent 2.5, init-dir nil] ... "Elapsed time: 1366249.815145 msecs"
+  ; (out) num found=2003.0, efficiency=0.0000015827524252283283
+  ; (out) group 6 [exponent 2.75, init-dir nil] ... "Elapsed time: 1839050.475438 msecs"
+  ; (out) num found=1600.0, efficiency=0.0000009995629732401995
+  ; (out) group 7 [exponent 3.0, init-dir nil] ...  "Elapsed time: 2283712.300652 msecs"
+  ; (out) num found=1192.0, efficiency=0.000000637027100658589
+  ; (out)  done.
+  ; (out) "Elapsed time: 7833095.088283 msecs"
 
 )
 
