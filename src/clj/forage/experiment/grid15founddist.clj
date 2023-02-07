@@ -114,7 +114,9 @@
   (def data-rng-asymm
     (time (fr/levy-experiments fr/default-file-prefix centered-env params
                                 seven-exponents 2500 seed ctrd-nontoroidal-look-fn)))
-  ;; accidentally ran this with bad-seven-exponents
+  ;; Accidentally ran this with bad-seven-exponents.  That means that the second
+  ;; mu=2.5 set of runs overwrote the first.  The only record of the first is in
+  ;; the stdout report from the runs.
   (fr/write-found-coords bad-seven-exponents data-rng-asymm)
 
 )
