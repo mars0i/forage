@@ -382,19 +382,22 @@
    (write-found-coords exponents data-rng ""))
   ([exponents data-rng file-prefix]
    (let [found-coords (:found-coords data-rng)]
-     (if (not= (count found-coords) (count exponents))
-       (println "Number of exponents != number of coordinate sequences.") ; and exit
-       (loop [exps exponents
-              found found-coords]
-         (if exps
-           (let [exponent (first exps)
-                 coords (first found)
-                 exponent-string (m/remove-decimal-pt exponent)]
-             (println "Writing coords csv for mu =" exponent)
-             (spit-csv (str file-prefix "foundcoords" exponent-string ".csv")
-                       coords)
-             (recur (next exps) (next found)))
-           (println "Done.")))))))
+     (let [exponents-count (count exponents)
+           coord-seqs-count (count found-coords)]
+       (if (not= exponents-count coord-seqs-count)
+         (println "Number of exponents:" exponents-count
+                  "!= number of coordinate sequences:" coord-seqs-count ".") ; and exit
+         (loop [exps exponents
+                found found-coords]
+           (if exps
+             (let [exponent (first exps)
+                   coords (first found)
+                   exponent-string (m/remove-decimal-pt exponent)]
+               (println "Writing coords csv for mu =" exponent)
+               (spit-csv (str file-prefix "foundcoords" exponent-string ".csv")
+                         coords)
+               (recur (next exps) (next found)))
+             (println "Done."))))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
