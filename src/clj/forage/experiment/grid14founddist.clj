@@ -115,7 +115,6 @@
     (time (fr/levy-experiments fr/default-file-prefix nocenter-env params
                                five-exponents 2500
                                seed noctr-nontoroidal-look-fn)))
-
   (fr/write-found-coords five-exponents data-rng-symm)
   ;; Wow--once again, ballistic wins, with monotonically decreasing
   ;; efficiencies as mu is increased.  This is different from the result
@@ -141,8 +140,23 @@
   (def data-rng-asymm
     (time (fr/levy-experiments fr/default-file-prefix centered-env params
                                 five-exponents 2500 seed ctrd-nontoroidal-look-fn)))
-
   (fr/write-found-coords five-exponents data-rng-asymm)
+  ;; FIRST TIME I RAN THIS, I ACCIDENTALLY KILLED IT (OR IT DIED FROM A BUG?), and 
+  ;; there was no mu=3.0 result, and I have no data except for this output:
+  ;; BUT IT LOOKS AGAIN LIKE BALLISTIC WINS.
+  ; eval (effective-root-form): (def data-rng-asymm (time (fr...
+  ; (out) Performing 12500 runs in groups of 2500 ...
+  ; (out) group 1 [exponent 1.001, init-dir nil] ... "Elapsed time: 785455.821492 msecs"
+  ; (out) num found=1444.0, efficiency=0.0000008578582543883021
+  ; (out) group 2 [exponent 1.5, init-dir nil] ... "Elapsed time: 767582.457566 msecs"
+  ; (out) num found=1413.0, efficiency=0.0000008337869867896749
+  ; (out) group 3 [exponent 2.0, init-dir nil] ... "Elapsed time: 1093228.440215 msecs"
+  ; (out) num found=1315.0, efficiency=0.0000007479475639797594
+  ; (out) group 4 [exponent 2.5, init-dir nil] ... 
+  ; (out) num found=1043.0, efficiency=0.0000005413558295774363
+
+(count data-rng-asymm)
+
 
   ;; Write the found coordinates to csv files for later analysis:
   (def found-coords (:found-coords data-rng-symm))
