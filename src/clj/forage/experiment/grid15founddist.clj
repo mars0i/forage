@@ -96,7 +96,8 @@
 
 (comment
   (def five-exponents [1.001 1.5 2.0 2.5 3.0])
-  (def seven-exponents [1.001 1.5 2.0 2.5 2.5 2.75 3.0]) ; w/ additional mu's at the high end
+  (def bad-seven-exponents [1.001 1.5 2.0 2.5 2.5 2.75 3.0]) ; w/ additional mu's at the high end
+  (def seven-exponents [1.001 1.5 2.0 2.25 2.5 2.75 3.0]) ; w/ additional mu's at the high end
 
   (def seed (r/make-seed))
 
@@ -106,15 +107,15 @@
     (time (fr/levy-experiments fr/default-file-prefix nocenter-env params
                                seven-exponents 2500 seed noctr-nontoroidal-look-fn)))
 
-  (fr/write-found-coords five-exponents data-rng-symm)
+  (fr/write-found-coords seven-exponents data-rng-symm)
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; NONDESTRUCTIVE/ASYMMETRIC
   (def data-rng-asymm
     (time (fr/levy-experiments fr/default-file-prefix centered-env params
                                 seven-exponents 2500 seed ctrd-nontoroidal-look-fn)))
-
-  (fr/write-found-coords five-exponents data-rng-asymm)
+  ;; accidentally ran this with bad-seven-exponents
+  (fr/write-found-coords bad-seven-exponents data-rng-asymm)
 
 )
 
