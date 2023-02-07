@@ -1,4 +1,4 @@
-;; GRID15FOUNDDIST.CLJ based on grid12founddist.clj BUT WITH LARGER PERC-RADIUS (!)
+;; GRID15FOUNDDIST.CLJ based on grid12founddist.clj BUT WITH LARGER PERC-RADIUS = 5 (!)
 ;; 
 ;; grid12founddist.clj began as grid11founddist modified with larger food-distance.
 ;; grid11founddist.clj is a modified version of grid10founddist.clj.
@@ -6,7 +6,7 @@
 ;;    trunclen is now equal to maxpathlen, rather than 1.5 x food-distance = 1500.
 ;;    The experiment (in comments) uses destructive searches.
 ;; (Originally based on grid9, which was based on grid8, from grid7.)
-(ns forage.experiment.grid12founddist
+(ns forage.experiment.grid15founddist
   (:require [forage.run :as fr]
             [forage.food :as f]
             [forage.walks :as w]
