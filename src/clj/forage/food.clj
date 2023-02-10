@@ -25,6 +25,7 @@
         vert-lines  (for [x (range neg-xmax xmax sep)] [[x neg-ymax] [x ymax]])]
     (concat horiz-lines vert-lines)))
 
+;; FIXME ? Is this right for toroidal envs??
 (defn rectangular-grid
   "Make a sequence of coordinate pairs spaced out every sep integers,
   from -quadrant-width to quadrant-width, and from -quadrant-height
@@ -55,6 +56,27 @@
                                 y (range 0 neg-ymax neg-sep)]
                                [x y]))]
      (concat ne-pairs sw-pairs se-pairs nw-pairs))))
+
+
+;; FIXME (literal) edge cases are wrong? Is grid1 is missing outer edges, 
+;; even though the points are internal?  Or does grid2 exceed boundaries?
+;; Also, what about toroidal?
+(defn slide-grid
+  "A slide-grid is the composition of two rectangular grids which by default
+  offset by sep in both directions so that the result is a regular rectangular
+  grid with spacing that is half of sep.  If shift-x or shift-y is nonzero,
+  then one of the two grids is shifted by shift-x and shift-y so that its
+  points are closer to some elements in the other grid than to others."
+  ([env-width env-height shift-x shift-y]
+   (slide-grid 1 env-width env-height shift-x shift-y))
+  ([sep env-width env-height shift-x shift-y]
+   (slide-grid sep 0 0 env-width env-height shift-x shift-y))
+  ([sep left-offset bottom-offset env-width env-height shift-x shift-y]
+   (let [grid1 (rectangular-grid sep left-offset bottom-offset env-width env-height)
+         grid2 (map (fn [[x y]] [(+ x sep shift-x) (+ y sep shift-y)])
+                    grid1)]
+     (concat grid1 grid2))))
+                    
 
 (defn fournierize
   "DEPRECATED: Use utils.fractal/fournierize.
