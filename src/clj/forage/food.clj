@@ -111,90 +111,27 @@
   (/ (+ 40 30) 5)
 )
 
-(defn slide-grid1
-  "A slide-grid is the composition of two rectangular grids with spacing
-  2*sep, offset from each other by shift-x and shift-y.  See
-  rectangular-grid for other parameters.  (If shift-x = shift-y = sep,
-  the result is a rectangular grid with spacing sep.)"
-  ([sep shift-x shift-y env-width env-height]
-   (slide-grid sep shift-x shift-y 0 0 env-width env-height))
-  ([sep shift-x shift-y left-offset bottom-offset env-width env-height]
-   (slide-grid sep shift-x shift-y left-offset bottom-offset env-width env-height false))
-  ([sep shift-x shift-y left-offset bottom-offset env-width env-height include-max-edges?]
-   (let [sep2 (* 2 sep)
-         grid1 (rectangular-grid sep2 left-offset bottom-offset
-                                 env-width env-height include-max-edges?)
-         grid2 (map (fn [[x y]] [(+ x shift-x) (+ y shift-y)]) grid1)]
-     (concat grid1 grid2))))
 
+(comment
+  ;; DELETE IF UNUSED:
 
-;; FIXME Doesn't work because it makes two separate lists of coords,
-;; but there are product coords that are missing.
-(defn slide-grid2
-  "A slide-grid is the composition of two rectangular grids with spacing
-  2*sep, offset from each other by shift-x and shift-y.  See
-  rectangular-grid for other parameters.  (If shift-x = shift-y = sep,
-  the result is a rectangular grid with spacing sep.)"
-  ([sep shift-x shift-y env-width env-height]
-   (slide-grid sep shift-x shift-y 0 0 env-width env-height))
-  ([sep shift-x shift-y left-offset bottom-offset env-width env-height]
-   (slide-grid sep shift-x shift-y left-offset bottom-offset env-width env-height false))
-  ([sep shift-x shift-y left-offset bottom-offset env-width env-height include-max-edges?]
-   (let [sep2 (* 2 sep)
-         grid1 (rectangular-grid sep2 left-offset bottom-offset
-                                 env-width env-height false)
-         _ (println grid1)
-         grid2 (rectangular-grid sep2 (+ left-offset shift-x) (+ bottom-offset shift-y)
-                                 env-width env-height include-max-edges?)
-         _ (println grid2)
-         ]
-     (concat grid1 grid2))))
+  (defn divisible-by?
+    [n d]
+    (= n (* d (quot n d))))
 
-(defn divisible-by?
-  [n d]
-  (= n (* d (quot n d))))
+  (defn filtered-pairs
+    [include-pair?
+     start-x end-x step-x
+     start-y end-y step-y]
+    (for [x (range start-x end-x step-x)
+          y (range start-y end-y step-y)
+          :when (include-pair? x y)]
+      [x y]))
 
-;; FIXME not right
-(defn slide-grid3
-  "A slide-grid is the composition of two rectangular grids with spacing
-  2*sep, offset from each other by shift-x and shift-y.  See
-  rectangular-grid for other parameters.  (If shift-x = shift-y = sep,
-  the result is a rectangular grid with spacing sep.)"
-  ([sep shift-x shift-y env-width env-height]
-   (slide-grid sep shift-x shift-y 0 0 env-width env-height))
-  ([sep shift-x shift-y left-offset bottom-offset env-width env-height]
-   (slide-grid sep shift-x shift-y left-offset bottom-offset env-width env-height false))
-  ([sep shift-x shift-y left-offset bottom-offset env-width env-height include-max-edges?]
-   (let [rang (if include-max-edges? misc/irange range)
-         sep2 (* 2 sep)]
-     (for [x (rang left-offset   (+ left-offset env-width) sep)
-           y (rang bottom-offset (+ bottom-offset env-height) sep)]
-       [(if (divisible-by? x sep2) x (- x shift-x))
-        (if (divisible-by? y sep2) x (- y shift-y))]))))
+)
 
-(defn filtered-pairs
-  [include-pair?
-   start-x end-x step-x
-   start-y end-y step-y]
-   (for [x (range start-x end-x step-x)
-         y (range start-y end-y step-y)
-         :when (include-pair? x y)]
-     [x y]))
-
-(defn even-pairs
-  [start-x end-x step-x
-   start-y end-y step-y]
-  (filtered-pairs (fn [x y] (even? (+ x y)))
-                  start-x end-x step-x
-                  start-y end-y step-y)
-
-(defn odd-pairs
-  [start-x end-x step-x
-   start-y end-y step-y]
-  (filtered-pairs (fn [x y] (odd? (+ x y)))
-                  start-x end-x step-x
-                  start-y end-y step-y)
-
+;; TODO: Add option to include right margins.  This is harder than it sounds.
+;; https://stackoverflow.com/a/68476365/1455243 and definition of irange in utils/misc.clj.
 (defn slide-grid
   "A slide-grid is the composition of two rectangular grids with spacing
   2*sep, offset from each other by shift-x and shift-y.  See
@@ -206,7 +143,7 @@
    (slide-grid sep shift-x shift-y left-offset bottom-offset env-width env-height false))
   ([sep shift-x shift-y left-offset bottom-offset env-width env-height include-max-edges?]
    (when include-max-edges?
-     (println "slide-grid: include-max-edges? is NOT YET IMPLEMENTED."))
+     (println "slide-grid: include-max-edges? is NOT YET IMPLEMENTED.")) ; because irange doesn't handle :when
    (let [unshifted-pairs (for [x (range left-offset   (+ left-offset   env-width)  sep)
                                y (range bottom-offset (+ bottom-offset env-height) sep)
                                :when (even? (+ x y))]
@@ -220,7 +157,7 @@
 
 
 (comment
-  (def grid1  (rectangular-grid 10       -10 -10 40 60))
+  (def grid1  (rectangular-grid 10     -10 -10 40 60))
   (def sgrid1 (slide-grid       10 0 0 -10 -10 40 60))
   (def sgrid2 (slide-grid       10 10 10 -10 -10 40 60))
   (def sgrid3 (slide-grid       10 10 10 -10 -10 40 60 true))
