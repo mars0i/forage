@@ -3,7 +3,8 @@
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
 (ns forage.food
   (:require [utils.math :as m]
-            [utils.fractal :as uf]))
+            [utils.fractal :as uf]
+            [utils.misc :as misc]))
 
 
 (declare x-zero? y-zero? either-zero? both-zero?)
@@ -25,8 +26,31 @@
         vert-lines  (for [x (range neg-xmax xmax sep)] [[x neg-ymax] [x ymax]])]
     (concat horiz-lines vert-lines)))
 
-;; FIXME ? Is this right for toroidal envs??
+
 (defn rectangular-grid
+  "Make a sequence of coordinate pairs spaced out every sep integers of
+  width env-width and height env-height, starting from left-offset and
+  bottom-offset.  By default, does not include rightmost column of
+  points, or topmost row of points (if set divides env-width and
+  env-height without remainder).  If include-max-edges? is true, these
+  extra points are included.  (The former case is appropriate for
+  toroidal environments; the latter may be useful for non-toroidal
+  environments or for an environment composed of multiple grids."
+  ([sep env-width env-height]
+   (rectangular-grid sep 0 0 env-width env-height)) ; origin at lower left
+  ([sep left-offset bottom-offset env-width env-height]
+   (rectangular-grid sep left-offset bottom-offset env-width env-height false))
+  ([sep left-offset bottom-offset env-width env-height include-max-edges?]
+   (let [rang (if include-max-edges? misc/irange range)]
+     (for [x (rang left-offset (+ left-offset env-width) sep)
+           y (rang bottom-offset (+ bottom-offset env-height) sep)]
+       [x y]))))
+
+
+;; DEPRECATED--old version used until 2/10/2023
+;; It works correctly when the offsets are = 0, but does strange things
+;; otherwise.  (What was I thinking?)
+(defn rectangular-grid-old
   "Make a sequence of coordinate pairs spaced out every sep integers,
   from -quadrant-width to quadrant-width, and from -quadrant-height
   to quadrant-height, including [0,0]."
@@ -56,6 +80,37 @@
                                 y (range 0 neg-ymax neg-sep)]
                                [x y]))]
      (concat ne-pairs sw-pairs se-pairs nw-pairs))))
+
+(comment
+  (def grid1 (rectangular-grid-old  10 -20 -10 40 30))
+  (def grid2 (rectangular-grid      10 -20 -10 40 30))
+  (println (count grid1) (count grid2))
+  (= (sort grid1) (sort grid2))
+
+  (def grid1a (rectangular-grid-old  10 0 0 40 30))
+  (def grid2a (rectangular-grid      10 0 0 40 30))
+  (println (count grid1a) (count grid2a))
+  (= (sort grid1a) (sort grid2a))
+
+  (def grid1b (rectangular-grid-old  10 -10 -10 40 30))
+  (def grid2b (rectangular-grid      10 -10 -10 40 30))
+  (println (count grid1b) (count grid2b))
+  (= (sort grid1b) (sort grid2b))
+
+  (def grid1c (rectangular-grid-old  5 -100 500 400 30000))
+  (def grid2c (rectangular-grid      5 -100 500 400 30000))
+  (println (count grid1c) (count grid2c))
+  (def grid2t (rectangular-grid      5 -100 500 400 30000 true))
+  (println (count grid2c) (count grid2t))
+  (+ (/ 400 5) (/ 30000 5))
+
+  (def grid2b (rectangular-grid 10 -10 -10 40 30))
+  (def grid2bt (rectangular-grid 10 -10 -10 40 30 true))
+  (println (count grid2b) (count grid2bt))
+  (+ (/ 40 5) (/ 30 5))
+  (/ (+ 40 30) 5)
+)
+   
 
 
 ;; FIXME (literal) edge cases are wrong? Is grid1 is missing outer edges, 
