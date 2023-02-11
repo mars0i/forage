@@ -170,9 +170,33 @@
   ;; NONDESTRUCTIVE/ASYMMETRIC
   (def data-rng-asymm
     (time (fr/levy-experiments fr/default-file-prefix centered-env params
-                                seven-exponents 1000 seed ctrd-nontoroidal-look-fn)))
-
-  (fr/write-found-coords seven-exponents data-rng-asymm)
+                                nine-exponents 1000 seed ctrd-nontoroidal-look-fn)))
+  (fr/write-found-coords nine-exponents data-rng-asymm)
+  ;; NONDESTRUCTIVE, PERC-RADIUS=50, nine-exponents
+  ;; Another triump of ballisticism (maybe with a slight bump for other low mu's).
+  ;; seed = -3509749017526314576
+  ; eval (effective-root-form): (def data-rng-asymm (time (fr...
+  ; (out) Performing 9000 runs in groups of 1000 ...
+  ; (out) group 1 [exponent 1.001, init-dir nil] ... "Elapsed time: 190872.992659 msecs"
+  ; (out) num found=1000.0, efficiency=0.00004454936645024621
+  ; (out) group 2 [exponent 1.25, init-dir nil] ... "Elapsed time: 191464.074401 msecs"
+  ; (out) num found=1000.0, efficiency=0.00004471082106393207
+  ; (out) group 3 [exponent 1.5, init-dir nil] ... "Elapsed time: 192481.183097 msecs"
+  ; (out) num found=1000.0, efficiency=0.000045336906603756004
+  ; (out) group 4 [exponent 1.75, init-dir nil] ... "Elapsed time: 219320.198867 msecs"
+  ; (out) num found=1000.0, efficiency=0.00004070047130508908
+  ; (out) group 5 [exponent 2.0, init-dir nil] ... "Elapsed time: 354365.523641 msecs"
+  ; (out) num found=1000.0, efficiency=0.000027476201306448645
+  ; (out) group 6 [exponent 2.25, init-dir nil] ... "Elapsed time: 730322.932075 msecs"
+  ; (out) num found=1000.0, efficiency=0.000014476405741478257
+  ; (out) group 7 [exponent 2.5, init-dir nil] ... "Elapsed time: 1542279.303272 msecs"
+  ; (out) num found=999.0, efficiency=0.000006891259064955648
+  ; (out) group 8 [exponent 2.75, init-dir nil] ... "Elapsed time: 2852986.474986 msecs"
+  ; (out) num found=969.0, efficiency=0.000003355243708035955
+  ; (out) group 9 [exponent 3.0, init-dir nil] ... "Elapsed time: 5196841.579481 msecs"
+  ; (out) num found=837.0, efficiency=0.0000017190104669086546
+  ; (out)  done.
+  ; (out) "Elapsed time: 1.1471005996656E7 msecs"
 
 )
 
