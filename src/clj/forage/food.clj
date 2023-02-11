@@ -148,26 +148,41 @@
                                y (range bottom-offset (+ bottom-offset env-height) sep)
                                :when (even? (+ x y))]
                            [x y])
-           shifted-pairs (for [x (range left-offset   (+ left-offset   env-width)  sep)
+         shifted-pairs   (for [x (range left-offset   (+ left-offset   env-width)  sep)
                                y (range bottom-offset (+ bottom-offset env-height) sep)
                                :when (odd? (+ x y))]
                            [(+ x shift-x) (+ y shift-y)])]
+     (println unshifted-pairs) ; DEBUG
+     (println shifted-pairs)   ; DEBUG
      (concat unshifted-pairs shifted-pairs))))
-   
+
 
 
 (comment
-  (def grid1  (rectangular-grid 10     -10 -10 40 60))
-  (def sgrid1 (slide-grid       10 0 0 -10 -10 40 60))
-  (def sgrid2 (slide-grid       10 10 10 -10 -10 40 60))
-  (def sgrid3 (slide-grid       10 10 10 -10 -10 40 60 true))
-  (println (count grid1)  (count sgrid1) (count sgrid2) (count sgrid3))
+  (def gridold  (rectangular-grid-old 10     0 0 40 60))
+  (def gridnew  (rectangular-grid     10     0 0 40 60))
+  (def sgridnew (slide-grid           10 0 0 0 0 40 60))
+  [(count gridold) (count gridnew) (count sgridnew)]
+  (= (sort gridold)  (sort gridnew))
+  (= (sort sgridnew) (sort gridnew))
+
+  (def grid0  (rectangular-grid-old 10 -10 -10 40 60))
+  (def grid1  (rectangular-grid 10     -30 -20 40 60))
+  (def sgrid1 (slide-grid       10 0 0 -30 -20 40 60))
+  (def sgrid2 (slide-grid       10 10 10 -30 -20 40 60))
+  (def sgrid3 (slide-grid       10 10 10 -30 -20 40 60 true))
+  (println (count grid0) (count grid1)  (count sgrid1) (count sgrid2) (count sgrid3))
   (sort grid1)
   (sort sgrid1)
   (= (sort grid1) (sort sgrid1))
 
-  (require 'clojure.data)
-  (clojure.data/diff grid1 sgrid1)
+  (def sgrid5 (slide-grid       10 0 0 0 0 30 40))
+  (count sgrid5)
+
+  (for [x (range 0 10 2)
+        y (range 0 8 2)]
+    [x y])
+
 )
                     
 
