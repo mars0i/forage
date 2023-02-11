@@ -144,14 +144,16 @@
   ([sep shift-x shift-y left-offset bottom-offset env-width env-height include-max-edges?]
    (when include-max-edges?
      (println "slide-grid: include-max-edges? is NOT YET IMPLEMENTED.")) ; because irange doesn't handle :when
-   (let [unshifted-pairs (for [x (range left-offset   (+ left-offset   env-width)  sep)
-                               y (range bottom-offset (+ bottom-offset env-height) sep)
+   (let [unshifted-pairs (for [x (range 0 (/ env-width sep))
+                               y (range 0 (/ env-height sep))
                                :when (even? (+ x y))]
-                           [x y])
-         shifted-pairs   (for [x (range left-offset   (+ left-offset   env-width)  sep)
-                               y (range bottom-offset (+ bottom-offset env-height) sep)
+                           [(+ left-offset   (* x sep))
+                            (+ bottom-offset (* y sep))])
+         shifted-pairs   (for [x (range 0 (/ env-width sep))
+                               y (range 0 (/ env-height sep))
                                :when (odd? (+ x y))]
-                           [(+ x shift-x) (+ y shift-y)])]
+                           [(+ left-offset   (* x sep) shift-x)
+                            (+ bottom-offset (* y sep) shift-y)])]
      (println unshifted-pairs) ; DEBUG
      (println shifted-pairs)   ; DEBUG
      (concat unshifted-pairs shifted-pairs))))
@@ -176,8 +178,11 @@
   (sort sgrid1)
   (= (sort grid1) (sort sgrid1))
 
-  (def sgrid5 (slide-grid       10 0 0 0 0 30 40))
+  (def grid5 (rectangular-grid 10     0 0 30 40))
+  (def sgrid5 (slide-grid      10 0 0 0 0 30 40))
+  (def sgrid6 (slide-grid      10 -7 0 0 0 30 40))
   (count sgrid5)
+  (= (sort grid5) (sort sgrid5))
 
   (for [x (range 0 10 2)
         y (range 0 8 2)]
