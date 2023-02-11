@@ -110,7 +110,7 @@
   (+ (/ 40 5) (/ 30 5))
   (/ (+ 40 30) 5)
 )
-   
+
 (defn slide-grid1
   "A slide-grid is the composition of two rectangular grids with spacing
   2*sep, offset from each other by shift-x and shift-y.  See
@@ -155,7 +155,7 @@
   (= n (* d (quot n d))))
 
 ;; FIXME not right
-(defn slide-grid
+(defn slide-grid3
   "A slide-grid is the composition of two rectangular grids with spacing
   2*sep, offset from each other by shift-x and shift-y.  See
   rectangular-grid for other parameters.  (If shift-x = shift-y = sep,
@@ -171,6 +171,52 @@
            y (rang bottom-offset (+ bottom-offset env-height) sep)]
        [(if (divisible-by? x sep2) x (- x shift-x))
         (if (divisible-by? y sep2) x (- y shift-y))]))))
+
+(defn filtered-pairs
+  [include-pair?
+   start-x end-x step-x
+   start-y end-y step-y]
+   (for [x (range start-x end-x step-x)
+         y (range start-y end-y step-y)
+         :when (include-pair? x y)]
+     [x y]))
+
+(defn even-pairs
+  [start-x end-x step-x
+   start-y end-y step-y]
+  (filtered-pairs (fn [x y] (even? (+ x y)))
+                  start-x end-x step-x
+                  start-y end-y step-y)
+
+(defn odd-pairs
+  [start-x end-x step-x
+   start-y end-y step-y]
+  (filtered-pairs (fn [x y] (odd? (+ x y)))
+                  start-x end-x step-x
+                  start-y end-y step-y)
+
+(defn slide-grid
+  "A slide-grid is the composition of two rectangular grids with spacing
+  2*sep, offset from each other by shift-x and shift-y.  See
+  rectangular-grid for other parameters.  (If shift-x = shift-y = sep,
+  the result is a rectangular grid with spacing sep.)"
+  ([sep shift-x shift-y env-width env-height]
+   (slide-grid sep shift-x shift-y 0 0 env-width env-height))
+  ([sep shift-x shift-y left-offset bottom-offset env-width env-height]
+   (slide-grid sep shift-x shift-y left-offset bottom-offset env-width env-height false))
+  ([sep shift-x shift-y left-offset bottom-offset env-width env-height include-max-edges?]
+   (when include-max-edges?
+     (println "slide-grid: include-max-edges? is NOT YET IMPLEMENTED."))
+   (let [unshifted-pairs (for [x (range left-offset   (+ left-offset   env-width)  sep)
+                               y (range bottom-offset (+ bottom-offset env-height) sep)
+                               :when (even? (+ x y))]
+                           [x y])
+           shifted-pairs (for [x (range left-offset   (+ left-offset   env-width)  sep)
+                               y (range bottom-offset (+ bottom-offset env-height) sep)
+                               :when (odd? (+ x y))]
+                           [(+ x shift-x) (+ y shift-y)])]
+     (concat unshifted-pairs shifted-pairs))))
+   
 
 
 (comment
