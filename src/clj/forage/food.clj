@@ -112,25 +112,35 @@
 )
    
 
-
-;; FIXME (literal) edge cases are wrong? Is grid1 is missing outer edges, 
-;; even though the points are internal?  Or does grid2 exceed boundaries?
-;; Also, what about toroidal?
+;; FIXME
 (defn slide-grid
-  "A slide-grid is the composition of two rectangular grids which by default
-  offset by sep in both directions so that the result is a regular rectangular
-  grid with spacing that is half of sep.  If shift-x or shift-y is nonzero,
-  then one of the two grids is shifted by shift-x and shift-y so that its
-  points are closer to some elements in the other grid than to others."
-  ([env-width env-height shift-x shift-y]
-   (slide-grid 1 env-width env-height shift-x shift-y))
-  ([sep env-width env-height shift-x shift-y]
-   (slide-grid sep 0 0 env-width env-height shift-x shift-y))
-  ([sep left-offset bottom-offset env-width env-height shift-x shift-y]
-   (let [grid1 (rectangular-grid sep left-offset bottom-offset env-width env-height)
-         grid2 (map (fn [[x y]] [(+ x sep shift-x) (+ y sep shift-y)])
-                    grid1)]
+  "A slide-grid is the composition of two rectangular grids with spacing
+  2*sep, offset from each other by shift-x and shift-y.  See
+  rectangular-grid for other parameters.  (If shift-x = shift-y = sep,
+  the result is a rectangular grid with spacing sep.)"
+  ([sep shift-x shift-y env-width env-height]
+   (slide-grid sep shift-x shift-y 0 0 env-width env-height))
+  ([sep shift-x shift-y left-offset bottom-offset env-width env-height]
+   (slide-grid sep shift-x shift-y left-offset bottom-offset env-width env-height false))
+  ([sep shift-x shift-y left-offset bottom-offset env-width env-height include-max-edges?]
+   (let [sep2 (* 2 sep)
+         grid1 (rectangular-grid sep2 left-offset bottom-offset
+                                 env-width env-height include-max-edges?)
+         grid2 (map (fn [[x y]] [(+ x shift-x) (+ y shift-y)]) grid1)]
      (concat grid1 grid2))))
+
+
+(comment
+  (def grid1  (rectangular-grid 10       -10 -10 40 30))
+  (def sgrid1 (slide-grid       10 10 10 -10 -10 40 30))
+  (println (count grid1) (count sgrid1))
+  (sort grid1)
+  (sort sgrid1)
+  (= (sort grid1) (sort sgrid1))
+
+  (require 'clojure.data)
+  (clojure.data/diff grid1 sgrid1)
+)
                     
 
 (defn fournierize
