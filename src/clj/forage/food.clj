@@ -134,7 +134,8 @@
 ;; https://stackoverflow.com/a/68476365/1455243 and definition of irange in utils/misc.clj.
 (defn slide-grid
   "A slide-grid is the composition of two rectangular grids with spacing
-  2*sep, offset from each other by shift-x and shift-y.  See
+  2*sep, offset from each other by shift-x and shift-y.  i.e. those parameters
+  allow you to \"slide\" some of the points toward/away from others.  See
   rectangular-grid for other parameters.  Tips: It's probably best if
   shift-x and shift-y are nonnegative and <= sep; otherwise foodspots may
   go beyond the intended boundaries of env.  You can use
