@@ -3,8 +3,9 @@
   (:require
    [utils.random :as r]
    [utils.toroidal :as t]
+   [forage.food :as f]
    [forage.walks :as w]
-   ;[forage.viz.hanami :as h]   ; don't load with cljplot
+   [forage.viz.hanami :as h]   ; don't load with cljplot
    ;[forage.viz.cljplot :as cp] ; don't load with hanami
    [oz.core :as oz]
    [clojure.math.numeric-tower :as m]
@@ -14,22 +15,31 @@
 
 "loaded"
 
-;; By John Collins at https://stackoverflow.com/a/68476365/1455243
-(defn irange
-  "Inclusive range function: end element is included."
-  ([start end step]
-   (take-while (if (pos? step) #(<= % end) #(>= % end)) (iterate #(+ % step) start)))
-  ([start end]
-   (irange start end 1))
-  ([end]
-   (irange 0 end))
-  ([] (range)))
+(comment
+  (oz/start-server!)
+
+  (def grid1 (f/slide-grid 10 0 0 0 0 100 100))
+  (def vgrid1 (map h/make-foodspot grid1))
+  (def food1 (h/vega-food-plot vgrid1 100 400 1))
+  (oz/view! food1)
+  
+  (def grid2 (f/slide-grid 10 8 8 0 0 100 100))
+
+  (def vgrid2 (map h/make-foodspot grid2))
+  (def food2 (h/vega-food-plot vgrid2 100 400 1))
+  (oz/view! food2)
+
+  (def vgrids2 (h/split-foodgrid grid2))
+  (def foods2 (h/vega-food-plot vgrids2 100 400 1))
+  (oz/view! foods2)
+
+)
+
+
 
 (comment
-
   (def plot (hc/xform ht/line-chart :UDATA [{"x" 0 "y" 1} {"x" 1 "y" 0} {"x" 2 "y" 2}]))
   (oz/export! plot "yo.svg")
-
 
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
@@ -75,14 +85,6 @@
                   [x0 xs])))
 
   (take 100 xs)
-
-
-
-  (oz/start-server!)
-  (oz/view! example {:port 10667} )
-
-  (require '[aerial.hanami.common :as hc])
-  (require '[aerial.hanami.templates :as ht])
 
 
 )
