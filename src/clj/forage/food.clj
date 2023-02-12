@@ -130,13 +130,19 @@
 
 )
 
-;; TODO: Add option to include right margins.  This is harder than it sounds.
+;; TODO: Add option to include right margins.  This is harder than it sounds.  See
 ;; https://stackoverflow.com/a/68476365/1455243 and definition of irange in utils/misc.clj.
 (defn slide-grid
   "A slide-grid is the composition of two rectangular grids with spacing
   2*sep, offset from each other by shift-x and shift-y.  See
-  rectangular-grid for other parameters.  (If shift-x = shift-y = sep,
-  the result is a rectangular grid with spacing sep.)"
+  rectangular-grid for other parameters.  Tips: It's probably best if
+  shift-x and shift-y are nonnegative and < sep; otherwise foodspots may
+  go beyond the intended boundaries of env.  (On the other hand, this
+  means that the shifted foodspots can only approach the unshifted ones
+  from the left, if that makes a difference.)  You can use
+  viz.hanami/split-foodgrid to distinguish between shifted and unshifted
+  foodspots.  If shift-x = shift-y = sep, the result is a rectangular
+  grid with spacing sep."
   ([sep shift-x shift-y env-width env-height]
    (slide-grid sep shift-x shift-y 0 0 env-width env-height))
   ([sep shift-x shift-y left-offset bottom-offset env-width env-height]
