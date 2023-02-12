@@ -156,6 +156,20 @@
   [[x y]]
   {"x" x, "y" y, "label" "food"})
 
+;; Easy to use make-foodspot with map to add to coordinates.
+
+(defn split-foodgrid
+  "For testing: If a set of coordinates is divided into two
+  equally-sized subsets, one concatenated onto the other (produced, for
+  example, by forage.food/slide-grid), this formats the coordinates for
+  Vega-Lite and adds different labels two the two subsets."
+  [coords]
+  (let [len (count coords)
+        [unshifted shifted] (split-at (/ len 2) coords)
+        vun (map (fn [[x y]] {"x" x, "y" y, "label" "food1"}) unshifted) 
+        vsh (map (fn [[x y]] {"x" x, "y" y, "label" "food2"}) shifted)]
+    (concat vun vsh)))
+
 ;; For the Hanami :MSIZE value:
 ;; Vega-Lite "mark" sizes--i.e. a circle at a point--are specified
 ;; by the *area of the bounding box around the circle*.  The BB's
