@@ -136,10 +136,8 @@
   "A slide-grid is the composition of two rectangular grids with spacing
   2*sep, offset from each other by shift-x and shift-y.  See
   rectangular-grid for other parameters.  Tips: It's probably best if
-  shift-x and shift-y are nonnegative and < sep; otherwise foodspots may
-  go beyond the intended boundaries of env.  (On the other hand, this
-  means that the shifted foodspots can only approach the unshifted ones
-  from the left, if that makes a difference.)  You can use
+  shift-x and shift-y are nonnegative and <= sep; otherwise foodspots may
+  go beyond the intended boundaries of env.  You can use
   viz.hanami/split-foodgrid to distinguish between shifted and unshifted
   foodspots.  If shift-x = shift-y = sep, the result is a rectangular
   grid with spacing sep."
