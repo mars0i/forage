@@ -19,6 +19,8 @@
 
 (def half-size 5000) ; half the full width of the env
 (def init-food 1000)
+(def maxpathlen (* 2000 half-size)) ; max total length of search path
+(def slide-shift 9/10) ; optional right shift of every other foodspot
 
 ;; Initial default params, with:
 ;; (a) Search starts in a random initial direction
@@ -31,8 +33,8 @@
              :env-discretization  5 ; for Continuous2D; see foodspot.clj
              :init-loc-fn         (constantly [half-size half-size]) ; function to return initial location given nil or prev foodwalk
              :init-pad            nil ; if truthy, initial loc offset by this in rand dir
-             :maxpathlen          (* 2000 half-size) ; max total length of search path
-             :trunclen            1500 ; max length of any line segment
+             :maxpathlen          maxpathlen
+             :trunclen            maxpathlen
              :look-eps            0.2    ; increment within segments for food check
              :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
              :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
@@ -45,29 +47,48 @@
 ;; So this has to be overridden for a pre-specified spread of straight walks:
 (def straight-params (assoc params :num-dirs 100))
 
-
-;; PARAMS FOR NON-DESTRUCTIVE/ASSYMETRIC SEARCH
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ENV FOR NONDESTRUCTIVE/ASYMMETRIC SEARCH--UNSHIFTED GRID
 (def assym-params (assoc params :init-pad (* 2 (params :perc-radius))))
 
+(def centered-env (mf/make-env (params :env-discretization)
+                               (params :env-size)
+                               (f/slide-grid (params :food-distance)
+                                             0 0 ; slide shifts [could use rectangular-grid]
+                                             (params :env-size) (params :env-size))))
+(def ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
 
-;; ENV FOR DESTRUCTIVE/SYMMETRIC SEARCH;
+(def shift-centered-env (mf/make-env (params :env-discretization)
+                                       (params :env-size)
+                                       (f/slide-grid (params :food-distance) 
+                                                     (* slide-shift (params :food-distance)) 0
+                                                     (params :env-size) (params :env-size))))
+(def shift-ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal
+                                 shift-centered-env (params :perc-radius)))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ENV FOR DESTRUCTIVE/SYMMETRIC SEARCH
 (def nocenter-env (mf/make-env (params :env-discretization)
-                      (params :env-size)
-                      (f/centerless-rectangular-grid (params :food-distance)
-                                                     (params :env-size)
-                                                     (params :env-size))))
-
+                               (params :env-size)
+                               (f/remove-center (params :env-size) (params :env-size)
+                                                (f/slide-grid (params :food-distance)
+                                                              0 0 ; slide shifts
+                                                              (params :env-size)
+                                                              (params :env-size)))))
 (def noctr-look-fn (partial mf/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
 
-
-;; ENV FOR NONDESTRUCTIVE/ASYMMETRIC SEARCH;
-(def centered-env (mf/make-env (params :env-discretization)
-                      (params :env-size)
-                      (f/rectangular-grid (params :food-distance)
-                                                     (params :env-size)
-                                                     (params :env-size))))
-
-(def ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
+(def shift-nocenter-env
+  (mf/make-env (params :env-discretization)
+               (params :env-size)
+               (f/remove-center (params :env-size) (params :env-size)
+                                (f/slide-grid (params :food-distance)
+                                              (* slide-shift (params :food-distance)) 0
+                                              (params :env-size)
+                                              (params :env-size)))))
+(def shift-noctr-look-fn (partial mf/perc-foodspots-exactly-toroidal
+                                  shift-nocenter-env (params :perc-radius)))
 
 
 (comment
@@ -77,23 +98,20 @@
 
   (def seed (r/make-seed))
 
-  ;; nondestructive/assymetric:
-  (def data-rng-assym (time (fr/levy-experiments fr/default-file-prefix centered-env assym-params [1.001 1.5 1.8 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  ;; NONDESTRUCTIVE/ASSYMETRIC:
+  (def data-rng-assym
+    (time (fr/levy-experiments fr/default-file-prefix centered-env assym-params
+                               five-exponents 1000 seed ctrd-look-fn)))
+  (def shift-data-rng-assym
+    (time(fr/levy-experiments fr/default-file-prefix shift-centered-env assym-params
+                              five-exponents 1000 seed shift-ctrd-look-fn)))
 
-  ;; destructive/symetric:
-  (def data-rng-symm  (time (fr/levy-experiments fr/default-file-prefix nocenter-env params       [1.001 1.5 1.8 2.0 2.5 3.0] 1000 seed noctr-look-fn)))
-
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Plotting
-  ;; The mu's here are merely used for informational output.
-  (let [env nocenter-env
-        mu 2.0
-        n-to-plot 1]
-    (time
-     (fr/write-foodwalk-plots 
-      (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
-      :svg seed env 800 1 1 100 500 mu params (take n-to-plot (w/sort-foodwalks fws)))))
-  ;:svg seed env 800 12 3 nil 50 mu params (take n-to-plot (w/sort-foodwalks fws)))
+  ;; DESTRUCTIVE/SYMETRIC:
+  (def data-rng-symm
+    (time (fr/levy-experiments fr/default-file-prefix nocenter-env params
+                               five-exponents 1000 seed noctr-look-fn)))
+  (def shift-data-rng-symm 
+    (time (fr/levy-experiments fr/default-file-prefix shift-nocenter-env params
+                               give-exponents 1000 seed shift-noctr-look-fn)))
 
 )
