@@ -159,10 +159,7 @@
                                :when (odd? (+ x y))]
                            [(+ left-offset   (* x sep) shift-x)
                             (+ bottom-offset (* y sep) shift-y)])]
-     (println unshifted-pairs) ; DEBUG
-     (println shifted-pairs)   ; DEBUG
      (concat unshifted-pairs shifted-pairs))))
-
 
 
 (comment
