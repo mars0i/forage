@@ -195,23 +195,6 @@
 
 )
                     
-
-(defn fournierize
-  "DEPRECATED: Use utils.fractal/fournierize.
-  Given a sequence of coordinate pairs (points), returns a sequence containing
-  those points and \"fournier children\", i.e. points that are (* sep multiplier)
-  up, down, left, and to the right of each original point.  Then iterates,
-  performing the same operation on all of the points at a smaller scale, levels
-  times.  multiplier should be < 1.  (Note that the number of points is increased
-  exponentially, multiplying by 5 each time.)"
-  [points sep multiplier levels]
-  (uf/fournierize points sep multiplier levels))
-
-(comment
-  (def points [[0 0] [0 100] [0 -100] [100 0] [-100 0]])
-  (fournierize points 100 0.1 2)
-)
-
 (defn remove-center
   "Remove the center point of a grid of size env-width x env-height.
   Dimensions must be even numbers."
