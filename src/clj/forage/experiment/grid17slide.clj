@@ -19,8 +19,8 @@
 
 (def half-size 5000) ; half the full width of the env
 (def init-food 1000)
+(def slide-shift 900) ; optional right shift of every other foodspot
 (def maxpathlen (* 2000 half-size)) ; max total length of search path
-(def slide-shift 9/10) ; optional right shift of every other foodspot
 
 ;; Initial default params, with:
 ;; (a) Search starts in a random initial direction
@@ -61,7 +61,7 @@
 (def shift-centered-env (mf/make-env (params :env-discretization)
                                        (params :env-size)
                                        (f/slide-grid (params :food-distance) 
-                                                     (* slide-shift (params :food-distance)) 0
+                                                     slide-shift 0
                                                      (params :env-size) (params :env-size))))
 (def shift-ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal
                                  shift-centered-env (params :perc-radius)))
@@ -84,7 +84,7 @@
                (params :env-size)
                (f/remove-center (params :env-size) (params :env-size)
                                 (f/slide-grid (params :food-distance)
-                                              (* slide-shift (params :food-distance)) 0
+                                              slide-shift 0
                                               (params :env-size)
                                               (params :env-size)))))
 (def shift-noctr-look-fn (partial mf/perc-foodspots-exactly-toroidal
