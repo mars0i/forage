@@ -169,7 +169,6 @@
   [(count gridold) (count gridnew) (count sgridnew)]
   (= (sort gridold)  (sort gridnew))
   (= (sort sgridnew) (sort gridnew))
-
   (def grid0  (rectangular-grid-old 10 -10 -10 40 60))
   (def grid1  (rectangular-grid 10     -30 -20 40 60))
   (def sgrid1 (slide-grid       10 0 0 -30 -20 40 60))
@@ -179,17 +178,11 @@
   (sort grid1)
   (sort sgrid1)
   (= (sort grid1) (sort sgrid1))
-
   (def grid5 (rectangular-grid 10     0 0 30 40))
   (def sgrid5 (slide-grid      10 0 0 0 0 30 40))
   (def sgrid6 (slide-grid      10 -7 0 0 0 30 40))
   (count sgrid5)
   (= (sort grid5) (sort sgrid5))
-
-  (for [x (range 0 10 2)
-        y (range 0 8 2)]
-    [x y])
-
 )
                     
 (defn remove-center
