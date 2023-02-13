@@ -28,7 +28,7 @@ Temporarily add this line to project.clj (e.g. just before `:source-paths`).
 ```
 Then start the repl, and run 
 ```clojure
-lein localrepo install <jarfilepath> MASON 20
+lein localrepo install <jarfilepath> MASON 21
 ```
 where `<jarfilepath>` is a string containing the full path and filename
 for your mason.20.jar file.  This will copy the file to the
