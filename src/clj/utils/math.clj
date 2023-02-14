@@ -128,6 +128,11 @@
      (/ (reduce + xs) n)))
   ([n xs] (mean (take n xs)))) ; don't divide by n explicitly: xs may be short
 
+(defn count-decimal-digits
+  "Given a number, returns the number of digits in the decimal
+  representation of its integer part."
+  [n]
+  (count (str (nt/round n))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
