@@ -22,7 +22,7 @@
 
 (def half-size 5000) ; half the full width of the env
 (def food-distance 1500)
-(def slide-shift 1350) ; s/b 9/10 of food-distance optional right shift of every other foodspot
+(def slide-shift 1425) ; s/b 9/10 of food-distance optional right shift of every other foodspot
 (def maxpathlen (* 5 half-size)) ; max total length of search path
 
 ;; Initial default params, with:
@@ -30,6 +30,7 @@
 ;; (b) Search starts exactly from init-loc (e.g. for destructive search)
 (def params (sorted-map ; sort so labels match values
              :food-distance       food-distance 
+             :slide-shift         slide-shift
              :perc-radius         1  ; distance that an animal can "see" in searching for food
              :powerlaw-min        1
              :env-size            (* 2 half-size)
