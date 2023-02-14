@@ -243,7 +243,8 @@
                                       "found" "efficency" "total path len"]
                                      path-labels)))
          found-coords$ (atom [])
-         iter-num$ (atom 0)]
+         iter-num$ (atom 0)
+         walks-per-combo-digits (misc/count-decimal-digits walks-per-combo)] ; passed to cl-format to format found foodspot count
      (spit-csv param-filename param-data) ; write out fixed parameters
      (cl-format true "Performing ~d runs in groups of ~d ...~%" 
                 (* (count exponents) walks-per-combo (if num-dirs (inc num-dirs) 1))
@@ -258,7 +259,7 @@
              n-found (count (keep identity found))
              total-length (reduce + lengths)
              efficiency (/ n-found total-length)] ; lengths start as doubles and remain so--this is double div
-         (cl-format true "num found=~f, efficiency=~f\n" n-found efficiency)
+         (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-combo-digits n-found efficiency) ; walks-per-combo digits makes num found same width
          (swap! found-coords$ conj found)
          (swap! data$ conj (into [init-dir exponent n-segments n-found efficiency total-length] lengths))))
      (spit-csv data-filename @data$)
