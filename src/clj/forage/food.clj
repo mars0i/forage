@@ -163,26 +163,38 @@
 
 
 (comment
+  ;; Small envs for direct viewing of coordinates:
   (def gridold  (rectangular-grid-old 10     0 0 40 60))
   (def gridnew  (rectangular-grid     10     0 0 40 60))
   (def sgridnew (slide-grid           10 0 0 0 0 40 60))
-  [(count gridold) (count gridnew) (count sgridnew)]
-  (= (sort gridold)  (sort gridnew))
-  (= (sort sgridnew) (sort gridnew))
+  
   (def grid0  (rectangular-grid-old 10 -10 -10 40 60))
   (def grid1  (rectangular-grid 10     -30 -20 40 60))
   (def sgrid1 (slide-grid       10 0 0 -30 -20 40 60))
   (def sgrid2 (slide-grid       10 10 10 -30 -20 40 60))
   (def sgrid3 (slide-grid       10 10 10 -30 -20 40 60 true))
-  (println (count grid0) (count grid1)  (count sgrid1) (count sgrid2) (count sgrid3))
-  (sort grid1)
-  (sort sgrid1)
-  (= (sort grid1) (sort sgrid1))
+ 
   (def grid5 (rectangular-grid 10     0 0 30 40))
   (def sgrid5 (slide-grid      10 0 0 0 0 30 40))
   (def sgrid6 (slide-grid      10 -7 0 0 0 30 40))
-  (count sgrid5)
-  (= (sort grid5) (sort sgrid5))
+
+  ;; Large envs that can be observed in plots:
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+
+  (def grid1 (f/slide-grid 10 0 0 0 0 100 100))
+  (def vgrid1 (map h/make-foodspot grid1))
+  (def food1 (h/vega-food-plot vgrid1 100 400 1))
+  (oz/view! food1)
+  
+  (def grid2 (f/slide-grid 10 8 0 0 0 100 100))
+  (def vgrid2 (map h/make-foodspot grid2))
+  (def food2 (h/vega-food-plot vgrid2 100 400 1))
+  (oz/view! food2)
+  (def vgrids2 (h/split-foodgrid grid2)) ; display shifted points with different color
+  (def foods2 (h/vega-food-plot vgrids2 100 400 1))
+  (oz/view! foods2)
 )
                     
 (defn remove-center
