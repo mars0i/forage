@@ -1,5 +1,6 @@
 ;; Modified version of grid9.clj: small but toroidal env
 ;; This version adds use of food/slide-grid in construction of envs.
+;; Also uses a very long trunclen, whereas grid9 used a short trunclen.
 ;;
 ;; grid9 was same as grid8.clj but with a little bit of cleanup and minor mods, 
 ;; e.g. lengthening maxpathlen, 
@@ -18,7 +19,7 @@
 
 
 (def half-size 5000) ; half the full width of the env
-(def init-food 1000)
+(def food-distance 1000)
 (def slide-shift 900) ; optional right shift of every other foodspot
 (def maxpathlen (* 2000 half-size)) ; max total length of search path
 
@@ -26,7 +27,7 @@
 ;; (a) Search starts in a random initial direction
 ;; (b) Search starts exactly from init-loc (e.g. for destructive search)
 (def params (sorted-map ; sort so labels match values
-             :food-distance       init-food
+             :food-distance       food-distance 
              :perc-radius         1  ; distance that an animal can "see" in searching for food
              :powerlaw-min        1
              :env-size            (* 2 half-size)
