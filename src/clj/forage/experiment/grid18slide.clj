@@ -20,6 +20,8 @@
             [utils.math :as m]))
 
 
+;; FIXME: FOOD-DISTANCE SHOULD DIVIDE HALF-SIZE EVENLY, OR THERE WON't BE FOOD AT CENTER,
+;; WHICH IS WHERE THE SEARCH STARTS.
 (def half-size 5000) ; half the full width of the env
 (def food-distance 1500)
 (def slide-shift90 1300) ; 0.90 * 1500
@@ -111,7 +113,7 @@
     (time (fr/levy-experiments fr/default-file-prefix centered-env assym-params
                                nine-exponents 5000 seed ctrd-look-fn)))
   (def shift-data-rng-assym
-    (time(fr/levy-experiments fr/default-file-prefix shift-centered-env assym-params
+    (time (fr/levy-experiments fr/default-file-prefix shift-centered-env assym-params
                               nine-exponents 5000 seed shift-ctrd-look-fn)))
 
   ;; DESTRUCTIVE/SYMETRIC:
