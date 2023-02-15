@@ -188,12 +188,12 @@
   (def food1 (h/vega-food-plot vgrid1 100 400 1))
   (oz/view! food1)
   
-  (def grid2 (f/slide-grid 10 8 0 0 0 100 100))
+  (def grid2 (slide-grid 10 8 0 0 0 100 100))
   (def vgrid2 (map h/make-foodspot grid2))
   (def food2 (h/vega-food-plot vgrid2 100 400 1))
   (oz/view! food2)
   (def vgrids2 (h/split-foodgrid grid2)) ; display shifted points with different color
-  (def foods2 (h/vega-food-plot vgrids2 100 400 1))
+  (def foods2 (h/vega-food-plot vgrids2 100 600 1))
   (oz/view! foods2)
 )
                     
