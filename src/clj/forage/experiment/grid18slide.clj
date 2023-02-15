@@ -25,6 +25,8 @@
 (def slide-shift90 1300) ; 0.90 * 1500
 (def slide-shift95 1425) ; 0.95 * 1500
 (def slide-shift99 1485) ; 0.99 * 1500
+(def slide-shift997 1495) ; five units away from unshifted pint
+
 (def maxpathlen (* 5 half-size)) ; max total length of search path
 
 ;; Initial default params, with:
@@ -32,7 +34,7 @@
 ;; (b) Search starts exactly from init-loc (e.g. for destructive search)
 (def params (sorted-map ; sort so labels match values
              :food-distance       food-distance 
-             :slide-shift         slide-shift95
+             :slide-shift         slide-shift997
              :perc-radius         1  ; distance that an animal can "see" in searching for food
              :powerlaw-min        1
              :env-size            (* 2 half-size)
@@ -67,7 +69,7 @@
 (def shift-centered-env (mf/make-env (params :env-discretization)
                                        (params :env-size)
                                        (f/slide-grid (params :food-distance) 
-                                                     slide-shift 0
+                                                     (params :slide-shift) 0
                                                      (params :env-size) (params :env-size))))
 (def shift-ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal
                                  shift-centered-env (params :perc-radius)))
@@ -90,7 +92,7 @@
                (params :env-size)
                (f/remove-center (params :env-size) (params :env-size)
                                 (f/slide-grid (params :food-distance)
-                                              slide-shift 0
+                                              (params :slide-shift) 0
                                               (params :env-size)
                                               (params :env-size)))))
 (def shift-noctr-look-fn (partial mf/perc-foodspots-exactly-toroidal
