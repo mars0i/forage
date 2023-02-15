@@ -244,7 +244,7 @@
                                      path-labels)))
          found-coords$ (atom [])
          iter-num$ (atom 0)
-         walks-per-combo-digits (misc/count-decimal-digits walks-per-combo)] ; passed to cl-format to format found foodspot count
+         walks-per-combo-digits (m/count-decimal-digits walks-per-combo)] ; passed to cl-format to format found foodspot count
      (spit-csv param-filename param-data) ; write out fixed parameters
      (cl-format true "Performing ~d runs in groups of ~d ...~%" 
                 (* (count exponents) walks-per-combo (if num-dirs (inc num-dirs) 1))
