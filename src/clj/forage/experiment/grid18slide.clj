@@ -1,3 +1,5 @@
+;; grid18slide.clj
+;; BROKEN SEE FIXME NOTE BELOW.  Replaced by grid19slide.clj.
 ;; Like grid17slide.clj but with much shorter maxpathlen.
 ;; And then I increased food-distance.
 ;; Modified version of grid9.clj: small but toroidal env
