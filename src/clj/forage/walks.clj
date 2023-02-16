@@ -299,7 +299,6 @@
             [nil stopsv])))))) ; no food in any segment; return entire input
 
 
-;; FIXME buggy: plots are not turning out correctly.
 (defn trim-full-walk
   "Gvien a foodwalk triple of the kind returned by levy-foodwalk
   or straight-foodwalk, returns a similar triple in which the third
