@@ -110,7 +110,7 @@
   (-> (h/vega-gridwalk-plot
      "N/A" maxpathlen powerlaw-scale n-steps
        []
-       (h/vega-walk-plot plot-dim env-size 1.0 walks)) 
+       (h/vega-walk-plot plot-dim (* 2 env-size) 0.75 walks)) 
        ;(h/vega-walk-plot plot-dim 750 3400 1.25 false walks :color-scheme "greys")) ;; ZoomOut setting used for version 603
        ;(h/vega-walk-plot plot-dim 2000 2700 0.75 false walks "greys")) ;; ZoomIn settting used for version 603
        ;(h/vega-walk-plot plot-dim 2250 2700 0.5 false walks "grays")) ;; ZoomIn for Brownian walk alone
