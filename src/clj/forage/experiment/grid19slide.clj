@@ -16,10 +16,7 @@
 (ns forage.experiment.grid19slide
   (:require [forage.run :as fr]
             [forage.food :as f]
-            [forage.walks :as w]
-            [forage.mason.foodspot :as mf]
-            [utils.random :as r]
-            [utils.math :as m]))
+            [utils.random :as r]))
 
 
 ;; FOOD-DISTANCE SHOULD DIVIDE HALF-SIZE EVENLY, OR THERE WON't BE FOOD AT CENTER,
@@ -124,6 +121,6 @@
                                nine-exponents 5000 seed noctr-look-fn)))
   (def shift-data-rng-symm 
     (time (fr/levy-experiments fr/default-file-prefix shift-nocenter-env params
-                               nine-exponents 5000 seed shift-noctr-look-fn)))
+                               five-exponents 10 seed shift-noctr-look-fn)))
 
 )
