@@ -53,7 +53,7 @@
 ;(def seed 3606716751769783334) ; version "600"
 ;(def seed -8570974758410904124) ; version "601"
 ;(def seed -3499416562441271185) ; version "602"
-(def seed -5280359680172809672) ; version "603"
+;(def seed -5280359680172809672) ; version "603"
 
 (def rng (r/make-well19937 seed))
 
@@ -110,8 +110,8 @@
   (-> (h/vega-gridwalk-plot
      "N/A" maxpathlen powerlaw-scale n-steps
        []
-       ;(h/vega-walk-plot plot-dim env-size 1.5 walks)) 
-       (h/vega-walk-plot plot-dim 750 3400 1.25 false walks :color-scheme "greys")) ;; ZoomOut setting used for version 603
+       (h/vega-walk-plot plot-dim env-size 1.0 walks)) 
+       ;(h/vega-walk-plot plot-dim 750 3400 1.25 false walks :color-scheme "greys")) ;; ZoomOut setting used for version 603
        ;(h/vega-walk-plot plot-dim 2000 2700 0.75 false walks "greys")) ;; ZoomIn settting used for version 603
        ;(h/vega-walk-plot plot-dim 2250 2700 0.5 false walks "grays")) ;; ZoomIn for Brownian walk alone
       (assoc :background "white")))
