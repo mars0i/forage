@@ -75,12 +75,11 @@
              next-tran-fns tran-cycle
              vecs []]
         (let [curr-step-fn (first next-step-fns)
-              curr-tran-fn (first next-tran-fns)]
-          ;; TODO
+              curr-tran-fn (first next-tran-fns)
+              new-vecs 'something] ;; TODO construct subseq of vecs here
           (recur (next next-step-fns)
                  (next next-tran-fns)
-                 'the-vecs-go-here
-                 ))))))
+                 (concat vecs new-vecs))))))) ; IS THIS WHAT I WANT?
 
 
 (defn subst-init-dir
