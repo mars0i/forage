@@ -45,8 +45,19 @@
   widely separated the arms are.  increment is the distance between
   input values in radians."
   [a increment]
-  (map (fn [x] (archimedean-spiral-pt (* increment x)))
+  (map (fn [x] (archimedean-spiral-pt a (* increment x)))
        (range)))
+
+(comment
+  (def xs (archimedean-spiral 0.1 0.1))
+  (require '[forage.viz.hanami :as h])
+  (def vs (h/add-walk-labels "spiral" xs))
+  (take 10 vs)
+  (def plot (h/vega-walk-plot 600 10 1.0 (take 25 vs)))
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+  (oz/view! plot) ; not working.  What's wrong with plot def?
+)
 
 
 (defn bool-to-bin
