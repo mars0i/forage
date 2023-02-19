@@ -85,16 +85,14 @@
   subsequence, (ii) length of subsequence, or (iii) the entire
   subsequence.]"
   [vec-fns dist?-fns]
-  ;; FIXME not right.  When is vecs every returned?  Loops forever, lazy-seq or not.
-  (loop [vecfns (cycle vec-fns), dist?fns (cycle dist?-fns), dist?data nil, vecs []]
-    (let [vecfn (first vecfns)
-          dist?fn (first dist?fns)
-          new-vec (vecfn)]
-      (if-let [newdist?data (dist?fn new-vec dist?data)] ; truthy means "keep using this vec fn"
-        (recur vecfns dist?fns newdist?data
-               (conj vecs new-vec))
-        (recur (next vecfns) (next dist?fns) nil ; nil since new vecfn, dist?fn should restart counting, etc.
-               (conj vecs new-vec))))))
+  (letfn [(make-vecs [vec-fns dist?-fns dist?-data] ; to use lazy-seq need to recurse on fn not loop
+            (let [new-vec ((first vec-fns))]
+              (lazy-seq
+                (cons new-vec
+                      (if-let [newdist?-data ((first dist?-fns) new-vec dist?-data)] ; truthy means "keep using this vec fn"
+                        (make-vecs vec-fns dist?-fns newdist?-data)
+                        (make-vecs (next vec-fns) (next dist?-fns) nil))))))]
+    (make-vecs (cycle vec-fns) (cycle dist?-fns) nil)))
 
 (comment
   (def seed (r/make-seed))
@@ -106,11 +104,13 @@
   (def levy-vecs (make-levy-vecs rng2 lendist2 1 100))
   (take 5 levy-vecs)
 
+  ;; Same thing using composite-brownian-vecs on a single dist:
   (def vecfn (step-vector-fn rng1 lendist1 1 100))
   (def samedistfn (constantly true))
   (def cb-vecs (make-composite-brownian-vecs [vecfn] [samedistfn]))
   (take 5 cb-vecs)
 
+  (= (take 1000 levy-vecs) (take 1000 cb-vecs))
 )
 
 
