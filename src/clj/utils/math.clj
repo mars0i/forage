@@ -30,6 +30,24 @@
 (defn ln [x] (Math/log x))
 (defn log [base x] (/ (ln x) (ln base)))
 
+;; Based on https://en.wikipedia.org/wiki/Spiral#Two-dimensional
+(defn archimedean-spiral-pt
+  "Returns 2D coordinates of a point on an Archimedean spiral
+  corresponding to input theta (which may be any positive real).
+  Parameter a determines how widely separated the arms are."
+  [a theta]
+  (let [r (* a theta)]
+    [(* r (cos theta)) (* r (sin theta))]))
+
+(defn archimedean-spiral
+  "Returns an infinite sequence of 2D coordinates of points on an
+  Archimedean spiral around the origin.  Parameter a determines how
+  widely separated the arms are.  increment is the distance between
+  input values in radians."
+  [a increment]
+  (map (fn [x] (archimedean-spiral-pt (* increment x)))
+       (range)))
+
 
 (defn bool-to-bin
   "Returns 1 if x is truthy, 0 if it's falsey."
