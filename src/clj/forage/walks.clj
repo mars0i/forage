@@ -85,13 +85,13 @@
   subsequence, (ii) length of subsequence, or (iii) the entire
   subsequence.]"
   [vec-fns dist?-fns]
-  (letfn [(make-vecs [vec-fns dist?-fns dist?-data] ; to use lazy-seq need to recurse on fn not loop
-            (let [new-vec ((first vec-fns))]
+  (letfn [(make-vecs [vecfns dist?fns dist?data] ; lazy-seq needs to recurse on fn not loop/recur
               (lazy-seq
+            (let [new-vec ((first vecfns))]
                 (cons new-vec
-                      (if-let [newdist?-data ((first dist?-fns) new-vec dist?-data)] ; truthy means "keep using this vec fn"
-                        (make-vecs vec-fns dist?-fns newdist?-data)
-                        (make-vecs (next vec-fns) (next dist?-fns) nil))))))]
+                      (if-let [newdist?data ((first dist?fns) new-vec dist?data)] ; truthy means "keep using this vec fn"
+                        (make-vecs vecfns dist?fns newdist?data)
+                        (make-vecs (next vecfns) (next dist?fns) nil))))))]
     (make-vecs (cycle vec-fns) (cycle dist?-fns) nil)))
 
 (comment
