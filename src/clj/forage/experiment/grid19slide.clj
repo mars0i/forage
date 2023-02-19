@@ -16,6 +16,7 @@
 (ns forage.experiment.grid19slide
   (:require [forage.run :as fr]
             [forage.food :as f]
+            [forage.env-mason :as em]
             [utils.random :as r]))
 
 
@@ -60,43 +61,43 @@
 ;; ENV FOR NONDESTRUCTIVE/ASYMMETRIC SEARCH--UNSHIFTED GRID
 (def assym-params (assoc params :init-pad (* 2 (params :perc-radius))))
 
-(def centered-env (mf/make-env (params :env-discretization)
+(def centered-env (em/make-env (params :env-discretization)
                                (params :env-size)
                                (f/slide-grid (params :food-distance)
                                              0 0 ; slide shifts [could use rectangular-grid]
                                              (params :env-size) (params :env-size))))
-(def ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
+(def ctrd-look-fn (partial em/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
 
-(def shift-centered-env (mf/make-env (params :env-discretization)
+(def shift-centered-env (em/make-env (params :env-discretization)
                                        (params :env-size)
                                        (f/slide-grid (params :food-distance) 
                                                      (params :slide-shift) 0
                                                      (params :env-size) (params :env-size))))
-(def shift-ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal
+(def shift-ctrd-look-fn (partial em/perc-foodspots-exactly-toroidal
                                  shift-centered-env (params :perc-radius)))
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ENV FOR DESTRUCTIVE/SYMMETRIC SEARCH
-(def nocenter-env (mf/make-env (params :env-discretization)
+(def nocenter-env (em/make-env (params :env-discretization)
                                (params :env-size)
                                (f/remove-center (params :env-size) (params :env-size)
                                                 (f/slide-grid (params :food-distance)
                                                               0 0 ; slide shifts
                                                               (params :env-size)
                                                               (params :env-size)))))
-(def noctr-look-fn (partial mf/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
+(def noctr-look-fn (partial em/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
 
 (def shift-nocenter-env
-  (mf/make-env (params :env-discretization)
+  (em/make-env (params :env-discretization)
                (params :env-size)
                (f/remove-center (params :env-size) (params :env-size)
                                 (f/slide-grid (params :food-distance)
                                               (params :slide-shift) 0
                                               (params :env-size)
                                               (params :env-size)))))
-(def shift-noctr-look-fn (partial mf/perc-foodspots-exactly-toroidal
+(def shift-noctr-look-fn (partial em/perc-foodspots-exactly-toroidal
                                   shift-nocenter-env (params :perc-radius)))
 
 
@@ -121,6 +122,6 @@
                                nine-exponents 5000 seed noctr-look-fn)))
   (def shift-data-rng-symm 
     (time (fr/levy-experiments fr/default-file-prefix shift-nocenter-env params
-                               five-exponents 10 seed shift-noctr-look-fn)))
+                               five-exponents 100 seed shift-noctr-look-fn)))
 
 )

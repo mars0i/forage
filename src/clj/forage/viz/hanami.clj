@@ -5,7 +5,7 @@
             [aerial.hanami.common :as hc]
             [aerial.hanami.templates :as ht]
             [oz.core :as oz]
-            [forage.mason.foodspot :as mf]
+            [forage.env-mason :as em] ;[forage.mason.foodspot :as mf]
             [forage.food :as f]
             [forage.walks :as w]
             [utils.toroidal :as tor]
@@ -248,8 +248,8 @@
   is the Vega-Lite dimension.  display-radius is the Vega-Lite size for
   foodspots."
   [env plot-dim display-radius]
-  (vega-food-plot (add-point-labels "food" (mf/env-foodspot-coords env))
-                  (mf/env-size env)
+  (vega-food-plot (add-point-labels "food" (em/env-foodspot-coords env))
+                  (em/env-size env)
                   plot-dim
                   display-radius))
 
@@ -259,7 +259,7 @@
   plots foodwalks and their hypothetical extensions."
   [env plot-dim stroke-width display-radius raw-walk]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
-        data-dim (mf/env-size env)
+        data-dim (em/env-size env)
         toroidal-walk (tor/toroidal-to-vega-lite "piece" (tor/wrap-path 0 data-dim raw-walk))
         walk-plot (vega-walk-plot plot-dim data-dim stroke-width toroidal-walk)]
     (hc/xform
@@ -283,7 +283,7 @@
   plots foodwalks and their hypothetical extensions."
   [env plot-dim stroke-width display-radius foodwalks]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
-        data-dim (mf/env-size env)
+        data-dim (em/env-size env)
         did-couldve-plots (mapcat
                             (partial did-couldve-walk-plot plot-dim data-dim stroke-width)
                            foodwalks)]

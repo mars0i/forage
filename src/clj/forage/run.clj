@@ -1,18 +1,17 @@
 (ns forage.run
-  (:require 
-   [clojure.data.csv :as csv]
-   [clojure.java.io :as io]
-   [clojure.pprint :refer [cl-format]]
-   [aerial.hanami.common :as hc]
-   [oz.core :as oz] ; REMOVE IF I switch to another plot-rendering lib
-   [utils.misc :as misc]
-   [utils.math :as m]
-   [utils.random :as r]
-   [utils.hanami :as uh] ; replace if grid-chart becomes non-local
-   [forage.viz.hanami :as h]
-   [forage.walks :as w]
-   [forage.food :as f]
-   [forage.mason.foodspot :as mf]))
+  (:require [clojure.data.csv :as csv]
+            [clojure.java.io :as io]
+            [clojure.pprint :refer [cl-format]]
+            [aerial.hanami.common :as hc]
+            [oz.core :as oz] ; REMOVE IF I switch to another plot-rendering lib
+            [utils.misc :as misc]
+            [utils.math :as m]
+            [utils.random :as r]
+            [utils.hanami :as uh] ; replace if grid-chart becomes non-local
+            [forage.viz.hanami :as h]
+            [forage.env-mason :as em] ;[forage.mason.foodspot :as mf]
+            [forage.walks :as w]
+            [forage.food :as f]))
 
 (def default-file-prefix "../../data.foraging/forage/")
 
@@ -52,20 +51,20 @@
   (def assym-params (assoc params :init-pad (* 2 (params :perc-radius))))
 
   ;; ENV AND LOOK-FN FOR DESTRUCTIVE/SYMMETRIC SEARCH:
-  (def nocenter-env (mf/make-env (params :env-discretization)
+  (def nocenter-env (em/make-env (params :env-discretization)
                                  (params :env-size)
                                  (f/centerless-rectangular-grid (params :food-distance)
                                                                 (params :env-size)
                                                                 (params :env-size))))
-  (def noctr-look-fn (partial mf/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
+  (def noctr-look-fn (partial em/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
 
   ;; ENV AND LOOK-FN FOR NONDESTRUCTIVE/ASYMMETRIC SEARCH;
-  (def centered-env (mf/make-env (params :env-discretization)
+  (def centered-env (em/make-env (params :env-discretization)
                                  (params :env-size)
                                  (f/rectangular-grid (params :food-distance)
                                                      (params :env-size)
                                                      (params :env-size))))
-  (def ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
+  (def ctrd-look-fn (partial em/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
 )
 ;; END OF EXAMPLE SETUP PARAMS, ETC.
 
@@ -90,7 +89,7 @@
   [default-loc fw]
   (if fw
     (if-let [found (first fw)]
-      (mf/foodspot-coords (first found)) ; if two or more found, ignore others
+      (em/foodspot-coords (first found)) ; if two or more found, ignore others
       (last (second fw))) ; could also use third
     default-loc))
 
@@ -110,7 +109,7 @@
   [default-loc fw]
   (if fw
     (if-let [found (first fw)]
-      (mf/foodspot-coords (first found)) ; if two or more found, ignore others
+      (em/foodspot-coords (first found)) ; if two or more found, ignore others
       nil)
     default-loc))
 
@@ -120,7 +119,7 @@
   "Returns the coordinates of a random foodspot in env.  The last argument, which
   would normally be a foodwalk from the previous run, will be ignored."
   [rng env _]
-  (let [coords (first (r/sample-from-coll rng (mf/env-foodspot-coords env) 1))]
+  (let [coords (first (r/sample-from-coll rng (em/env-foodspot-coords env) 1))]
     ;(println "start of walk:" coords) ; DEBUG
     coords))
 
@@ -151,7 +150,7 @@
 (comment
   (def yo (levy-run (r/make-well19937) noctr-look-fn nil params 2 [half-size half-size]))
   (first yo)
-  (mf/foodspot-coords (first (first yo)))
+  (em/foodspot-coords (first (first yo)))
   (last (second yo))
 )
 
@@ -179,7 +178,7 @@
         (recur (dec n)
                fw
                (+ n-segments (w/count-segments-until-found fw))
-               (conj found (mf/foodspot-coords-if-found (first fw)))
+               (conj found (em/foodspot-coords-if-found (first fw)))
                (conj lengths (w/path-until-found-length fw)))))))
 
 
@@ -214,7 +213,7 @@
        - :rng; value is PRNG object with state as it was at end of runs."
   ([file-prefix env params exponents walks-per-combo seed]
    (levy-experiments file-prefix env params exponents walks-per-combo seed 
-                     (partial mf/perc-foodspots-exactly env (params :perc-radius))))
+                     (partial em/perc-foodspots-exactly env (params :perc-radius))))
   ([file-prefix env params exponents walks-per-combo seed look-fn]
    (levy-experiments file-prefix env params exponents walks-per-combo seed 
                      look-fn (r/make-well19937 seed)))
@@ -300,7 +299,7 @@
         dir-increment (/ (* m/pi (params :max-frac)) num-dirs)
         init-dirs (mapv (partial * dir-increment)
                         (range (inc num-dirs))) ; inc to include range max
-        look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius))
+        look-fn (partial em/perc-foodspots-exactly env (params :perc-radius))
         id (r/make-seed)
         sorted-params (into (sorted-map) params) ; for writing param file
         param-filename (str file-prefix "straight_param" id ".csv")
