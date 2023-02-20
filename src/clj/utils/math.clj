@@ -43,20 +43,28 @@
   "Returns an infinite sequence of 2D coordinates of points on an
   Archimedean spiral around the origin.  Parameter a determines how
   widely separated the arms are.  increment is the distance between
-  input values in radians."
-  [a increment]
-  (map (fn [x] (archimedean-spiral-pt a (* increment x)))
-       (range)))
+  input values in radians; it determines the smoothness of a plot.
+  If x and y are provided, they move the center of the spiral to [x y]."
+  ([a increment] (map (fn [x] (archimedean-spiral-pt a (* increment x)))
+                      (range)))
+  ([a increment x y] (map (fn [[x' y]] [(+ x' x) (+ y' y)])
+                          (archimedean-spiral a increment))))
 
 (comment
-  (def xs (archimedean-spiral 0.1 0.1))
   (require '[forage.viz.hanami :as h])
-  (def vs (h/add-walk-labels "spiral" xs))
-  (take 10 vs)
-  (def plot (h/vega-walk-plot 600 10 1.0 (take 25 vs)))
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (oz/view! plot) ; not working.  What's wrong with plot def?
+
+  (def xs (archimedean-spiral 0.05 0.1 5 5))
+  (def vs (h/add-walk-labels "spiral" xs))
+  (def plot (h/vega-walk-plot 600 10 1.0 (take 1000 vs)))
+  (oz/view! plot)
+  (take 5 xs)
+  (take 5 vs)
+
+  ;(require '[nextjournal.clerk :as clerk])
+  ;(clerk/serve! {:browse? true :watch-paths ["src/clj"]})
+  ;(clerk/vl plot)
 )
 
 
