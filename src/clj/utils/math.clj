@@ -1,5 +1,6 @@
 (ns utils.math
     (:require [clojure.math.numeric-tower :as nt]
+              [clojure.math :as math]
               [clojure.string :as st]))
 
 ; [fastmath.core :as fm]
@@ -22,6 +23,7 @@
   
 
 ;; Make my code a little prettier, and allow passing as functions:
+;; TODO: Replace java.lang.Math with clojure.math?
 (def pi Math/PI)
 (defn cos [theta] (Math/cos theta))
 (defn sin [theta] (Math/sin theta))
@@ -50,20 +52,41 @@
   ([a increment x y] (map (fn [[x' y']] [(+ x' x) (+ y' y)])
                           (archimedean-spiral a increment))))
 
+
 ;; On the name of the parameter arm-dist, cf. 
 ;; https://physics.stackexchange.com/questions/83760/what-is-the-space-between-galactic-arms-called
+;; I'm calling this "unit" because the first argument is in
+;; units of distance between arms.  Dunno.
 (defn unit-archimedean-spiral
   "Returns an infinite sequence of 2D coordinates of points on an
   Archimedean spiral around the origin.  Parameter arm-dist is the
   distance between arms or loops along a straight line from the center
-  of the spiral.  sincrement is the distance between input values in
+  of the spiral.  increment is the distance between input values in
   radians; it determines the smoothness of a plot.  If x and y are
   provided, they move the center of the spiral to [x y]."
   ([arm-dist increment]
-   (archimedean-spiral (* arm-dist (/ 1 2 pi)) increment))
+   (archimedean-spiral (/ arm-dist 2 pi) increment))
   ([arm-dist increment x y]
-   (archimedean-spiral (* arm-dist (/ 1 2 pi)) increment x y)))
+   (archimedean-spiral (/ arm-dist 2 pi) increment x y)))
 
+;; From 
+;; https://en.wikipedia.org/wiki/Archimedean_spiral#Arc_length_and_curvature
+;; cf. https://mathworld.wolfram.com/ArchimedesSpiral.html
+(defn archimedean-arc-len
+  "Returns the length of an Archimedean spiral with parameter a from the
+  center to angle x."
+  [a x]
+  (let [rootincsq (nt/sqrt (inc (* x x)))]
+    (* a 0.5
+       (+ (* x rootincsq)
+          (math/log (+ x rootincsq))))))
+
+;; TODO is this right?
+(defn unit-archimedean-arc-len
+  "Returns the length of an Archimedean spiral with parameter arm-dist, in
+  units of 1/2pi, from the center to angle x."
+  [arm-dist x]
+  (archimedean-arc-len (* arm-dist 2 pi) x))
 
 (comment
   (require '[forage.viz.hanami :as h])
@@ -85,6 +108,7 @@
   (def vs (h/add-walk-labels "spiral" xs))
   (def plot (h/vega-walk-plot 600 21 1.0 (take 300 vs)))
   (oz/view! plot)
+  (unit-archimedean-arc-len 2 30)
 
   ;(require '[nextjournal.clerk :as clerk])
   ;(clerk/serve! {:browse? true :watch-paths ["src/clj"]})
