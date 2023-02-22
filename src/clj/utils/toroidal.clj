@@ -140,7 +140,7 @@
 ;; while choose-shifts returns numbers for incrementally shifting, one
 ;; segment at a time.
 (defn choose-shifts
-  "Returns a pair in which each element is -1, 0, or 1, If no boundary
+  "Returns a pair in which each element is -1, 0, or 1.  If no boundary
   is exceeded, no shift is needed, so [0 0] is returned.  If only one
   boundary is exceeded, -1 is returned if it's bound-min, or 1 if it's
   bound-max; the other element of the pair will be zero.  If both
@@ -148,7 +148,7 @@
   corner of the region, both elements of the returned pair will be
   nonzero.  Otherwise, the end point of the segment exceeds one boundary
   at a location that is beyond both boundaries in the other dimension.
-  Only one element of the returned pair will be nonzero: the one
+  Then only one element of the returned pair will be nonzero: the one
   corresponding to the boundary that was crossed between the boundaries
   in the other dimension.  See doc/exceedingboundaries1.pdf.  (The numbers
   returned by this function differ from the number returned by full-shift,
