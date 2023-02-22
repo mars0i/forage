@@ -110,6 +110,17 @@
   (oz/view! plot)
   (unit-archimedean-arc-len 2 30)
 
+  (->>
+    (unit-archimedean-spiral 10 0.1 50 50)
+    (h/add-walk-labels "spiral")
+    (take 300)
+    (h/vega-walk-plot 600 100 1.0)
+    (oz/view!))
+
+  (unit-archimedean-arc-len 1 30)
+  (unit-archimedean-arc-len 2 30)
+  (unit-archimedean-arc-len 10 30)
+
   ;(require '[nextjournal.clerk :as clerk])
   ;(clerk/serve! {:browse? true :watch-paths ["src/clj"]})
   ;(clerk/vl plot)
