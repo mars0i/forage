@@ -48,7 +48,7 @@
 (defn wrap-segs
   "Given a sequence of line segments (pairs of pairs of numbers)
   representing a path connected by line segments, returns a transformed
-  sequence in which segments whose second point that would go beyond the
+  sequence in which segments whose second point would go beyond the
   boundaries are \"duplicated\" with a new segment that is like the
   previous version, but shifted so that, if it's short enough, the
   duplicate ends within boundaries.  If it doesn't end within the
