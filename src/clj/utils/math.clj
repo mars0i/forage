@@ -47,8 +47,22 @@
   If x and y are provided, they move the center of the spiral to [x y]."
   ([a increment] (map (fn [x] (archimedean-spiral-pt a (* increment x)))
                       (range)))
-  ([a increment x y] (map (fn [[x' y]] [(+ x' x) (+ y' y)])
+  ([a increment x y] (map (fn [[x' y']] [(+ x' x) (+ y' y)])
                           (archimedean-spiral a increment))))
+
+(defn scaled-archimedean-spiral
+  "Returns an infinite sequence of 2D coordinates of points on an
+  Archimedean spiral around the origin.  Parameter scale determines how
+  widely separated the arms are.  scale=1 causes the arms to be
+  separated by 1 unit along any line from the center of the spiral.
+  sincrement is the distance between input values in radians; it
+  determines the smoothness of a plot.  If x and y are provided, they
+  move the center of the spiral to [x y]."
+  ([scale increment]
+   (archimedean-spiral (* scale (/ 1 2 pi)) increment))
+  ([scale increment x y] 
+   (archimedean-spiral (* scale (/ 1 2 pi)) increment x y)))
+
 
 (comment
   (require '[forage.viz.hanami :as h])
@@ -57,10 +71,19 @@
 
   (def xs (archimedean-spiral 0.05 0.1 5 5))
   (def vs (h/add-walk-labels "spiral" xs))
-  (def plot (h/vega-walk-plot 600 10 1.0 (take 1000 vs)))
+  (def plot (h/vega-walk-plot 600 10 1.0 (take 200 vs)))
   (oz/view! plot)
-  (take 5 xs)
-  (take 5 vs)
+  
+  (def pi2inv (/ 1 2 pi))
+  (def xs (archimedean-spiral pi2inv 0.01 6 6))
+  (def vs (h/add-walk-labels "spiral" xs))
+  (def plot (h/vega-walk-plot 600 14 1.0 (take 4000 vs)))
+  (oz/view! plot)
+
+  (def xs (scaled-archimedean-spiral 2 0.1 10 10))
+  (def vs (h/add-walk-labels "spiral" xs))
+  (def plot (h/vega-walk-plot 600 21 1.0 (take 300 vs)))
+  (oz/view! plot)
 
   ;(require '[nextjournal.clerk :as clerk])
   ;(clerk/serve! {:browse? true :watch-paths ["src/clj"]})
