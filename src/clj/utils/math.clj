@@ -29,6 +29,20 @@
 (defn sin [theta] (Math/sin theta))
 (defn tan [theta] (Math/tan theta))
 
+(comment
+
+  ;; How to convert from and back to polar coordinates:
+  (let [r 5
+        theta 0.5 
+        x (* r (cos theta))
+        y (* r (sin theta))]
+    [(math/sqrt (+ (* x x) (* y y))), (math/atan2 y x)])
+  ;; NOTE that you have to give x and y to atan2 in REVERSE order.
+  ;; That is required.
+
+
+)
+
 (defn ln [x] (Math/log x))
 (defn log [base x] (/ (ln x) (ln base)))
 
