@@ -46,6 +46,29 @@
 (defn ln [x] (Math/log x))
 (defn log [base x] (/ (ln x) (ln base)))
 
+
+(defn distance-2D
+  "Computes distance between two-dimensional points [x0 y0] and [x1 y1]
+  using the Pythagorean theorem."
+  [[x0 y0] [x1 y1]]
+  (let [xdiff (- x0 x1)
+        ydiff (- y0 y1)]
+  (nt/sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
+
+
+;; Implements $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\;$  given $\;ax^2 + bx + c = 0$.
+;; (If both results are routinely needed inside a tight loop, consider making 
+;; a version of this function that returns both of them.)
+(defn quadratic-formula
+  "Returns the result of the quadratic formula applied to the coefficients in
+  ax^2 + bx + c = 0.  plus-or-minus should be one of the two functions: + - ."
+  [plus-or-minus a b c]
+  (let [root-part (nt/sqrt (- (* b b) (* 4 a c)))
+        negb (- b)
+        a2 (* 2 a)]
+    (/ (plus-or-minus negb root-part) a2)))
+
+
 ;; Based on https://en.wikipedia.org/wiki/Spiral#Two-dimensional
 (defn archimedean-spiral-pt
   "Returns 2D coordinates of a point on an Archimedean spiral
@@ -54,6 +77,7 @@
   [a theta]
   (let [r (* a theta)]
     [(* r (cos theta)) (* r (sin theta))]))
+
 
 (defn archimedean-spiral
   "Returns an infinite sequence of 2D coordinates of points on an
@@ -95,12 +119,23 @@
        (+ (* x rootincsq)
           (math/log (+ x rootincsq))))))
 
-;; TODO is this right?
+
 (defn unit-archimedean-arc-len
   "Returns the length of an Archimedean spiral with parameter arm-dist, in
   units of 1/2pi, from the center to angle x."
   [arm-dist x]
   (archimedean-arc-len (* arm-dist 2 pi) x))
+
+
+;; TODO initial attempt. may not be right.
+(defn archimedean-arc-len-to-xy
+  "[x, y] should be shifted so that the spiral has center a [0,0]." ; TODO maybe change this later
+  [a x y]
+  (let [r (distance-2D [0 0] [x y])
+        theta (+ (* 2 pi) (math/atan2 y x)) ; note y comes before x
+        arclen2pi (archimedean-arc-len a (* 2 pi))] ;; length of first loop
+    (* arclen2pi (+ theta (/ r 2 pi))))) ;; FIXME not right
+
 
 (comment
   (require '[forage.viz.hanami :as h])
@@ -134,6 +169,9 @@
   (unit-archimedean-arc-len 1 30)
   (unit-archimedean-arc-len 2 30)
   (unit-archimedean-arc-len 10 30)
+
+  (archimedean-arc-len-to-xy 10 76 21)
+  (unit-archimedean-arc-len 10 19)
 
   ;(require '[nextjournal.clerk :as clerk])
   ;(clerk/serve! {:browse? true :watch-paths ["src/clj"]})
@@ -207,26 +245,6 @@
       (* y (sin theta))) ,
    (+ (* y (cos theta))
       (* x (sin theta)))])
-
-(defn distance-2D
-  "Computes distance between two-dimensional points [x0 y0] and [x1 y1]
-  using the Pythagorean theorem."
-  [[x0 y0] [x1 y1]]
-  (let [xdiff (- x0 x1)
-        ydiff (- y0 y1)]
-  (nt/sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
-
-;; Implements $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\;$  given $\;ax^2 + bx + c = 0$.
-;; (If both results are routinely needed inside a tight loop, consider making 
-;; a version of this function that returns both of them.)
-(defn quadratic-formula
-  "Returns the result of the quadratic formula applied to the coefficients in
-  ax^2 + bx + c = 0.  plus-or-minus should be one of the two functions: + - ."
-  [plus-or-minus a b c]
-  (let [root-part (nt/sqrt (- (* b b) (* 4 a c)))
-        negb (- b)
-        a2 (* 2 a)]
-    (/ (plus-or-minus negb root-part) a2)))
 
 
 (defn mean
