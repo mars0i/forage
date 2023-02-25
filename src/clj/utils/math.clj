@@ -119,21 +119,34 @@
        (+ (* x rootincsq)
           (math/log (+ x rootincsq))))))
 
-
 (defn unit-archimedean-arc-len
   "Returns the length of an Archimedean spiral with parameter arm-dist, in
   units of 1/2pi, from the center to angle x."
   [arm-dist x]
-  (archimedean-arc-len (* arm-dist 2 pi) x))
+  (archimedean-arc-len (/ arm-dist 2 pi) x))
 
-;; TODO Note this may need to be adjusted if spirals can be rotated.
+;; TODO Note may need to be adjusted if spirals can be rotated.
 (defn archimedean-arc-len-to-xy
-  "[x, y] should be shifted so that the spiral has center a [0,0]." ; Maybe change this later
+  ([a [x y]] (archimedean-arc-len-to-xy a [0 0] [x y]))
+  ([a [center-x center-y] [x y]]
+   (let [r (distance-2D [center-x center-y] [x y])
+         theta (/ r a)] ; see spiral.nt1
+     (archimedean-arc-len a theta))))
+
+;; Not right
+;(defn unit-archimedean-arc-len-to-xy
+;  ([arm-dist [x y]] (archimedean-arc-len-to-xy (* arm-dist 2 pi)  [0 0] [x y]))
+;  ([arm-dist [center-x center-y] [x y]]
+;   (archimedean-arc-len-to-xy (* arm-dist 2 pi) [center-x center-y] [x y])))
+
+;; This one seems to work
+;; TODO Note may need to be adjusted if spirals can be rotated.
+(defn unit-archimedean-arc-len-to-xy
   ([a [x y]] (archimedean-arc-len-to-xy a [0 0] [x y]))
   ([a [center-x center-y] [x y]]
    (let [r (distance-2D [center-x center-y] [x y])
          theta (* 2 pi (/ r a))] ; cf spiral.nt1, TODO: there's something I don't understane
-     (archimedean-arc-len a theta))))
+     (unit-archimedean-arc-len a theta))))
 
 (comment
   (require '[forage.viz.hanami :as h])
@@ -158,23 +171,33 @@
   (unit-archimedean-arc-len 2 30)
 
   (->>
-    ;(unit-archimedean-spiral 10 0.1 50 50)
-    (archimedean-spiral 1 0.1 50 50)
+    (archimedean-spiral 1 0.01 50 50)
     (h/add-walk-labels "spiral")
-    (take 300)
+    (take 3000)
+    (h/vega-walk-plot 600 100 1.0)
+    (oz/view!))
+
+  (->>
+    (unit-archimedean-spiral 10 0.01 50 50)
+    (h/add-walk-labels "spiral")
+    (take 3000)
     (h/vega-walk-plot 600 100 1.0)
     (oz/view!))
 
   (* 4 pi)
-  (archimedean-arc-len-to-xy 10 [50 50] [56 50])
-  ;(archimedean-arc-len 10 (* 4 pi))
-  (archimedean-arc-len 1 (* 4 pi))
-  (archimedean-arc-len-to-xy 10 [50 50] [80 50])
-  (archimedean-arc-len 10 (* 6 pi))
-  (archimedean-arc-len-to-xy 10 [50 50] [35 50])
-  (archimedean-arc-len 10 (* 3 pi))
 
+  ;; These should be about the same:
+  (archimedean-arc-len-to-xy 1 [50 50] [62.55 50])
+  (archimedean-arc-len 1 (* 4 pi))
+
+  ;; These should be exactly the same:
+  (unit-archimedean-arc-len-to-xy 10 [50 50] [70 50])
   (unit-archimedean-arc-len 10 (* 4 pi))
+
+  ;; These should be exactly the same:
+  (unit-archimedean-arc-len-to-xy 10 [50 50] [25 50])
+  (unit-archimedean-arc-len 10 (* 5 pi))
+
 
 
   ;(require '[nextjournal.clerk :as clerk])
