@@ -47,6 +47,16 @@
 (defn log [base x] (/ (ln x) (ln base)))
 
 
+(defn rotate
+  "Given an angle theta and a pair of coordinates [x y], returns a
+  new pair of coordinates that is the rotation of [x y] by theta."
+  [theta [x y]]
+  [(- (* x (cos theta))
+      (* y (sin theta))) ,
+   (+ (* y (cos theta))
+      (* x (sin theta)))])
+
+
 (defn distance-2D
   "Computes distance between two-dimensional points [x0 y0] and [x1 y1]
   using the Pythagorean theorem."
@@ -79,33 +89,41 @@
     [(* r (cos theta)) (* r (sin theta))]))
 
 
+;; If this needed to be more efficient, the maps could be combined
+;; with comb or a transducer.
 (defn archimedean-spiral
   "Returns an infinite sequence of 2D coordinates of points on an
   Archimedean spiral around the origin.  Parameter a determines how
   widely separated the arms are.  increment is the distance between
   input values in radians; it determines the smoothness of a plot.  If x
-  and y are provided, they move the center of the spiral to [x y]."
+  and y are provided, they move the center of the spiral to [x y].  If
+  angle is provided, the entire spiral is rotated by angle radians."
   ([a increment] (map (fn [x] (archimedean-spiral-pt a (* increment x)))
                       (range)))
   ([a increment x y] (map (fn [[x' y']] [(+ x' x) (+ y' y)])
-                          (archimedean-spiral a increment))))
-
+                          (archimedean-spiral a increment)))
+  ([a increment x y angle] (map (comp (fn [[x' y']] [(+ x' x) (+ y' y)]) ; replace with transducer?
+                                      (partial rotate angle)) ; rotation is around (0,0), so apply before shift
+                                (archimedean-spiral a increment))))
 
 ;; On the name of the parameter arm-dist, cf. 
 ;; https://physics.stackexchange.com/questions/83760/what-is-the-space-between-galactic-arms-called
 ;; I'm calling this "unit" because the first argument is in
 ;; units of distance between arms.  Dunno.
 (defn unit-archimedean-spiral
-  "Returns an infinite sequence of 2D coordinates of points on an
+  "Returns an infinite sequence of 2D coordinate pairs of points on an
   Archimedean spiral around the origin.  Parameter arm-dist is the
   distance between arms or loops along a straight line from the center
   of the spiral.  increment is the distance between input values in
   radians; it determines the smoothness of a plot.  If x and y are
-  provided, they move the center of the spiral to [x y]."
+  provided, they move the center of the spiral to [x y].  If angle is
+  provided, the entire spiral is rotated by angle radians."
   ([arm-dist increment]
    (archimedean-spiral (/ arm-dist 2 pi) increment))
   ([arm-dist increment x y]
-   (archimedean-spiral (/ arm-dist 2 pi) increment x y)))
+   (archimedean-spiral (/ arm-dist 2 pi) increment x y))
+  ([arm-dist increment x y angle]
+   (archimedean-spiral (/ arm-dist 2 pi) increment x y angle)))
 
 ;; From 
 ;; https://en.wikipedia.org/wiki/Archimedean_spiral#Arc_length_and_curvature
@@ -171,13 +189,25 @@
     (oz/view!))
 
   (->>
-    (unit-archimedean-spiral 10 0.01 50 50)
+    (unit-archimedean-spiral 2 0.01 50 50)
     (h/add-walk-labels "spiral")
-    (take 3000)
+    (take 10000)
     (h/vega-walk-plot 600 100 1.0)
     (oz/view!))
 
-  (* 4 pi)
+  (->>
+    (archimedean-spiral 1 0.01 50 50)
+    (h/add-walk-labels "spiral")
+    (take 1500)
+    (h/vega-walk-plot 600 100 1.0)
+    (oz/view!))
+
+  (->>
+    (archimedean-spiral 1 0.01 50 50 (/ pi 2))
+    (h/add-walk-labels "spiral")
+    (take 1500)
+    (h/vega-walk-plot 600 100 1.0)
+    (oz/view!))
 
   ;; These should be about the same:
   (archimedean-arc-len-to-xy 1 [50 50] [62.55 50])
@@ -256,15 +286,6 @@
             ulp (min (Math/ulp xd) (Math/ulp yd))]
         (<= (abs (- xd yd))
             (* n-ulps ulp)))))
-
-(defn rotate
-  "Given an angle theta and a pair of coordinates [x y], returns a
-  new pair of coordinates that is the rotation of [x y] by theta."
-  [theta [x y]]
-  [(- (* x (cos theta))
-      (* y (sin theta))) ,
-   (+ (* y (cos theta))
-      (* x (sin theta)))])
 
 
 (defn mean
