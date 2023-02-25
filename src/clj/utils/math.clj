@@ -126,25 +126,14 @@
   [arm-dist x]
   (archimedean-arc-len (* arm-dist 2 pi) x))
 
-
-;; FIXME doesn't seem to work right.
 ;; TODO Note this may need to be adjusted if spirals can be rotated.
-;; Also needs to be modified for spirals not centered on (0,0).
 (defn archimedean-arc-len-to-xy
   "[x, y] should be shifted so that the spiral has center a [0,0]." ; Maybe change this later
-  [a x y]
-  (let [r (distance-2D [0 0] [x y])
-        theta (/ r a)] ; see spiral.nt1
-    (println a r theta (* theta 2 pi))
-    (archimedean-arc-len a theta)))
-
-(defn NONWORKING-archimedean-arc-len-to-xy
-  "[x, y] should be shifted so that the spiral has center a [0,0]." ; Maybe change this later
-  [a x y]
-  (let [r (distance-2D [0 0] [x y])
-        theta (+ (* 2 pi) (math/atan2 y x)) ; note y comes before x
-        arclen2pi (archimedean-arc-len a (* 2 pi))] ;; length of first loop
-    (* arclen2pi (+ theta (/ r 2 pi))))) ;; FIXME not right
+  ([a [x y]] (archimedean-arc-len-to-xy a [0 0] [x y]))
+  ([a [center-x center-y] [x y]]
+   (let [r (distance-2D [center-x center-y] [x y])
+         theta (* 2 pi (/ r a))] ; cf spiral.nt1, TODO: there's something I don't understane
+     (archimedean-arc-len a theta))))
 
 (comment
   (require '[forage.viz.hanami :as h])
@@ -169,17 +158,21 @@
   (unit-archimedean-arc-len 2 30)
 
   (->>
-    (unit-archimedean-spiral 10 0.1 50 50)
+    ;(unit-archimedean-spiral 10 0.1 50 50)
+    (archimedean-spiral 1 0.1 50 50)
     (h/add-walk-labels "spiral")
     (take 300)
     (h/vega-walk-plot 600 100 1.0)
     (oz/view!))
 
   (* 4 pi)
-  (archimedean-arc-len-to-xy 10 20 0)
-  (archimedean-arc-len 10 (* 4 pi))
-  (archimedean-arc-len-to-xy 10 30 0)
+  (archimedean-arc-len-to-xy 10 [50 50] [56 50])
+  ;(archimedean-arc-len 10 (* 4 pi))
+  (archimedean-arc-len 1 (* 4 pi))
+  (archimedean-arc-len-to-xy 10 [50 50] [80 50])
   (archimedean-arc-len 10 (* 6 pi))
+  (archimedean-arc-len-to-xy 10 [50 50] [35 50])
+  (archimedean-arc-len 10 (* 3 pi))
 
   (unit-archimedean-arc-len 10 (* 4 pi))
 
