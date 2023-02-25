@@ -133,20 +133,13 @@
          theta (/ r a)] ; see spiral.nt1
      (archimedean-arc-len a theta))))
 
-;; Not right
-;(defn unit-archimedean-arc-len-to-xy
-;  ([arm-dist [x y]] (archimedean-arc-len-to-xy (* arm-dist 2 pi)  [0 0] [x y]))
-;  ([arm-dist [center-x center-y] [x y]]
-;   (archimedean-arc-len-to-xy (* arm-dist 2 pi) [center-x center-y] [x y])))
-
-;; This one seems to work
 ;; TODO Note may need to be adjusted if spirals can be rotated.
 (defn unit-archimedean-arc-len-to-xy
-  ([a [x y]] (archimedean-arc-len-to-xy a [0 0] [x y]))
-  ([a [center-x center-y] [x y]]
+  ([arm-dist [x y]] (archimedean-arc-len-to-xy arm-dist [0 0] [x y]))
+  ([arm-dist [center-x center-y] [x y]]
    (let [r (distance-2D [center-x center-y] [x y])
-         theta (* 2 pi (/ r a))] ; cf spiral.nt1, TODO: there's something I don't understane
-     (unit-archimedean-arc-len a theta))))
+         theta (/ (* 2 pi r) arm-dist)] ; a=arm-dist/2pi, so r/a = r2pi/a
+     (unit-archimedean-arc-len arm-dist theta))))
 
 (comment
   (require '[forage.viz.hanami :as h])
