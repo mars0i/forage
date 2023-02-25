@@ -127,15 +127,24 @@
   (archimedean-arc-len (* arm-dist 2 pi) x))
 
 
-;; TODO initial attempt. may not be right.
+;; FIXME doesn't seem to work right.
+;; TODO Note this may need to be adjusted if spirals can be rotated.
+;; Also needs to be modified for spirals not centered on (0,0).
 (defn archimedean-arc-len-to-xy
-  "[x, y] should be shifted so that the spiral has center a [0,0]." ; TODO maybe change this later
+  "[x, y] should be shifted so that the spiral has center a [0,0]." ; Maybe change this later
+  [a x y]
+  (let [r (distance-2D [0 0] [x y])
+        theta (/ r a)] ; see spiral.nt1
+    (println a r theta (* theta 2 pi))
+    (archimedean-arc-len a theta)))
+
+(defn NONWORKING-archimedean-arc-len-to-xy
+  "[x, y] should be shifted so that the spiral has center a [0,0]." ; Maybe change this later
   [a x y]
   (let [r (distance-2D [0 0] [x y])
         theta (+ (* 2 pi) (math/atan2 y x)) ; note y comes before x
         arclen2pi (archimedean-arc-len a (* 2 pi))] ;; length of first loop
     (* arclen2pi (+ theta (/ r 2 pi))))) ;; FIXME not right
-
 
 (comment
   (require '[forage.viz.hanami :as h])
@@ -166,12 +175,14 @@
     (h/vega-walk-plot 600 100 1.0)
     (oz/view!))
 
-  (unit-archimedean-arc-len 1 30)
-  (unit-archimedean-arc-len 2 30)
-  (unit-archimedean-arc-len 10 30)
+  (* 4 pi)
+  (archimedean-arc-len-to-xy 10 20 0)
+  (archimedean-arc-len 10 (* 4 pi))
+  (archimedean-arc-len-to-xy 10 30 0)
+  (archimedean-arc-len 10 (* 6 pi))
 
-  (archimedean-arc-len-to-xy 10 76 21)
-  (unit-archimedean-arc-len 10 19)
+  (unit-archimedean-arc-len 10 (* 4 pi))
+
 
   ;(require '[nextjournal.clerk :as clerk])
   ;(clerk/serve! {:browse? true :watch-paths ["src/clj"]})
