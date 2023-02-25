@@ -151,13 +151,16 @@
          theta (/ r a)] ; see spiral.nt1
      (archimedean-arc-len a theta))))
 
-;; TODO Note may need to be adjusted if spirals can be rotated.
+;; TODO TEST ROTATION CODE
+;; AND apply same trick to archimedean-arc-len-to-xy
 (defn unit-archimedean-arc-len-to-xy
   ([arm-dist [x y]] (archimedean-arc-len-to-xy arm-dist [0 0] [x y]))
   ([arm-dist [center-x center-y] [x y]]
+   (archimedean-arc-len-to-xy arm-dist [0 0] [x y] 0))
+  ([arm-dist [center-x center-y] [x y] angle]
    (let [r (distance-2D [center-x center-y] [x y])
          theta (/ (* 2 pi r) arm-dist)] ; a=arm-dist/2pi, so r/a = r2pi/a
-     (unit-archimedean-arc-len arm-dist theta))))
+     (unit-archimedean-arc-len arm-dist (- theta angle)))))
 
 (comment
   (require '[forage.viz.hanami :as h])
