@@ -145,32 +145,33 @@
   [arm-dist x]
   (archimedean-arc-len (/ arm-dist 2 pi) x))
 
-;; TODO TEST ROTATION CODE
+;; TODO NEED MORE TESTING
+;; not right (?)
 (defn archimedean-arc-len-to-xy
   "Returns the arc length of an Archimedean spiral with parameter a from
   its center to the location where it hits point [x y]."
   ([a [x y]]
-   (archimedean-arc-len-to-xy a [0 0] [x y]))
+   (archimedean-arc-len-to-xy a [0 0]               [x y] 0))
   ([a [center-x center-y] [x y]]
-   (archimedean-arc-len-to-xy a [0 0] [x y] 0))
+   (archimedean-arc-len-to-xy a [center-x center-y] [x y] 0))
   ([a [center-x center-y] [x y] angle]
    (let [r (distance-2D [center-x center-y] [x y])
          theta (/ r a)] ; see spiral.nt1
      (archimedean-arc-len a (- theta angle)))))
 
-;; TODO TEST ROTATION CODE
+;; SEEMS OK
 (defn unit-archimedean-arc-len-to-xy
   "Returns the arc length of an Archimedean spiral with parameter
   arm-dist (i.e. distance between \"arms\") from its center to the
   location where it hits point [x y]."
   ([arm-dist [x y]]
-   (unit-archimedean-arc-len-to-xy arm-dist [0 0] [x y]))
+   (unit-archimedean-arc-len-to-xy arm-dist [0 0]               [x y] 0))
   ([arm-dist [center-x center-y] [x y]]
-   (unit-archimedean-arc-len-to-xy arm-dist [0 0] [x y] 0))
+   (unit-archimedean-arc-len-to-xy arm-dist [center-x center-y] [x y] 0))
   ([arm-dist [center-x center-y] [x y] angle]
    (let [r (distance-2D [center-x center-y] [x y])
-         theta (/ (* 2 pi r) arm-dist)] ; a=arm-dist/2pi, so r/a = r2pi/a
-     (archimedean-arc-len arm-dist (- theta angle)))))
+         theta (/ (* 2 pi r) arm-dist)] ; a=arm-dist/2pi, so r/a = r2pi/arm-dist
+     (unit-archimedean-arc-len arm-dist (- theta angle)))))
 
 (comment
   (require '[forage.viz.hanami :as h])
@@ -223,9 +224,11 @@
     (oz/view!))
 
   ;; These should be the same:
-  (unit-archimedean-arc-len-to-xy 25 [80 80] [124 80] (/ pi 2))
-  (unit-archimedean-arc-len 25 (* 3 pi))
+  (unit-archimedean-arc-len-to-xy 25 [80 80] [130 80] (/ pi 2))
+  (unit-archimedean-arc-len 25 (* 3.5 pi))
 
+  (archimedean-arc-len-to-xy 25 [80 80] [130 80] (/ pi 2))
+  (archimedean-arc-len 25 (* 3.5 pi))
 
 
   ;(require '[nextjournal.clerk :as clerk])
