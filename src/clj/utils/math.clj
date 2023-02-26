@@ -128,6 +128,7 @@
 ;; From 
 ;; https://en.wikipedia.org/wiki/Archimedean_spiral#Arc_length_and_curvature
 ;; cf. https://mathworld.wolfram.com/ArchimedesSpiral.html
+;; NOTE No need to add a rotation; this is independent of rotation.
 (defn archimedean-arc-len
   "Returns the length of an Archimedean spiral with parameter a from the
   center to angle x."
@@ -137,30 +138,39 @@
        (+ (* x rootincsq)
           (math/log (+ x rootincsq))))))
 
+;; NOTE No need to add a rotation; this is independent of rotation.
 (defn unit-archimedean-arc-len
   "Returns the length of an Archimedean spiral with parameter arm-dist, in
   units of 1/2pi, from the center to angle x."
   [arm-dist x]
   (archimedean-arc-len (/ arm-dist 2 pi) x))
 
-;; TODO Note may need to be adjusted if spirals can be rotated.
+;; TODO TEST ROTATION CODE
 (defn archimedean-arc-len-to-xy
-  ([a [x y]] (archimedean-arc-len-to-xy a [0 0] [x y]))
+  "Returns the arc length of an Archimedean spiral with parameter a from
+  its center to the location where it hits point [x y]."
+  ([a [x y]]
+   (archimedean-arc-len-to-xy a [0 0] [x y]))
   ([a [center-x center-y] [x y]]
+   (archimedean-arc-len-to-xy a [0 0] [x y] 0))
+  ([a [center-x center-y] [x y] angle]
    (let [r (distance-2D [center-x center-y] [x y])
          theta (/ r a)] ; see spiral.nt1
-     (archimedean-arc-len a theta))))
+     (archimedean-arc-len a (- theta angle)))))
 
 ;; TODO TEST ROTATION CODE
-;; AND apply same trick to archimedean-arc-len-to-xy
 (defn unit-archimedean-arc-len-to-xy
-  ([arm-dist [x y]] (archimedean-arc-len-to-xy arm-dist [0 0] [x y]))
+  "Returns the arc length of an Archimedean spiral with parameter
+  arm-dist (i.e. distance between \"arms\") from its center to the
+  location where it hits point [x y]."
+  ([arm-dist [x y]]
+   (unit-archimedean-arc-len-to-xy arm-dist [0 0] [x y]))
   ([arm-dist [center-x center-y] [x y]]
-   (archimedean-arc-len-to-xy arm-dist [0 0] [x y] 0))
+   (unit-archimedean-arc-len-to-xy arm-dist [0 0] [x y] 0))
   ([arm-dist [center-x center-y] [x y] angle]
    (let [r (distance-2D [center-x center-y] [x y])
          theta (/ (* 2 pi r) arm-dist)] ; a=arm-dist/2pi, so r/a = r2pi/a
-     (unit-archimedean-arc-len arm-dist (- theta angle)))))
+     (archimedean-arc-len arm-dist (- theta angle)))))
 
 (comment
   (require '[forage.viz.hanami :as h])
