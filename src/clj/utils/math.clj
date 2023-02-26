@@ -206,23 +206,15 @@
     (oz/view!))
 
   (->>
-    (archimedean-spiral 1 0.01 50 50 (/ pi 2))
+    (unit-archimedean-spiral 25 0.01 80 80 (/ pi 2)) ; rotated 90 degrees
     (h/add-walk-labels "spiral")
     (take 1500)
-    (h/vega-walk-plot 600 100 1.0)
+    (h/vega-walk-plot 600 150 1.0)
     (oz/view!))
 
-  ;; These should be about the same:
-  (archimedean-arc-len-to-xy 1 [50 50] [62.55 50])
-  (archimedean-arc-len 1 (* 4 pi))
-
-  ;; These should be exactly the same:
-  (unit-archimedean-arc-len-to-xy 10 [50 50] [70 50])
-  (unit-archimedean-arc-len 10 (* 4 pi))
-
-  ;; These should be exactly the same:
-  (unit-archimedean-arc-len-to-xy 10 [50 50] [25 50])
-  (unit-archimedean-arc-len 10 (* 5 pi))
+  ;; These should be the same:
+  (unit-archimedean-arc-len-to-xy 25 [80 80] [124 80] (/ pi 2))
+  (unit-archimedean-arc-len 25 (* 3 pi))
 
 
 
