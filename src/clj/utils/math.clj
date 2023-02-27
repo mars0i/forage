@@ -210,25 +210,26 @@
     (oz/view!))
 
   (->>
-    (archimedean-spiral 1 0.01 50 50)
-    (h/add-walk-labels "spiral")
-    (take 1500)
-    (h/vega-walk-plot 600 100 1.0)
-    (oz/view!))
-
-  (->>
     (unit-archimedean-spiral 25 0.01 80 80 (/ pi 2)) ; rotated 90 degrees
     (h/add-walk-labels "spiral")
     (take 1500)
     (h/vega-walk-plot 600 150 1.0)
     (oz/view!))
 
+  (->>
+    (archimedean-spiral 1 0.01 50 50 (/ pi 2))
+    (h/add-walk-labels "spiral")
+    (take 2000)
+    (h/vega-walk-plot 600 100 1.0)
+    (oz/view!))
+
+  (archimedean-arc-len-to-xy 1 [50 50] [67.28 50] (/ pi 2))
+  (archimedean-arc-len 1 (* 5.0 pi)) ; this is same as preceding, but I thought it s/b 5.5 pi
+                                    ; since 6pi is the unrotated 3rd path, and this unrotates.
+
   ;; These should be the same:
   (unit-archimedean-arc-len-to-xy 25 [80 80] [130 80] (/ pi 2))
   (unit-archimedean-arc-len 25 (* 3.5 pi))
-
-  (archimedean-arc-len-to-xy 25 [80 80] [130 80] (/ pi 2))
-  (archimedean-arc-len 25 (* 3.5 pi))
 
 
   ;(require '[nextjournal.clerk :as clerk])
