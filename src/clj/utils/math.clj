@@ -156,7 +156,8 @@
    (archimedean-arc-len-to-xy a [center-x center-y] [x y] 0))
   ([a [center-x center-y] [x y] angle]
    (let [r (distance-2D [center-x center-y] [x y])
-         theta (/ r a)] ; see spiral.nt1
+         _ (println r) ; DEBUG
+         theta (/ r a)] ; see my ~/math/randomwalks/spiral.nt1
      (archimedean-arc-len a (- theta angle)))))
 
 ;; SEEMS OK
@@ -170,6 +171,7 @@
    (unit-archimedean-arc-len-to-xy arm-dist [center-x center-y] [x y] 0))
   ([arm-dist [center-x center-y] [x y] angle]
    (let [r (distance-2D [center-x center-y] [x y])
+         _ (println r) ; DEBUG
          theta (/ (* 2 pi r) arm-dist)] ; a=arm-dist/2pi, so r/a = r2pi/arm-dist
      (unit-archimedean-arc-len arm-dist (- theta angle)))))
 
@@ -178,59 +180,52 @@
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  (def xs (archimedean-spiral 0.05 0.1 5 5))
-  (def vs (h/add-walk-labels "spiral" xs))
-  (def plot (h/vega-walk-plot 600 10 1.0 (take 200 vs)))
-  (oz/view! plot)
-  
-  (def pi2inv (/ 1 2 pi))
-  (def xs (archimedean-spiral pi2inv 0.01 6 6))
-  (def vs (h/add-walk-labels "spiral" xs))
-  (def plot (h/vega-walk-plot 600 14 1.0 (take 4000 vs)))
-  (oz/view! plot)
+  (defn spir [rot]
+    (->> (archimedean-spiral 2 0.01 50 50 rot)
+         (h/add-walk-labels "spiral")
+         (take 2000)
+         (h/vega-walk-plot 600 100 1.0)
+         (oz/view!)))
 
-  (def xs (unit-archimedean-spiral 2 0.1 10 10))
-  (def vs (h/add-walk-labels "spiral" xs))
-  (def plot (h/vega-walk-plot 600 21 1.0 (take 300 vs)))
-  (oz/view! plot)
-  (unit-archimedean-arc-len 2 30)
+  (defn arcl
+    [rot edge npi]
+    [(archimedean-arc-len-to-xy 2 [50 50] [edge 50] rot)
+     (archimedean-arc-len 2 (* npi pi))])
 
-  (->>
-    (archimedean-spiral 1 0.01 50 50)
-    (h/add-walk-labels "spiral")
-    (take 3000)
-    (h/vega-walk-plot 600 100 1.0)
-    (oz/view!))
+  (spir 0)
+  (arcl 0 87.7 6)
+  (spir pi)
+  (arcl pi 81.4 4)
+  (arcl pi 12.32 6)
 
-  (->>
-    (unit-archimedean-spiral 2 0.01 50 50)
-    (h/add-walk-labels "spiral")
-    (take 10000)
-    (h/vega-walk-plot 600 100 1.0)
-    (oz/view!))
 
-  (->>
-    (unit-archimedean-spiral 25 0.01 80 80 (/ pi 2)) ; rotated 90 degrees
-    (h/add-walk-labels "spiral")
-    (take 1500)
-    (h/vega-walk-plot 600 150 1.0)
-    (oz/view!))
+  (defn uspir [rot]
+    (->>
+      (unit-archimedean-spiral 25 0.01 80 80 rot) ; rotated 90 degrees
+      (h/add-walk-labels "spiral")
+      (take 2000)
+      (h/vega-walk-plot 600 160 1.0)
+      (oz/view!)))
 
-  (->>
-    (archimedean-spiral 1 0.01 50 50 (/ pi 2))
-    (h/add-walk-labels "spiral")
-    (take 2000)
-    (h/vega-walk-plot 600 100 1.0)
-    (oz/view!))
+  (defn uarcl
+    [rot edge npi]
+    [(unit-archimedean-arc-len-to-xy 25 [80 80] [edge 80] rot)
+     (unit-archimedean-arc-len 25 (* npi pi))])
 
-  (archimedean-arc-len-to-xy 1 [50 50] [67.28 50] (/ pi 2))
-  (archimedean-arc-len 1 (* 5.0 pi)) ; this is same as preceding, but I thought it s/b 5.5 pi
-                                    ; since 6pi is the unrotated 3rd path, and this unrotates.
+  (uspir 0)
+  (uarcl 0 130 4)
+  (uarcl 0 155 6)
 
-  ;; These should be the same:
-  (unit-archimedean-arc-len-to-xy 25 [80 80] [130 80] (/ pi 2))
-  (unit-archimedean-arc-len 25 (* 3.5 pi))
+  (uspir pi)
+  (uarcl pi 117.5 2)
+  (uarcl pi 142.5 4)
 
+  (uspir (/ pi 2))
+  (uarcl (/ pi 2) 123.8 3)
+  (uarcl (/ pi 2) 148.8 5)
+
+  ;; for both arcl and uarcl, the rule seems to be that rot
+  ;; subtracts (* 2 rot) from the rotation. Which doesn't make sense.
 
   ;(require '[nextjournal.clerk :as clerk])
   ;(clerk/serve! {:browse? true :watch-paths ["src/clj"]})
