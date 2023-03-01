@@ -149,7 +149,8 @@
 ;; not right (?)
 (defn archimedean-arc-len-to-xy
   "Returns the arc length of an Archimedean spiral with parameter a from
-  its center to the location where it hits point [x y]."
+  its center to the location where it hits point [x y].  If angle is
+  present, it is the rotation of the spiral."
   ([a [x y]]
    (archimedean-arc-len-to-xy a [0 0]               [x y] 0))
   ([a [center-x center-y] [x y]]
@@ -164,7 +165,8 @@
 (defn unit-archimedean-arc-len-to-xy
   "Returns the arc length of an Archimedean spiral with parameter
   arm-dist (i.e. distance between \"arms\") from its center to the
-  location where it hits point [x y]."
+  location where it hits point [x y].  If angle is present, it is the
+  rotation of the spiral."
   ([arm-dist [x y]]
    (unit-archimedean-arc-len-to-xy arm-dist [0 0]               [x y] 0))
   ([arm-dist [center-x center-y] [x y]]
@@ -193,10 +195,9 @@
      (archimedean-arc-len 2 (* npi pi))])
 
   (spir 0)
-  (arcl 0 87.7 6)
-  (spir pi)
-  (arcl pi 81.4 4)
-  (arcl pi 12.32 6)
+  (arcl 0 75 4)
+  (spir (* pi 1/3))
+  (arcl 1/3 73.07 3.66666667)
 
 
   (defn uspir [rot]
