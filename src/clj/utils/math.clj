@@ -145,10 +145,10 @@
   [arm-dist x]
   (archimedean-arc-len (/ arm-dist 2 pi) x))
 
-;; TODO NEED MORE TESTING
-;; not right (?)
+;; FIXME Seems to work with some rotations, but not with others.
 (defn archimedean-arc-len-to-xy
-  "Returns the arc length of an Archimedean spiral with parameter a from
+  "UNTRUSTWORTHY:
+  Returns the arc length of an Archimedean spiral with parameter a from
   its center to the location where it hits point [x y].  If angle is
   present, it is the rotation of the spiral."
   ([a [x y]]
@@ -161,9 +161,10 @@
          theta (/ r a)] ; see my ~/math/randomwalks/spiral.nt1
      (archimedean-arc-len a (- theta angle)))))
 
-;; SEEMS OK
+;; FIXME Seems to work with some rotations, but not with others.
 (defn unit-archimedean-arc-len-to-xy
-  "Returns the arc length of an Archimedean spiral with parameter
+  "UNTRUSTWORTHY:
+  Returns the arc length of an Archimedean spiral with parameter
   arm-dist (i.e. distance between \"arms\") from its center to the
   location where it hits point [x y].  If angle is present, it is the
   rotation of the spiral."
@@ -178,6 +179,8 @@
      (unit-archimedean-arc-len arm-dist (- theta angle)))))
 
 (comment
+  ;; Some ofthese examples show the arc-len-to-xy functions working,
+  ;; but others don't.
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
@@ -190,15 +193,22 @@
          (oz/view!)))
 
   (defn arcl
+    "rot: rotation of spiral; edge: x coord of spiral at y value
+    of center point; npi: radians from start to [edge, center-y]."
     [rot edge npi]
     [(archimedean-arc-len-to-xy 2 [50 50] [edge 50] rot)
      (archimedean-arc-len 2 (* npi pi))])
 
   (spir 0)
   (arcl 0 75 4)
+  (spir (* pi 1/2))
+  (arcl 1/2 72 (- 4 1/2))
   (spir (* pi 1/3))
-  (arcl 1/3 73.07 3.66666667)
-
+  (arcl 1/3 73.035 (- 4 1/3))
+  (spir (* pi 1/6))
+  (arcl 1/6 74.1 (- 4 1/6))
+  (spir (* pi 5/6))
+  (arcl 5/6 69.9 (- 4 5/6))
 
   (defn uspir [rot]
     (->>
@@ -209,6 +219,8 @@
       (oz/view!)))
 
   (defn uarcl
+    "rot: rotation of spiral; edge: x coord of spiral at y value
+    of center point; npi: radians from start to [edge, center-y]."
     [rot edge npi]
     [(unit-archimedean-arc-len-to-xy 25 [80 80] [edge 80] rot)
      (unit-archimedean-arc-len 25 (* npi pi))])
@@ -224,6 +236,14 @@
   (uspir (/ pi 2))
   (uarcl (/ pi 2) 123.8 3)
   (uarcl (/ pi 2) 148.8 5)
+
+  (uspir (* pi 1/3))
+  (uarcl 1/3 125.84 (- 4 1/3))
+  (uspir (* pi 1/6))
+  (uarcl 1/6 127.9 (- 4 1/6))
+  (uspir (* pi 5/6))
+  (uarcl 5/6 119.6 (- 4 5/6))
+
 
   ;; for both arcl and uarcl, the rule seems to be that rot
   ;; subtracts (* 2 rot) from the rotation. Which doesn't make sense.
