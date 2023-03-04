@@ -277,7 +277,7 @@
 ;; not equal to the y endpoint as if it were equal to it.  Once the
 ;; x coordinate becomes equal to the x endpoint, we pretend that the
 ;; y coords are equal even if they aren't.  But that's OK, because
-;; if y-eps is so small that this matters, then the difference between
+;; if y-eps is so small that if this matters, then the difference between
 ;; the incrementing y coordinate and the y endpoint is so small that
 ;; it is much smaller then what matters for searching for foodspots.
 ;; Because the tiny y-eps means that the initial starting y coordinate
