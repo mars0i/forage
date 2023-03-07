@@ -262,6 +262,7 @@
 ;; when the line pair was created.
 ;; 
 ;; WHY ONLY TEST FOR x = endpoint x2, and not the y coords, too?
+;; (See the cond within the loop/recur expression.)
 ;; The code in the function flips coords so that when the test for
 ;; the end of the inner loop occurs, the slope cannot be vertical,
 ;; and in fact is very far from vertical.  Therefore if y is changing,
@@ -277,13 +278,13 @@
 ;; not equal to the y endpoint as if it were equal to it.  Once the
 ;; x coordinate becomes equal to the x endpoint, we pretend that the
 ;; y coords are equal even if they aren't.  But that's OK, because
-;; if y-eps is so small that this matters, then the difference between
-;; the incrementing y coordinate and the y endpoint is so small that
-;; it is much smaller then what matters for searching for foodspots.
-;; Because the tiny y-eps means that the initial starting y coordinate
+;; if y-eps is so small that if this mattered, the difference between
+;; the incrementing y coordinate and the y endpoint would be so small that
+;; it would be much smaller then what matters for searching for foodspots.
+;; In that case, the tiny y-eps means that the initial starting y coordinate
 ;; and the final ending y coordinate are so close that the difference
-;; between them will not matter for finding foodspots (or if it does
-;; matter, that's a difference that I'm willing to accept).
+;; between them will not matter for finding foodspots.  (Or if it does
+;; matter, that's a difference that I'm willing to accept.)
 ;; SEE smallSlopeBugNotes052022.txt for further details.
 ;; 
 (defn find-in-seg
@@ -304,7 +305,6 @@
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
   [look-fn eps [x1 y1] [x2 y2]]
-  ;(println [x1 y1] [x2 y2]) (flush) ; DEBUG
   (let [slope (m/slope-from-coords [x1 y1] [x2 y2])
         steep (or (infinite? slope)
                   (> (abs slope) steep-slope-inf))
@@ -323,7 +323,6 @@
     (loop [x x1, y y1]
       (let [food (look-fn x y)]
         (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
-              ;(and (== x x2) (== y y2))  nil ; OLD VERSION: last point. check both: horizontal or vertical lines
               (== x x2)  nil ; last point: see comment above function def for explanation.
               :else  (let [xsh (+ x x-shift)
                            ysh (+ y y-shift)]
