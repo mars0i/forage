@@ -105,6 +105,43 @@
   (def samedistfn (constantly true))
   (def cb-vecs (make-composite-vecs [vecfn] [samedistfn]))
   (= (take 1000 levy-vecs) (take 1000 cb-vecs))
+
+)
+(comment
+  ;; TEST OF make-composite-vecs
+  ;; note uses functions defined below
+
+  (def seed (r/make-seed))
+  ;; Using distinct rngs for different subsequences to avoid  order
+  ;; effects during testing.  Not sure that's necessary in production,
+  ;; where the order of use will be fixed by the experiment.
+
+  (def rng1 (r/make-well19937 seed))
+  (def lendist1 (r/make-powerlaw rng1 1 1.001))
+  (def vecfn1 (step-vector-fn rng1 lendist1 1 1000))
+
+  (def rng2 (r/make-well19937 seed))
+  (def lendist2 (r/make-powerlaw rng2 1 2))
+  (def vecfn2 (step-vector-fn rng2 lendist2 1 100))
+
+  (def rng3 (r/make-well19937 seed))
+  (def lendist3 (r/make-powerlaw rng3 1 3))
+  (def vecfn3 (step-vector-fn rng3 lendist3 1 100))
+
+  (def switch500 (switch-after-n-steps-fn 500))
+  (def switch1000 (switch-after-n-steps-fn 500))
+
+  (def vecs (make-composite-vecs [vecfn1 vecfn3] [switch1000]))
+  ;(def walk (walk-stops [5000 5000] (vecs-upto-len 20000 vecs))) ; by max distance traveled
+  (def walk (walk-stops [10000 10000] (take 10000 vecs))) ; by number of steps
+  (def vl-walk (h/add-walk-labels "composite" walk))
+  (def plot (h/vega-walk-plot 600 20000 1.0 vl-walk))
+  (oz/view! plot)
+
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+
 )
 
 
@@ -142,41 +179,6 @@
     [0 []]
     vecs))
 
-(comment
-  ;; TEST OF make-composite-vecs
-  ;; FIXME not plotting
-
-  (def seed (r/make-seed))
-  ;; Using distinct rngs for different subsequences to avoid  order
-  ;; effects during testing.  Not sure that's necessary in production,
-  ;; where the order of use will be fixed by the experiment.
-
-  ;(def rng1 (r/make-well19937 seed))
-  ;(def lendist1 (r/make-powerlaw rng1 1 1.001))
-  ;(def vecfn1 (step-vector-fn rng1 lendist1 1 100))
-
-  (def rng2 (r/make-well19937 seed))
-  (def lendist2 (r/make-powerlaw rng2 1 2))
-  (def vecfn2 (step-vector-fn rng2 lendist2 1 100))
-
-  (def rng3 (r/make-well19937 seed))
-  (def lendist3 (r/make-powerlaw rng3 1 3))
-  (def vecfn3 (step-vector-fn rng3 lendist3 1 100))
-
-  (def switch100 (switch-after-n-steps-fn 100))
-
-  (def vecs (make-composite-vecs [vecfn2 vecfn3] [switch100]))
-  (def walk (vecs-upto-len 2000 vecs))
-
-  (require '[forage.viz.hanami :as h])
-  (require '[oz.core :as oz])
-  (oz/start-server!)
-
-  (def vl-walk (h/add-walk-labels "composite" walk))
-  (def plot (h/vega-walk-plot 600 5000 1.0 vl-walk))
-  (oz/view! plot)
-
-)
 
 
 
@@ -582,3 +584,5 @@
   [fws]
   (sort-by #(if (first %) 0 1)
            fws))
+
+nil
