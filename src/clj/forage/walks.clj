@@ -94,6 +94,7 @@
         new-step-count))))
 
 (comment
+  ;; TEST OF make-composite-vecs
   (def seed (r/make-seed))
   (def rng1 (r/make-well19937 seed))
   (def rng2 (r/make-well19937 seed))
@@ -105,7 +106,6 @@
   (def samedistfn (constantly true))
   (def cb-vecs (make-composite-vecs [vecfn] [samedistfn]))
   (= (take 1000 levy-vecs) (take 1000 cb-vecs))
-
 )
 (comment
   ;; TEST OF make-composite-vecs
