@@ -187,7 +187,7 @@
 
   (defn spir [rot]
     (->> (archimedean-spiral 2 0.01 50 50 rot)
-         (h/add-walk-labels "spiral")
+         (h/order-walk-with-labels "spiral")
          (take 2000)
          (h/vega-walk-plot 600 100 1.0)
          (oz/view!)))
@@ -213,7 +213,7 @@
   (defn uspir [rot]
     (->>
       (unit-archimedean-spiral 25 0.01 80 80 rot) ; rotated 90 degrees
-      (h/add-walk-labels "spiral")
+      (h/order-walk-with-labels "spiral")
       (take 2000)
       (h/vega-walk-plot 600 160 1.0)
       (oz/view!)))
