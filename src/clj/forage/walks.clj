@@ -71,7 +71,7 @@
   function).  [Example data as second arg of dist?  functions: (i) number
   of steps in subsequence, (ii) length of subsequence, or (iii) the entire
   subsequence.]"
-  [vec-fns dist?-fns]
+  [dist?-fns vec-fns]
   (letfn [(make-vecs [vecfns dist?fns dist?data] ; lazy-seq needs to recurse on fn not loop/recur
             (lazy-seq
               (let [new-vec ((first vecfns))]
@@ -94,7 +94,7 @@
         new-step-count))))
 
 (comment
-  ;; TEST OF make-composite-vecs
+  ;; BASIC TESTS OF make-composite-vecs
   (def seed (r/make-seed))
   (def rng1 (r/make-well19937 seed))
   (def rng2 (r/make-well19937 seed))
@@ -104,11 +104,11 @@
   ;; Same thing using composite-brownian-vecs on a single dist:
   (def vecfn (step-vector-fn rng1 lendist1 1 100))
   (def samedistfn (constantly true))
-  (def cb-vecs (make-composite-vecs [vecfn] [samedistfn]))
+  (def cb-vecs (make-composite-vecs [samedistfn] [vecfn]))
   (= (take 1000 levy-vecs) (take 1000 cb-vecs))
 )
 (comment
-  ;; TEST OF make-composite-vecs
+  ;; ADDITIONAL TESTS OF make-composite-vecs
   ;; note uses functions defined below
 
   (def seed (r/make-seed))
@@ -128,17 +128,19 @@
   (def lendist3 (r/make-powerlaw rng3 1 3))
   (def vecfn3 (step-vector-fn rng3 lendist3 1 100))
 
-  (def switch500 (switch-after-n-steps-fn 500))
-  (def switch1000 (switch-after-n-steps-fn 500))
+  (def switch500  (switch-after-n-steps-fn 500))
+  (def switch1000 (switch-after-n-steps-fn 1000))
 
-  (def vecs (make-composite-vecs [vecfn1 vecfn3] [switch1000]))
+  (def vecs (make-composite-vecs [switch1000] [vecfn1 vecfn3]))
+
+  (require '[forage.viz.hanami :as h])
+
   ;(def walk (walk-stops [5000 5000] (vecs-upto-len 20000 vecs))) ; by max distance traveled
   (def walk (walk-stops [10000 10000] (take 10000 vecs))) ; by number of steps
-  (def vl-walk (h/add-walk-labels "composite" walk))
+  (def vl-walk (h/order-walk-with-labels "composite" walk))
   (def plot (h/vega-walk-plot 600 20000 1.0 vl-walk))
   (oz/view! plot)
 
-  (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
 
