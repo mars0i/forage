@@ -74,11 +74,12 @@
   ([switch-fns vec-fns]
    (make-composite-vecs switch-fns vec-fns nil))
   ([switch-fns vec-fns labels]
+   (println labels) ; DEBUG
   (letfn [(make-vecs [v-fns sw-fns labls sw-data] ; lazy-seq needs to recurse on fn not loop/recur
             (lazy-seq
               (let [fresh-vec ((first v-fns))
-                    new-vec (if labels
-                              (conj (vec fresh-vec) (first labels)) ; add label to end of record
+                    new-vec (if labls
+                              (conj (vec fresh-vec) (first labls)) ; add label to end of record
                               fresh-vec)]                           ; if available
                 (cons new-vec
                       (if-let [new-sw-data ((first sw-fns) new-vec sw-data)] ; truthy means "keep using this vec fn"
@@ -133,18 +134,20 @@
   (def lendist3 (r/make-powerlaw rng3 1 3))
   (def vecfn3 (step-vector-fn rng3 lendist3 1 100))
 
+  (def switch10  (switch-after-n-steps-fn 10))
   (def switch500  (switch-after-n-steps-fn 500))
   (def switch1000 (switch-after-n-steps-fn 1000))
 
-  (def vecs (make-composite-vecs [switch1000] [vecfn1 vecfn3]))
+  (def vecs (make-composite-vecs [switch10] [vecfn1 vecfn3] ["mu=1001" "mu=3"]))
+  (take 100 vecs)
 
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
 
   ;(def walk (walk-stops [5000 5000] (vecs-upto-len 20000 vecs))) ; by max distance traveled
-  (def walk (walk-stops [10000 10000] (take 10000 vecs))) ; by number of steps
-  (def vl-walk (h/order-walk-with-labels "composite" walk))
+  (def walk (walk-stops [10000 10000] (take 5000 vecs))) ; by number of steps
+  (def vl-walk (h/order-walk-with-labels "walk with " walk))
   (def plot (h/vega-walk-plot 600 20000 1.0 vl-walk))
   (oz/view! plot)
 
@@ -209,12 +212,15 @@
   "Given an initial point (or a mathematical vector) in the form of a
   coordinate pair, and a mathematical vector in the form of a direction
   in radians and a length, returns a new coordinate pair that's the result
-  of adding the vector to the point.  (This is the next \"stop\" in a walk.)"
-  [[prevx prevy] [dir len]]
+  of adding the vector to the point.  (This is the next \"stop\" in a walk.)
+  If provided, an optional label is the third element of the returneed 
+  Clojure vector."
+  [[prevx prevy] [dir len label]]
   (let [[vecx vecy] (m/rotate dir [len, 0]) ; rotate vector lying on x-axis
         nextx (+ prevx vecx)  ; add vector to prev point
-        nexty (+ prevy vecy)]
-    [nextx nexty]))
+        nexty (+ prevy vecy)
+        newpt [nextx nexty]]
+    (if label (conj newpt label) newpt)))
 
 ;; I see no straightforward way to do this with reduce, btw.
 (defn walk-stops
