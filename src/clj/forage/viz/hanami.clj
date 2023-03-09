@@ -104,15 +104,14 @@
 
 (defn order-walk-with-labels
   "Given a sequence of pairs or triples where the first two elements
-  represent x and y coordinates, returns a Vega-Lite data
-  specification in the form of a sequence of maps, where the
-  coordinates are values for keys \"x\" and \"x\".  A \"label\" key
-  and value base-label is added to each map if the elements of the
-  input sequence are pairs.  If the elements of the sequence are
-  triples, the third element of each triple is concatenated onto the
-  string base-label using the str function. In addition, each map is
-  given an \"ord\" key with increasing integers as values. This can be
-  used with the Vega-Lite \"order\" key."
+  represent x and y coordinates, returns a Vega-Lite data specification in
+  the form of a sequence of maps, where the coordinates are values for keys
+  \"x\" and \"x\".  A \"label\" key and value base-label is added to each
+  map if the elements of the input sequence are pairs.  If the elements of
+  the sequence are triples, the third element of each triple will be
+  concatenated onto the string base-label using the str function.
+  Regardless, each map will be given an \"ord\" key with increasing
+  integers as values. This can be used with the Vega-Lite \"order\" key."
   [base-label xys]
   (map (fn [[x y & [suffix]] n]
          {"x" x, "y" y,
@@ -123,10 +122,6 @@
 ;; Backward compatibility alias
 (def add-walk-labels order-walk-with-labels)
 
-(comment
-  (defn yo [x & [y]] [x y])
-  (yo 1)
-)
 
 (defn plot-dist
   [y-fn label xmin xmax increment]
