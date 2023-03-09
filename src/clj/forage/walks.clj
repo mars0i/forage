@@ -129,17 +129,23 @@
   ;; effects during testing.  Not sure that's necessary in production,
   ;; where the order of use will be fixed by the experiment.
 
-  (def rng1 (r/make-well19937 (r/make-seed)))
+  (def seed1 (r/make-seed))
+  (def rng1 (r/make-well19937 seed1))
   (def lendist1 (r/make-powerlaw rng1 1 1.001))
-  (def vecfn1 (step-vector-fn rng1 lendist1 1 1000))
+  (def vecfn1 (fn [] (println "\nvf1:")
+                ((step-vector-fn rng1 lendist1 1 10))))
 
-  (def rng2 (r/make-well19937 (r/make-seed)))
+  (def seed2 (r/make-seed))
+  (def rng2 (r/make-well19937 seed2))
   (def lendist2 (r/make-powerlaw rng2 1 2))
-  (def vecfn2 (step-vector-fn rng2 lendist2 1 100))
+  (def vecfn2 (fn [] (println "\nvf2:")
+                ((step-vector-fn rng2 lendist2 1 10))))
 
-  (def rng3 (r/make-well19937 (r/make-seed)))
+  (def seed3 (r/make-seed))
+  (def rng3 (r/make-well19937 seed3))
   (def lendist3 (r/make-powerlaw rng3 1 3))
-  (def vecfn3 (step-vector-fn rng3 lendist3 1 10))
+  (def vecfn3 (fn [] (println "\nvf3:")
+                ((step-vector-fn rng3 lendist3 1 10))))
 
   (def switch1  (switch-after-n-steps-fn 1))
   (def switch2  (switch-after-n-steps-fn 2))
@@ -148,7 +154,7 @@
   (def switch1000 (switch-after-n-steps-fn 1000))
 
   (def vecs (make-composite-vecs [switch2] [vecfn1 vecfn3] ["mu=1001" "mu=3"]))
-  (take 23 vecs)
+  (take 20 vecs)
 
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
