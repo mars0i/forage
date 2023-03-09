@@ -75,17 +75,18 @@
    (make-composite-vecs switch-fns vec-fns nil))
   ([switch-fns vec-fns labels]
    (println labels) ; DEBUG
-  (letfn [(make-vecs [v-fns sw-fns labls sw-data] ; lazy-seq needs to recurse on fn not loop/recur
+  (letfn [(make-vecs [sw-fns v-fns labls sw-data] ; lazy-seq needs to recurse on fn not loop/recur
             (lazy-seq
               (let [fresh-vec ((first v-fns))
+                    ;; TODO Can I get rid of the conditional and always append the label?:
                     new-vec (if labls
                               (conj (vec fresh-vec) (first labls)) ; add label to end of record
                               fresh-vec)]                           ; if available
                 (cons new-vec
                       (if-let [new-sw-data ((first sw-fns) new-vec sw-data)] ; truthy means "keep using this vec fn"
-                        (make-vecs v-fns        sw-fns        labls       new-sw-data)
-                        (make-vecs (next v-fns) (next sw-fns) (next labls) nil))))))]
-    (make-vecs (cycle vec-fns) (cycle switch-fns) (cycle labels) nil))))
+                        (make-vecs sw-fns        v-fns        labls       new-sw-data)
+                        (make-vecs (next sw-fns) (next v-fns) (next labls) nil))))))]
+    (make-vecs (cycle switch-fns) (cycle vec-fns) (cycle labels) nil))))
 
 (defn switch-after-n-steps-fn
   "Generates a dist?fn for use with make-composite-vecs.  The returned function
@@ -138,7 +139,7 @@
   (def switch500  (switch-after-n-steps-fn 500))
   (def switch1000 (switch-after-n-steps-fn 1000))
 
-  (def vecs (make-composite-vecs [switch10] [vecfn1 vecfn3] ["mu=1001" "mu=3"]))
+  (def vecs (make-composite-vecs [switch500] [vecfn1 vecfn3] ["mu=1001" "mu=3"]))
   (take 100 vecs)
 
   (require '[forage.viz.hanami :as h])
@@ -146,11 +147,10 @@
   (oz/start-server!)
 
   ;(def walk (walk-stops [5000 5000] (vecs-upto-len 20000 vecs))) ; by max distance traveled
-  (def walk (walk-stops [10000 10000 "mu=1001"] (take 5000 vecs))) ; by number of steps
+  (def walk (walk-stops [10000 10000 "mu=1001"] (take 5000 (drop 100000 vecs)))) ; by number of steps
   (def vl-walk (h/order-walk-with-labels "walk with " walk))
   (def plot (h/vega-walk-plot 600 20000 1.0 vl-walk))
   (oz/view! plot)
-
 )
 
 
