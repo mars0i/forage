@@ -71,15 +71,20 @@
   function).  [Example data as second arg of dist?  functions: (i) number
   of steps in subsequence, (ii) length of subsequence, or (iii) the entire
   subsequence.]"
-  [switch-fns vec-fns]
-  (letfn [(make-vecs [v-fns sw-fns sw-data] ; lazy-seq needs to recurse on fn not loop/recur
+  ([switch-fns vec-fns]
+   (make-composite-vecs switch-fns vec-fns nil))
+  ([switch-fns vec-fns labels]
+  (letfn [(make-vecs [v-fns sw-fns labls sw-data] ; lazy-seq needs to recurse on fn not loop/recur
             (lazy-seq
-              (let [new-vec ((first v-fns))]
+              (let [fresh-vec ((first v-fns))
+                    new-vec (if labels
+                              (conj (vec fresh-vec) (first labels)) ; add label to end of record
+                              fresh-vec)]                           ; if available
                 (cons new-vec
                       (if-let [new-sw-data ((first sw-fns) new-vec sw-data)] ; truthy means "keep using this vec fn"
-                        (make-vecs v-fns sw-fns new-sw-data)
-                        (make-vecs (next v-fns) (next sw-fns) nil))))))]
-    (make-vecs (cycle vec-fns) (cycle switch-fns) nil)))
+                        (make-vecs v-fns        sw-fns        labls       new-sw-data)
+                        (make-vecs (next v-fns) (next sw-fns) (next labls) nil))))))]
+    (make-vecs (cycle vec-fns) (cycle switch-fns) (cycle labels) nil))))
 
 (defn switch-after-n-steps-fn
   "Generates a dist?fn for use with make-composite-vecs.  The returned function
