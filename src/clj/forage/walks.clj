@@ -132,8 +132,7 @@
   (def seed2 (r/make-seed))
   (def rng2 (r/make-well19937 seed2))
   (def lendist2 (r/make-powerlaw rng2 1 2))
-  (def vecfn2 (fn [] (println "\nvf2:")
-                ((step-vector-fn rng2 lendist2 1 10))))
+  (def vecfn2 (step-vector-fn rng2 lendist2 1 5000))
 
   (def seed1 (r/make-seed))
   (def rng1 (r/make-well19937 seed1))
@@ -159,10 +158,10 @@
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  ;(def walk (walk-stops [10000 10000] (vecs-upto-len 50000 vecs))) ; by max distance traveled
-  (def walk (walk-stops [15000 15000] (take 100000 vecs))) ; by number of steps
+  (def walk (walk-stops [1000 1000] (vecs-upto-len 200000 vecs))) ; by max distance traveled
+  ;(def walk (walk-stops [15000 15000] (take 100000 vecs))) ; by number of steps
   (def vl-walk (h/order-walk-with-labels "walk with " walk))
-  (def plot (h/vega-walk-plot 600 30000 1.0 vl-walk))
+  (def plot (h/vega-walk-plot 600 2000 1.0 vl-walk))
   (oz/view! plot)
 
   ;; THIS WAS AN ATTEMPT TO DISPLAY A COMPOSITE WALK WITH DIFFERENT COLORS
