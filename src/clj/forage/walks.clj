@@ -138,12 +138,12 @@
   (def seed1 (r/make-seed))
   (def rng1 (r/make-well19937 seed1))
   (def lendist1 (r/make-powerlaw rng1 1 1.001))
-  (def vecfn1 (step-vector-fn rng1 lendist1 1 1000))
+  (def vecfn1 (step-vector-fn rng1 lendist1 1 5000))
 
   (def seed3 (r/make-seed))
   (def rng3 (r/make-well19937 seed3))
   (def lendist3 (r/make-powerlaw rng3 1 3))
-  (def vecfn3 (step-vector-fn rng3 lendist3 1 10))
+  (def vecfn3 (step-vector-fn rng3 lendist3 1 5))
 
   (def switch1  (switch-after-n-steps-fn 1))
   (def switch2  (switch-after-n-steps-fn 2))
@@ -151,6 +151,19 @@
   (def switch500  (switch-after-n-steps-fn 500))
   (def switch1000 (switch-after-n-steps-fn 1000))
   (def switch10000 (switch-after-n-steps-fn 10000))
+
+  (def vecs (make-composite-vecs [switch10 switch10000] [vecfn1 vecfn3]))
+  ;(take 200 vecs)
+
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+
+  ;(def walk (walk-stops [10000 10000] (vecs-upto-len 50000 vecs))) ; by max distance traveled
+  (def walk (walk-stops [15000 15000] (take 100000 vecs))) ; by number of steps
+  (def vl-walk (h/order-walk-with-labels "walk with " walk))
+  (def plot (h/vega-walk-plot 600 30000 1.0 vl-walk))
+  (oz/view! plot)
 
   ;; THIS WAS AN ATTEMPT TO DISPLAY A COMPOSITE WALK WITH DIFFERENT COLORS
   ;; FOR THE DIFFERENT SORTS OF COMPONENTS.  BUT
@@ -164,19 +177,6 @@
   ;(def v1 (map (fn [[x y l] n] (if (= l "mu=1") [x y (str n "mu=3")] [x y (str n "mu=1")])) v0 (range)))
   ;(def v2 (map (fn [[x y l] n] (if (= l "mu=1") [x y (str n "mu=1")] [x y (str n "mu=3")])) v0 (drop 1 (range))))
   ;(def v1v2 (interleave v1 v2))
-
-  (def vecs (make-composite-vecs [switch10 switch10000] [vecfn1 vecfn3]))
-  ;(take 200 vecs)
-
-  (require '[forage.viz.hanami :as h])
-  (require '[oz.core :as oz])
-  (oz/start-server!)
-
-  ;(def walk (walk-stops [5000 5000] (vecs-upto-len 20000 vecs))) ; by max distance traveled
-  (def walk (walk-stops [2500 2500] (take 2000 vecs))) ; by number of steps
-  (def vl-walk (h/order-walk-with-labels "walk with " walk))
-  (def plot (h/vega-walk-plot 600 5000 1.0 vl-walk))
-  (oz/view! plot)
 )
 
 
