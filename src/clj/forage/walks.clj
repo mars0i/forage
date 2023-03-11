@@ -55,8 +55,45 @@
   [dir-dist len-dist low high]
   (repeatedly (step-vector-fn dir-dist len-dist low high)))
 
+
+(comment
+  ;;; Exploring alternatives to live-composite-vecs below.
+
+  (def seed (r/make-seed))
+  (def rng (r/make-well19937 seed))
+  (def lendist1 (r/make-powerlaw rng 1 1.001))
+  (def vecs1 (make-levy-vecs rng lendist1 1 5000))
+  (def lendist2 (r/make-powerlaw rng 1 2))
+  (def vecs2 (make-levy-vecs rng lendist2 1 5000))
+  (def lendist3 (r/make-powerlaw rng 1 3))
+  (def vecs3 (make-levy-vecs rng lendist3 1 5000))
+  (def shortvecs (concat (take 10 vecs1) (take 10000 vecs3)))
+  (def vecsa (concat 
+                  (take 10 vecs1) (take 10000 vecs3)
+                  (take 10 (drop 10 vecs1)) (take 10000 (drop 10000 vecs3))
+                  (take 10 (drop 20 vecs1)) (take 10000 (drop 20000 vecs3))
+                  (take 10 (drop 30 vecs1)) (take 10000 (drop 30000 vecs3))))
+  (def vecsb (concat 
+                  (take 1000 vecs2) (take 10000 vecs3)
+                  (take 1000 (drop 1000 vecs2)) (take 10000 (drop 10000 vecs3))
+                  (take 1000 (drop 2000 vecs2)) (take 10000 (drop 20000 vecs3))
+                  (take 1000 (drop 3000 vecs2)) (take 10000 (drop 30000 vecs3))))
+
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+
+  (def walk (walk-stops [3000 3000] vecsb))
+  (def vl-walk (h/order-walk-with-labels "walk with " walk))
+  (def plot (h/vega-walk-plot 600 6000 1.0 vl-walk))
+  (oz/view! plot)
+)
+
 ;; NOTE: Another good way to generate a sequence of vectors is to
 ;; simply concatenate sequences of vectors generated some other way, as above.
+;; This version runs a test on every step.  The might be useful to e.g.
+;; test for something about a found target/foodspot.  But my general
+;; strategy is to generate walks in a higher-level sense.
 ;; TODO remove labels arg?  See docstring.
 (defn live-composite-vecs
   "Returns an infinite sequence of mathematical vectors.  vec-fns is a
@@ -188,59 +225,6 @@
         othersteps (rest step-seq)
         newstep    (assoc firststep 0 init-dir)]
     (cons newstep othersteps)))
-
-
-;; The problem with this as written was that though it worked for infinite
-;; input sequences, it could fail for finite input sequences.  This is
-;; because the reduced (short-circuit) function returns something
-;; of a kind *other* than the default return value (which is the
-;; the value [tot-len out-vecs] when the input sequence finishes)--
-;; whereas the reduced fn returns just the latter.  So if you get to
-;; the end of the finite sequence without maxing out len, you will
-;; get not only the wrong value, but the wrong kind of value.  But if
-;; you hit desired-total before that point, you'll get the expected value,
-;; a sequence whose total is equal to (or a little beyond) desired-total.
-;; Another problem is that when you try to debug it, if you reach
-;; the end of the input sequence, the reduced fn never fires, so if you
-;; thought it would, you will be confused.
-;; And with infinite sequences that problem will never occur.
-;; It would be possible to fix this, but using reduce and reduced is
-;; confusing, and I've rewritten it with loop/recur, which is less
-;; confusing (and I included a test for the end of the sequence to avoid
-;; an analogous but different bug in the loop/recur version).
-(defn buggy-vecs-upto-len
-  "Given a desired total path length, and a sequence of step vectors, returns 
-  a sequence of step vectors from the front of the sequence, whose lengths sum
-  to at least desired-total.  By default, the lengths are made to sum to exactly
-  desired-total by reducing the length in the last step vector.  Add 
-  ':trim false' or ':trim nil' to return a sequence with the last vector as it
-  was in the input vecs sequence."
-  [desired-total vecs & {trim :trim :or {trim true}}]
-  (reduce 
-    (fn [[tot-len out-vecs] [dir len :as v]]
-      (if (< tot-len desired-total)          ; if not yet reached total
-        [(+ tot-len len) (conj out-vecs v)]  ; keep conj'ing
-        (reduced                             ; otherwise
-          (if trim   ; by default shorten last len so tot-len = desired-total
-            (let [overshoot (- tot-len desired-total) ; how much > desired?
-                  [old-dir old-len] (last out-vecs)
-                  newlast [old-dir (- old-len overshoot)]] ; subtract extra
-              (conj (vec (butlast out-vecs)) newlast)) ; replace old last
-            out-vecs)))) ; return constructed seq as is, if trim was falsey
-    [0 []]
-    vecs))
-
-(comment
-  (def seed (r/make-seed))
-  ;(def seed 1882274738322009621)
-  (def rng (r/make-well19937 seed))
-  (def lendist1 (r/make-powerlaw rng 1 1.001))
-  (def vecs1 (make-levy-vecs rng lendist1 1 5000))
-  (def lendist3 (r/make-powerlaw rng 1 3))
-  (def vecs3 (make-levy-vecs rng lendist3 1 10))
-  (def vecs (concat (take 10 vecs1) (take 10000 vecs3)))
-
-)
 
 ;; NEW version 3/11/2023 that replaces old confusing (and bug-prone)
 ;; reduce/reduced version.
