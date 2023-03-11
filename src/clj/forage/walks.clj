@@ -190,9 +190,24 @@
     (cons newstep othersteps)))
 
 
-;; SEE NOTE about bug in this above.
-;; TODO Ideally, I should rewrite this with loop/recur.  Using reduce and
-;; reduced is just confusing.
+;; The problem with this as written was that though it worked for infinite
+;; input sequences, it could fail for finite input sequences.  This is
+;; because the reduced (short-circuit) function returns something
+;; of a kind *other* than the default return value (which is the
+;; the value [tot-len out-vecs] when the input sequence finishes)--
+;; whereas the reduced fn returns just the latter.  So if you get to
+;; the end of the finite sequence without maxing out len, you will
+;; get not only the wrong value, but the wrong kind of value.  But if
+;; you hit desired-total before that point, you'll get the expected value,
+;; a sequence whose total is equal to (or a little beyond) desired-total.
+;; Another problem is that when you try to debug it, if you reach
+;; the end of the input sequence, the reduced fn never fires, so if you
+;; thought it would, you will be confused.
+;; And with infinite sequences that problem will never occur.
+;; It would be possible to fix this, but using reduce and reduced is
+;; confusing, and I've rewritten it with loop/recur, which is less
+;; confusing (and I included a test for the end of the sequence to avoid
+;; an analogous but different bug in the loop/recur version).
 (defn buggy-vecs-upto-len
   "Given a desired total path length, and a sequence of step vectors, returns 
   a sequence of step vectors from the front of the sequence, whose lengths sum
@@ -215,50 +230,9 @@
     [0 []]
     vecs))
 
-(defn instrumented-buggy-vecs-upto-len
-  "Given a desired total path length, and a sequence of step vectors, returns 
-  a sequence of step vectors from the front of the sequence, whose lengths sum
-  to at least desired-total.  By default, the lengths are made to sum to exactly
-  desired-total by reducing the length in the last step vector.  Add 
-  ':trim false' or ':trim nil' to return a sequence with the last vector as it
-  was in the input vecs sequence."
-  [desired-total vecs & {trim :trim :or {trim true}}]
-  (reduce 
-    (fn [[tot-len out-vecs] [dir len :as v]]
-      ;(pr tot-len "") ; DEBUG
-      (if (< tot-len desired-total)          ; if not yet reached total
-        (do (print ".") ; DEBUG
-            [(+ tot-len len) (conj out-vecs v)]  ; keep conj'ing
-            ) ; DEBUG
-        (do (println "\nWTF?" tot-len)
-        (reduced                             ; otherwise
-                   (if trim   ; by default shorten last len so tot-len = desired-total
-                     (let [overshoot (- tot-len desired-total) ; how much > desired?
-                           [old-dir old-len] (last out-vecs)
-                           newlast [old-dir (- old-len overshoot)]] ; subtract extra
-                       (prn "tot-len:" tot-len "overshoot:" overshoot "old last:" [old-dir old-len] "newlast:" newlast) ; DEBUG
-                       (conj (vec (butlast out-vecs)) newlast)) ; replace old last
-                     out-vecs))
-        )
-        )) ; return constructed seq as is, if trim was falsey
-    [0 []]
-    vecs))
-
 (comment
-  ;; SEEING VERY BIZARRE EFFECT THAT SOMETIMES buggy-vecs-upto-len
-  ;; CONSES WHAT SEEMS TO BE THE TOTAL LENGTH SO FAR ONTO
-  ;; THE FRONT OF THE COLLECTED VECTORS SO FAR, AND IN THAT
-  ;; CASE NOTHING IS PRINTED OUT IN THE INSTRUMENTED VERSION
-  ;; OF THAT LOGICAL FORK.
-  ;; With the fixed seed below it will happen at 23866 but not 23865
-  ;; as the len that we're going "up to".
-  ;; This does not happen with the loop/recur version of vecs-upto-len.
-  ;; Maybe has something to do with the reduced function.
-  ;; I don't think this is a bug in my code.
-  ;; But I can't figure out how to MWE it.
-
   (def seed (r/make-seed))
-  (def seed 1882274738322009621)
+  ;(def seed 1882274738322009621)
   (def rng (r/make-well19937 seed))
   (def lendist1 (r/make-powerlaw rng 1 1.001))
   (def vecs1 (make-levy-vecs rng lendist1 1 5000))
@@ -266,25 +240,10 @@
   (def vecs3 (make-levy-vecs rng lendist3 1 10))
   (def vecs (concat (take 10 vecs1) (take 10000 vecs3)))
 
-  (def yo (buggy-vecs-upto-len 23866 vecs)) ; Doesn't work as intended
-  (first yo)
-  (def yo (instrumented-buggy-vecs-upto-len 23866 vecs)) ; Doesn't work as intended
-  (first yo)
-  (def yonew (vecs-upto-len 23866 vecs)) ; This works as intended
-  (first yonew)
-  (last yo)
-  (last yonew)
-  (count yo)
-  (count yonew)
-  (count (second yo))
-  (= yonew (second yo))
-  (count (second yonew))
-  (last (take 10010 vecs))
 )
 
-;; NEW version 3/11/2023 that seems to get rid of weird bug in reduce/reduced
-;; version (which was also a bad idea because the code was more confusing
-;; than the verson below).
+;; NEW version 3/11/2023 that replaces old confusing (and bug-prone)
+;; reduce/reduced version.
 (defn vecs-upto-len
   "Given a desired total path length, and a sequence of step vectors, returns 
   a sequence of step vectors from the front of the sequence, whose lengths sum
