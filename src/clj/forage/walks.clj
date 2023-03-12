@@ -55,6 +55,25 @@
   [dir-dist len-dist low high]
   (repeatedly (step-vector-fn dir-dist len-dist low high)))
 
+;; FIXME This would be correct in polar coordinates (because 1/a is the
+;; derivative of theta=r/a), but that's not what we use.
+(defn make-archimedean-spiral-vecs
+  [a increment]
+  (repeat [(/ a), increment]))
+
+(comment
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+
+  (def walk (walk-stops [50 50] (take 2000 (make-archimedean-spiral-vecs 2 0.01))))
+  (def vl-walk (h/order-walk-with-labels "spiral" walk))
+  (def plot (h/vega-walk-plot 600 100 1.0 vl-walk))
+  (oz/view! plot)
+)
+
+
+
 
 (comment
   ;;; Exploring alternatives to live-composite-vecs below.
