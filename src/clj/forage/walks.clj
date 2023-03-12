@@ -55,8 +55,15 @@
   [dir-dist len-dist low high]
   (repeatedly (step-vector-fn dir-dist len-dist low high)))
 
+
 ;; FIXME This would be correct in polar coordinates (because 1/a is the
 ;; derivative of theta=r/a), but that's not what we use.
+;; See answers here:
+;; https://math.stackexchange.com/questions/1078185/differentiate-archimedess-spiral
+;; But I think I need to skip the vecs stage, which is redundant,
+;; since I really only need it to calculate the length of a spiral,
+;; and I can do that directly.  So maybe figure out how to merge into
+;; (walk-stops ...) or soemthing like that.
 (defn make-archimedean-spiral-vecs
   [a increment]
   (repeat [(/ a), increment]))
