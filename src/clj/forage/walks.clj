@@ -12,6 +12,18 @@
 ;; might not work with fastmath.
 
 
+;; NOTE Advantages of starting with mathematical vectors (direction,
+;; length) pairs over coordinates (x, y location pairs) are:
+;;   - It's easier to calculate overall length, since the second element
+;;     of every pair is already a length.
+;;   - It's easier to paste talks together to make composite walks.
+;;     If you start with sequences of coordinates, you have to shift
+;;     them all with the value of the last point in the previous walk
+;;     in the sequence.  If you start from math-vectors, you can just
+;;     concatenate the sequences of vectors for the different subwalks,
+;;     and then create the coordinate pair sequences as you normally would.
+
+
 ;; Setting this to 1 would give us symmetry between the swapped and
 ;; unswapped coordinates.  Seems as if it would improve performance
 ;; slightly to have a higher value, since then the x,y swap operations
