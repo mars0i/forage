@@ -327,11 +327,33 @@
 
 
 (comment
+
+  ;; Don't normally need separate rngs: 
+  ;; Just for reproducibility during testing.
+  (def seed1 (r/make-seed))
+  (def rng1 (r/make-well19937 seed1))
+  (def lendist1 (r/make-powerlaw rng1 1 1.001))
+  (def vecfn1 (step-vector-fn rng1 lendist1 1 5000))
+  (def seed2 (r/make-seed))
+  (def rng2 (r/make-well19937 seed2))
+  (def lendist2 (r/make-powerlaw rng2 1 2))
+  (def vecfn2 (step-vector-fn rng2 lendist2 1 5000))
+  (def seed3 (r/make-seed))
+  (def rng3 (r/make-well19937 seed3))
+  (def lendist3 (r/make-powerlaw rng3 1 3))
+  (def vecfn3 (step-vector-fn rng3 lendist3 1 5))
+
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  (def vl-walk (h/order-walk-with-labels "walk with " walk))
+  ;; Need to connect the starting point and ending point of the spiral
+  ;; to the other walks.  Oh--this is an advantage to working with
+  ;; math-vectors.
+  (def levy-walk (walk-stops [1000 1000]
+                             (vecs-upto-len 20000 (make-levy-vecs rng3 lendist3 1 5000))))
+  (def spiral-walk (take 5000 (m/unit-archimedean-spiral 10 0.01 1000 1000 1)))  
+  (def vl-walk (h/order-walk-with-labels "whatever" spiral-walk))
   (def plot (h/vega-walk-plot 600 2000 1.0 vl-walk))
   (oz/view! plot)
 
