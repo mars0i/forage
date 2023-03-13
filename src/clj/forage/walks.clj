@@ -535,8 +535,48 @@
   (trim-full-walk [["food"] wuf2 full])
 )
 
+;; Abstracted this out of levy-foodwalk so one can provide a sequence of
+;; location coordinate pairs rather than a sequence of vectors.  It's
+;; easier to construct some walks directly as location coordinate pairs.
+;; (Example: a composite walk that contains Archimedean spirals.)
+(defn foodwalk
+  "Given stop-walk, a representation of a possible walk as a sequence of
+  location coordinate pairs, returns a triple produced by trim-full-walk,
+  which has been passed the result of calling path-with-food on the
+  arguments to foodwalk with the original stop-walk conj'ed onto the
+  result."
+  [look-fn look-eps stop-walk]
+  (trim-full-walk (conj (path-with-food look-fn look-eps stop-walk)
+                        stop-walk)))
 
 (defn levy-foodwalk
+  "Generates a random foodwalk starting from point init-loc in direction
+  init-dir, and returns a vector triple containing (a) a sequence of found
+  foodspots or nil if none found, (b) the generated sequence from start until
+  the point from which the foodspots were found or the entire sequence if
+  no foodspots were found, and (c) a subsequence containing the remaining
+  stops, if any, after the foodspots were found.  If init-dir is falsey, 
+  the initial direction will be random.  More specifically, the generated 
+  foodwalk consists of a series of line segments and ends where a foodspot
+  is first found, or when the sum of segment lengths is equal to maxpathlen.
+  Food search uses look-fn to repeatedly check for food at points that are
+  look-eps apart, beginning from init-loc. (The environment is to be wrapped
+  up in look-fn and carried with it.)"
+  ([look-fn look-eps maxpathlen init-dir trunclen rng scale exponent init-pad init-loc]
+   (let [len-dist (r/make-powerlaw rng scale exponent)]
+     (levy-foodwalk look-fn look-eps maxpathlen init-dir trunclen rng len-dist init-pad init-loc)))
+  ([look-fn look-eps maxpathlen init-dir trunclen dir-dist len-dist init-pad init-loc]
+   (let [raw-inf-step-walk (make-levy-vecs dir-dist len-dist 1 trunclen)
+         inf-step-walk (if init-dir
+                         (subst-init-dir init-dir raw-inf-step-walk)
+                         raw-inf-step-walk)
+         step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
+         first-loc (if init-pad  ; if truthy, shift start in a random dir this much from init-loc
+                     (next-walk-stop init-loc [(r/next-radian dir-dist) init-pad])
+                     init-loc)]
+     (foodwalk look-fn look-eps (walk-stops first-loc step-walk))))) ; walk-stops is no longer lazy btw
+
+(defn old-levy-foodwalk
   "Generates a random foodwalk starting from point init-loc in direction
   init-dir, and returns a vector triple containing (a) a sequence of found
   foodspots or nil if none found, (b) the generated sequence from start until
@@ -564,7 +604,6 @@
          stop-walk (walk-stops first-loc step-walk) ; walk-stops is no longer lazy btw
          walk-with-food (path-with-food look-fn look-eps stop-walk)] ; a vec
      (trim-full-walk (conj walk-with-food stop-walk)))))
-
 
 ;; TODO: DOES THIS WORK: IS THE STATE THE SAME AT THE END?
 (defn levy-foodwalk-flush-state
