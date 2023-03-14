@@ -29,18 +29,24 @@
 (defn sin [theta] (Math/sin theta))
 (defn tan [theta] (Math/tan theta))
 
+(defn cartesian-to-polar
+  "Convert Cartesian coordinates from x, y to [radius, angle]."
+  [[x y]]
+  [(math/sqrt (+ (* x x) (* y y))), (math/atan2 y x)]) ; note args to atan must be backwards
+
+(defn polar-to-cartesian
+  "Convert polar coordinates from radius r and angle theta to a
+  pair of points [x y]."
+  [[r theta]]
+  [(* r (cos theta)) (* r (sin theta))])
+
 (comment
-
   ;; How to convert from and back to polar coordinates:
-  (let [r 5
-        theta 0.5 
-        x (* r (cos theta))
-        y (* r (sin theta))]
-    [(math/sqrt (+ (* x x) (* y y))), (math/atan2 y x)])
-  ;; NOTE that you have to give x and y to atan2 in REVERSE order.
-  ;; That is required.
-
-
+  (let [original-r 5
+        original-theta 0.5 
+        [x y] (polar-to-cartesian original-r original-theta)
+        [new-r new-theta] (cartesian-to-polar x y)]
+    [x y original-r new-r original-theta new-theta])
 )
 
 (defn ln [x] (Math/log x))
