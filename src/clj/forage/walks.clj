@@ -68,8 +68,11 @@
   (repeatedly (step-vector-fn dir-dist len-dist low high)))
 
 
-
-
+;; FIXME Broken (or maybe broken when walk-stops processes it)
+(defn make-spiral-vecs
+  [arm-dist increment]
+  (map m/cartesian-to-polar 
+       (m/unit-archimedean-spiral arm-dist increment 0 0)))
 
 (comment
   ;;; Exploring alternatives to incremental-composite-vecs below.
@@ -83,6 +86,7 @@
   (def lendist3 (r/make-powerlaw rng 1 3))
   (def vecs3 (make-levy-vecs rng lendist3 1 5000))
   (def shortvecs (concat (take 10 vecs1) (take 10000 vecs3)))
+  (def spirvecs (make-spiral-vecs 10 0.01))
   (def vecsa (concat 
                   (take 10 vecs1) (take 10000 vecs3)
                   (take 10 (drop 10 vecs1)) (take 10000 (drop 10000 vecs3))
@@ -93,15 +97,16 @@
                   (take 1000 (drop 1000 vecs2)) (take 10000 (drop 10000 vecs3))
                   (take 1000 (drop 2000 vecs2)) (take 10000 (drop 20000 vecs3))
                   (take 1000 (drop 3000 vecs2)) (take 10000 (drop 30000 vecs3))))
+  (def vecsc (concat (take 1000 vecs2) (take 1000 spirvecs) (take 1000 vecs2)))
+
+  (def walk (walk-stops [3000 3000] (take 1000 spirvecs)))
+  (def vl-walk (h/order-walk-with-labels "walk with " walk))
+  (def plot (h/vega-walk-plot 600 6000 1.0 vl-walk))
+  (oz/view! plot)
 
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
-
-  (def walk (walk-stops [3000 3000] vecsb))
-  (def vl-walk (h/order-walk-with-labels "walk with " walk))
-  (def plot (h/vega-walk-plot 600 6000 1.0 vl-walk))
-  (oz/view! plot)
 )
 
 ;; NOTE: Another good way to generate a sequence of vectors is to
