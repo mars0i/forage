@@ -131,7 +131,6 @@
   ([arm-dist increment x y angle]
    (archimedean-spiral (/ arm-dist 2 pi) increment x y angle)))
 
-
 (defn archimedean-spiral-derivative
   "Returns the Cartesian-coordinates derivative with respect to theta of
   the Archimedean spiral with parameter b.  That is, the pair returned
@@ -227,9 +226,9 @@
          (h/vega-walk-plot 600 100 1.0)
          (oz/view!)))
 
-  (defn spir [rot]
+  (defn spir* [rot]
     (->> (archimedean-spiral 2 0.01 50 50 rot)
-         (h/order-walk-with-labels "spiral")
+         (h/order-walk-with-labels "spiral*")
          (take 2000)
          (h/vega-walk-plot 600 100 1.0)
          (oz/view!)))
@@ -251,6 +250,12 @@
   (arcl 1/6 74.1 (- 4 1/6))
   (spir (* pi 5/6))
   (arcl 5/6 69.9 (- 4 5/6))
+
+  (spir* 0)
+  (spir* (* pi 1/2))
+  (spir* (* pi 1/3))
+  (spir* (* pi 1/6))
+  (spir* (* pi 5/6))
 
   (defn uspir [rot]
     (->>
