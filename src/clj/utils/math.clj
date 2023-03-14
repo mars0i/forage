@@ -89,9 +89,9 @@
 (defn archimedean-spiral-pt
   "Returns 2D coordinates of a point on an Archimedean spiral
   corresponding to input theta (which may be any positive real).
-  Parameter a determines how widely separated the arms are."
-  [a theta]
-  (let [r (* a theta)]
+  Parameter b determines how widely separated the arms are."
+  [b theta]
+  (let [r (* b theta)]
     [(* r (cos theta)) (* r (sin theta))]))
 
 
@@ -99,18 +99,18 @@
 ;; with comb or a transducer.
 (defn archimedean-spiral
   "Returns an infinite sequence of 2D coordinates of points on an
-  Archimedean spiral around the origin.  Parameter a determines how
+  Archimedean spiral around the origin.  Parameter b determines how
   widely separated the arms are.  increment is the distance between
   input values in radians; it determines the smoothness of a plot.  If x
   and y are provided, they move the center of the spiral to [x y].  If
   angle is provided, the entire spiral is rotated by angle radians."
-  ([a increment] (map (fn [x] (archimedean-spiral-pt a (* increment x)))
+  ([b increment] (map (fn [x] (archimedean-spiral-pt b (* increment x)))
                       (range)))
-  ([a increment x y] (map (fn [[x' y']] [(+ x' x) (+ y' y)])
-                          (archimedean-spiral a increment)))
-  ([a increment x y angle] (map (comp (fn [[x' y']] [(+ x' x) (+ y' y)]) ; replace with transducer?
+  ([b increment x y] (map (fn [[x' y']] [(+ x' x) (+ y' y)])
+                          (archimedean-spiral b increment)))
+  ([b increment x y angle] (map (comp (fn [[x' y']] [(+ x' x) (+ y' y)]) ; replace with transducer?
                                       (partial rotate angle)) ; rotation is around (0,0), so apply before shift
-                                (archimedean-spiral a increment))))
+                                (archimedean-spiral b increment))))
 
 ;; On the name of the parameter arm-dist, cf. 
 ;; https://physics.stackexchange.com/questions/83760/what-is-the-space-between-galactic-arms-called
@@ -134,13 +134,13 @@
 ;; From 
 ;; https://en.wikipedia.org/wiki/Archimedean_spiral#Arc_length_and_curvature
 ;; cf. https://mathworld.wolfram.com/ArchimedesSpiral.html
-;; NOTE No need to add a rotation; this is independent of rotation.
+;; NOTE No need to add b rotation; this is independent of rotation.
 (defn archimedean-arc-len
   "Returns the length of an Archimedean spiral with parameter a from the
   center to angle x."
-  [a x]
+  [b x]
   (let [rootincsq (nt/sqrt (inc (* x x)))]
-    (* a 0.5
+    (* b 0.5
        (+ (* x rootincsq)
           (math/log (+ x rootincsq))))))
 
@@ -154,18 +154,18 @@
 ;; FIXME Seems to work with some rotations, but not with others.
 (defn archimedean-arc-len-to-xy
   "UNTRUSTWORTHY:
-  Returns the arc length of an Archimedean spiral with parameter a from
+  Returns the arc length of an Archimedean spiral with parameter b from
   its center to the location where it hits point [x y].  If angle is
   present, it is the rotation of the spiral."
-  ([a [x y]]
-   (archimedean-arc-len-to-xy a [0 0]               [x y] 0))
-  ([a [center-x center-y] [x y]]
-   (archimedean-arc-len-to-xy a [center-x center-y] [x y] 0))
-  ([a [center-x center-y] [x y] angle]
+  ([b [x y]]
+   (archimedean-arc-len-to-xy b [0 0]               [x y] 0))
+  ([b [center-x center-y] [x y]]
+   (archimedean-arc-len-to-xy b [center-x center-y] [x y] 0))
+  ([b [center-x center-y] [x y] angle]
    (let [r (distance-2D [center-x center-y] [x y])
          _ (println r) ; DEBUG
-         theta (/ r a)] ; see my ~/math/randomwalks/spiral.nt1
-     (archimedean-arc-len a (- theta angle)))))
+         theta (/ r b)] ; see my ~/math/randomwalks/spiral.nt1
+     (archimedean-arc-len b (- theta angle)))))
 
 ;; FIXME Seems to work with some rotations, but not with others.
 (defn unit-archimedean-arc-len-to-xy
