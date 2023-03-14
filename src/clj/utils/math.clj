@@ -131,6 +131,35 @@
   ([arm-dist increment x y angle]
    (archimedean-spiral (/ arm-dist 2 pi) increment x y angle)))
 
+
+(defn archimedean-spiral-derivative
+  "Returns the Cartesian-coordinates derivative with respect to theta of
+  the Archimedean spiral with parameter b.  That is, the pair returned
+  represents the slope of the spiral at theta."
+  [b theta]
+  [(- (* b (cos theta)) (* b theta (sin theta)))])
+
+(defn archimedean-spiral*
+  "Alternate version of archimedean-spiral function defined in terms of the
+  spiral's derivative. Returns an infinite sequence of 2D coordinates of
+  points on an Archimedean spiral around the origin.  Parameter b
+  determines how widely separated the arms are.  increment is the distance
+  between input values in radians; it determines the smoothness of a plot.
+  If x and y are provided, they move the center of the spiral to [x y].  If
+  angle is provided, the entire spiral is rotated by angle radians."
+  ([b increment]     (archimedean-spiral* b increment 0 0 0))
+  ([b increment x y] (archimedean-spiral* b increment x y 0))
+  ([b increment x y angle]
+   (letfn [(make-points [old-x old-y theta]
+             (lazy-seq
+               (let [[dx dy] (archimedean-spiral-derivative b theta)
+                     new-x (+ old-x dx) 
+                     new-y (+ old-y dy)]
+                 (cons [new-x new-y]
+                       (make-points new-x new-y (+ theta increment))))))]
+     (make-points x y angle))))
+
+
 ;; From 
 ;; https://en.wikipedia.org/wiki/Archimedean_spiral#Arc_length_and_curvature
 ;; cf. https://mathworld.wolfram.com/ArchimedesSpiral.html
@@ -190,6 +219,13 @@
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
+
+  (defn spir [rot]
+    (->> (archimedean-spiral 2 0.01 50 50 rot)
+         (h/order-walk-with-labels "spiral")
+         (take 2000)
+         (h/vega-walk-plot 600 100 1.0)
+         (oz/view!)))
 
   (defn spir [rot]
     (->> (archimedean-spiral 2 0.01 50 50 rot)
