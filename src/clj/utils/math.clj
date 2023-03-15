@@ -110,6 +110,9 @@
                                       (partial rotate angle)) ; rotation is around (0,0), so apply before shift
                                 (archimedean-spiral b theta-inc))))
 
+;; FIXME broken - returning empty sequence
+;; Also, it seems like I made a mistake when I wrote it: shouldn't adding the
+;; derivatives wrt x and y not work when the theta-inc is large?
 (defn archimedean-spiral*
   "Alternate version of archimedean-spiral function defined in terms of the
   spiral's derivative. Returns an infinite sequence of 2D coordinates of
@@ -124,8 +127,8 @@
    (letfn [(make-points [old-x old-y theta]
              (lazy-seq
                (let [[dx dy] (archimedean-spiral-derivative b theta)
-                     new-x (+ old-x dx) 
-                     new-y (+ old-y dy)]
+                     new-x (+ old-x dx)   ; FIXME seems wrong
+                     new-y (+ old-y dy)]  ; FIXME seems wrong
                  (cons [new-x new-y]
                        (make-points new-x new-y (+ theta theta-inc))))))]
      (make-points x y angle))))
@@ -204,6 +207,15 @@
      (unit-archimedean-arc-len arm-dist (- theta angle)))))
 
 (comment
+  (def myspir  (take 2000 (archimedean-spiral  2 0.01 50 50 1/3)))
+  (def myspir* (take 2000 (archimedean-spiral* 2 0.01 50 50 1/3)))
+  (count myspir)
+  (count myspir*)
+  (take 10 myspir)
+  (take 10 myspir*)
+  (= myspir myspir*)
+
+
   ;; Some ofthese examples show the arc-len-to-xy functions working,
   ;; but others don't.
   (require '[forage.viz.hanami :as h])
@@ -218,7 +230,7 @@
          (oz/view!)))
 
   (defn spir* [rot]
-    (->> (archimedean-spiral 2 0.01 50 50 rot)
+    (->> (archimedean-spiral* 2 0.01 50 50 rot)
          (h/order-walk-with-labels "spiral*")
          (take 2000)
          (h/vega-walk-plot 600 100 1.0)
