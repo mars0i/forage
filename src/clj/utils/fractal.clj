@@ -1,6 +1,7 @@
 ;; Mathematical operations to create or manipulate fractal structures
 (ns utils.fractal
-  (:require [clojure.math.numeric-tower :as nt :refer [floor]]
+  (:require ;[clojure.math.numeric-tower :as nt] ; per https://clojureverse.org/t/article-blog-post-etc-about-clojure-math-vs-numeric-tower/9805/6?u=mars0i
+            [clojure.math :as math]
             [clojure.set :as s]
             [flatland.ordered.set :as os]
             [fastmath.complex :as c]
@@ -225,8 +226,8 @@
   \"Inverse iteration algorithms for Julia sets\", by Mark McClure, in
   _Mathematica in Education and Research_, v.7 (1998), no. 2, pp 22-28,
   https://marksmath.org/scholarship/Julia.pdf"
-  [z] (c/complex (nt/floor (c/re z))
-                 (nt/floor (c/im z))))
+  [z] (c/complex (math/floor (c/re z))
+                 (math/floor (c/im z))))
 
 (defn c-round
   "Round function for complex numbers based on Wolframe's Floor function:
@@ -236,8 +237,8 @@
   \"Inverse iteration algorithms for Julia sets\", by Mark McClure, in
   _Mathematica in Education and Research_, v.7 (1998), no. 2, pp 22-28,
   https://marksmath.org/scholarship/Julia.pdf"
-  [z] (c/complex (nt/round (c/re z))
-                 (nt/round (c/im z))))
+  [z] (c/complex (math/round (c/re z))
+                 (math/round (c/im z))))
 
 (defn c-round-to
   "Like round (for complex numbers), but rounds to the nearest multiple

@@ -1,16 +1,11 @@
 (ns utils.math
-    (:require [clojure.math.numeric-tower :as nt]
-              [clojure.math :as math]
+    (:require ;[clojure.math.numeric-tower :as nt] ; see https://clojureverse.org/t/article-blog-post-etc-about-clojure-math-vs-numeric-tower/9805/6?u=mars0i
+              [clojure.math :as math :refer [cos sin tan atan2 sqrt round]]
               [clojure.string :as st]))
 
 ; [fastmath.core :as fm]
 ; (use-primitive-operators)
 ; (unuse-primitive-operators)
-
-
-;; TODO Consider revising to use clojure.math in Clojure 1.11:
-;; https://clojure.org/news/2022/03/22/clojure-1-11-0
-;; https://clojure.github.io/clojure/clojure.math-api.html
 
 
 (defn remove-decimal-pt
@@ -21,18 +16,15 @@
   (apply str 
          (st/split (str x) #"\.")))
   
-
-;; Make my code a little prettier, and allow passing as functions:
-;; TODO: Replace java.lang.Math with clojure.math?
-(def pi Math/PI)
-(defn cos [theta] (Math/cos theta))
-(defn sin [theta] (Math/sin theta))
-(defn tan [theta] (Math/tan theta))
+(def pi math/PI) ; I just like it lowercase
+;(defn cos [theta] (Math/cos theta)) ; now using clojure.math wrappers
+;(defn sin [theta] (Math/sin theta))
+;(defn tan [theta] (Math/tan theta))
 
 (defn cartesian-to-polar
   "Convert Cartesian coordinates from x, y to [radius, angle]."
   [[x y]]
-  [(math/sqrt (+ (* x x) (* y y))), (math/atan2 y x)]) ; note args to atan must be backwards
+  [(sqrt (+ (* x x) (* y y))), (atan2 y x)]) ; note args to atan must be backwards
 
 (defn polar-to-cartesian
   "Convert polar coordinates from radius r and angle theta to a
@@ -49,8 +41,8 @@
     [x y original-r new-r original-theta new-theta])
 )
 
-(defn ln [x] (Math/log x))
-(defn log [base x] (/ (ln x) (ln base)))
+(def ln math/log) ; alias so I don't have to remember whether log is ln or is arbitrary base
+(defn log-to-base [base x] (/ (ln x) (ln base)))
 
 
 (defn rotate
@@ -69,7 +61,7 @@
   [[x0 y0] [x1 y1]]
   (let [xdiff (- x0 x1)
         ydiff (- y0 y1)]
-  (nt/sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
+  (sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
 
 
 ;; Implements $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\;$  given $\;ax^2 + bx + c = 0$.
@@ -79,7 +71,7 @@
   "Returns the result of the quadratic formula applied to the coefficients in
   ax^2 + bx + c = 0.  plus-or-minus should be one of the two functions: + - ."
   [plus-or-minus a b c]
-  (let [root-part (nt/sqrt (- (* b b) (* 4 a c)))
+  (let [root-part (sqrt (- (* b b) (* 4 a c)))
         negb (- b)
         a2 (* 2 a)]
     (/ (plus-or-minus negb root-part) a2)))
@@ -167,10 +159,10 @@
   "Returns the length of an Archimedean spiral with parameter a from the
   center to angle x."
   [b x]
-  (let [rootincsq (nt/sqrt (inc (* x x)))]
+  (let [rootincsq (sqrt (inc (* x x)))]
     (* b 0.5
        (+ (* x rootincsq)
-          (math/log (+ x rootincsq))))))
+          (ln (+ x rootincsq))))))
 
 ;; NOTE No need to add a rotation; this is independent of rotation.
 (defn unit-archimedean-arc-len
@@ -373,7 +365,7 @@
   "Given a number, returns the number of digits in the decimal
   representation of its integer part."
   [n]
-  (count (str (nt/round n))))
+  (count (str (round n))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -391,8 +383,8 @@
     [xm alpha x]
     (if (< x xm)
       0
-      (/ (* alpha (nt/expt xm alpha))
-         (nt/expt x (inc alpha)))))
+      (/ (* alpha (math/pow xm alpha))
+         (math/pow x (inc alpha)))))
 
   ; Assuming that $\mu > 1$, 
   ; $\int_r^{\infty} x^{-\mu} \; dl = \frac{r^{1-\mu}}{\mu-1} \,$.
@@ -408,5 +400,5 @@
     (if (< x r)
       0
       (let [mu- (dec mu)]
-        (* (nt/expt x (- mu)) (nt/expt r mu-) mu-))))
+        (* (math/pow x (- mu)) (math/pow r mu-) mu-))))
 )

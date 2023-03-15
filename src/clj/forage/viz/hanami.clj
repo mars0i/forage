@@ -1,8 +1,7 @@
 ;; Functions for plotting things in 2D spatial coordinates using Hanami
 ;; and Vega-Lite.
 (ns forage.viz.hanami
-  (:require [clojure.math.numeric-tower :as nt]
-            [aerial.hanami.common :as hc]
+  (:require [aerial.hanami.common :as hc]
             [aerial.hanami.templates :as ht]
             [oz.core :as oz]
             [forage.env-mason :as em] ;[forage.mason.foodspot :as mf]

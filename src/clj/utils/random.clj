@@ -21,7 +21,8 @@
            [java.io
             ByteArrayOutputStream ObjectOutputStream FileOutputStream
             ByteArrayInputStream  ObjectInputStream  FileInputStream])
-  (:require [clojure.math.numeric-tower :as nt]
+  (:require ;[clojure.math.numeric-tower :as nt] ; now using clojure.math/pow instead of nt/expt see https://clojureverse.org/t/article-blog-post-etc-about-clojure-math-vs-numeric-tower/9805/6?u=mars0i
+            [clojure.math :as math]
             [clojure.java.io :as io]))
 
 ;; NOTE Apache Commons Math 3.6.1 is latest official, but I started using
@@ -366,13 +367,13 @@
   distributed values."
   ([mu minval x] 
    (let [-alpha (- 1 mu)]
-     (- 1 (/ (nt/expt x -alpha)
-             (nt/expt minval -alpha)))))
+     (- 1 (/ (math/pow x -alpha)
+             (math/pow minval -alpha)))))
   ([mu minval maxval x]
    (let [-alpha (- 1 mu)
-        minval-pow (nt/expt minval -alpha)]
-     (/ (- minval-pow (nt/expt x -alpha))
-        (- minval-pow (nt/expt maxval -alpha))))))
+        minval-pow (math/pow minval -alpha)]
+     (/ (- minval-pow (math/pow x -alpha))
+        (- minval-pow (math/pow maxval -alpha))))))
 
 (comment
   (powerlaw-cumulative 0.5285 16.18435699 2.1706 7.55453491) ; => 0.3989374083781279
