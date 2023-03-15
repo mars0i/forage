@@ -84,25 +84,51 @@
   Parameter b determines how widely separated the arms are."
   [b theta]
   (let [r (* b theta)]
-    [(* r (cos theta)) (* r (sin theta))]))
+    [(* r (cos theta)), (* r (sin theta))]))
 
+(defn archimedean-spiral-derivative
+  "Returns the Cartesian-coordinates derivative with respect to theta of
+  the Archimedean spiral with parameter b.  That is, the pair returned
+  represents the slope of the spiral at theta."
+  [b theta]
+  [(- (* b (cos theta)), (* b theta (sin theta)))])
 
 ;; If this needed to be more efficient, the maps could be combined
 ;; with comb or a transducer.
 (defn archimedean-spiral
   "Returns an infinite sequence of 2D coordinates of points on an
   Archimedean spiral around the origin.  Parameter b determines how
-  widely separated the arms are.  increment is the distance between
+  widely separated the arms are.  theta-inc is the distance between
   input values in radians; it determines the smoothness of a plot.  If x
   and y are provided, they move the center of the spiral to [x y].  If
   angle is provided, the entire spiral is rotated by angle radians."
-  ([b increment] (map (fn [x] (archimedean-spiral-pt b (* increment x)))
+  ([b theta-inc] (map (fn [x] (archimedean-spiral-pt b (* theta-inc x)))
                       (range)))
-  ([b increment x y] (map (fn [[x' y']] [(+ x' x) (+ y' y)])
-                          (archimedean-spiral b increment)))
-  ([b increment x y angle] (map (comp (fn [[x' y']] [(+ x' x) (+ y' y)]) ; replace with transducer?
+  ([b theta-inc x y] (map (fn [[x' y']] [(+ x' x) (+ y' y)])
+                          (archimedean-spiral b theta-inc)))
+  ([b theta-inc x y angle] (map (comp (fn [[x' y']] [(+ x' x) (+ y' y)]) ; replace with transducer?
                                       (partial rotate angle)) ; rotation is around (0,0), so apply before shift
-                                (archimedean-spiral b increment))))
+                                (archimedean-spiral b theta-inc))))
+
+(defn archimedean-spiral*
+  "Alternate version of archimedean-spiral function defined in terms of the
+  spiral's derivative. Returns an infinite sequence of 2D coordinates of
+  points on an Archimedean spiral around the origin.  Parameter b
+  determines how widely separated the arms are.  theta-inc is the distance
+  between input values in radians; it determines the smoothness of a plot.
+  If x and y are provided, they move the center of the spiral to [x y].  If
+  angle is provided, the entire spiral is rotated by angle radians."
+  ([b theta-inc]     (archimedean-spiral* b theta-inc 0 0 0))
+  ([b theta-inc x y] (archimedean-spiral* b theta-inc x y 0))
+  ([b theta-inc x y angle]
+   (letfn [(make-points [old-x old-y theta]
+             (lazy-seq
+               (let [[dx dy] (archimedean-spiral-derivative b theta)
+                     new-x (+ old-x dx) 
+                     new-y (+ old-y dy)]
+                 (cons [new-x new-y]
+                       (make-points new-x new-y (+ theta theta-inc))))))]
+     (make-points x y angle))))
 
 ;; On the name of the parameter arm-dist, cf. 
 ;; https://physics.stackexchange.com/questions/83760/what-is-the-space-between-galactic-arms-called
@@ -112,43 +138,16 @@
   "Returns an infinite sequence of 2D coordinate pairs of points on an
   Archimedean spiral around the origin.  Parameter arm-dist is the
   distance between arms or loops along a straight line from the center
-  of the spiral.  increment is the distance between input values in
+  of the spiral.  theta-inc is the distance between input values in
   radians; it determines the smoothness of a plot.  If x and y are
   provided, they move the center of the spiral to [x y].  If angle is
   provided, the entire spiral is rotated by angle radians."
-  ([arm-dist increment]
-   (archimedean-spiral (/ arm-dist 2 pi) increment))
-  ([arm-dist increment x y]
-   (archimedean-spiral (/ arm-dist 2 pi) increment x y))
-  ([arm-dist increment x y angle]
-   (archimedean-spiral (/ arm-dist 2 pi) increment x y angle)))
-
-(defn archimedean-spiral-derivative
-  "Returns the Cartesian-coordinates derivative with respect to theta of
-  the Archimedean spiral with parameter b.  That is, the pair returned
-  represents the slope of the spiral at theta."
-  [b theta]
-  [(- (* b (cos theta)) (* b theta (sin theta)))])
-
-(defn archimedean-spiral*
-  "Alternate version of archimedean-spiral function defined in terms of the
-  spiral's derivative. Returns an infinite sequence of 2D coordinates of
-  points on an Archimedean spiral around the origin.  Parameter b
-  determines how widely separated the arms are.  increment is the distance
-  between input values in radians; it determines the smoothness of a plot.
-  If x and y are provided, they move the center of the spiral to [x y].  If
-  angle is provided, the entire spiral is rotated by angle radians."
-  ([b increment]     (archimedean-spiral* b increment 0 0 0))
-  ([b increment x y] (archimedean-spiral* b increment x y 0))
-  ([b increment x y angle]
-   (letfn [(make-points [old-x old-y theta]
-             (lazy-seq
-               (let [[dx dy] (archimedean-spiral-derivative b theta)
-                     new-x (+ old-x dx) 
-                     new-y (+ old-y dy)]
-                 (cons [new-x new-y]
-                       (make-points new-x new-y (+ theta increment))))))]
-     (make-points x y angle))))
+  ([arm-dist theta-inc]
+   (archimedean-spiral (/ arm-dist 2 pi) theta-inc))
+  ([arm-dist theta-inc x y]
+   (archimedean-spiral (/ arm-dist 2 pi) theta-inc x y))
+  ([arm-dist theta-inc x y angle]
+   (archimedean-spiral (/ arm-dist 2 pi) theta-inc x y angle)))
 
 
 ;; From 
