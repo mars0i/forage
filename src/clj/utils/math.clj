@@ -184,6 +184,7 @@
   ([b [center-x center-y] [x y]]
    (archimedean-arc-len-to-xy b [center-x center-y] [x y] 0))
   ([b [center-x center-y] [x y] angle]
+   (println "WARNING: This function" "archimedean-arc-len-to-xy" "seems to be flaky. Needs work.")
    (let [r (distance-2D [center-x center-y] [x y])
          _ (println r) ; DEBUG
          theta (/ r b)] ; see my ~/math/randomwalks/spiral.nt1
@@ -201,6 +202,7 @@
   ([arm-dist [center-x center-y] [x y]]
    (unit-archimedean-arc-len-to-xy arm-dist [center-x center-y] [x y] 0))
   ([arm-dist [center-x center-y] [x y] angle]
+   (println "WARNING: This function" "unit-archimedean-arc-len-to-xy" "seems to be flaky. Needs work.")
    (let [r (distance-2D [center-x center-y] [x y])
          _ (println r) ; DEBUG
          theta (/ (* 2 pi r) arm-dist)] ; a=arm-dist/2pi, so r/a = r2pi/arm-dist
