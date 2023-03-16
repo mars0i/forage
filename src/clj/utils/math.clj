@@ -84,14 +84,31 @@
   Parameter b determines how widely separated the arms are."
   [b theta]
   (let [r (* b theta)]
-    [(* r (cos theta)), (* r (sin theta))]))
+    [(* r (cos theta))  (* r (sin theta))]))
+
 
 (defn archimedean-spiral-derivative
   "Returns the Cartesian-coordinates derivative with respect to theta of
   the Archimedean spiral with parameter b.  That is, the pair returned
   represents the slope of the spiral at theta."
   [b theta]
-  [(- (* b (cos theta)), (* b theta (sin theta)))])
+  [(- (* b (cos theta)) (* b theta (sin theta)))])
+
+
+(defn archimedean-spiral-vecs
+  "Returns an infinite sequence of mathematical vectors in the form
+  [direction, length], where direction is in radians.  These represent a
+  sequence of steps that approximate an Archimedean spiral with multiplier
+  b, where the directions are theta-inc apart.  Note that though distances
+  have a constant increment, lengths will increase as the spiral moves
+  outward."
+  [b theta-inc]
+  (let [dirs (map (partial * theta-inc) (range))
+        pts (map (partial archimedean-spiral-pt b) dirs)
+        lens (map distance-2D pts (rest pts))]
+    (map vector dirs lens))) 
+
+
 
 ;; If this needed to be more efficient, the maps could be combined
 ;; with comb or a transducer.
@@ -102,13 +119,14 @@
   input values in radians; it determines the smoothness of a plot.  If x
   and y are provided, they move the center of the spiral to [x y].  If
   angle is provided, the entire spiral is rotated by angle radians."
-  ([b theta-inc] (map (fn [x] (archimedean-spiral-pt b (* theta-inc x)))
+  ([b theta-inc] (map (fn [i] (archimedean-spiral-pt b (* theta-inc i)))
                       (range)))
   ([b theta-inc x y] (map (fn [[x' y']] [(+ x' x) (+ y' y)])
                           (archimedean-spiral b theta-inc)))
   ([b theta-inc x y angle] (map (comp (fn [[x' y']] [(+ x' x) (+ y' y)]) ; replace with transducer?
                                       (partial rotate angle)) ; rotation is around (0,0), so apply before shift
                                 (archimedean-spiral b theta-inc))))
+
 
 ;; On the name of the parameter arm-dist, cf. 
 ;; https://physics.stackexchange.com/questions/83760/what-is-the-space-between-galactic-arms-called
