@@ -110,29 +110,6 @@
                                       (partial rotate angle)) ; rotation is around (0,0), so apply before shift
                                 (archimedean-spiral b theta-inc))))
 
-;; FIXME broken - returning empty sequence
-;; Also, it seems like I made a mistake when I wrote it: shouldn't adding the
-;; derivatives wrt x and y not work when the theta-inc is large?
-(defn archimedean-spiral*
-  "Alternate version of archimedean-spiral function defined in terms of the
-  spiral's derivative. Returns an infinite sequence of 2D coordinates of
-  points on an Archimedean spiral around the origin.  Parameter b
-  determines how widely separated the arms are.  theta-inc is the distance
-  between input values in radians; it determines the smoothness of a plot.
-  If x and y are provided, they move the center of the spiral to [x y].  If
-  angle is provided, the entire spiral is rotated by angle radians."
-  ([b theta-inc]     (archimedean-spiral* b theta-inc 0 0 0))
-  ([b theta-inc x y] (archimedean-spiral* b theta-inc x y 0))
-  ([b theta-inc x y angle]
-   (letfn [(make-points [old-x old-y theta]
-             (lazy-seq
-               (let [[dx dy] (archimedean-spiral-derivative b theta)
-                     new-x (+ old-x dx)   ; FIXME seems wrong
-                     new-y (+ old-y dy)]  ; FIXME seems wrong
-                 (cons [new-x new-y]
-                       (make-points new-x new-y (+ theta theta-inc))))))]
-     (make-points x y angle))))
-
 ;; On the name of the parameter arm-dist, cf. 
 ;; https://physics.stackexchange.com/questions/83760/what-is-the-space-between-galactic-arms-called
 ;; I'm calling this "unit" because the first argument is in
