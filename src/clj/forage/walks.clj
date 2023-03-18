@@ -1,6 +1,7 @@
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
 (ns forage.walks
     (:require [utils.math :as m]
+              [utils.spiral :as spiral]
               [utils.random :as r]))
 
 ;; Try this?
@@ -92,7 +93,7 @@
                   (take 1000 (drop 3000 vecs2)) (take 10000 (drop 30000 vecs3))))
 
 
-  (def spirvecs (m/archimedean-spiral-vecs 20 0.01))
+  (def spirvecs (spiral/archimedean-spiral-vecs 20 0.01))
   (def vecsc (concat (take 1000 vecs2) (take 10000 spirvecs) (take 1000 (drop 1000 vecs2))))
   (def vecsd (concat (take 1000 vecs2) (vecs-upto-len 5000 (take 10000 spirvecs)) (take 1000 (drop 1000 vecs2))))
 
@@ -366,7 +367,7 @@
   ;; math-vectors.
   (def levy-walk (walk-stops [1000 1000]
                              (vecs-upto-len 20000 (make-levy-vecs rng3 lendist3 1 5000))))
-  (def spiral-walk (take 5000 (m/unit-archimedean-spiral 10 0.01 1000 1000 1)))  
+  (def spiral-walk (take 5000 (spiral/unit-archimedean-spiral 10 0.01 1000 1000 1)))  
   (def vl-walk (h/order-walk-with-labels "whatever" spiral-walk))
   (def plot (h/vega-walk-plot 600 2000 1.0 vl-walk))
   (oz/view! plot)
