@@ -154,7 +154,7 @@
   (last (second yo))
 )
 
-
+;; NOTE WORKS WITH ANY WALK--NOT ONLY SINGLE LEVY WALKS.
 ;; This function replaced old inner loop in levy-experiments which collected 
 ;; all foodwalk paths before adding statistics to the data$ atom.  That led 
 ;; to excessive memory use, causing a lot of GC and sometimes dying even with 
@@ -253,6 +253,8 @@
        (cl-format true "~{~c~}group ~d [exponent ~f, init-dir ~a] ... " nil (swap! iter-num$ inc) exponent init-dir)  ; ~{~c~} means stuff all chars (~c) in sequence arg here
        (flush)
        (r/write-state (str base-state-filename "_mu" (double-to-dotless exponent) "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin") (r/get-state rng))
+       ;; TODO TODO This next line is the one that performs a Levy run per se (using params passed or 
+       ;; constructed above).  Consider abstracting this out into a parameter to generalize this function.
        (let [sim-fn (partial levy-run rng look-fn init-dir params exponent) ; remaining arg is initial location
              [n-segments lengths found] (time (run-and-collect sim-fn init-loc-fn walks-per-combo))
              n-found (count (keep identity found))
