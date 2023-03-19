@@ -134,7 +134,7 @@
   taken from params if not provided. Returns a triple containing found
   food (nil if none), the walk until where food was found, and the remaining
   steps (nil if none) that would have occurred after food was found."
-  ([rng look-fn init-dir params exponent] ; deprecated case
+  ([rng look-fn init-dir params exponent]
    (levy-run rng look-fn init-dir params exponent ((params :init-loc-fn) nil)))
   ([rng look-fn init-dir params exponent init-loc]
    (w/levy-foodwalk look-fn
@@ -218,17 +218,17 @@
          of found foodspot coord pairs (nil if not found), in combo order.
        - :rng; value is PRNG object with state as it was at end of runs."
   ([env params walk-fns walks-per-fn seed]
-   (levy-experiments env params walk-fns walks-per-fn seed 
+   (walk-experiments env params walk-fns walks-per-fn seed 
                      (partial em/perc-foodspots-exactly env (params :perc-radius))))
   ([env params walk-fns walks-per-fn seed look-fn]
-   (levy-experiments env params walk-fns walks-per-fn seed 
+   (walk-experiments env params walk-fns walks-per-fn seed 
                      look-fn (r/make-well19937 seed)))
   ([env params walk-fns walks-per-fn seed look-fn rng]
    (let [num-dirs (params :num-dirs)
          init-dirs (if num-dirs
                      (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
                            (range (inc num-dirs))) ; inc to include range max
-                     [nil]) ; tell w/levy-walks to leave initial dir random
+                     [nil]) ; leave initial dir random
          init-loc-fn (params :init-loc-fn)
          base-filename (str (params :basename) seed)
          param-filename (str base-filename "params.csv")
