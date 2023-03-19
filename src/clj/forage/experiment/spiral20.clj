@@ -6,6 +6,7 @@
             [forage.env-mason :as em]
             [utils.random :as r]))
 
+(def default-file-prefix "../../data.foraging/forage/")
 
 ;; FOOD-DISTANCE SHOULD DIVIDE HALF-SIZE EVENLY, OR THERE WON't BE FOOD AT CENTER,
 ;; WHICH IS WHERE THE SEARCH STARTS.
@@ -27,6 +28,7 @@
              :maxpathlen          maxpathlen
              :trunclen            half-size
              :look-eps            0.2    ; TODO WILL THIS WORK WITH SHORTER SPIRAL SEGMENTS?
+             :basename            (str default-file-prefix "spiral20_")
              ))
 
 

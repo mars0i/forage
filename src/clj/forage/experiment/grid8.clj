@@ -6,7 +6,7 @@
   (:require [forage.run :as fr]
             [forage.food :as f]
             [forage.walks :as w]
-            [forage.mason.foodspot :as mf]
+            [forage.env-mason :as env]
             [utils.random :as r]
             [utils.math :as m]))
 
@@ -30,6 +30,7 @@
              :look-eps            0.2    ; increment within segments for food check
              :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
              :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
+             :basename            "grid8_"
              :fournier-levels     nil
              :fournier-multiplier nil
             ))
@@ -46,20 +47,20 @@
 ;(def nondestr-params (assoc params :init-pad (* 10 (params :perc-radius))))
 ;(def nondestr-params (assoc params :init-pad (* 50 (params :perc-radius))))
 
-(def nocenter-env (mf/make-env (params :env-discretization)
+(def nocenter-env (env/make-env (params :env-discretization)
                       (params :env-size)
                       (f/centerless-rectangular-grid (params :food-distance)
                                                      (params :env-size)
                                                      (params :env-size))))
 
-(def centered-env (mf/make-env (params :env-discretization)
+(def centered-env (env/make-env (params :env-discretization)
                       (params :env-size)
                       (f/rectangular-grid (params :food-distance)
                                                      (params :env-size)
                                                      (params :env-size))))
 
-(def noctr-look-fn (partial mf/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
-(def ctrd-look-fn (partial mf/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
+(def noctr-look-fn (partial env/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
+(def ctrd-look-fn (partial env/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
 
 
 (comment
@@ -69,6 +70,10 @@
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Data-file-generating exeriment: nondestructive foraging
+
+  (def data-and-rng 
+    (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params
+                               [1.01 1.5 2.0] 10 seed ctrd-look-fn)))
 
   (def data-and-rng  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
