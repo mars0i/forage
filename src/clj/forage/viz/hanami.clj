@@ -1,5 +1,5 @@
 ;; Functions for plotting things in 2D spatial coordinates using Hanami
-;; and Vega-Lite.
+;; and Vega-Lite, and sometimes Oz.
 (ns forage.viz.hanami
   (:require [aerial.hanami.common :as hc]
             [aerial.hanami.templates :as ht]
@@ -7,6 +7,7 @@
             [forage.env-mason :as em] ;[forage.mason.foodspot :as mf]
             [forage.food :as f]
             [forage.walks :as w]
+            [utils.hanami :as uh] ; replace if grid-chart becomes non-local
             [utils.toroidal :as tor]
             [utils.math :as m]))
 
@@ -300,3 +301,54 @@
      ht/layer-chart
      :LAYER (cons env-plot did-couldve-plots))))
 
+;; FIXME IS THERE A LEAK IN THIS?  I don't think there should be,
+;; but seems like there might be.
+;; 
+;; SEE ALSO forage.run/write-found-coords.
+;; 
+;; Maybe ought to be merged with other looping functions above.
+;; But maybe not: levy-experiments and straight-experiments are designed to
+;; automate generation of a lot of data in a systematic way, while
+;; write-foodwalk-plots is designed for exploratory work to understand how
+;; things would or did work when produced systematically, and should allow
+;; a variety of ways of generating the walk data (e.g. by using the same
+;; walk in different envs, which is not usually what I'd want when generating
+;; a lot of data).
+(defn write-foodwalk-plots
+  "Given a sequence of foodwalk triples (foodwalks), uses Hanami,
+  Vega-Lite, and Oz to generate a series of graphic files containing
+  grids/lattices of plots, one plot for each foodwalk.  Filenames are
+  composed of stubname, the seed (could be an arbitrary string), and info
+  about which walks (runs) from foodwalks are included in a particular
+  graphics file.  params is a map of the kind used to specify parameters
+  for walks (illustrated in forage/run.clj and many files in
+  forage/experiment). mu and params are used only for labels or filename
+  info. env is only needed to generate foodspot representations. total-runs
+  specifies how many runs to plot. Currently uses oz/export! to plot, and
+  file-type should be :svg (or :png, but that's currently broken in
+  oz/export!)."
+  [stubname file-type seed                                 ; filename parameters
+   env plot-size runs-per-grid grid-columns stroke-width display-radius ; plot display parameters
+   mu params                                               ; plot header label info
+   foodwalks]                                              ; data 
+  (let [total-runs (count foodwalks)
+        basename (str stubname "seed" seed)
+        basetitle (str "mu=" mu ", seed=" seed ", maxpathlen=trunclen=" (params :maxpathlen))]
+    (doseq [plot-index (range 0 total-runs runs-per-grid)]
+      (let [first-run-id (inc plot-index)
+            last-run-id  (+ plot-index runs-per-grid)
+            suffix (name file-type)
+            filename (str basename "runs" first-run-id "thru" last-run-id "." suffix)
+            title (str basetitle ", runs " first-run-id " through " last-run-id)]
+        (print "Constructing" filename "... ") (flush)
+        (-> (hc/xform
+             uh/grid-chart
+             :TITLE title
+             :TOFFSET 10
+             :COLUMNS grid-columns
+             :CONCAT (mapv (partial vega-envwalk-plot env plot-size stroke-width display-radius)
+                           (map vector 
+                                (take runs-per-grid
+                                      (drop plot-index foodwalks)))))
+            (oz/export! filename))
+        (println "written.") (flush)))))

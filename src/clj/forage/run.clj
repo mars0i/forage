@@ -3,17 +3,18 @@
             [clojure.java.io :as io]
             [clojure.pprint :refer [cl-format]]
             [aerial.hanami.common :as hc]
-            [oz.core :as oz] ; REMOVE IF I switch to another plot-rendering lib
             [utils.misc :as misc]
             [utils.math :as m]
             [utils.random :as r]
-            [utils.hanami :as uh] ; replace if grid-chart becomes non-local
             [forage.viz.hanami :as h]
             [forage.env-mason :as em] ;[forage.mason.foodspot :as mf]
             [forage.walks :as w]
             [forage.food :as f]))
 
-(def default-file-prefix "../../data.foraging/forage/")
+;; NOTE write-foodwalk-plots has been moved to forage/viz/hanami.clj
+
+(def default-dirname "../../data.foraging/forage/")
+(def default-file-prefix default-dirname) ; for backward compatibility
 
 ;; small utility functions later:
 (declare ignore-food append-row append-labels spit-csv double-to-dotless)
@@ -38,7 +39,8 @@
                :look-eps            0.2    ; increment within segments for food check
                :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
                :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
-               :basefilename       "levy"
+               :basename            "levy"
+               :dirname             default-dirname
                ))
 
   ;; NON-RANDOM STRAIGHT RUNS that systematically try a series of directions:
@@ -181,97 +183,6 @@
                (conj lengths (w/path-until-found-length fw)))))))
 
 
-(defn levy-experiments
-  "Uses seed to seed a PRNG unless rng is provided, in which case seed
-  is only used for informational purposes in file output.  Uses
-  parameters in the params map.  Then for each exponent in exponents,
-  creates a powerlaw (Pareto) distribution using that exponent, and runs
-  walks-per-combo Levy-walk style food searches using the parameters,
-  look-fn for each direction in init-dirs.  A new PRNG is created using
-  seed unless a PRNG is passed in for parameter rng, in which case the
-  seed is just used as an id number. Output filenames (see below) 
-  are constructed using file-prefix and seed.
-  Output:
-  * Writes informational messages to stdout.
-  * Writes one random number generator state file *.bin per parameter 
-    combo (indicated in filename). Allows restart with that combo and
-    the same PRNG state using utils.random/read-state and set-state.
-  * Writes file *params.csv listing fixed parameters used by all runs.
-  * Writes file *data.csv containing summary data about runs:
-       - initial direction (empty if random).
-       - powerlaw exponent, if used.
-       - total segments in runs with that combination of parameters.
-       - number of foodspots found.
-       - efficiency of parameter combo (num found / total path length).
-       - total path length.
-       - a series of fields containing path lengths from individual runs.
-  * Returns map with keys:
-       - :data; value is data in CSV file.
-       - :found-coords; value is sequence of per-parameter-combo sequences
-         of found foodspot coord pairs (nil if not found), in combo order.
-       - :rng; value is PRNG object with state as it was at end of runs."
-  ([file-prefix env params exponents walks-per-combo seed]
-   (levy-experiments file-prefix env params exponents walks-per-combo seed 
-                     (partial em/perc-foodspots-exactly env (params :perc-radius))))
-  ([file-prefix env params exponents walks-per-combo seed look-fn]
-   (levy-experiments file-prefix env params exponents walks-per-combo seed 
-                     look-fn (r/make-well19937 seed)))
-  ([file-prefix env params exponents walks-per-combo seed look-fn rng]
-   (let [num-dirs (params :num-dirs)
-         init-dirs (if num-dirs
-                     (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
-                           (range (inc num-dirs))) ; inc to include range max
-                     [nil]) ; tell w/levy-walks to leave initial dir random
-         init-loc-fn (params :init-loc-fn)
-         base-filename (str file-prefix (params :basename) seed)
-         param-filename (str base-filename "params.csv")
-         data-filename (str base-filename "data.csv")
-         base-state-filename (str base-filename "state") ; for PRNG state files
-         sorted-params (into (sorted-map) params) ; for writing param file
-         param-labels (append-labels (concat ["namespace" "seed"] (keys sorted-params)))
-         param-data (append-row param-labels
-                                (cons (str *ns*)
-                                      (cons (str "\"" seed "\"") ; keep Excel from making it a float
-                                            (vals sorted-params))))
-         runids (range 1 (inc walks-per-combo))
-         path-labels (map #(str "path " %) runids)   ; labels for path lengths until found or gave up
-         ; found-labels (map #(str "found " %) runids) ; labels for found foodspots coords
-         ;; TODO TODO This is a place that won't work with composite walks:
-         data$ (atom (append-labels (into       ; header row for data csv
-                                     ["initial dir" "exponent" "segments"
-                                      "found" "efficency" "total path len"]
-                                     path-labels)))
-         found-coords$ (atom [])
-         iter-num$ (atom 0)
-         walks-per-combo-digits (m/count-decimal-digits walks-per-combo)] ; passed to cl-format to format found foodspot count
-     (spit-csv param-filename param-data) ; write out fixed parameters
-     ;; TODO TODO With composite walks, counting exponents doesn't fit:
-     (cl-format true "Performing ~d runs in groups of ~d ...~%" 
-                (* (count exponents) walks-per-combo (if num-dirs (inc num-dirs) 1))
-                walks-per-combo)
-     ;; TODO TODO With composite walks, looping through exponents and init-dirs doesn't make sense:
-     (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
-             init-dir init-dirs]
-     ;; TODO TODO With composite walks, exponents and init-dirs doesn't fit:
-       (cl-format true "~{~c~}group ~d [exponent ~f, init-dir ~a] ... " nil (swap! iter-num$ inc) exponent init-dir)  ; ~{~c~} means stuff all chars (~c) in sequence arg here
-       (flush)
-     ;; TODO TODO With composite walks, exponents and init-dirs doesn't fit:
-       (r/write-state (str base-state-filename "_mu" (double-to-dotless exponent) "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin") (r/get-state rng))
-       ;; TODO TODO This next line is the one that performs a Levy run per se (using params passed or 
-       ;; constructed above).  Consider abstracting this out into a parameter to generalize this function.
-       (let [sim-fn (partial levy-run rng look-fn init-dir params exponent) ; remaining arg is initial location
-             [n-segments lengths found] (time (run-and-collect sim-fn init-loc-fn walks-per-combo))
-             n-found (count (keep identity found))
-             total-length (reduce + lengths)
-             efficiency (/ n-found total-length)] ; lengths start as doubles and remain so--this is double div
-         (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-combo-digits n-found efficiency) ; walks-per-combo digits makes num found same width
-         (swap! found-coords$ conj found)
-         (swap! data$ conj (into [init-dir exponent n-segments n-found efficiency total-length] lengths))))
-     (spit-csv data-filename @data$)
-     (println " done.")
-     {:data @data$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
-
-
 ;; NEW, GENERALIZED VERSION OF leyv-experiments.
 ;; Generalized for any kind of walk, not just Levy walks.
 ;; NOTE I removed the file-prefix parameter that was included in
@@ -287,8 +198,7 @@
   direction in init-dirs.  A new PRNG is created using seed unless a PRNG
   is passed in for parameter rng, in which case the seed is just used as an
   id number. Output filenames (see below) are constructed using file-prefix
-  and seed.
-  Output:
+  and seed. Output:
   * Writes informational messages to stdout.
   * Writes one random number generator state file *.bin per parameter 
     combo (indicated in filename). Allows restart with that combo and
@@ -369,6 +279,99 @@
      {:data @data$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
 
+(defn levy-experiments
+  "Uses seed to seed a PRNG unless rng is provided, in which case seed
+  is only used for informational purposes in file output.  Uses
+  parameters in the params map.  Then for each exponent in exponents,
+  creates a powerlaw (Pareto) distribution using that exponent, and runs
+  walks-per-combo Levy-walk style food searches using the parameters,
+  look-fn for each direction in init-dirs.  A new PRNG is created using
+  seed unless a PRNG is passed in for parameter rng, in which case the
+  seed is just used as an id number. Output filenames (see below) 
+  are constructed using dirname and seed.
+  Output:
+  * Writes informational messages to stdout.
+  * Writes one random number generator state file *.bin per parameter 
+    combo (indicated in filename). Allows restart with that combo and
+    the same PRNG state using utils.random/read-state and set-state.
+  * Writes file *params.csv listing fixed parameters used by all runs.
+  * Writes file *data.csv containing summary data about runs:
+       - initial direction (empty if random).
+       - powerlaw exponent, if used.
+       - total segments in runs with that combination of parameters.
+       - number of foodspots found.
+       - efficiency of parameter combo (num found / total path length).
+       - total path length.
+       - a series of fields containing path lengths from individual runs.
+  * Returns map with keys:
+       - :data; value is data in CSV file.
+       - :found-coords; value is sequence of per-parameter-combo sequences
+         of found foodspot coord pairs (nil if not found), in combo order.
+       - :rng; value is PRNG object with state as it was at end of runs."
+  ([dirname env params exponents walks-per-combo seed]
+   (levy-experiments dirname env params exponents walks-per-combo seed 
+                     (partial em/perc-foodspots-exactly env (params :perc-radius))))
+  ([dirname env params exponents walks-per-combo seed look-fn]
+   (levy-experiments dirname env params exponents walks-per-combo seed 
+                     look-fn (r/make-well19937 seed)))
+  ([dirname env params exponents walks-per-combo seed look-fn rng]
+   (let [num-dirs (params :num-dirs)
+         init-dirs (if num-dirs
+                     (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
+                           (range (inc num-dirs))) ; inc to include range max
+                     [nil]) ; tell w/levy-walks to leave initial dir random
+         init-loc-fn (params :init-loc-fn)
+         base-filename (str dirname (params :basename) seed)
+         param-filename (str base-filename "params.csv")
+         data-filename (str base-filename "data.csv")
+         base-state-filename (str base-filename "state") ; for PRNG state files
+         sorted-params (into (sorted-map) params) ; for writing param file
+         param-labels (append-labels (concat ["namespace" "seed"] (keys sorted-params)))
+         param-data (append-row param-labels
+                                (cons (str *ns*)
+                                      (cons (str "\"" seed "\"") ; keep Excel from making it a float
+                                            (vals sorted-params))))
+         runids (range 1 (inc walks-per-combo))
+         path-labels (map #(str "path " %) runids)   ; labels for path lengths until found or gave up
+         ; found-labels (map #(str "found " %) runids) ; labels for found foodspots coords
+         data$ (atom (append-labels (into       ; header row for data csv
+                                     ["initial dir" "exponent" "segments"
+                                      "found" "efficency" "total path len"]
+                                     path-labels)))
+         found-coords$ (atom [])
+         iter-num$ (atom 0)
+         walks-per-combo-digits (m/count-decimal-digits walks-per-combo)] ; passed to cl-format to format found foodspot count
+     (spit-csv param-filename param-data) ; write out fixed parameters
+     (cl-format true "Performing ~d runs in groups of ~d ...~%" 
+                (* (count exponents) walks-per-combo (if num-dirs (inc num-dirs) 1))
+                walks-per-combo)
+     (doseq [exponent exponents  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
+             init-dir init-dirs]
+       (cl-format true "~{~c~}group ~d [exponent ~f, init-dir ~a] ... " nil (swap! iter-num$ inc) exponent init-dir)  ; ~{~c~} means stuff all chars (~c) in sequence arg here
+       (flush)
+       (r/write-state (str base-state-filename "_mu" (double-to-dotless exponent) "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin") (r/get-state rng))
+       (let [sim-fn (partial levy-run rng look-fn init-dir params exponent) ; remaining arg is initial location
+             [n-segments lengths found] (time (run-and-collect sim-fn init-loc-fn walks-per-combo))
+             n-found (count (keep identity found))
+             total-length (reduce + lengths)
+             efficiency (/ n-found total-length)] ; lengths start as doubles and remain so--this is double div
+         (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-combo-digits n-found efficiency) ; walks-per-combo digits makes num found same width
+         (swap! found-coords$ conj found)
+         (swap! data$ conj (into [init-dir exponent n-segments n-found efficiency total-length] lengths))))
+     (spit-csv data-filename @data$)
+     (println " done.")
+     {:data @data$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
+
+
+;; I have a lot of experiment files that use levy-experiments.  I'd rather
+;; not break them, but going forward, I'd rather use the new-dirname-in-
+;; params parameter list that walk-experiments uses.
+(defn levy-experiments-no-pref
+  "Wrapper around levy-experiments that gets its first argument dirname as
+  the value of :dirname in params."
+  [env params walks-per-combo seed & addl-args]
+  (apply levy-experiments (params :dirname)
+         env params walks-per-combo seed addl-args))
 
 ;; TODO Modify further for new :init-loc-fn parameter?  
 ;; Currently always ;; passes nil to the init-loc-fn.
@@ -425,55 +428,7 @@
     (println "done.")
     data))
 
-
-;; FIXME IS THERE A LEAK IN THIS?  I don't think there should be,
-;; but seems like maybe.
-;; 
-;; Maybe ought to be merged with other looping functions above.
-;; But maybe not: levy-experiments and straight-experiments are designed to
-;; automate generation of a lot of data in a systematic way, while
-;; write-foodwalk-plots is designed for exploratory work to understand how
-;; things would or did work when produced systematically, and should allow
-;; a variety of ways of generating the walk data (e.g. by using the same
-;; walk in different envs, which is not usually what I'd want when generating
-;; a lot of data).
-(defn write-foodwalk-plots
-  "Given a sequence of foodwalk triples (foodwalks), uses Hanami,
-  Vega-Lite, and Oz to generate a series of graphic files containing
-  grids/lattices of plots, one plot for each foodwalk.  Filenames are
-  composed of stubname, the seed (could be an arbitrary string), and
-  info about which walks (runs) from foodwalks are included in a
-  particular graphics file.  mu and params are used only for labels or
-  filename info. env is only needed to generate foodspot
-  representations. total-runs specifies how many runs to plot.
-  Currently uses oz/export! to plot, and file-type should be :svg (or
-  :png, but that's currently broken in oz/export!)."
-  [stubname file-type seed                                 ; filename parameters
-   env plot-size runs-per-grid grid-columns stroke-width display-radius ; plot display parameters
-   mu params                                               ; plot header label info
-   foodwalks]                                              ; data 
-  (let [total-runs (count foodwalks)
-        basename (str stubname "seed" seed)
-        basetitle (str "mu=" mu ", seed=" seed ", maxpathlen=trunclen=" (params :maxpathlen))]
-    (doseq [plot-index (range 0 total-runs runs-per-grid)]
-      (let [first-run-id (inc plot-index)
-            last-run-id  (+ plot-index runs-per-grid)
-            suffix (name file-type)
-            filename (str basename "runs" first-run-id "thru" last-run-id "." suffix)
-            title (str basetitle ", runs " first-run-id " through " last-run-id)]
-        (print "Constructing" filename "... ") (flush)
-        (-> (hc/xform
-             uh/grid-chart
-             :TITLE title
-             :TOFFSET 10
-             :COLUMNS grid-columns
-             :CONCAT (mapv (partial h/vega-envwalk-plot env plot-size stroke-width display-radius)
-                           (map vector 
-                                (take runs-per-grid
-                                      (drop plot-index foodwalks)))))
-            (oz/export! filename))
-        (println "written.") (flush)))))
-
+;; NOTE write-foodwalk-plots (which used to be here) has been moved to forage/viz/hanami.clj.
 
 (defn write-found-coords
   "Given a data-rng structure produced by levy-experiments and a

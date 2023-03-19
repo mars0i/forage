@@ -10,6 +10,7 @@
             [utils.random :as r]
             [utils.math :as m]))
 
+(def default-dirname "../../data.foraging/forage/")
 
 (def half-size 5000) ; half the full width of the env
 (def init-food 1000)
@@ -31,6 +32,7 @@
              :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
              :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
              :basename            "grid8_"
+             :dirname             default-dirname
              :fournier-levels     nil
              :fournier-multiplier nil
             ))
@@ -71,36 +73,37 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Data-file-generating exeriment: nondestructive foraging
 
-  (def data-and-rng 
-    (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params
-                               [1.01 1.5 2.0] 10 seed ctrd-look-fn)))
+  ;; Testing changes in run.clj:
+  (def levy-data-and-rng (time (fr/levy-experiments-no-pref centered-env nondestr-params [1.01 1.5 2.0] 10 seed ctrd-look-fn)))
+  ;; TODO CREATE MAP walk-fns FOR USE WITH WALK-EXPERIMENTS:
+  (def walk-data-and-rng (time (fr/walk-experiments centered-env nondestr-params walk-fns 1.5 2.0] 10 seed ctrd-look-fn)))
 
-  (def data-and-rng  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng  (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 5000))
-  (def data-and-rng-5000 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-5000 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 2500))
-  (def data-and-rng-2500 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
-  (def data-and-rng-2500 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
-  (def data-and-rng-2500 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 2.0] 10 seed ctrd-look-fn)))
+  (def data-and-rng-2500 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [1.001 2.0] 10 seed ctrd-look-fn)))
   (:found-coords data-and-rng-2500)
 
-  (def data-and-rng-2500-1.001 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001] 1000 seed ctrd-look-fn)))
-  (def data-and-rng-2500-1.5 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.5] 1000 seed ctrd-look-fn)))
-  (def data-and-rng-2500-2.0 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.0] 1000 seed ctrd-look-fn)))
-  (def data-and-rng-2500-2.5 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.5] 1000 seed ctrd-look-fn)))
-  (def data-and-rng-2500-3.0 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [3.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500-1.001 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [1.001] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500-1.5 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [1.5] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500-2.0 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [2.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500-2.5 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [2.5] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2500-3.0 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [3.0] 1000 seed ctrd-look-fn)))
 
 (count data-and-rng-2500-2.0)
 
 
   (def rng (:rng data-and-rng))
-  (def data-and-rng2 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params [1.001 1.5] 1000 seed ctrd-look-fn rng)))
+  (def data-and-rng2 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params [1.001 1.5] 1000 seed ctrd-look-fn rng)))
 
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 2000))
-  (def data-and-rng-2000  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-2000  (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
   ;; ...............................................................
   ;; ILLUSTRATIONS OF CODE FOR RUNNING IN PARALLEL NREPL SESSIONS
@@ -108,18 +111,18 @@
   ;; For use with parallel nrepl sessions from within nvim/conjure.  The change in the filename prevents one session's data from clobbering
   ;; the other's.  Note you must use different params if you're using the same seed; otherwise you're just doing the same thing twice:
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 2000))
-  (def data-and-rng1 (time (fr/levy-experiments (str fr/default-file-prefix "1stRuns") centered-env nondestr-params-shorttrunclen [2.0] 1000 seed ctrd-look-fn)))
-  (def data-and-rng2 (time (fr/levy-experiments (str fr/default-file-prefix "2ndRuns") centered-env nondestr-params-shorttrunclen [3.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng1 (time (fr/levy-experiments (str fr/default-dirname "1stRuns") centered-env nondestr-params-shorttrunclen [2.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng2 (time (fr/levy-experiments (str fr/default-dirname "2ndRuns") centered-env nondestr-params-shorttrunclen [3.0] 1000 seed ctrd-look-fn)))
   ;; If you use different seeds--which you ought to do to run the same parameters--you don't have to change the file prefix:
-  (def data-and-rng1 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.0] 1000 (r/make-seed) ctrd-look-fn)))
-  (def data-and-rng2 (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [2.0] 1000 (r/make-seed) ctrd-look-fn)))
+  (def data-and-rng1 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [2.0] 1000 (r/make-seed) ctrd-look-fn)))
+  (def data-and-rng2 (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [2.0] 1000 (r/make-seed) ctrd-look-fn)))
   ;; ...............................................................
 
   (def nondestr-params-shorttrunclen (assoc nondestr-params :trunclen 1500))
-  (def data-and-rng-1500  (time (fr/levy-experiments fr/default-file-prefix centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
+  (def data-and-rng-1500  (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params-shorttrunclen [1.001 1.5 2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
   (def data-and-rng-1500  (time (fr/levy-experiments
-                                  fr/default-file-prefix 
+                                  fr/default-dirname 
                                   centered-env nondestr-params-shorttrunclen
                                   [1.5 2.0 2.5 3.0] 100 seed ctrd-look-fn)))
 
@@ -128,11 +131,12 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Plotting
   ;; The mu's here are merely used for informational output.
+  (require '[forage.viz.hanami :as h])
   (let [env nocenter-env
         mu 2.0
         n-to-plot 1]
     (time
-     (fr/write-foodwalk-plots 
+     (h/write-foodwalk-plots 
       (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
       :svg seed env 800 1 1 100 500 mu params (take n-to-plot (w/sort-foodwalks fws)))))
   ;:svg seed env 800 12 3 nil 50 mu params (take n-to-plot (w/sort-foodwalks fws)))

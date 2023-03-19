@@ -6,7 +6,7 @@
             [forage.env-mason :as em]
             [utils.random :as r]))
 
-(def default-file-prefix "../../data.foraging/forage/")
+(def default-dirname "../../data.foraging/forage/")
 
 ;; FOOD-DISTANCE SHOULD DIVIDE HALF-SIZE EVENLY, OR THERE WON't BE FOOD AT CENTER,
 ;; WHICH IS WHERE THE SEARCH STARTS.
@@ -28,7 +28,7 @@
              :maxpathlen          maxpathlen
              :trunclen            half-size
              :look-eps            0.2    ; TODO WILL THIS WORK WITH SHORTER SPIRAL SEGMENTS?
-             :basename            (str default-file-prefix "spiral20_")
+             :basename            (str default-dirname "spiral20_")
              ))
 
 
@@ -55,18 +55,18 @@
 
   ;; NONDESTRUCTIVE/ASSYMETRIC:
   (def data-rng-assym
-    (time (fr/levy-experiments fr/default-file-prefix centered-env assym-params
+    (time (fr/levy-experiments fr/default-dirname centered-env assym-params
                                nine-exponents 5000 seed ctrd-look-fn)))
   (def shift-data-rng-assym
-    (time (fr/levy-experiments fr/default-file-prefix shift-centered-env assym-params
+    (time (fr/levy-experiments fr/default-dirname shift-centered-env assym-params
                                nine-exponents 5000 seed shift-ctrd-look-fn)))
 
   ;; DESTRUCTIVE/SYMETRIC:
   (def data-rng-symm
-    (time (fr/levy-experiments fr/default-file-prefix env params
+    (time (fr/levy-experiments fr/default-dirname env params
                                nine-exponents 5000 seed look-fn)))
   (def shift-data-rng-symm 
-    (time (fr/levy-experiments fr/default-file-prefix shift-env params
+    (time (fr/levy-experiments fr/default-dirname shift-env params
                                five-exponents 100 seed shift-look-fn)))
 
 )
