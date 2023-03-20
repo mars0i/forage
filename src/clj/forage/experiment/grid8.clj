@@ -52,16 +52,16 @@
 ;(def nondestr-params (assoc params :init-pad (* 50 (params :perc-radius))))
 
 (def nocenter-env (env/make-env (params :env-discretization)
-                      (params :env-size)
-                      (f/centerless-rectangular-grid (params :food-distance)
-                                                     (params :env-size)
-                                                     (params :env-size))))
+                                (params :env-size)
+                                (f/centerless-rectangular-grid (params :food-distance)
+                                                               (params :env-size)
+                                                               (params :env-size))))
 
 (def centered-env (env/make-env (params :env-discretization)
-                      (params :env-size)
-                      (f/rectangular-grid (params :food-distance)
-                                                     (params :env-size)
-                                                     (params :env-size))))
+                                (params :env-size)
+                                (f/rectangular-grid (params :food-distance)
+                                                    (params :env-size)
+                                                    (params :env-size))))
 
 (def noctr-look-fn (partial env/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
 (def ctrd-look-fn (partial env/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
@@ -70,18 +70,18 @@
 (comment
 
   (def seed (r/make-seed))
-  (def seed -1952310114482451978)
   (def rng (r/make-well19937 seed))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Data-file-generating exeriment: nondestructive foraging
 
-  (def walk-fns {"2" (fn [init-loc] (fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0 init-loc))})
-
-  ;; Testing some changes in run.clj 3/2023:
-  (def levy-data-and-rng (time (fr/levy-experiments "./" centered-env nondestr-params [2.0] 1 seed ctrd-look-fn)))
-  ;; TODO CREATE MAP walk-fns FOR USE WITH WALK-EXPERIMENTS:
-  (def walk-data-and-rng (time (fr/walk-experiments centered-env nondestr-params walk-fns 1 seed ctrd-look-fn)))
+  ;; TESTING CHANGES to run.clj 3/2023:
+  (def walk-fns {"1.01" (fn [init-loc] (fr/levy-run rng ctrd-look-fn nil nondestr-params 1.01 init-loc))
+                 "1.5"  (fn [init-loc] (fr/levy-run rng ctrd-look-fn nil nondestr-params 1.5 init-loc))
+                 "2.0"  (fn [init-loc] (fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0 init-loc))
+                 "3.0"  (fn [init-loc] (fr/levy-run rng ctrd-look-fn nil nondestr-params 3.0 init-loc))})
+  (def walk-data-and-rng (time (fr/walk-experiments centered-env nondestr-params walk-fns 100 seed ctrd-look-fn)))
+  (def levy-data-and-rng (time (fr/levy-experiments "./" centered-env nondestr-params [1.01 1.5 2.0 3.0] 100 seed ctrd-look-fn)))
 
   (def data-and-rng  (time (fr/levy-experiments fr/default-dirname centered-env nondestr-params [2.0 2.5 3.0] 1000 seed ctrd-look-fn)))
 
@@ -144,6 +144,5 @@
      (h/write-foodwalk-plots 
       (str (System/getenv "HOME") "/docs/src/data.foraging/forage/yo_mu" mu)
       :svg seed env 800 1 1 100 500 mu params (take n-to-plot (w/sort-foodwalks fws)))))
-  ;:svg seed env 800 12 3 nil 50 mu params (take n-to-plot (w/sort-foodwalks fws)))
 
 )
