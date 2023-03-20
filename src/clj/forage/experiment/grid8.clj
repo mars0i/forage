@@ -24,7 +24,9 @@
              :powerlaw-min        1
              :env-size            (* 2 half-size)
              :env-discretization  5 ; for Continuous2D; see foodspot.clj
-             :init-loc-fn  (constantly [half-size half-size])
+             :init-loc-fn         (constantly [half-size half-size]) ; always start in center
+             ;:init-loc-fn         (partial fr/end-of-walk [half-size half-size]) ; start from end of previous foodwalk, after starting in center.
+             ;:init-loc-fn         (partial fr/end-of-walk-if-found [half-size half-size]) ; start from end of previous foodwalk if it successful
              :init-pad            nil ; if truthy, initial loc offset by this in rand dir
              :maxpathlen          (* 1000 half-size) ; max total length of search path
              :trunclen            10000 ; max length of any line segment
