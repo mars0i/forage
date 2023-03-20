@@ -191,15 +191,16 @@
 (defn walk-experiments
   "Uses seed to seed a PRNG unless rng is provided, in which case seed is
   only used for informational purposes in file output.  Uses parameters in
-  the params map.  walk-fns s/b a map with values that are functions of
-  that can generate a walk given [FIXME] such and such arguments.  The keys
-  in walk-fns should be strings that can be used as names of the
-  corresponding functions for reporting purposes. Then for each walk-fn
-  runs walks-per-combo food searches using the walk-fn and look-fn for each
-  direction in init-dirs.  A new PRNG is created using seed unless a PRNG
-  is passed in for parameter rng, in which case the seed is just used as an
-  id number. Output filenames (see below) are constructed using file-prefix
-  and seed. Output:
+  the params map.  walk-fns s/b a map with values that are functions of one
+  argument, which will be passed to the value of :init-loc-fn in params.
+  walk-fns should each generate a walk given such a previous location
+  argument. The keys in walk-fns should be strings that can be used as
+  names of the corresponding functions for reporting purposes. Then for
+  each walk-fn runs walks-per-combo food searches using the walk-fn and
+  look-fn for each direction in init-dirs.  A new PRNG is created using
+  seed unless a PRNG is passed in for parameter rng, in which case the seed
+  is just used as an id number. Output filenames (see below) are
+  constructed using file-prefix and seed. Output:
   * Writes informational messages to stdout.
   * Writes one random number generator state file *.bin per parameter 
     combo (indicated in filename). Allows restart with that combo and
