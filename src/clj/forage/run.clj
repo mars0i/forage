@@ -135,7 +135,8 @@
   food (nil if none), the walk until where food was found, and the remaining
   steps (nil if none) that would have occurred after food was found."
   ([rng look-fn init-dir params exponent]
-   (levy-run rng look-fn init-dir params exponent ((params :init-loc-fn) nil)))
+   (levy-run rng look-fn init-dir params exponent
+             ((params :init-loc-fn) nil)))
   ([rng look-fn init-dir params exponent init-loc]
    (w/levy-foodwalk look-fn
                     (params :look-eps) 
