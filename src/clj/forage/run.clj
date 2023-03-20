@@ -230,7 +230,7 @@
                            (range (inc num-dirs))) ; inc to include range max
                      [nil]) ; leave initial dir random
          init-loc-fn (params :init-loc-fn)
-         base-filename (str (params :basename) seed)
+         base-filename (str (params :dirname) (params :basename) seed)
          param-filename (str base-filename "params.csv")
          data-filename (str base-filename "data.csv")
          base-state-filename (str base-filename "state") ; for PRNG state files
@@ -266,7 +266,7 @@
        (r/write-state (str base-state-filename "_mu" walk-name "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin") (r/get-state rng))
        ;; TODO TODO This next line is the one that performs a Levy run per se (using params passed or 
        ;; constructed above).  Consider abstracting this out into a parameter to generalize this function.
-       (let [sim-fn (partial (walk-fns walk-name) rng look-fn init-dir params) ; remaining arg is initial location [walk-name is a string, so can't be first]
+       (let [sim-fn (walk-fns walk-name) ; remaining arg is initial location [walk-name is a string, so can't be first]
              [n-segments lengths found] (time (run-and-collect sim-fn init-loc-fn walks-per-fn))
              n-found (count (keep identity found))
              total-length (reduce + lengths)

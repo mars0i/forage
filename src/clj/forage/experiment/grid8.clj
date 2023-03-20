@@ -69,14 +69,15 @@
 
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
+  (def rng2 (r/make-well19937 seed))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Data-file-generating exeriment: nondestructive foraging
 
-  (def walk-fns {"Levy mu=20" (fn [] (fr/levy-run rng ctrd-look-fn nil nondestr-params 20))})
+  (def walk-fns {"Levy20" (fn [init-loc] (fr/levy-run rng2 ctrd-look-fn nil nondestr-params 20 init-loc))})
 
   ;; Testing some changes in run.clj 3/2023:
-  (def levy-data-and-rng (time (fr/levy-experiments-no-pref centered-env nondestr-params [2.0] 10 seed ctrd-look-fn)))
+  (def levy-data-and-rng (time (fr/levy-experiments "./" centered-env nondestr-params [2.0] 10 seed ctrd-look-fn)))
   ;; TODO CREATE MAP walk-fns FOR USE WITH WALK-EXPERIMENTS:
   (def walk-data-and-rng (time (fr/walk-experiments centered-env nondestr-params walk-fns 10 seed ctrd-look-fn)))
 
