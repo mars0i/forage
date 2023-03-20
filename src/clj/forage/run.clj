@@ -190,6 +190,12 @@
 ;; Generalized for any kind of walk, not just Levy walks.
 ;; NOTE I removed the file-prefix parameter that was included in
 ;; levy-eperiments; build it into basename in params.
+;; Example of use:
+;;   (def walk-fns {"1.01" (fn [init-loc] (fr/levy-run rng ctrd-look-fn nil nondestr-params 1.01 init-loc)) ; or use partial
+;;                  "1.5"  (fn [init-loc] (fr/levy-run rng ctrd-look-fn nil nondestr-params 1.5  init-loc))
+;;                  "2.0"  (fn [init-loc] (fr/levy-run rng ctrd-look-fn nil nondestr-params 2.0  init-loc))
+;;                  "3.0"  (fn [init-loc] (fr/levy-run rng ctrd-look-fn nil nondestr-params 3.0  init-loc))})
+;;   (def walk-data-and-rng (time (fr/walk-experiments centered-env nondestr-params walk-fns 100 seed ctrd-look-fn)))
 (defn walk-experiments
   "Uses seed to seed a PRNG unless rng is provided, in which case seed
   is only used for informational purposes in file output.  Uses
