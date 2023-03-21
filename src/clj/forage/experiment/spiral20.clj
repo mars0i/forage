@@ -74,19 +74,13 @@
                                 1000 400 20))
     (Thread/sleep 1000))
 
-
-  (def three-exponents [1.001 2.0 3.0])
-  (def five-exponents [1.001 1.5 2.0 2.5 3.0])
-  (def nine-exponents [1.001 1.25 1.5 1.75 2.0 2.25 2.5 2.75 3.0]) ; w/ additional mu's
-  (def seven-exponents [1.001 1.5 2.0 2.25 2.5 2.75 3.0]) ; w/ additional mu's only at the high end
-
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
 
-  (def walk-fns {"1.01" (partial (fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 1.01))
-                 "1.5"  (partial (fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 1.5))
-                 "2.0"  (partial (fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 2.0))
-                 "3.0"  (partial (fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 3.0))})
+  (def walk-fns {"1.01" (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 1.01)
+                 "1.5"  (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 1.5)
+                 "2.0"  (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 2.0)
+                 "3.0"  (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 3.0)})
 
   (def data-and-rng
     (time
