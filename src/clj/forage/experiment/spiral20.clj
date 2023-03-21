@@ -12,7 +12,7 @@
 ;; WHICH IS WHERE THE SEARCH STARTS.
 (def half-size 500) ; half the full width of the env
 (def maxpathlen (* 20 half-size)) ; max total length of search path
-(def fooddistance nil) ; won't be used
+(def food-distance nil) ; won't be used
 
 ;; Initial default params, with:
 ;; (a) Search starts in a random initial direction
@@ -31,28 +31,60 @@
              :basename            (str default-dirname "spiral20_")
              ))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; ENV FOR DESTRUCTIVE/SYMMETRIC SEARCH
-(def env (em/make-env (params :env-discretization)
-                      (params :env-size)
-                      (f/remove-center (params :env-size) (params :env-size)
-                                       (f/slide-grid (params :food-distance)
-                                                     0 0 ; slide shifts
-                                                     (params :env-size)
-                                                     (params :env-size)))))
+;; SINGLE-FOODSPOT ENV
 
-(def look-fn (partial em/perc-foodspots-exactly-toroidal env (params :perc-radius)))
+(defn make-single-target-env
+  "Make an env with a single foodspot between the center of the core env
+  and the right edge along the equator."
+  [denom nomin]
+  (let [half-size (/ (params :env-size) 2)] ; probably already defined as var, but should get from params
+    (em/make-env (params :env-discretization)
+                 (params :env-size)
+                 [[(long (+ half-size (* (/ nomin denom) half-size))) ; coerce to long: avoid probs later with Ratio, BigInt
+                   half-size]])))
+                 
+(def envs (mapv (partial make-single-target-env 10)
+                (range 1 10)))
+
+(defn make-toroidal-look-fn
+  [env]
+  (partial em/perc-foodspots-exactly-toroidal env (params :perc-radius)))
+
+(defn make-unbounded-look-fn
+  "Make a non-toroidal look-fn from env.  Searches that leave the core env
+  will just continue without success unless they wander back."
+  [env]
+  (partial em/perc-foodspots-exactly env (params :perc-radius)))
 
 
 (comment
+  ;; Let's see what these envs look like:
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+  ;; Piecemeal:
+  (def v-env (map h/make-foodspot (em/env-foodspot-coords (envs 0))))
+  (def food-plot (h/vega-food-plot v-env 1000 400 20))
+  (oz/view! food-plot)
+  ;; All at once, animated:
+  (dotimes [i 9]
+    (oz/view! (h/vega-food-plot (map h/make-foodspot (em/env-foodspot-coords (envs i)))
+                                1000 400 20))
+    (Thread/sleep 1000))
+
+
+
+
   (def five-exponents [1.001 1.5 2.0 2.5 3.0])
   (def nine-exponents [1.001 1.25 1.5 1.75 2.0 2.25 2.5 2.75 3.0]) ; w/ additional mu's
   (def seven-exponents [1.001 1.5 2.0 2.25 2.5 2.75 3.0]) ; w/ additional mu's only at the high end
 
   (def seed (r/make-seed))
+  (def rng (r/make-well19937 seed))
 
+  ;; OBSOLETE--REPLACE THE STUFF BELOW:
   ;; NONDESTRUCTIVE/ASSYMETRIC:
   (def data-rng-assym
     (time (fr/levy-experiments fr/default-dirname centered-env assym-params
