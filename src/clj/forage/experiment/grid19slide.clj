@@ -100,6 +100,25 @@
 (def shift-noctr-look-fn (partial em/perc-foodspots-exactly-toroidal
                                   shift-nocenter-env (params :perc-radius)))
 
+(comment
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+
+  (def grid1 (f/slide-grid 10 0 0 0 0 100 100))
+  (def vgrid1 (map h/make-foodspot grid1))
+  (def food1 (h/vega-food-plot vgrid1 100 400 1))
+  (oz/view! food1)
+  
+  (def grid2 (f/slide-grid 10 8 8 0 0 100 100))
+  (def vgrid2 (map h/make-foodspot grid2))
+  (def food2 (h/vega-food-plot vgrid2 100 400 1))
+  (oz/view! food2)
+  ;; With different colors:
+  (def vgrids2 (h/split-foodgrid grid2))
+  (def foods2 (h/vega-food-plot vgrids2 100 400 1))
+  (oz/view! foods2)
+)
 
 (comment
   (def five-exponents [1.001 1.5 2.0 2.5 3.0])
