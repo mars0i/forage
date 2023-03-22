@@ -83,9 +83,7 @@
                  "2.0"  (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 2.0)
                  "3.0"  (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 3.0)})
   (def data-and-rng
-    (time
-      (fr/walk-experiments
-        (envs 4) params walk-fns 10 seed (make-toroidal-look-fn (envs 4)))))
+    (time (fr/walk-experiments (envs 4) params walk-fns 100 seed (make-toroidal-look-fn (envs 4)) rng)))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; OK, LET'S TRY SOME SAMPLE SEARCHES THAT ARE MORE LIKE WHAT'S INTENDED
