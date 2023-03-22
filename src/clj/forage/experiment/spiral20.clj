@@ -60,7 +60,8 @@
 
 
 (comment
-  ;; Let's see what these envs look like:
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; LET's SEE WHAT THESE ENVS LOOK LIKE:
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
@@ -70,38 +71,23 @@
   (oz/view! food-plot)
   ;; All at once, animated:
   (dotimes [i 9]
-    (oz/view! (h/vega-food-plot (map h/make-foodspot (em/env-foodspot-coords (envs i)))
-                                1000 400 20))
+    (oz/view! (h/vega-food-plot (map h/make-foodspot (em/env-foodspot-coords (envs i))) 1000 400 20))
     (Thread/sleep 1000))
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; LET'S TRY RUNNING SOME SEARCHES TO MAKE SURE IT WORKS:
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
-
   (def walk-fns {"1.01" (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 1.01)
                  "1.5"  (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 1.5)
                  "2.0"  (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 2.0)
                  "3.0"  (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 3.0)})
-
   (def data-and-rng
     (time
       (fr/walk-experiments
         (envs 4) params walk-fns 10 seed (make-toroidal-look-fn (envs 4)))))
 
-  ;; OBSOLETE--REPLACE THE STUFF BELOW:
-  ;; NONDESTRUCTIVE/ASSYMETRIC:
-  (def data-rng-assym
-    (time (fr/levy-experiments fr/default-dirname centered-env assym-params
-                               nine-exponents 5000 seed (make-toroidal-look-fn (envs 4)))))
-  (def shift-data-rng-assym
-    (time (fr/levy-experiments fr/default-dirname shift-centered-env assym-params
-                               nine-exponents 5000 seed shift-(make-toroidal-look-fn (envs 4)))))
-
-  ;; DESTRUCTIVE/SYMETRIC:
-  (def data-rng-symm
-    (time (fr/levy-experiments fr/default-dirname env params
-                               nine-exponents 5000 seed look-fn)))
-  (def shift-data-rng-symm 
-    (time (fr/levy-experiments fr/default-dirname shift-env params
-                               five-exponents 100 seed shift-look-fn)))
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; OK, LET'S TRY SOME SAMPLE SEARCHES THAT ARE MORE LIKE WHAT'S INTENDED
 
 )
