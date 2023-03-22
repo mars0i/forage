@@ -38,6 +38,23 @@
     (map vector dirs lens))) 
 
 
+;; TODO TEST ME
+(defn unit-archimedean-spiral-vecs
+  "Returns an infinite sequence of mathematical vectors in the form
+  [direction, length], where direction is in radians.  These represent
+  a sequence of steps that approximate an Archimedean spiral with
+  multiplier b = arm-dist/2pi, where the directions are theta-inc
+  apart.  Parameter arm-dist is the distance between arms or loops
+  along a straight line from the center of the spiral.  Note that
+  though distances have a constant increment, lengths will increase as
+  the spiral moves outward."
+  [arm-dist theta-inc]
+  (let [b (/ arm-dist 2 pi)
+        dirs (map (partial * theta-inc) (range))
+        pts (map (partial archimedean-spiral-pt b) dirs)
+        lens (map um/distance-2D pts (rest pts))]
+    (map vector dirs lens))) 
+
 
 ;; If this needed to be more efficient, the maps could be combined
 ;; with comb or a transducer.
@@ -55,7 +72,6 @@
   ([b theta-inc x y angle] (map (comp (fn [[x' y']] [(+ x' x) (+ y' y)]) ; replace with transducer?
                                       (partial um/rotate angle)) ; rotation is around (0,0), so apply before shift
                                 (archimedean-spiral b theta-inc))))
-
 
 ;; On the name of the parameter arm-dist, cf. 
 ;; https://physics.stackexchange.com/questions/83760/what-is-the-space-between-galactic-arms-called
