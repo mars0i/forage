@@ -3,6 +3,8 @@
 (ns forage.experiment.spiral20
   (:require [forage.run :as fr]
             [forage.food :as f]
+            [forage.walks :as w]
+            [utils.spiral :as sp]
             [forage.env-mason :as em]
             [utils.random :as r]))
 
@@ -59,6 +61,7 @@
   (partial em/perc-foodspots-exactly env (params :perc-radius)))
 
 
+
 (comment
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; LET's SEE WHAT THESE ENVS LOOK LIKE:
@@ -85,7 +88,17 @@
   (def data-and-rng
     (time (fr/walk-experiments (envs 4) params walk-fns 100 seed (make-toroidal-look-fn (envs 4)) rng)))
 
+
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; OK, LET'S TRY SOME SAMPLE SEARCHES THAT ARE MORE LIKE WHAT'S INTENDED
+  ;; OK, LET'S TRY SOME SAMPLE SEARCHES THAT ARE MORE LIKE WHAT I WANT:
+
+  (def seed (r/make-seed))
+  (def rng (r/make-well19937 seed))
+
+  (def mu3dist (r/make-powerlaw rng 1 3))
+  (defn more-mu3-vecs [] 
+    (w/vecs-upto-len (w/make-levy-vecs rng mu3dist 1 (params :trunclen)) (* 4 half-size)))
+  (defn more-spiral-vecs []
+    (w/vecs-upto-len (sp/unit-archimedean-spiral-vecs 2 0.1) (* 4 half-size)))
 
 )
