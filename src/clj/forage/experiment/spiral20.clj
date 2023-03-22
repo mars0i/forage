@@ -96,9 +96,31 @@
   (def rng (r/make-well19937 seed))
 
   (def mu3dist (r/make-powerlaw rng 1 3))
+  (def mu1xdist (r/make-powerlaw rng 1 1.3))
+  (defn more-mu1x-vecs [] 
+    (w/vecs-upto-len  (* 2 half-size) (w/make-levy-vecs rng mu3dist 1 (params :trunclen))))
   (defn more-mu3-vecs [] 
-    (w/vecs-upto-len (w/make-levy-vecs rng mu3dist 1 (params :trunclen)) (* 4 half-size)))
+    (w/vecs-upto-len  (* 3 half-size) (w/make-levy-vecs rng mu3dist 1 (params :trunclen))))
   (defn more-spiral-vecs []
-    (w/vecs-upto-len (sp/unit-archimedean-spiral-vecs 2 0.1) (* 4 half-size)))
+    (w/vecs-upto-len  (* 3 half-size) (sp/unit-archimedean-spiral-vecs 2 0.1)))
+
+  (def composite-mu1-mu3-walk (into [] cat [(more-mu1x-vecs)
+                                            (more-mu3-vecs)
+                                            (more-mu1x-vecs)
+                                            (more-mu3-vecs)
+                                            (more-mu1x-vecs)
+                                            (more-mu3-vecs)
+                                            (more-mu1x-vecs)
+                                            (more-mu3-vecs)]))
+
+  (def composite-mu1-spiral-walk (into [] cat [(more-mu1x-vecs)
+                                               (more-spiral-vecs)
+                                               (more-mu1x-vecs)
+                                               (more-spiral-vecs)
+                                               (more-mu1x-vecs)
+                                               (more-spiral-vecs)
+                                               (more-mu1x-vecs)
+                                               (more-spiral-vecs)]))
+
 
 )
