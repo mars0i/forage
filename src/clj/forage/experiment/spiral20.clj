@@ -98,19 +98,43 @@
   (def mu3dist (r/make-powerlaw rng 1 3))
   ;; These maxlens are way too long, probably, but:
   (defn more-mu1x-vecs [] 
-    (w/vecs-upto-len  (* 10 half-size) (w/make-levy-vecs rng mu1xdist 1 (params :trunclen))))
+    (w/vecs-upto-len (* 2 half-size) (w/make-levy-vecs rng mu1xdist 1 (params :trunclen))))
   (defn more-mu3-vecs [] 
-    (w/vecs-upto-len  (* 10 half-size) (w/make-levy-vecs rng mu3dist  1 (params :trunclen))))
+    (w/vecs-upto-len (* 2 half-size) (w/make-levy-vecs rng mu3dist  1 (params :trunclen))))
   (defn more-spiral-vecs []
-    (w/vecs-upto-len  (* 10 half-size) (sp/unit-archimedean-spiral-vecs 2 0.1)))
+    (w/vecs-upto-len (* 2 half-size) (sp/unit-archimedean-spiral-vecs 2 0.1)))
 
   (defn more-mu2-vecs [] 
-    (w/vecs-upto-len  (* 10 half-size) (w/make-levy-vecs rng mu2dist 2 (params :trunclen))))
+    (w/vecs-upto-len (* 2 half-size) (w/make-levy-vecs rng mu2dist 2 (params :trunclen))))
   ;; Note different maxpathlen:
   (defn more-mu2-vecs [] 
-    (w/vecs-upto-len  (params :maxpathlen) (w/make-levy-vecs rng mu2dist 2 (params :trunclen))))
+    (w/vecs-upto-len (params :maxpathlen) (w/make-levy-vecs rng mu2dist 2 (params :trunclen))))
 
-  ;; Note needs to be a function so that you get a different path for each run.
+  ;; Not sure if I'm violating this advice, or if the number of iterations
+  ;; are such that I can blow the stack, or what the best way to avoid this is.
+  ;; https://stuartsierra.com/2015/04/26/clojure-donts-concat
+  (defn composite-mu1-mu3-vecs
+    [maxpathlen]
+    (w/vecs-upto-len maxpathlen
+                     (apply concat
+                            (interleave (repeatedly more-mu1x-vecs)
+                                        (repeatedly more-mu3-vecs)))))
+
+  ;; IS this one any better?
+  ;; https://stuartsierra.com/2015/04/26/clojure-donts-concat
+  (defn composite-mu1-mu3-vecs
+    [maxpathlen]
+    (w/vecs-upto-len maxpathlen
+                     (apply concat
+                            (repeatedly #(into [] cat [(more-mu1x-vecs) (more-mu3-vecs)])))))
+  (defn composite-mu1-spiral-vecs
+    [maxpathlen]
+    (w/vecs-upto-len maxpathlen
+                     (apply concat
+                            (repeatedly #(into [] cat [(more-mu1x-vecs) (more-spiral-vecs)])))))
+
+
+  ;; NOTE NEEDS TO BE A FUNCTION SO THAT YOU GET A DIFFERENT PATH FOR EACH RUN.
   (defn composite-mu1-mu3-vecs []
     (into [] cat [(more-mu1x-vecs)
                   (more-mu3-vecs)
@@ -143,10 +167,9 @@
                   (more-mu1x-vecs)
                   (more-mu3-vecs)]))
 
+  ;; NOTE NEEDS TO BE A FUNCTION SO THAT YOU GET A DIFFERENT PATH FOR EACH RUN.
   (defn composite-mu1-spiral-vecs []
     (into [] cat [(more-mu1x-vecs)
-                  (more-spiral-vecs)
-                  (more-mu1x-vecs)
                   (more-spiral-vecs)
                   (more-mu1x-vecs)
                   (more-spiral-vecs)
@@ -187,13 +210,12 @@
   (def walk-fns
     (let [look-fn (make-toroidal-look-fn (envs 5))]
       {"composite-spiral"   (fn [init-loc] (w/foodwalk look-fn (params :look-eps) 
-                                                       (w/walk-stops init-loc (composite-mu1-spiral-vecs))))
+                                                       (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
        "composite-brownian" (fn [init-loc] (w/foodwalk look-fn (params :look-eps)
-                                                       (w/walk-stops init-loc (composite-mu1-mu3-vecs))))
-       ;"yo" (fn [init-loc] (w/foodwalk look-fn (params :look-eps) yo))
+                                                       (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
        "mu2" (partial fr/levy-run rng look-fn nil params 2.0)}))
 
-  (def data-and-rng (time (fr/walk-experiments params walk-fns 100 seed)))
+  (def data-and-rng (time (fr/walk-experiments params walk-fns 10000 seed)))
 
   (:found-coords data-and-rng)
 
