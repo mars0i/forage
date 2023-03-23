@@ -123,12 +123,12 @@
                                                (more-spiral-vecs)]))
 
   (def walk-fns 
-    {"composite-spiral" (w/foodwalk (make-toroidal-look-fn (envs 5)) (params :look-eps) 
-                                    ;; composite-mu1-spiral-vecs into a stop-walk
-                                    )
-     "composite-brownian" (w/foodwalk (make-toroidal-look-fn (envs 5)) (params :look-eps) 
-                                      ;; composite-mu1-mu3-vecs into a stop-walk
-                                      }))
+    {"composite-spiral"   (fn [init-loc] (w/foodwalk (make-toroidal-look-fn (envs 5))
+                                                     (params :look-eps) 
+                                                     (w/walk-stops init-loc composite-mu1-spiral-vecs)))
+     "composite-brownian" (fn [init-loc] (w/foodwalk (make-toroidal-look-fn (envs 5))
+                                                     (params :look-eps)
+                                                     (w/walk-stops init-loc composite-mu1-mu3-vecs)))})
 
 
 )
