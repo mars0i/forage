@@ -69,8 +69,8 @@
   (require '[oz.core :as oz])
   (oz/start-server!)
   ;; Piecemeal:
-  (def v-env (map h/make-foodspot (em/env-foodspot-coords (envs 0))))
-  (def food-plot (h/vega-food-plot v-env 1000 400 20))
+  (def v-env (map h/make-foodspot (em/env-foodspot-coords (envs 5))))
+  (def food-plot (h/vega-food-plot v-env 2000 400 20))
   (oz/view! food-plot)
   ;; All at once, animated:
   (dotimes [i 9]
@@ -91,20 +91,32 @@
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; OK, LET'S TRY SOME SAMPLE SEARCHES THAT ARE MORE LIKE WHAT I WANT:
-
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
 
   (def mu3dist (r/make-powerlaw rng 1 3))
-  (def mu1xdist (r/make-powerlaw rng 1 1.3))
+  (def mu1xdist (r/make-powerlaw rng 1 1.5))
+  ;; These maxlens are way too long, probably, but:
   (defn more-mu1x-vecs [] 
-    (w/vecs-upto-len  (* 2 half-size) (w/make-levy-vecs rng mu3dist 1 (params :trunclen))))
+    (w/vecs-upto-len  (* 10 half-size) (w/make-levy-vecs rng mu1xdist 1 (params :trunclen))))
   (defn more-mu3-vecs [] 
-    (w/vecs-upto-len  (* 3 half-size) (w/make-levy-vecs rng mu3dist 1 (params :trunclen))))
+    (w/vecs-upto-len  (* 10 half-size) (w/make-levy-vecs rng mu3dist  1 (params :trunclen))))
   (defn more-spiral-vecs []
-    (w/vecs-upto-len  (* 3 half-size) (sp/unit-archimedean-spiral-vecs 2 0.1)))
+    (w/vecs-upto-len  (* 10 half-size) (sp/unit-archimedean-spiral-vecs 2 0.1)))
 
   (def composite-mu1-mu3-vecs (into [] cat [(more-mu1x-vecs)
+                                            (more-mu3-vecs)
+                                            (more-mu1x-vecs)
+                                            (more-mu3-vecs)
+                                            (more-mu1x-vecs)
+                                            (more-mu3-vecs)
+                                            (more-mu1x-vecs)
+                                            (more-mu3-vecs)
+                                            (more-mu1x-vecs)
+                                            (more-mu3-vecs)
+                                            (more-mu1x-vecs)
+                                            (more-mu3-vecs)
+                                            (more-mu1x-vecs)
                                             (more-mu3-vecs)
                                             (more-mu1x-vecs)
                                             (more-mu3-vecs)
@@ -120,7 +132,20 @@
                                                (more-mu1x-vecs)
                                                (more-spiral-vecs)
                                                (more-mu1x-vecs)
+                                               (more-spiral-vecs)
+                                               (more-mu1x-vecs)
+                                               (more-spiral-vecs)
+                                               (more-mu1x-vecs)
+                                               (more-spiral-vecs)
+                                               (more-mu1x-vecs)
+                                               (more-spiral-vecs)
+                                               (more-mu1x-vecs)
+                                               (more-spiral-vecs)
+                                               (more-mu1x-vecs)
+                                               (more-spiral-vecs)
+                                               (more-mu1x-vecs)
                                                (more-spiral-vecs)]))
+
 
   (def walk-fns 
     {"composite-spiral"   (fn [init-loc] (w/foodwalk (make-toroidal-look-fn (envs 5))
@@ -128,7 +153,22 @@
                                                      (w/walk-stops init-loc composite-mu1-spiral-vecs)))
      "composite-brownian" (fn [init-loc] (w/foodwalk (make-toroidal-look-fn (envs 5))
                                                      (params :look-eps)
-                                                     (w/walk-stops init-loc composite-mu1-mu3-vecs)))})
+                                                     (w/walk-stops init-loc composite-mu1-mu3-vecs)))
+     "mu2" (partial fr/levy-run rng (make-toroidal-look-fn (envs 5)) nil params 2.0)})
 
+  (def data-and-rng (time (fr/walk-experiments params walk-fns 100 seed)))
+
+  ;; What do these walks look like?
+  (def walk (w/walk-stops [(* 2 half-size) (* 2 half-size)] composite-mu1-mu3-vecs))
+  (def walk (w/walk-stops [(* 2 half-size) (* 2 half-size)] composite-mu1-spiral-vecs))
+  (oz/view! (h/vega-envwalk-plot (envs 5) 600 1.0 20 walk))
+
+  (def vl-walk (h/order-walk-with-labels "walk " walk))
+  (def plot (h/vega-walk-plot 600 2000 1.0 vl-walk))
+  (oz/view! plot)
+
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
 
 )
