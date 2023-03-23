@@ -121,6 +121,9 @@
                                                (more-spiral-vecs)
                                                (more-mu1x-vecs)
                                                (more-spiral-vecs)]))
+  (def isthisright (w/foodwalk 
+(make-toroidal-look-fn (envs 5))
+(params :look-eps) 'blah))
 
 
 )
