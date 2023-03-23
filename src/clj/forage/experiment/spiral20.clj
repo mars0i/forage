@@ -85,8 +85,7 @@
                  "1.5"  (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 1.5)
                  "2.0"  (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 2.0)
                  "3.0"  (partial fr/levy-run rng (make-toroidal-look-fn (envs 4)) nil params 3.0)})
-  (def data-and-rng
-    (time (fr/walk-experiments (envs 4) params walk-fns 100 seed (make-toroidal-look-fn (envs 4)) rng)))
+  (def data-and-rng (time (fr/walk-experiments params walk-fns 100 seed)))
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -106,10 +105,10 @@
     (w/vecs-upto-len  (* 10 half-size) (sp/unit-archimedean-spiral-vecs 2 0.1)))
 
   (defn more-mu2-vecs [] 
-    (w/vecs-upto-len  (* 10 half-size) (w/make-levy-vecs rng mu1xdist 2 (params :trunclen))))
+    (w/vecs-upto-len  (* 10 half-size) (w/make-levy-vecs rng mu2dist 2 (params :trunclen))))
   ;; Note different maxpathlen:
   (defn more-mu2-vecs [] 
-    (w/vecs-upto-len  (params :maxpathlen) (w/make-levy-vecs rng mu1xdist 2 (params :trunclen))))
+    (w/vecs-upto-len  (params :maxpathlen) (w/make-levy-vecs rng mu2dist 2 (params :trunclen))))
 
   (def composite-mu1-mu3-vecs (into [] cat [(more-mu1x-vecs)
                                             (more-mu3-vecs)
@@ -174,13 +173,14 @@
                                                (more-spiral-vecs)]))
 
   (def just-mu2-vecs (into [] cat [(more-mu2-vecs)]))
+  (take 5 just-mu2-vecs)
   (def walk-fns
     {"just-mu2" (fn [init-loc] (w/foodwalk (make-toroidal-look-fn (envs 5))
                                            (params :look-eps) 
                                            (w/walk-stops init-loc just-mu2-vecs)))})
 
 
-  (def walk-fns 
+  (def walk-fns                      ;; FIXME THIS IS THE PROBLEM (it's fine with levy-run)
     {"composite-spiral"   (fn [init-loc] (w/foodwalk (make-toroidal-look-fn (envs 5))
                                                      (params :look-eps) 
                                                      (w/walk-stops init-loc composite-mu1-spiral-vecs)))
