@@ -546,6 +546,7 @@
   arguments to foodwalk with the original stop-walk conj'ed onto the
   result."
   [look-fn look-eps stop-walk]
+  ;(println)(pr look-fn look-eps (class stop-walk) (count stop-walk) (take 2 stop-walk)) ; DEBUG
   (trim-full-walk (conj (path-with-food look-fn look-eps stop-walk)
                         stop-walk)))
 
@@ -573,8 +574,9 @@
          step-walk (vecs-upto-len maxpathlen inf-step-walk) ; should be a vec
          first-loc (if init-pad  ; if truthy, shift start in a random dir this much from init-loc
                      (next-walk-stop init-loc [(r/next-radian dir-dist) init-pad])
-                     init-loc)]
-     (foodwalk look-fn look-eps (walk-stops first-loc step-walk))))) ; walk-stops is no longer lazy btw
+                     init-loc)
+         stops (walk-stops first-loc step-walk)] ; walk-stops is no longer lazy btw
+     (foodwalk look-fn look-eps stops))))
 
 (defn old-levy-foodwalk
   "Generates a random foodwalk starting from point init-loc in direction
