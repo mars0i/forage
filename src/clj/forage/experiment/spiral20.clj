@@ -104,7 +104,7 @@
   (defn more-spiral-vecs []
     (w/vecs-upto-len  (* 3 half-size) (sp/unit-archimedean-spiral-vecs 2 0.1)))
 
-  (def composite-mu1-mu3-walk (into [] cat [(more-mu1x-vecs)
+  (def composite-mu1-mu3-vecs (into [] cat [(more-mu1x-vecs)
                                             (more-mu3-vecs)
                                             (more-mu1x-vecs)
                                             (more-mu3-vecs)
@@ -113,7 +113,7 @@
                                             (more-mu1x-vecs)
                                             (more-mu3-vecs)]))
 
-  (def composite-mu1-spiral-walk (into [] cat [(more-mu1x-vecs)
+  (def composite-mu1-spiral-vecs (into [] cat [(more-mu1x-vecs)
                                                (more-spiral-vecs)
                                                (more-mu1x-vecs)
                                                (more-spiral-vecs)
@@ -121,9 +121,14 @@
                                                (more-spiral-vecs)
                                                (more-mu1x-vecs)
                                                (more-spiral-vecs)]))
-  (def isthisright (w/foodwalk 
-(make-toroidal-look-fn (envs 5))
-(params :look-eps) 'blah))
+
+  (def walk-fns 
+    {"composite-spiral" (w/foodwalk (make-toroidal-look-fn (envs 5)) (params :look-eps) 
+                                    ;; composite-mu1-spiral-vecs into a stop-walk
+                                    )
+     "composite-brownian" (w/foodwalk (make-toroidal-look-fn (envs 5)) (params :look-eps) 
+                                      ;; composite-mu1-mu3-vecs into a stop-walk
+                                      }))
 
 
 )
