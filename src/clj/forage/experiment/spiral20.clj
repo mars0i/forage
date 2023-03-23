@@ -94,8 +94,9 @@
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))
 
-  (def mu3dist (r/make-powerlaw rng 1 3))
   (def mu1xdist (r/make-powerlaw rng 1 1.5))
+  (def mu2dist (r/make-powerlaw rng 1 2))
+  (def mu3dist (r/make-powerlaw rng 1 3))
   ;; These maxlens are way too long, probably, but:
   (defn more-mu1x-vecs [] 
     (w/vecs-upto-len  (* 10 half-size) (w/make-levy-vecs rng mu1xdist 1 (params :trunclen))))
@@ -103,6 +104,12 @@
     (w/vecs-upto-len  (* 10 half-size) (w/make-levy-vecs rng mu3dist  1 (params :trunclen))))
   (defn more-spiral-vecs []
     (w/vecs-upto-len  (* 10 half-size) (sp/unit-archimedean-spiral-vecs 2 0.1)))
+
+  (defn more-mu2-vecs [] 
+    (w/vecs-upto-len  (* 10 half-size) (w/make-levy-vecs rng mu1xdist 2 (params :trunclen))))
+  ;; Note different maxpathlen:
+  (defn more-mu2-vecs [] 
+    (w/vecs-upto-len  (params :maxpathlen) (w/make-levy-vecs rng mu1xdist 2 (params :trunclen))))
 
   (def composite-mu1-mu3-vecs (into [] cat [(more-mu1x-vecs)
                                             (more-mu3-vecs)
@@ -166,6 +173,12 @@
                                                (more-mu1x-vecs)
                                                (more-spiral-vecs)]))
 
+  (def just-mu2-vecs (into [] cat [(more-mu2-vecs)]))
+  (def walk-fns
+    {"just-mu2" (fn [init-loc] (w/foodwalk (make-toroidal-look-fn (envs 5))
+                                           (params :look-eps) 
+                                           (w/walk-stops init-loc just-mu2-vecs)))})
+
 
   (def walk-fns 
     {"composite-spiral"   (fn [init-loc] (w/foodwalk (make-toroidal-look-fn (envs 5))
@@ -176,7 +189,7 @@
                                                      (w/walk-stops init-loc composite-mu1-mu3-vecs)))
      "mu2" (partial fr/levy-run rng (make-toroidal-look-fn (envs 5)) nil params 2.0)})
 
-  (def data-and-rng (time (fr/walk-experiments params walk-fns 100 seed)))
+  (def data-and-rng (time (fr/walk-experiments params walk-fns 5000 seed)))
 
   ;; What do these walks look like?
   (def walk (w/walk-stops [(* 2 half-size) (* 2 half-size)] composite-mu1-mu3-vecs))
