@@ -235,9 +235,9 @@
          of found foodspot coord pairs (nil if not found), in combo order.
        - :rng; value is PRNG object with state as it was at end of runs, or nil
          if no PRNG was passed to this function."
-  ([env params walk-fns walks-per-fn seed]
-   (walk-experiments env params walk-fns walks-per-fn seed nil))
-  ([env params walk-fns walks-per-fn seed rng]
+  ([params walk-fns walks-per-fn seed]
+   (walk-experiments params walk-fns walks-per-fn seed nil))
+  ([params walk-fns walks-per-fn seed rng]
    (let [num-dirs (params :num-dirs)
          init-dirs (if num-dirs
                      (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
