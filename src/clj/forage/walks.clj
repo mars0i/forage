@@ -246,12 +246,12 @@
 ;; NEW version 3/11/2023 that replaces old confusing (and bug-prone)
 ;; reduce/reduced version.
 (defn vecs-upto-len
-  "Given a desired total path length, and a sequence of step vectors, returns 
-  a sequence of step vectors from the front of the sequence, whose lengths sum
-  to at least desired-total.  By default, the lengths are made to sum to exactly
-  desired-total by reducing the length in the last step vector.  Add 
-  ':trim false' or ':trim nil' to return a sequence with the last vector as it
-  was in the input vecs sequence."
+  "Given a desired total path length, and a sequence of step vectors,
+  returns a sequence of step vectors (beginning from the front of the
+  sequence) whose lengths sum to at least desired-total.  By default, the
+  lengths are made to sum to exactly desired-total by reducing the length
+  in the last step vector.  Add ':trim false' or ':trim nil' to return a
+  sequence with the last vector as it was in the input vecs sequence."
   [desired-total vecs & {trim :trim :or {trim true}}]
   (loop [tot-len 0, out-vecs [], in-vecs vecs]
     (if (empty? in-vecs)
