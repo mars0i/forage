@@ -11,9 +11,9 @@
 (def default-dirname "../../data.foraging/forage/")
 
 (def half-size  50000) ; half the full width of the env
-(def maxpathlen (* 200 half-size)) ; max length of an entire continuous search path
-(def explore-segment-len (/ maxpathlen 500.0)) ; max length of walk segments that go far
-(def examine-segment-len (/ maxpathlen 5.0))  ; max length of walk segments that stay local (not exploit, but rather "look closely", examine)
+(def maxpathlen (* 500 half-size)) ; max length of an entire continuous search path
+(def explore-segment-len (/ maxpathlen 1000.0)) ; max length of walk segments that go far
+(def examine-segment-len (/ maxpathlen 10.0))  ; max length of walk segments that stay local (not exploit, but rather "look closely", examine)
 (def trunclen explore-segment-len)
 (def food-distance nil) ; won't be used
 
@@ -119,9 +119,9 @@
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (def walk (w/walk-stops [half-size half-size] (composite-mu1-mu3-vecs (params :maxpathlen))))
-  (def walk (w/walk-stops [half-size half-size] (composite-mu1-spiral-vecs (params :maxpathlen))))
-  (oz/view! (h/vega-envwalk-plot (envs 0) 600 1.0 1000 walk))
+  (def walk (time (w/walk-stops [half-size half-size] (composite-mu1-mu3-vecs (params :maxpathlen)))))
+  (def walk (time (w/walk-stops [half-size half-size] (composite-mu1-spiral-vecs (params :maxpathlen)))))
+  (time (oz/view! (h/vega-envwalk-plot (envs 0) 600 1.0 1000 walk)))
 
   (def vl-walk (h/order-walk-with-labels "walk " walk))
   (def plot (h/vega-walk-plot 600 2000 1.0 vl-walk))
