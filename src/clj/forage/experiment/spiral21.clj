@@ -13,7 +13,7 @@
 (def half-size  50000) ; half the full width of the env
 (def maxpathlen (* 500 half-size)) ; max length of an entire continuous search path
 (def explore-segment-len (/ maxpathlen 1000.0)) ; max length of walk segments that go far
-(def examine-segment-len (/ maxpathlen 10.0))  ; max length of walk segments that stay local (not exploit, but rather "look closely", examine)
+(def examine-segment-len (/ maxpathlen 50.0))  ; max length of walk segments that stay local (not exploit, but rather "look closely", examine)
 (def trunclen explore-segment-len)
 (def food-distance nil) ; won't be used
 
