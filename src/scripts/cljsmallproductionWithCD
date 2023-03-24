@@ -1,5 +1,5 @@
 #!/bin/sh
 set -x
 cd ~/cloj/forage
-clj -M:nrepl-server:smallproduction "$@"
+clojure -M:nrepl-server:smallproduction "$@"
 
