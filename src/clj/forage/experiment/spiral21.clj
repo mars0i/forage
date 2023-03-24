@@ -1,12 +1,14 @@
 ;; spiral21.clj
 ;; Copied from spiral20.clj and modified.
 (ns forage.experiment.spiral21
-  (:require [forage.run :as fr]
+  (:require ;[criterium.core :as crit]
+            ;[clj-async-profiler.core :as prof]
+            [forage.run :as fr]
             [forage.food :as f]
             [forage.walks :as w]
-            [utils.spiral :as sp]
             [forage.env-mason :as em]
-            [utils.random :as r]))
+            [utils.random :as r]
+            [utils.spiral :as sp]))
 
 (def default-dirname "../../data.foraging/forage/")
 
@@ -85,14 +87,16 @@
 
 (defn composite-mu1-mu3-vecs
   [maxpathlen]
-  (w/vecs-upto-len maxpathlen
-                   (apply concat ;; but https://stuartsierra.com/2015/04/26/clojure-donts-concat ?
-                          (repeatedly #(into [] cat [(more-mu1x-vecs) (more-mu3-vecs)])))))
+  (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
+                   (apply concat
+                          (interleave (repeatedly more-mu1x-vecs)
+                                      (repeatedly more-mu3-vecs)))))
 (defn composite-mu1-spiral-vecs
   [maxpathlen]
-  (w/vecs-upto-len maxpathlen
+  (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
                    (apply concat
-                          (repeatedly #(into [] cat [(more-mu1x-vecs) (more-spiral-vecs)])))))
+                          (interleave (repeatedly more-mu1x-vecs)
+                                      (repeatedly more-spiral-vecs)))))
 
 (def walk-fns
   {"composite-brownian-env0" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
