@@ -11,7 +11,7 @@
 (def default-dirname "../../data.foraging/forage/")
 
 (def half-size  50000) ; half the full width of the env
-(def maxpathlen (* 500 half-size)) ; max length of an entire continuous search path
+(def maxpathlen (* 200 half-size)) ; max length of an entire continuous search path
 (def explore-segment-len (/ maxpathlen 1000.0)) ; max length of walk segments that go far
 (def examine-segment-len (/ maxpathlen 50.0))  ; max length of walk segments that stay local (not exploit, but rather "look closely", examine)
 (def trunclen explore-segment-len)
@@ -108,7 +108,14 @@
    "mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
    "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
    "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
-   "mu3-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)})
+   "mu3-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)
+
+   ;; TO ADD: Lévy searchers or ballistic searches with perceptual
+   ;; radius equal to the spiral size.
+
+   ;; AND MAYBE ADD: Full spiral of length equal to maxpathlen
+   
+   })
 
 
 (comment
@@ -119,13 +126,10 @@
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (def walk (time (w/walk-stops [half-size half-size] (composite-mu1-mu3-vecs (params :maxpathlen)))))
-  (def walk (time (w/walk-stops [half-size half-size] (composite-mu1-spiral-vecs (params :maxpathlen)))))
-  (time (oz/view! (h/vega-envwalk-plot (envs 0) 600 1.0 1000 walk)))
-
-  (def vl-walk (h/order-walk-with-labels "walk " walk))
-  (def plot (h/vega-walk-plot 600 2000 1.0 vl-walk))
-  (oz/view! plot)
+  (def walk13 (time (w/walk-stops [half-size half-size] (composite-mu1-mu3-vecs (params :maxpathlen)))))
+  (time (oz/view! (h/vega-envwalk-plot (envs 0) 600 1.0 1000 walk13)))
+  (def walk1s (time (w/walk-stops [half-size half-size] (composite-mu1-spiral-vecs (params :maxpathlen)))))
+  (time (oz/view! (h/vega-envwalk-plot (envs 0) 600 1.0 1000 walk1s)))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
