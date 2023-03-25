@@ -130,10 +130,19 @@
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (def walk13 (time (w/walk-stops [half-size half-size] (composite-mu1-mu3-vecs (params :maxpathlen)))))
-  (time (oz/view! (h/vega-envwalk-plot (envs 0) 600 1.0 1000 walk13)))
+
   (def walk1s (time (w/walk-stops [half-size half-size] (composite-mu1-spiral-vecs (params :maxpathlen)))))
   (time (oz/view! (h/vega-envwalk-plot (envs 0) 600 1.0 1000 walk1s)))
+
+  (def walk13 (time (w/walk-stops [half-size half-size] (composite-mu1-mu3-vecs (params :maxpathlen)))))
+  (def vwalk13 (time (h/vega-envwalk-plot (envs 0) 600 1.0 1000 walk13)))  ; 8 minutes
+  (time (oz/view! vwalk13)) ; returns quickly but DOESN'T DISPLAY
+  ;; Try this instead:
+  ;(require '[aerial.hanami.common :as hc])
+  (oz/export! vwalk13
+              "compositeBrownianWalkExampleSpiral21commit_02cbde0_seed-7370724773351240133.png")
+
+  ;(time (h/write-foodwalk-plots "compositemu1m3" :svg seed (envs 0) 600 1 1 1.0 0 "1.25,3" params [walk13]))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
