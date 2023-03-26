@@ -98,28 +98,29 @@
                           (interleave (repeatedly more-mu1x-vecs)
                                       (repeatedly more-spiral-vecs)))))
 
-(def walk-fns
+(def brown-walk-fns
   {"composite-brownian-env0" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
    "composite-brownian-env1" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
    "composite-brownian-env2" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
-   "composite-brownian-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
+   "composite-brownian-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))})
 
-   "composite-spiral-env0"   (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
+(def spiral-walk-fns
+  {"composite-spiral-env0"   (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
    "composite-spiral-env1"   (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
    "composite-spiral-env2"   (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
-   "composite-spiral-env3"   (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
+   "composite-spiral-env3"   (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))})
 
-   "mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
+(def mu2-walk-fns
+  {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
    "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
    "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
-   "mu3-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)
+   "mu3-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)})
 
    ;; TO ADD: Lévy searchers or ballistic searches with perceptual
    ;; radius equal to the spiral size.
 
    ;; AND MAYBE ADD: Full spiral of length equal to maxpathlen
    
-   })
 
 
 (comment
@@ -146,6 +147,8 @@
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
-  (def data-and-rng (time (fr/walk-experiments params walk-fns 1000 seed)))
+  (def spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "spiral")) spiral-walk-fns 100 seed)))
+  (def mu2-data-and-rng    (time (fr/walk-experiments (update params :basename #(str % "mu2")) mu2-walk-fns 100 seed)))
+  (def brown-data-and-rng  (time (fr/walk-experiments (update params :basename #(str % "brown")) brown-walk-fns 100 seed)))
 
 )
