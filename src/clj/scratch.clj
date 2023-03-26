@@ -15,7 +15,23 @@
 
 "loaded"
 
+(defn prret
+  [x]
+  (println "<" x ">")
+  x)
+
+(defn prang
+  [n m]
+  (map prret (range n m)))
+
+
 (comment
+  (concat (#(prang 1 5)) (#(prang 11 15)))
+  (lazy-cat (#(prang 1 5)) (#(prang 11 15)))
+
+  (def xs (apply concat (take 3 (repeatedly #(prang 1 4)))))
+  (def xs (lazy-cat (take 3 (repeatedly #(prang 1 4)))))
+
   (oz/start-server!)
 
   (def grid1 (f/slide-grid 10 0 0 0 0 100 100))
