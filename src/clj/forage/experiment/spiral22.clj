@@ -211,10 +211,10 @@
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
-  (def mu2-data-and-rng    (time (fr/walk-experiments (update params :basename #(str % "mu2")) mu2-walk-fns 100 seed)))
-  (def mu1-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "spiral")) mu1-spiral-walk-fns 100 seed)))
-  (def mu1-mu3-data-and-rng  (time (fr/walk-experiments (update params :basename #(str % "brown")) mu1-mu3-walk-fns 100 seed)))
-  (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "spiral")) mu15-spiral-walk-fns 100 seed)))
-  (def mu15-mu3-data-and-rng  (time (fr/walk-experiments (update params :basename #(str % "brown")) mu15-mu3-walk-fns 100 seed)))
+  (def mu1-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "spiral")) mu1-spiral-walk-fns 5000 seed)))
+  (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "spiral")) mu15-spiral-walk-fns 5000 seed)))
+  (def mu1-mu3-data-and-rng  (time (fr/walk-experiments (update params :basename #(str % "brown")) mu1-mu3-walk-fns 5000 seed)))
+  (def mu15-mu3-data-and-rng  (time (fr/walk-experiments (update params :basename #(str % "brown")) mu15-mu3-walk-fns 5000 seed)))
+  (def mu2-data-and-rng    (time (fr/walk-experiments (update params :basename #(str % "mu2")) mu2-walk-fns 5000 seed)))
 
 )
