@@ -274,7 +274,8 @@
   foraging path.  display-radius is the Vega-Lite size for foodspots
   in perc-radius units: a display-radius of 1 is the perc-radius of a
   forager. walk-stops is a sequence of 2D coordinates representing the
-  foraging path."
+  foraging path.  (Note that stroke-width uses Vega-Lite units, whereas
+  display-radius uses units based on simulation values.)"
   [env plot-dim stroke-width display-radius walk-stops]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
         data-dim (em/env-size env)
@@ -297,8 +298,10 @@
 
 ;; TODO add a nice header
 (defn vega-didcould-envwalk-plot
-  "Simple plot that plots whatever foodspots are in env and then
-  plots foodwalks and their hypothetical extensions."
+  "Simple plot that plots whatever foodspots are in env and then plots
+  foodwalks and their hypothetical extensions. path.  (Note that
+  stroke-width uses Vega-Lite units, whereas display-radius uses units
+  based on simulation values.)"
   [env plot-dim stroke-width display-radius foodwalks]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
         data-dim (em/env-size env)
@@ -326,15 +329,17 @@
   "Given a sequence of foodwalk triples (foodwalks), uses Hanami,
   Vega-Lite, and Oz to generate a series of graphic files containing
   grids/lattices of plots, one plot for each foodwalk.  Filenames are
-  composed of stubname, the seed (could be an arbitrary string), and info
-  about which walks (runs) from foodwalks are included in a particular
-  graphics file.  params is a map of the kind used to specify parameters
-  for walks (illustrated in forage/run.clj and many files in
-  forage/experiment). mu and params are used only for labels or filename
-  info. env is only needed to generate foodspot representations. total-runs
-  specifies how many runs to plot. Currently uses oz/export! to plot, and
-  file-type should be :svg (or :png, but that's currently broken in
-  oz/export!)."
+  composed of stubname, the seed (could be an arbitrary string), and
+  info about which walks (runs) from foodwalks are included in a
+  particular graphics file.  params is a map of the kind used to
+  specify parameters for walks (illustrated in forage/run.clj and many
+  files in forage/experiment). mu and params are used only for labels
+  or filename info. env is only needed to generate foodspot
+  representations. total-runs specifies how many runs to plot.
+  Currently uses oz/export! to plot, and file-type should be :svg (or
+  :png, but that's currently broken in oz/export!). (Note that
+  stroke-width uses Vega-Lite units, whereas display-radius uses units
+  based on simulation values.)"
   [stubname file-type seed                                 ; filename parameters
    env plot-size runs-per-grid grid-columns stroke-width display-radius ; plot display parameters
    mu params                                               ; plot header label info
