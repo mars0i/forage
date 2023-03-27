@@ -16,6 +16,8 @@
 
 ;; TODO Rationalize parameter lists.
 
+;; TODO Several docstrings need more detail.
+
 
 ;; TODO Allow other color schemes.
 (defn make-heatmap
@@ -254,9 +256,10 @@
                   env-sz plot-dim 0))
 
 (defn vega-env-plot
-  "Plot foodspot display radii on where foodspots from env are.  plot-dim
-  is the Vega-Lite dimension.  display-radius is the Vega-Lite size for
-  foodspots."
+  "Plot foodspot display radii on where foodspots from env are.
+  plot-dim is the Vega-Lite dimension.  display-radius is the
+  Vega-Lite size for foodspots in perc-radius units: a display-radius
+  of 1 is the perc-radius of a forager."
   [env plot-dim display-radius]
   (vega-food-plot (add-point-labels "food" (em/env-foodspot-coords env))
                   (em/env-size env)
@@ -265,12 +268,17 @@
 
 ;; TODO add a nice header
 (defn vega-envwalk-plot
-  "Simple plot that plots whatever foodspots are in env and then
-  plots foodwalks and their hypothetical extensions."
-  [env plot-dim stroke-width display-radius raw-walk]
+  "Simple plot that plots whatever foodspots are in env and then plots
+  foodwalks and their hypothetical extensions. plot-dim is the
+  Vega-Lite dimension.  stroke-width is the Vega-Lite thickness of the
+  foraging path.  display-radius is the Vega-Lite size for foodspots
+  in perc-radius units: a display-radius of 1 is the perc-radius of a
+  forager. walk-stops is a sequence of 2D coordinates representing the
+  foraging path."
+  [env plot-dim stroke-width display-radius walk-stops]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
         data-dim (em/env-size env)
-        toroidal-walk (tor/toroidal-to-vega-lite "piece" (tor/wrap-path 0 data-dim raw-walk))
+        toroidal-walk (tor/toroidal-to-vega-lite "piece" (tor/wrap-path 0 data-dim walk-stops))
         walk-plot (vega-walk-plot plot-dim data-dim stroke-width toroidal-walk)]
     (hc/xform
       ht/layer-chart
