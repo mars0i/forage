@@ -12,6 +12,8 @@
 
 
 (def $ "THIS FUNCTION, $, IS AN ABBREVIATION FOR partial." partial)
+;; partial is a lot slower than (fn [...] ...) with four or more args 
+;; passed to the fn, but only would matter in an inner loop.
 
 
 (def default-dirname "../../data.foraging/forage/spiral22/")
@@ -226,7 +228,7 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
 
-  ;; This took 7.5 hours and found between 0 and 5 foodspots.
+  ;; This took 7.5 hours and found between 0 and 5 foodspots across the four env conditions.
   (def mu1-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns 2000 seed)))
 
   (def mu1-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns 2000 seed)))
