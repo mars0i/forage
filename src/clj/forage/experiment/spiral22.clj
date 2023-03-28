@@ -14,7 +14,7 @@
 (def $ "THIS FUNCTION, $, IS AN ABBREVIATION FOR partial." partial)
 
 
-(def default-dirname "../../data.foraging/forage/")
+(def default-dirname "../../data.foraging/forage/spiral22/")
 
 (def half-size  50000) ; half the full width of the env
 (def maxpathlen (* 150 half-size)) ; max length of an entire continuous search path
@@ -192,7 +192,7 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; EXAMINE, CONFIGURE:
 
-  ;; What do these walks look like?
+  ;; WHAT DO THESE WALKS LOOK LIKE?
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
@@ -224,12 +224,12 @@
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
-  (def mu1-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "spiral")) mu1-spiral-walk-fns 5000 seed)))
-  (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "spiral")) mu15-spiral-walk-fns 5000 seed)))
-  (def mu1-mu3-data-and-rng  (time (fr/walk-experiments (update params :basename #(str % "brown")) mu1-mu3-walk-fns 5000 seed)))
-  (def mu15-mu3-data-and-rng  (time (fr/walk-experiments (update params :basename #(str % "brown")) mu15-mu3-walk-fns 5000 seed)))
-  (def mu2-data-and-rng    (time (fr/walk-experiments (update params :basename #(str % "mu2")) mu2-walk-fns 5000 seed)))
-  (def mu25-data-and-rng    (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns 5000 seed)))
+  (def mu1-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns 2000 seed)))
+  (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns 2000 seed)))
+  (def mu1-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns 2000 seed)))
+  (def mu15-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns 2000 seed)))
+  (def mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu2")) mu2-walk-fns 2000 seed)))
+  (def mu25-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns 2000 seed)))
 
 )
 
