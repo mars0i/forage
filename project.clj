@@ -12,6 +12,7 @@
                  [org.apache.commons/commons-rng-sampling "1.4"]
                  [generateme/fastmath "2.1.8"]
                  [org.flatland/ordered "1.15.10"] ; for ordered-set
+                 [net.mikera/core.matrix "0.62.0"] ; should switch to 0.63.0
                  [aerial.hanami "0.17.0"]
                  [techascent/tech.viz "6.00-beta-16-2"]
                  [io.github.nextjournal/clerk "0.5.346"]

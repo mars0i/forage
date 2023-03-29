@@ -1,5 +1,6 @@
-(ns forage.env-indexed)
 ;; Future home of replacement for env-mason.
+(ns forage.env-indexed
+  (:require [clojure.core.matrix :as mx]))
 
 ;; Strategy:
 ;; Foodspots exist in a 2D grid made with core.matrix using one of 
@@ -12,3 +13,12 @@
 
 ;; When a walk reaches a point, mod its coords it to get the indexes into 
 ;; the matrix and check wehther it's in the radius of the foodspot.
+
+
+;(mx/set-current-implementation :persistent-vector)
+(mx/set-current-implementation :ndarray)
+;(mx/set-current-implementation :vectorz)
+
+(defn make-env
+  ([size] (mx/matrix 'fixme))
+  ([size locs] 'fixme))
