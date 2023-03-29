@@ -228,11 +228,15 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
 
+  ;; 3/27-28/2023
   ;; This took 7.5 hours and found between 0 and 5 foodspots in the four env conditions.  Total found = 11 in all 8000 runs.
   (def mu1-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns 2000 seed)))
 
+  ;; 3/28/2023
+  ;; This took 16.5 hours and found between 1 and 3 foodspots in the four env conditions.  Total found = 5 in all 8000 runs.
   (def mu1-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns 2000 seed)))
 
+  ;; Didn't run the rest 3/27-28/2023
   (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns 2000 seed)))
   (def mu15-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns 2000 seed)))
 
