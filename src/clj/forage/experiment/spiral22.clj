@@ -211,11 +211,11 @@
   (time (oz/view! vwalk15))
 
   (def walk13 (time (w/walk-stops [half-size half-size] (composite-mu1-mu3-vecs (params :maxpathlen)))))
-  (def vwalk13 (time (h/vega-envwalk-plot env 600 0.75 200 walk13)))  ; 8 minutes
+  (def vwalk13 (time (h/vega-envwalk-plot env 600 0.75 200 walk13)))
   (time (oz/view! vwalk13))
 
   (def walk153 (time (w/walk-stops [half-size half-size] (composite-mu15-mu3-vecs (params :maxpathlen)))))
-  (def vwalk153 (time (h/vega-envwalk-plot env 600 0.75 200 walk153)))  ; 8 minutes
+  (def vwalk153 (time (h/vega-envwalk-plot env 600 0.75 200 walk153)))
   (time (oz/view! vwalk153))
 
   ;; Try this instead:
@@ -228,15 +228,9 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
 
-  ;; 3/27-28/2023
-  ;; This took 7.5 hours and found between 0 and 5 foodspots in the four env conditions.  Total found = 11 in all 8000 runs.
   (def mu1-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns 2000 seed)))
-
-  ;; 3/28/2023
-  ;; This took 16.5 hours and found between 1 and 3 foodspots in the four env conditions.  Total found = 5 in all 8000 runs.
   (def mu1-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns 2000 seed)))
 
-  ;; Didn't run the rest 3/27-28/2023
   (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns 2000 seed)))
   (def mu15-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns 2000 seed)))
 
