@@ -242,8 +242,9 @@
 
   ;; This took one hour:
   (def mu2-data-and-rng  (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  2000 seed)))
-
+  ;; An hour an 45 minutes:
   (def mu25-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns 2000 seed)))
+
   (def mu15-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns 2000 seed)))
 
 )
