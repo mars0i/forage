@@ -237,15 +237,19 @@
   (def mu1-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns 2000 seed)))
   (def mu1-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns 2000 seed)))
 
-  (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns 2000 seed)))
-  (def mu15-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns 2000 seed)))
-
   ;; This took one hour:
   (def mu2-data-and-rng  (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  2000 seed)))
-  ;; An hour an 45 minutes:
+  ;; An hour and 45 minutes:
   (def mu25-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns 2000 seed)))
 
+  ;; 45-50 minutes:
   (def mu15-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns 2000 seed)))
+
+  ;; two hours and 10 minutes:
+  (def mu15-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns 2000 seed)))
+
+  ;; one hour, 35 minutes:
+  (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns 2000 seed)))
 
 )
 
