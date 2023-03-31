@@ -1,5 +1,3 @@
-;; spiral23.clj
-;; Began as attempt to reduce code dupe in spiral22.clj (which I decided to preserve as is)
 (ns forage.experiment.spiral22
   (:require ;[criterium.core :as crit]
             ;[clj-async-profiler.core :as prof]
@@ -11,14 +9,16 @@
             [utils.spiral :as sp]))
 
 
-(def $ "THIS FUNCTION, $, IS AN ABBREVIATION FOR partial." partial)
+;(def $ "THIS FUNCTION, $, IS AN ABBREVIATION FOR partial." partial)
+;; partial is a lot slower than (fn [...] ...) with four or more args 
+;; passed to the fn, but only would matter in an inner loop.
 
 
 (def default-dirname "../../data.foraging/forage/spiral22/")
 
-(def half-size  50000) ; half the full width of the env
-(def maxpathlen (* 150 half-size)) ; max length of an entire continuous search path
-(def explore-segment-len (/ maxpathlen 500.0)) ; max length of walk segments that go far
+(def half-size  10000) ; half the full width of the env
+(def maxpathlen (* 100 half-size)) ; max length of an entire continuous search path
+(def explore-segment-len (/ maxpathlen 400.0)) ; max length of walk segments that go far
 (def examine-segment-len (/ maxpathlen 50.0))  ; max length of walk segments that stay local (not exploit, but rather "look closely", examine)
 (def trunclen explore-segment-len)
 (def food-distance nil) ; won't be used
@@ -55,7 +55,7 @@
 
 ;; Make envs each with a single target but at several different distances
 ;; from center as proportion of size of env:
-(def envs (mapv ($ make-single-target-env 5)
+(def envs (mapv (partial make-single-target-env 5)
                 (range 1 6))) ; five targets at 1/5, 2/4, 3/4, 4/5, 5/5 of distance to border
 
 (comment
@@ -64,13 +64,13 @@
 
 (defn make-toroidal-look-fn
   [env]
-  ($ em/perc-foodspots-exactly-toroidal env (params :perc-radius)))
+  (partial em/perc-foodspots-exactly-toroidal env (params :perc-radius)))
 
 (defn make-unbounded-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
-  ($ em/perc-foodspots-exactly env (params :perc-radius)))
+  (partial em/perc-foodspots-exactly env (params :perc-radius)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -78,6 +78,7 @@
 
 (def seed (r/make-seed))
 ;(def seed -7370724773351240133)
+(println "Using seed" seed)
 (def rng (r/make-well19937 seed))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -167,18 +168,25 @@
    "composite-mu15-spiral-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))})
 
 ;; pure mu=2 walks (using my older interface)
+(def mu15-walk-fns
+  {"mu15-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 1.5)
+   "mu15-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 1.5)
+   "mu15-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 1.5)
+   "mu15-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 1.5)})
+
+;; pure mu=2 walks (using my older interface)
 (def mu2-walk-fns
-  {"mu2-env0" ($ fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
-   "mu2-env1" ($ fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
-   "mu2-env2" ($ fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
-   "mu3-env3" ($ fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)})
+  {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
+   "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
+   "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
+   "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)})
 
 ;; pure mu=2.5 walks (using my older interface)
 (def mu25-walk-fns
-  {"mu25-env0" ($ fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.5)
-   "mu25-env1" ($ fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.5)
-   "mu25-env2" ($ fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.5)
-   "mu35-env3" ($ fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.5)})
+  {"mu25-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.5)
+   "mu25-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.5)
+   "mu25-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.5)
+   "mu25-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.5)})
 
 
    ;; TO ADD: Lévy searchers or ballistic searches with perceptual
@@ -197,22 +205,22 @@
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  (def env (envs 3))
+  (def env (envs 2))
 
   (def walk1s (time (w/walk-stops [half-size half-size] (composite-mu1-spiral-vecs (params :maxpathlen)))))
-  (def vwalk1s (time (h/vega-envwalk-plot env 600 0.75 1000 walk1s)))
+  (def vwalk1s (time (h/vega-envwalk-plot env 600 0.75 200 walk1s)))
   (time (oz/view! vwalk1s))
 
-  (def walk15 (time (w/walk-stops [half-size half-size] (composite-mu15-spiral-vecs (params :maxpathlen)))))
-  (def vwalk15 (time (h/vega-envwalk-plot env 600 0.75 1000 walk15)))
+  (def walk15s (time (w/walk-stops [half-size half-size] (composite-mu15-spiral-vecs (params :maxpathlen)))))
+  (def vwalk15s (time (h/vega-envwalk-plot env 600 0.75 200 walk15)))
   (time (oz/view! vwalk15))
 
   (def walk13 (time (w/walk-stops [half-size half-size] (composite-mu1-mu3-vecs (params :maxpathlen)))))
-  (def vwalk13 (time (h/vega-envwalk-plot env 600 0.75 1000 walk13)))  ; 8 minutes
-  (time (oz/view! vwalk13)) ; returns quickly but DOESN'T DISPLAY?
+  (def vwalk13 (time (h/vega-envwalk-plot env 600 0.75 200 walk13)))
+  (time (oz/view! vwalk13))
 
   (def walk153 (time (w/walk-stops [half-size half-size] (composite-mu15-mu3-vecs (params :maxpathlen)))))
-  (def vwalk153 (time (h/vega-envwalk-plot env 600 0.75 1000 walk153)))  ; 8 minutes
+  (def vwalk153 (time (h/vega-envwalk-plot env 600 0.75 200 walk153)))
   (time (oz/view! vwalk153))
 
   ;; Try this instead:
@@ -224,14 +232,20 @@
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
+
+  ;; These took about two hours each:
   (def mu1-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns 2000 seed)))
   (def mu1-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns 2000 seed)))
 
   (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns 2000 seed)))
   (def mu15-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns 2000 seed)))
 
-  (def mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu2")) mu2-walk-fns 2000 seed)))
+  ;; This took one hour:
+  (def mu2-data-and-rng  (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  2000 seed)))
+  ;; An hour an 45 minutes:
   (def mu25-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns 2000 seed)))
+
+  (def mu15-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns 2000 seed)))
 
 )
 
