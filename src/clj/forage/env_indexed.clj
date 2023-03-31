@@ -20,5 +20,20 @@
 ;(mx/set-current-implementation :vectorz)
 
 (defn make-env
-  ([size] (mx/matrix 'fixme))
-  ([size locs] 'fixme))
+  "Creates a new environment in the form of a matrix.  If locs is
+  provided, it should be a collection of triples consisting of two
+  integers representing coordinates of a location in the environment,
+  and a value to be placed at that location."
+  ([size] (mx/new-matrix size size))
+  ([size locs]
+   (let [e (make-env size)]
+     (doseq [[x y v] locs]
+       (mx/mset! e x y v))
+     e)))
+
+
+(comment
+  (mx/pm
+    (make-env 5 [[1 1 1] [1 2 "Yow!"] [4 3 27]])
+  )
+)
