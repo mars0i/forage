@@ -3,6 +3,7 @@
 (ns utils.math
     (:require ;[clojure.math.numeric-tower :as nt] ; see https://clojureverse.org/t/article-blog-post-etc-about-clojure-math-vs-numeric-tower/9805/6?u=mars0i
               [clojure.math :as math :refer [cos sin tan atan2 sqrt round]]
+              [fastmath.stats :as fstats]
               [clojure.string :as st]))
 
 ; [fastmath.core :as fm]
@@ -137,8 +138,7 @@
         (<= (abs (- xd yd))
             (* n-ulps ulp)))))
 
-
-(defn mean
+(defn old-mean
   "Returns the mean value of all numbers in collection xs, or the
   first n values if n is provided.  If n greater than the length of xs,
   takes the mean of xs."
@@ -146,6 +146,36 @@
    (let [n (count xs)]
      (/ (reduce + xs) n)))
   ([n xs] (mean (take n xs)))) ; don't divide by n explicitly: xs may be short
+
+(defn mean
+  "Returns the mean value of all numbers in collection xs, or the
+  expectation using corresponding probabilities in weights.  Return
+  value is always a double."
+  ([xs] (fstats/mean xs))
+  ([xs weights] (fstats/wmean xs weights)))
+
+(comment
+  (mean [1 2 3 4])
+  (mean [1 2 3 4] [0.5 0.25 0.25 0.0])
+)
+
+;; TODO
+(def "TODO add docstring" sample-variance fstats/variance)
+(def "TODO add docstring" variance fstats/population-variance)
+
+(comment
+  (variance [1 1 2 2])
+  (let [xs [1 1 2 2]
+        m (mean xs)
+        squares (map #(* % %) xs)]
+    (- (mean squares) (* m m)))
+
+  (sample-variance [1 1 2 2])
+  (let [xs [1 1 2 2]
+        m (mean xs)]
+    (/ (reduce + (map (fn [x] (let [y (- x m)] (* y y))) xs))
+       (dec (count xs))))
+)
 
 (defn count-decimal-digits
   "Given a number, returns the number of digits in the decimal
