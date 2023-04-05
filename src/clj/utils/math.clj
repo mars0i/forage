@@ -159,9 +159,20 @@
   (mean [1 2 3 4] [0.5 0.25 0.25 0.0])
 )
 
-;; TODO
-(def "TODO add docstring" sample-variance fstats/variance)
-(def "TODO add docstring" variance fstats/population-variance)
+(def sample-variance
+  "[xs] [xs mean]
+  Calculate the sample variance  of the numbers in xs. The internal sum is
+  divided by N-1, where N is the size of xs.  If mean is provided, uses
+  that rather than calculating the mean value of xs."
+  fstats/variance)
+
+(def variance
+  "[xs] [xs mean]
+  Calculate the (population, normal, simple) variance  of the numbers in
+  xs, treating each as having probability 1/N: The internal sum is divided
+  by N, the size of xs.  If mean is provided, uses that rather than
+  calculating the mean value of xs."
+  fstats/population-variance)
 
 (comment
   (variance [1 1 2 2])
