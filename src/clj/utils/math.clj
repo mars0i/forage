@@ -159,13 +159,9 @@
   (mean [1 2 3 4] [0.5 0.25 0.25 0.0])
 )
 
-(def sample-variance
-  "[xs] [xs mean]
-  Calculate the sample variance  of the numbers in xs. The internal sum is
-  divided by N-1, where N is the size of xs.  If mean is provided, uses
-  that rather than calculating the mean value of xs."
-  fstats/variance)
-
+;; If I were to use fastmath's names, I'd probably forget that fastmath's
+;; variance is the sample-variance, and that what I normally call variance
+;; is fastmath's population-variance.  (fastmath follows Apache's naming convention.)
 (def variance
   "[xs] [xs mean]
   Calculate the (population, normal, simple) variance  of the numbers in
@@ -173,6 +169,13 @@
   by N, the size of xs.  If mean is provided, uses that rather than
   calculating the mean value of xs."
   fstats/population-variance)
+
+(def sample-variance
+  "[xs] [xs mean]
+  Calculate the sample variance  of the numbers in xs. The internal sum is
+  divided by N-1, where N is the size of xs.  If mean is provided, uses
+  that rather than calculating the mean value of xs."
+  fstats/variance)
 
 (comment
   (variance [1 1 2 2])
