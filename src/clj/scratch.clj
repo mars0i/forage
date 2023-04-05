@@ -8,10 +8,10 @@
    [forage.walks :as w]
    [forage.viz.hanami :as h]   ; don't load with cljplot
    ;[forage.viz.cljplot :as cp] ; don't load with hanami
-   [oz.core :as oz]
+   ;[oz.core :as oz]
    ;[clojure.math.numeric-tower :as nt]
-   [aerial.hanami.common :as hc]
-   [aerial.hanami.templates :as ht]
+   ;[aerial.hanami.common :as hc]
+   ;[aerial.hanami.templates :as ht]
    ))
 
 (def $ "$ is an abbreviation for partial." partial)
@@ -117,18 +117,32 @@
                  [1 (* maxpathlen 0.5)]
                  [1 (* maxpathlen 0.5)]])
 
-  (map ($ fitness maxpathlen 1) results6)
+  (def results7 [[1 (* maxpathlen 0.1)]
+                 [1 (* maxpathlen 0.2)]
+                 [1 (* maxpathlen 0.3)]
+                 [1 (* maxpathlen 0.4)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.6)]
+                 [1 (* maxpathlen 0.7)]
+                 [1 (* maxpathlen 0.8)]
+                 [1 (* maxpathlen 0.9)]
+                 [1 maxpathlen]])
 
-  (um/variance (map ($ fitness maxpathlen 1) results1))
+  (def results8 [[1 (* maxpathlen 0.1)]
+                 [1 (* maxpathlen 0.2)]
+                 [1 (* maxpathlen 0.3)]
+                 [1 (* maxpathlen 0.4)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 maxpathlen]
+                 [1 maxpathlen]
+                 [1 maxpathlen]
+                 [1 maxpathlen]
+                 [1 maxpathlen]])
+
+  (map ($ fitness maxpathlen 1) results7)
+  (um/variance (map ($ fitness maxpathlen 1) results7))
   (um/variance (map ($ fitness maxpathlen 1) results2))
-  (um/variance (map ($ fitness maxpathlen 1) results3))
-  (um/variance (map ($ fitness maxpathlen 1) results4))
-  (um/variance (map ($ fitness maxpathlen 1) results5))
-  (um/variance (map ($ fitness maxpathlen 1) results6))
-
-  (um/sample-variance (map ($ fitness maxpathlen 1) results1))
-  (um/sample-variance (map ($ fitness maxpathlen 1) results2))
-  (um/sample-variance (map ($ fitness maxpathlen 1) results3))
+  (um/sample-variance (map ($ fitness maxpathlen 1) results7))
 )
 
 
