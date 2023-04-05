@@ -21,11 +21,22 @@
 
 (def maxpathlen 100)
 
+(defn fitness-benefit
+  [benefit success]
+  (* benefit success))
+
+(defn fitness-cost
+  [cost pathlen]
+  (* cost pathlen))
+
 (defn fitness
   [benefit cost [success pathlen]]
-  (+ (* benefit success) (* cost pathlen)))
+  (- (* benefit success) (* cost pathlen)))
 
-(def results [[0 maxpathlen]
+
+(comment
+
+(def results1 [[0 maxpathlen]
               [1 (* maxpathlen 0.5)]
               [0 maxpathlen]
               [0 maxpathlen]
@@ -36,14 +47,88 @@
               [1 (* maxpathlen 0.75)]
               [0 maxpathlen]])
 
-(count results)
+  (map (comp ($ fitness-benefit maxpathlen) first) results1)
+  (map (comp ($ fitness-cost 1) second) results1)
+
+  (map ($ fitness maxpathlen 1) results1)
+
+  (count results1)
+  (um/variance '(-100 50.0 -100 -100 10.0 -100 -100 -100 25.0 -100))
+
+  (um/variance '(-100 50.0 -100 -100 10.0 -100 -100 -100 25.0 -100))
+  (um/variance (map ($ fitness maxpathlen 1) results1))
+
+  (um/sample-variance '(-100 50.0 -100 -100 10.0 -100 -100 -100 25.0 -100))
+  (um/sample-variance (map ($ fitness maxpathlen 1) results1))
 
 
+  (def results2 [[0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]])
 
-(comment
-  (um/sample-variance (map ($ fitness maxpathlen -1) results))
-  (um/variance (map ($ fitness maxpathlen -1) results))
+  (def results3 [[0 maxpathlen]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]])
 
+  (def results4 [[0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [1 (* maxpathlen 0.1)]
+                 [1 (* maxpathlen 0.1)]
+                 [1 (* maxpathlen 0.1)]
+                 [1 (* maxpathlen 0.1)]
+                 [1 (* maxpathlen 0.1)]])
+
+  (def results5 [[0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [1 (* maxpathlen 0.9)]
+                 [1 (* maxpathlen 0.9)]
+                 [1 (* maxpathlen 0.9)]
+                 [1 (* maxpathlen 0.9)]
+                 [1 (* maxpathlen 0.9)]])
+
+  (def results6 [[0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [1 (* maxpathlen 0.5)]
+                 [1 (* maxpathlen 0.5)]])
+
+  (map ($ fitness maxpathlen 1) results6)
+
+  (um/variance (map ($ fitness maxpathlen 1) results1))
+  (um/variance (map ($ fitness maxpathlen 1) results2))
+  (um/variance (map ($ fitness maxpathlen 1) results3))
+  (um/variance (map ($ fitness maxpathlen 1) results4))
+  (um/variance (map ($ fitness maxpathlen 1) results5))
+  (um/variance (map ($ fitness maxpathlen 1) results6))
+
+  (um/sample-variance (map ($ fitness maxpathlen 1) results1))
+  (um/sample-variance (map ($ fitness maxpathlen 1) results2))
+  (um/sample-variance (map ($ fitness maxpathlen 1) results3))
 )
 
 
