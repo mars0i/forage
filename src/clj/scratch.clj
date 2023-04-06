@@ -6,12 +6,12 @@
    [utils.toroidal :as t]
    [forage.food :as f]
    [forage.walks :as w]
-   [forage.viz.hanami :as h]   ; don't load with cljplot
-   ;[forage.viz.cljplot :as cp] ; don't load with hanami
-   ;[oz.core :as oz]
    ;[clojure.math.numeric-tower :as nt]
+   ;[oz.core :as oz]
+   ;[forage.viz.hanami :as h]   ; don't load with cljplot
    ;[aerial.hanami.common :as hc]
    ;[aerial.hanami.templates :as ht]
+   ;[forage.viz.cljplot :as cp] ; don't load with hanami
    ))
 
 (def $ "$ is an abbreviation for partial." partial)
@@ -21,59 +21,22 @@
 
 (def maxpathlen 100)
 
-(defn fitness-benefit
+(defn realized-fitness-benefit
   [benefit success]
   (* benefit success))
 
-(defn fitness-cost
+(defn realized-fitness-cost
   [cost pathlen]
   (* cost pathlen))
 
-(defn fitness
+(defn realized-fitness
   [benefit cost [success pathlen]]
   (- (* benefit success) (* cost pathlen)))
 
 
 (comment
 
-(def results1 [[0 maxpathlen]
-              [1 (* maxpathlen 0.5)]
-              [0 maxpathlen]
-              [0 maxpathlen]
-              [1 (* maxpathlen 0.9)]
-              [0 maxpathlen]
-              [0 maxpathlen]
-              [0 maxpathlen]
-              [1 (* maxpathlen 0.75)]
-              [0 maxpathlen]])
-
-  (map (comp ($ fitness-benefit maxpathlen) first) results1)
-  (map (comp ($ fitness-cost 1) second) results1)
-
-  (map ($ fitness maxpathlen 1) results1)
-
-  (count results1)
-  (um/variance '(-100 50.0 -100 -100 10.0 -100 -100 -100 25.0 -100))
-
-  (um/variance '(-100 50.0 -100 -100 10.0 -100 -100 -100 25.0 -100))
-  (um/variance (map ($ fitness maxpathlen 1) results1))
-
-  (um/sample-variance '(-100 50.0 -100 -100 10.0 -100 -100 -100 25.0 -100))
-  (um/sample-variance (map ($ fitness maxpathlen 1) results1))
-
-
-  (def results2 [[0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [1 (* maxpathlen 0.5)]
-                 [1 (* maxpathlen 0.5)]
-                 [1 (* maxpathlen 0.5)]
-                 [1 (* maxpathlen 0.5)]
-                 [1 (* maxpathlen 0.5)]])
-
-  (def results3 [[0 maxpathlen]
+  (def results1 [[1 (* maxpathlen 0.5)]
                  [1 (* maxpathlen 0.5)]
                  [1 (* maxpathlen 0.5)]
                  [1 (* maxpathlen 0.5)]
@@ -84,41 +47,8 @@
                  [1 (* maxpathlen 0.5)]
                  [1 (* maxpathlen 0.5)]])
 
-  (def results4 [[0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
+  (def results2 [[1 (* maxpathlen 0.1)]
                  [1 (* maxpathlen 0.1)]
-                 [1 (* maxpathlen 0.1)]
-                 [1 (* maxpathlen 0.1)]
-                 [1 (* maxpathlen 0.1)]
-                 [1 (* maxpathlen 0.1)]])
-
-  (def results5 [[0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [1 (* maxpathlen 0.9)]
-                 [1 (* maxpathlen 0.9)]
-                 [1 (* maxpathlen 0.9)]
-                 [1 (* maxpathlen 0.9)]
-                 [1 (* maxpathlen 0.9)]])
-
-  (def results6 [[0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [0 maxpathlen]
-                 [1 (* maxpathlen 0.5)]
-                 [1 (* maxpathlen 0.5)]])
-
-  (def results7 [[1 (* maxpathlen 0.1)]
-                 [1 (* maxpathlen 0.2)]
                  [1 (* maxpathlen 0.3)]
                  [1 (* maxpathlen 0.4)]
                  [1 (* maxpathlen 0.5)]
@@ -126,23 +56,40 @@
                  [1 (* maxpathlen 0.7)]
                  [1 (* maxpathlen 0.8)]
                  [1 (* maxpathlen 0.9)]
+                 [1 (* maxpathlen 1.0)]])
+
+  (def results3 [[1 (* maxpathlen 0.1)]
+                 [1 (* maxpathlen 0.1)]
+                 [1 (* maxpathlen 0.1)]
+                 [1 (* maxpathlen 0.1)]
+                 [1 (* maxpathlen 0.1)]
+                 [1 maxpathlen]
+                 [1 maxpathlen]
+                 [1 maxpathlen]
+                 [1 maxpathlen]
                  [1 maxpathlen]])
 
-  (def results8 [[1 (* maxpathlen 0.1)]
-                 [1 (* maxpathlen 0.2)]
-                 [1 (* maxpathlen 0.3)]
-                 [1 (* maxpathlen 0.4)]
-                 [1 (* maxpathlen 0.5)]
+  (def results4 [[0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
+                 [0 maxpathlen]
                  [1 maxpathlen]
                  [1 maxpathlen]
                  [1 maxpathlen]
                  [1 maxpathlen]
                  [1 maxpathlen]])
 
-  (map ($ fitness maxpathlen 1) results7)
-  (um/variance (map ($ fitness maxpathlen 1) results7))
-  (um/variance (map ($ fitness maxpathlen 1) results2))
-  (um/sample-variance (map ($ fitness maxpathlen 1) results7))
+  (map ($ realized-fitness maxpathlen 1) results7)
+  (um/variance (map ($ realized-fitness maxpathlen 1) results1))
+  (um/variance (map ($ realized-fitness maxpathlen 1) results2))
+  (um/variance (map ($ realized-fitness maxpathlen 1) results3))
+  (um/variance (map ($ realized-fitness maxpathlen 1) results4))
+
+  (um/sample-variance (map ($ realized-fitness maxpathlen 1) results1))
+  (um/sample-variance (map ($ realized-fitness maxpathlen 1) results2))
+  (um/sample-variance (map ($ realized-fitness maxpathlen 1) results3))
+  (um/sample-variance (map ($ realized-fitness maxpathlen 1) results4))
 )
 
 
