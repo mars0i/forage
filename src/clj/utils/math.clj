@@ -145,7 +145,7 @@
   ([xs]
    (let [n (count xs)]
      (/ (reduce + xs) n)))
-  ([n xs] (mean (take n xs)))) ; don't divide by n explicitly: xs may be short
+  ([n xs] (old-mean (take n xs)))) ; don't divide by n explicitly: xs may be short
 
 (defn mean
   "Returns the mean value of all numbers in collection xs, or the
