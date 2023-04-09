@@ -49,21 +49,11 @@
 
 (mx/set-current-implementation :ndarray) 
 ;(mx/set-current-implementation :vectorz)
+;; Strategy is to use :ndarray internally so that it's easy to update
+;; matrices, but then return the result in whatever implementation is
+;; the default specified above.
 
-;(def scale 1000)
-
-;; By default new-matrix will initialize with zero doubles, I don't want that 
-;; because it could be interpreted as a reference to a foodspot at [0,0].
-(defn make-env
-  "Creates a new environment in the form of a matrix with cells initialized
-  with nils."
-  [size] 
-  (let [env (mx/new-matrix size size)]
-    (doseq [x (range size)
-            y (range size)]
-      (mx/mset! env x y nil))
-    env))
-
+(def default-center :food)
 
 ;; FIXME I think scale is being ignored.
 ;;
@@ -73,14 +63,42 @@
   "Add foodspot, with its perceptual radius perc-radius, at scale scale, at
   location (x y). All cells within perc-radius of (x y) will have the value
   [x y] to indicate that they are in the perceptual radius of foodspot."
-  [scale perc-radius env x y]
+  ([scale perc-radius env x y]
+   (add-foodspot scale perc-radius env x y default-center))
+  ([scale perc-radius env x y center-val]
   (let [radius-squared (* perc-radius perc-radius)]
     (doseq [off-x (um/irange (- scale) scale)
             off-y (um/irange (- scale) scale)
             :when (<= (+ (* off-x off-x) (* off-y off-y))
                       radius-squared)]
-      (mx/mset! env (+ x off-x) (+ y off-y) [x y]))) ; Every within radius contains spot coords, including itself
-  (mx/mset! env x y :food)) ; replace foodspot location itself with distinguishing value
+      (mx/mset! env (+ x off-x) (+ y off-y) 
+                [x y]))) ; Every within radius contains spot coords
+  (mx/mset! env x y center-val))) ; replace foodspot location itself with distinguishing value
+
+(defn add-foodspots
+  [scale perc-radius env locs]
+  ;; FIXME
+  )
+
+;; By default new-matrix will initialize with zero doubles, I don't want that 
+;; because it could be confusing.
+(defn make-env
+  "Creates a new environment in the form of a matrix with cells initialized
+  with nils."
+  ([size] 
+   (let [env (mx/new-matrix :ndarray size size)] ;; Use ndarray internally so mset! works
+     (doseq [x (range size)
+             y (range size)]
+       (mx/mset! env x y nil)) ; initialize with non-confusing default
+     (mx/matrix env))) ; return as default implementation
+  ([size scale perc-radius locs]
+   (let [env (make-env size)]
+     (add-foodspots scale perc-radius env locs)
+     (mx/matrix env)))) ; return as default implementation
+
+
+(def m (mx/new-matrix 4 4))
+
 
 (comment
   (def e (make-env 100))
