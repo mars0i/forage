@@ -138,6 +138,11 @@
      (mx/matrix env)))) ; return as default implementation
 
 
+(defn env-foodspot-coords
+  [env]
+  )
+
+
 (comment
   (def e (make-env 100))
   (add-foodspot! 2 4 e 60 50)
@@ -146,4 +151,21 @@
   (add-foodspots! 2 3 e [;[10 10] 
                          [20 20] [15 15]])
   (mx/pm e)
+
+  (every? sequential? 
+
+  (sequential? 2)
+  (sequential? :a)
+  (seq? :a)
+
+  (mx/ereduce
+    (fn [acc xs]
+      (if (every? sequential? xs)
+        acc
+        (conj acc "uh-oh need indexes here")))
+    [] e)
+  ;; Use emap-indexed instead, I think.
+  ;; Or write my own doseq loop.
+
+
 )
