@@ -53,11 +53,34 @@
 ;; matrices, but then return the result in whatever implementation is
 ;; the default specified above.
 
+(defn mset-conj!
+  "Sets element [x y] of matrix m to a new value which is v conj'ed
+  onto the old value of m at [x y]. The old value must be a collection."
+  [m x y v]
+  (mx/mset! m x y (conj 
+                    (mx/mget m x y)
+                    v)))
+
+
 (def default-foodspot-val :food)
 
 ;; I put scale and perc-radius before env in the parameters below to make it
 ;; easier to define custom version of these functions for specific types
 ;; of models using partial.
+
+;; Values are conj'ed onto the existing value since there can be two
+;; foodspots at one location, or more likely, foodspots with
+;; overlapping perceptual radii.
+
+
+;; FIXME
+;; If not equal both off-x = 0 and off-y = 0 then if within radius,
+;; add pointer.
+;; if !(and x=0 y=0)
+;;    then when within radius
+;;              add pointer
+
+
 
 ;; Algorithm for scale:
 ;; If scale is 1, then fill in every point s.t. distance from foodspot
@@ -65,29 +88,33 @@
 ;; But suppose I want at least radius of 500.  Then if perc-radius=1,
 ;; r s/b 500.  If perc-radius=2, make r=1000.  So make r = perc-radius * scale.
 (defn add-foodspot!
-  "Add foodspot to env, with its perceptual radius perc-radius, at scale
-  scale, around location [x y]. All cells within scale*perc-radius of (x y)
-  will have the value [x y] to indicate that they are within the perceptual
-  radius of foodspot, and the center--the actual foodspot--will have the
-  value passed as center-val, or env-indexed/default-foodspot-val."
+  "Add foodspot to env, with its perceptual radius perc-radius, at
+  scale scale, around location [x y]. All cells within
+  scale*perc-radius of (x y) will have the value [x y] conj'ed to
+  indicate that they are within the perceptual radius of foodspot, and
+  the center--the actual foodspot--will have the value passed as
+  center-val, or env-indexed/default-foodspot-val."
   ([scale perc-radius env x y]
    (add-foodspot! scale perc-radius env x y default-foodspot-val))
   ([scale perc-radius env x y center-val]
-   (let [actual-radius (* scale perc-radius)
+   (mset-conj! env x y center-val) ; mark foodspot location itself with a distinguishing value
+   (let [actual-radius (* scale perc-radius)  ; add pointers to foodspot to its radius
          radius-squared (* actual-radius actual-radius)]
-     (doseq [off-x (um/irange (- actual-radius) actual-radius)
+     (doseq [off-x (um/irange (- actual-radius) actual-radius)  ;; FIXME
              off-y (um/irange (- actual-radius) actual-radius)
-             :when (<= (+ (* off-x off-x) (* off-y off-y))
-                       radius-squared)]
-       ;; FIXME This should conj onto existing sequence of references:
-       (mx/mset! env (+ x off-x) (+ y off-y) 
-                 [x y]))) ; Every point within radius contains spot coords
-   (mx/mset! env x y center-val))) ; replace foodspot location itself with a distinguishing value
+             :when (and (not= 0 off-x) ; skip foodspot location itself
+                        (not= 0 off-y)
+                        (<= (+ (* off-x off-x) (* off-y off-y))
+                            radius-squared))]
+       (mset-conj! env (+ x off-x) (+ y off-y) 
+                   [x y]))))) ; Every point within radius contains spot coords
+
 
 (defn add-foodspots!
   [scale perc-radius env locs]
   (doseq [[x y] locs]
     (add-foodspot! scale perc-radius env x y)))
+
 
 ;; By default new-matrix will initialize with zero doubles, I don't want that 
 ;; because it could be confusing.
