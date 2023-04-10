@@ -55,8 +55,10 @@
 
 (def default-foodspot-val :food)
 
-;; FIXME I think scale is being ignored.
-;;
+;; I put scale and perc-radius before env in the parameters below to make it
+;; easier to define custom version of these functions for specific types
+;; of models using partial.
+
 ;; Algorithm for scale:
 ;; If scale is 1, then fill in every point s.t. distance from foodspot
 ;; is <= perc-radius.  i.e. sqrt(x^2 + y^2) <= r, or x^2 + y^2 <= r^2.
@@ -69,7 +71,7 @@
   radius of foodspot, and the center--the actual foodspot--will have the
   value passed as center-val, or env-indexed/default-foodspot-val."
   ([scale perc-radius env x y]
-   (add-foodspot scale perc-radius env x y default-foodspot-val))
+   (add-foodspot! scale perc-radius env x y default-foodspot-val))
   ([scale perc-radius env x y center-val]
    (let [actual-radius (* scale perc-radius)
          radius-squared (* actual-radius actual-radius)]
@@ -77,14 +79,15 @@
              off-y (um/irange (- actual-radius) actual-radius)
              :when (<= (+ (* off-x off-x) (* off-y off-y))
                        radius-squared)]
+       ;; FIXME This should conj onto existing sequence of references:
        (mx/mset! env (+ x off-x) (+ y off-y) 
                  [x y]))) ; Every point within radius contains spot coords
    (mx/mset! env x y center-val))) ; replace foodspot location itself with a distinguishing value
 
 (defn add-foodspots!
   [scale perc-radius env locs]
-  ;; FIXME
-  )
+  (doseq [[x y] locs]
+    (add-foodspot! scale perc-radius env x y)))
 
 ;; By default new-matrix will initialize with zero doubles, I don't want that 
 ;; because it could be confusing.
@@ -99,15 +102,15 @@
      (mx/matrix env))) ; return as default implementation
   ([size scale perc-radius locs]
    (let [env (make-env size)]
-     (add-foodspots scale perc-radius env locs)
+     (add-foodspots! scale perc-radius env locs)
      (mx/matrix env)))) ; return as default implementation
-
-
-(def m (mx/new-matrix 4 4))
 
 
 (comment
   (def e (make-env 100))
-  (add-foodspot e 30 20 60 50)
+  (add-foodspot! 2 4 e 60 50)
+  (mx/pm e)
+  (def e (make-env 100))
+  (add-foodspots! 2 3 e [[10 10] [20 20]])
   (mx/pm e)
 )
