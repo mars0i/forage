@@ -77,6 +77,12 @@
 ;; TODO: Vega-lite and other coordinates I've used increase from lower
 ;; left to upper right.  core.matrix uses matrix-style coords from
 ;; upper left to lower right.  Need to harmonize these.
+;; Consider that I haven't always placed the origin at lower left, 
+;; though lately I have.
+;; What if I just flip the matrix afterwards?
+;; Or don't?  Why does the internal rep of an env have to be the same
+;; as the display rep?  (I didn't need to think about that for the
+;; MASON envs in env_mason.clj.)
 ;;
 ;; Algorithm for scale:
 ;; If scale is 1, then fill in every point s.t. distance from foodspot
@@ -101,7 +107,7 @@
              :when (and 
                      (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
                      (> radius-squared (+ (* off-x off-x) (* off-y off-y))))] ; Every other point within radius needs foodspot coords
-       (mset-conj! env (+ x off-x) (+ y off-y) [x y]))))) ;; add the foodspot coords
+       (mset-conj! env (+ x off-x) (+ y off-y) [x y]))))) ; add the foodspot coords
 
 
 (defn add-foodspots!
