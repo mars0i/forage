@@ -73,15 +73,11 @@
 ;; overlapping perceptual radii.
 
 
-;; FIXME
-;; If not equal both off-x = 0 and off-y = 0 then if within radius,
-;; add pointer.
-;; if !(and x=0 y=0)
-;;    then when within radius
-;;              add pointer
 
-
-
+;; TODO: Vega-lite and other coordinates I've used increase from lower
+;; left to upper right.  core.matrix uses matrix-style coords from
+;; upper left to lower right.  Need to harmonize these.
+;;
 ;; Algorithm for scale:
 ;; If scale is 1, then fill in every point s.t. distance from foodspot
 ;; is <= perc-radius.  i.e. sqrt(x^2 + y^2) <= r, or x^2 + y^2 <= r^2.
@@ -100,14 +96,12 @@
    (mset-conj! env x y center-val) ; mark foodspot location itself with a distinguishing value
    (let [actual-radius (* scale perc-radius)  ; add pointers to foodspot to its radius
          radius-squared (* actual-radius actual-radius)]
-     (doseq [off-x (um/irange (- actual-radius) actual-radius)  ;; FIXME
+     (doseq [off-x (um/irange (- actual-radius) actual-radius)
              off-y (um/irange (- actual-radius) actual-radius)
-             :when (and (not= 0 off-x) ; skip foodspot location itself
-                        (not= 0 off-y)
-                        (<= (+ (* off-x off-x) (* off-y off-y))
-                            radius-squared))]
-       (mset-conj! env (+ x off-x) (+ y off-y) 
-                   [x y]))))) ; Every point within radius contains spot coords
+             :when (and 
+                     (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
+                     (> radius-squared (+ (* off-x off-x) (* off-y off-y))))] ; Every other point within radius needs foodspot coords
+       (mset-conj! env (+ x off-x) (+ y off-y) [x y]))))) ;; add the foodspot coords
 
 
 (defn add-foodspots!
@@ -117,7 +111,9 @@
 
 
 ;; By default new-matrix will initialize with zero doubles, I don't want that 
-;; because it could be confusing.
+;; because it could be confusing.  Instead initialize with nils, which can
+;; be conj'ed onto later.  Don't use [] for this purpose: It can confuse
+;; core.matrix because it thinks the inner vectors are part of the matrix structure.
 (defn make-env
   "Creates a new environment in the form of a matrix with cells initialized
   with nils."
@@ -138,6 +134,7 @@
   (add-foodspot! 2 4 e 60 50)
   (mx/pm e)
   (def e (make-env 100))
-  (add-foodspots! 2 3 e [[10 10] [20 20]])
+  (add-foodspots! 2 3 e [;[10 10] 
+                         [20 20] [15 15]])
   (mx/pm e)
 )
