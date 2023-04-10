@@ -53,29 +53,35 @@
 ;; matrices, but then return the result in whatever implementation is
 ;; the default specified above.
 
-(def default-center :food)
+(def default-foodspot-val :food)
 
 ;; FIXME I think scale is being ignored.
 ;;
-;; Giving the foodspot itself a distinguishing value is better for debugging.
-;; Also for list of foodspots.
-(defn add-foodspot
-  "Add foodspot, with its perceptual radius perc-radius, at scale scale, at
-  location (x y). All cells within perc-radius of (x y) will have the value
-  [x y] to indicate that they are in the perceptual radius of foodspot."
+;; Algorithm for scale:
+;; If scale is 1, then fill in every point s.t. distance from foodspot
+;; is <= perc-radius.  i.e. sqrt(x^2 + y^2) <= r, or x^2 + y^2 <= r^2.
+;; But suppose I want at least radius of 500.  Then if perc-radius=1,
+;; r s/b 500.  If perc-radius=2, make r=1000.  So make r = perc-radius * scale.
+(defn add-foodspot!
+  "Add foodspot to env, with its perceptual radius perc-radius, at scale
+  scale, around location [x y]. All cells within scale*perc-radius of (x y)
+  will have the value [x y] to indicate that they are within the perceptual
+  radius of foodspot, and the center--the actual foodspot--will have the
+  value passed as center-val, or env-indexed/default-foodspot-val."
   ([scale perc-radius env x y]
-   (add-foodspot scale perc-radius env x y default-center))
+   (add-foodspot scale perc-radius env x y default-foodspot-val))
   ([scale perc-radius env x y center-val]
-  (let [radius-squared (* perc-radius perc-radius)]
-    (doseq [off-x (um/irange (- scale) scale)
-            off-y (um/irange (- scale) scale)
-            :when (<= (+ (* off-x off-x) (* off-y off-y))
-                      radius-squared)]
-      (mx/mset! env (+ x off-x) (+ y off-y) 
-                [x y]))) ; Every within radius contains spot coords
-  (mx/mset! env x y center-val))) ; replace foodspot location itself with distinguishing value
+   (let [actual-radius (* scale perc-radius)
+         radius-squared (* actual-radius actual-radius)]
+     (doseq [off-x (um/irange (- actual-radius) actual-radius)
+             off-y (um/irange (- actual-radius) actual-radius)
+             :when (<= (+ (* off-x off-x) (* off-y off-y))
+                       radius-squared)]
+       (mx/mset! env (+ x off-x) (+ y off-y) 
+                 [x y]))) ; Every point within radius contains spot coords
+   (mx/mset! env x y center-val))) ; replace foodspot location itself with a distinguishing value
 
-(defn add-foodspots
+(defn add-foodspots!
   [scale perc-radius env locs]
   ;; FIXME
   )

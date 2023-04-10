@@ -31,16 +31,18 @@
   [foodspot]
   [(.x foodspot) (.y foodspot)])
 
-(defn add-foodspots
+(defn add-foodspots!
   "Given an env which is a MASON Continuous2D, adds Foodspots to it at 
   coordinate pairs listed in locs.  If a sequence of nutrition-values is
   not provided, the nutrition field of all new foodspots will be set to 1."
-  ([env locs] (add-foodspots env locs (repeat (count locs) 1)))
+  ([env locs] (add-foodspots! env locs (repeat (count locs) 1)))
   ([^Continuous2D env locs nutrition-values]
    (doseq [[[x y] nutrition] (map vector locs nutrition-values)]
           (.setObjectLocation env
                               (->Foodspot x y nutrition)
                               (Double2D. x y)))))
+
+(def add-foodspots add-foodspots!) ; backwards compatibility
 
 (defn make-env
   "Returns a MASON Continuous2D to function as a square environment in 
@@ -54,7 +56,7 @@
   ([discretization size] (Continuous2D. discretization size size))
   ([discretization size locs]
    (let [env (make-env discretization size)]
-     (add-foodspots env locs)
+     (add-foodspots! env locs)
      env)))
 
 (defn env-size
