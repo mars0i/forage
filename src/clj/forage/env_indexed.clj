@@ -54,8 +54,9 @@
 ;; the default specified above.
 
 (defn mset-conj!
-  "Sets element [x y] of matrix m to a new value which is v conj'ed
-  onto the old value of m at [x y]. The old value must be a collection."
+  "Sets element [x y] of core.matrix matrix m to a new value which is v
+  conj'ed onto the old value of m at [x y]. The old value must be a
+  collection."
   [m x y v]
   (mx/mset! m x y (conj 
                     (mx/mget m x y)
@@ -64,31 +65,33 @@
 
 (def default-foodspot-val :food)
 
-;; I put scale and perc-radius before env in the parameters below to make it
-;; easier to define custom version of these functions for specific types
-;; of models using partial.
+;; Note: Vega-lite and other coordinates I've used increase from lower
+;; left to upper right.  core.matrix uses matrix-style coords from
+;; upper left to lower right.  But that's OK.
+;; I didn't need to think about that for the MASON envs in env_mason.clj.
+;; It turns out that MASON in fact use the matrix-style rep.  From 
+;; section 5.1.1 of the version 20 MASON manual:
+;;      It’s also probably best to think of grids in traditional matrix
+;;      format, that is, as having their origin in the top let corner,
+;;      with the positive Y axis pointing down. This is because of how
+;;      MASON displays them with its portrayals, which in turn is because
+;;      Java’s graphics coordinate system is flipped in the Y axis and has
+;;      <0, 0> at the top left corner.
+
 
 ;; Values are conj'ed onto the existing value since there can be two
 ;; foodspots at one location, or more likely, foodspots with
 ;; overlapping perceptual radii.
-
-
-
-;; TODO: Vega-lite and other coordinates I've used increase from lower
-;; left to upper right.  core.matrix uses matrix-style coords from
-;; upper left to lower right.  Need to harmonize these.
-;; Consider that I haven't always placed the origin at lower left, 
-;; though lately I have.
-;; What if I just flip the matrix afterwards?
-;; Or don't?  Why does the internal rep of an env have to be the same
-;; as the display rep?  (I didn't need to think about that for the
-;; MASON envs in env_mason.clj.)
 ;;
 ;; Algorithm for scale:
 ;; If scale is 1, then fill in every point s.t. distance from foodspot
 ;; is <= perc-radius.  i.e. sqrt(x^2 + y^2) <= r, or x^2 + y^2 <= r^2.
 ;; But suppose I want at least radius of 500.  Then if perc-radius=1,
 ;; r s/b 500.  If perc-radius=2, make r=1000.  So make r = perc-radius * scale.
+;;
+;; I put scale and perc-radius before env in the parameters below to make it
+;; easier to define custom version of these functions for specific types
+;; of models using partial.
 (defn add-foodspot!
   "Add foodspot to env, with its perceptual radius perc-radius, at
   scale scale, around location [x y]. All cells within
