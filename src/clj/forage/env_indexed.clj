@@ -3,7 +3,16 @@
   (:require [clojure.core.matrix :as mx]
             [utils.misc :as um]))
 
-;; Strategy:
+
+;; TODO TODO:
+;; SHOULD POINTER COORDS BE THE INTERNAL, SCALED COORDS, OR
+;; THE EXTERNAL, UNSCALED COORDS?
+;; TODO: Rename choose from mulitple foodspots function as "random".
+;; An alternative function might assess which foodspot is closer and
+;; choose that one.
+
+
+;; Overall strategy:
 ;; Foodspots exist in a 2D grid made with core.matrix (or some other
 ;; arbitrary-content 2D structure) using one of the pure Clojure matrix implementations.
 ;; A foodspot is represented by a special marker (maybe true, or a number
@@ -12,13 +21,13 @@
 ;; coordinates, are marked with a collection containing points to the
 ;; foodspot it's a radius around.  This is the size of the perceptual
 ;; radius, but it's around the foodspots.
-
+;;
 ;; These should perhaps be marked with the coordinates of the foodspoot
 ;; that that can be recorded.
-
+;;
 ;; Alternatively, if all search paths are continuous in 2D, one might only fill in
 ;; the slots on the perimeter.
-
+;;
 ;; When a walk reaches a check point, mod, or better yet round its coords it to
 ;; get the indexes into the matrix and check whether it's in the radius
 ;; of the foodspot.  Since indexes are integers 0, 1, 2, ..., this could be done 
@@ -30,14 +39,11 @@
 ;; that were two large, here were are just letting the grid representation
 ;; decide what is close enough.  So in addition to it probably being faster
 ;; to look up targets this way, I don't need to check for them as often.
-
-
+;;
 ;; The representation should have a scale, so that e.g. we represent a
 ;; distance of 1 as 100 cells.  Otherwise, if a distance of 1 was the cell
 ;; dimension, then perceptual radius 1 would be represented by a Moore or
 ;; von Neumann neighborhood, which is not a good approximation of circle.
-
-;; PROBLEM: What if perc-radii for two foodspots overlap?
 
 ;; NOTE there if I use regular Clojure vectors, I can use Clojure indexing:
 ;;   (def foo (mx/new-matrix :persistent-vector 4 4))
