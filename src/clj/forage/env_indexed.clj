@@ -79,6 +79,13 @@
 ;;      <0, 0> at the top left corner.
 
 
+;; TODO:
+;; What if foodspot is near edge of env?
+;; If non-toroidal, make sure there's not an index out of bounds error.
+;; If toroidal, then need to mod the pointers over to the other side.
+
+;; TODO ??  Maybe only place coordinates on the actual radius of the circle?
+
 ;; Values are conj'ed onto the existing value since there can be two
 ;; foodspots at one location, or more likely, foodspots with
 ;; overlapping perceptual radii.
@@ -138,9 +145,18 @@
      (mx/matrix env)))) ; return as default implementation
 
 
+;; Method used below doesn't try to find the foodspots themselves.  Their
+;; coordinates are referenced many times, so we extract them into a set.
+;; Perhaps this method will be too slow given the size of envs in models.
+;; A more bespoke method might be needed (perhaps using mx/ereduce).
 (defn env-foodspot-coords
+  "Returns a sequence of the coordinates off all foodspots in environment
+  env."
   [env]
-  )
+  (seq (into #{}
+             (comp cat (filter coll?)) ; Each elt is coll of pairs or single values--we want pairs.
+             (mx/eseq env))))
+
 
 
 (comment
@@ -148,24 +164,9 @@
   (add-foodspot! 2 4 e 60 50)
   (mx/pm e)
   (def e (make-env 100))
-  (add-foodspots! 2 3 e [;[10 10] 
+  (add-foodspots! 2 3 e [[10 10] 
                          [20 20] [15 15]])
   (mx/pm e)
-
-  (every? sequential? 
-
-  (sequential? 2)
-  (sequential? :a)
-  (seq? :a)
-
-  (mx/ereduce
-    (fn [acc xs]
-      (if (every? sequential? xs)
-        acc
-        (conj acc "uh-oh need indexes here")))
-    [] e)
-  ;; Use emap-indexed instead, I think.
-  ;; Or write my own doseq loop.
-
+  (env-foodspot-coords e)
 
 )
