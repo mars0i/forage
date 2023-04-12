@@ -72,10 +72,7 @@
 ;; convert it.
 
 (mx/set-current-implementation :ndarray) 
-;(mx/set-current-implementation :vectorz)
-;; Strategy is to use :ndarray internally so that it's easy to update
-;; matrices, but then return the result in whatever implementation is
-;; the default specified above.
+;; don't use this: (mx/set-current-implementation :persistent-vector)
 
 ;; core.matrix helper function
 (defn mset-conj!
@@ -130,12 +127,12 @@
   scale*perc-radius of (x y) will have the value [x y] conj'ed to
   indicate that they are within the perceptual radius of foodspot, and
   the center--the actual foodspot--will have the value passed as
-  center-val, or env-indexed/default-foodspot-val."
+  foodspot-val, or env-indexed/default-foodspot-val."
   ([scale perc-radius env x y]
    (add-foodspot! scale perc-radius env x y default-foodspot-val))
-  ([scale perc-radius env x y center-val]
-   (mset-conj! env x y center-val) ; mark foodspot location itself with a distinguishing value
-   (let [actual-radius (* scale perc-radius)  ; add pointers to foodspot to its radius
+  ([scale perc-radius env x y foodspot-val]
+   (mset-conj! env x y foodspot-val) ; mark foodspot location itself with a distinguishing value
+   (let [actual-radius (* scale perc-radius)  ; add pointers to foodspot in surrounding cells
          radius-squared (* actual-radius actual-radius)]
      (doseq [off-x (um/irange (- actual-radius) actual-radius)
              off-y (um/irange (- actual-radius) actual-radius)
@@ -151,23 +148,28 @@
     (add-foodspot! scale perc-radius env x y)))
 
 
+;; NOTE Because of the use of scale, this has to have a different
+;; signature from the version in env_mason.clj.
+;; 
 ;; By default new-matrix will initialize with zero doubles, I don't want that 
 ;; because it could be confusing.  Instead initialize with nils, which can
 ;; be conj'ed onto later.  Don't use [] for this purpose: It can confuse
 ;; core.matrix because it thinks the inner vectors are part of the matrix structure.
 (defn make-env
   "Creates a new environment in the form of a matrix with cells initialized
-  with nils."
-  ([size] 
-   (let [env (mx/new-matrix :ndarray size size)] ;; Use ndarray internally so mset! works
-     (doseq [x (range size)
-             y (range size)]
-       (mx/mset! env x y nil)) ; initialize with non-confusing default
-     (mx/matrix env))) ; return as default implementation
+  with nils.  The size of th4e matrix will be size X scale."
+  ([size scale] 
+   (let [size* (* size scale)
+         env (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
+     (doseq [x (range size*)
+             y (range size*)]
+       (mx/mset! env x y nil)) ; this default is assumed by other functions here.
+     env))
   ([size scale perc-radius locs]
-   (let [env (make-env size)]
+   (let [env (make-env size scale)]
      (add-foodspots! scale perc-radius env locs)
-     (mx/matrix env)))) ; return as default implementation
+     env)))
+     
 
 
 ;; Method used below doesn't try to find the foodspots themselves.  Their
@@ -230,17 +232,21 @@
 
 (comment
 
-  (def e (make-env 100))
-  (add-foodspot! 2 4 e 60 50)
+  (def e (make-env 10 2))
+  (add-foodspot! 2 3 e 5 5)
   (mx/pm e)
 
-  (def e (make-env 100))
-  (add-foodspots! 2 3 e [[10 10] 
-                         [20 20] [15 15]])
+  (def e (make-env 50 5))
+  (add-foodspots! 5 2 e [[30 30] [15 15]]) ; no overlap
   (mx/pm e)
+
+  (def e (make-env 50 5))
+  (add-foodspots! 5 2 e [[30 30] [30 20]]) ; a little bit of overlap
+  (mx/pm e)
+
   (env-foodspot-coords e)
 
-  (perc-foodspots e 12 12)
+  (perc-foodspots e 30 40)
   (def rng (r/make-well19937))
   (perc-foodspot-choose-randomly rng e 12 12)
 
