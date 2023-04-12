@@ -1,12 +1,22 @@
 ;; Future home of replacement for env-mason.
 (ns forage.env-indexed
-  (:require [clojure.core.matrix :as mx]
+  (:require [clojure.math :as math]
+            [clojure.core.matrix :as mx]
+            [utils.random :as r]
             [utils.misc :as um]))
-
 
 ;; TODO TODO:
 ;; SHOULD POINTER COORDS BE THE INTERNAL, SCALED COORDS, OR
 ;; THE EXTERNAL, UNSCALED COORDS?
+;; ANSWER: The external unscaled ones.  And then always do the conversion
+;; internally (as if it were OO).
+;; Maybe make the env into a pair or map that contains the scale and maybe size
+;; as well as the matrix.  But in that case, do not destructure the map
+;; or whatever it is in the functions that are used to look for foodspots.
+;; Or don't create the working versions of those using partial.  Make it
+;; so that any destructuring only happens once during setup--not every
+;; every time the system stops to look for foodspots.
+
 ;; TODO: Rename choose from mulitple foodspots function as "random".
 ;; An alternative function might assess which foodspot is closer and
 ;; choose that one.
@@ -21,13 +31,13 @@
 ;; coordinates, are marked with a collection containing points to the
 ;; foodspot it's a radius around.  This is the size of the perceptual
 ;; radius, but it's around the foodspots.
-;;
+
 ;; These should perhaps be marked with the coordinates of the foodspoot
 ;; that that can be recorded.
-;;
+
 ;; Alternatively, if all search paths are continuous in 2D, one might only fill in
 ;; the slots on the perimeter.
-;;
+
 ;; When a walk reaches a check point, mod, or better yet round its coords it to
 ;; get the indexes into the matrix and check whether it's in the radius
 ;; of the foodspot.  Since indexes are integers 0, 1, 2, ..., this could be done 
@@ -39,7 +49,8 @@
 ;; that were two large, here were are just letting the grid representation
 ;; decide what is close enough.  So in addition to it probably being faster
 ;; to look up targets this way, I don't need to check for them as often.
-;;
+
+
 ;; The representation should have a scale, so that e.g. we represent a
 ;; distance of 1 as 100 cells.  Otherwise, if a distance of 1 was the cell
 ;; dimension, then perceptual radius 1 would be represented by a Moore or
@@ -59,6 +70,7 @@
 ;; matrices, but then return the result in whatever implementation is
 ;; the default specified above.
 
+;; core.matrix helper function
 (defn mset-conj!
   "Sets element [x y] of core.matrix matrix m to a new value which is v
   conj'ed onto the old value of m at [x y]. The old value must be a
@@ -164,8 +176,38 @@
              (mx/eseq env))))
 
 
+;; Note perc-foodspot fns have different signatures from similar functions in 
+;; env_mason.clj because of differences in the approach.  In env-mason,
+;; perceptual radius is associated with the forager, whereas here it's 
+;; built into the env, and each foodspot.
+
+;; TODO add docstring
+(defn perc-foodspots
+  [env x y]
+  (let [x-int (math/round x)
+        y-int (math/round y)
+        found (mx/mget env x-int y-int)] ; note mget accepts floats but floors them
+    (and found   ; if nil, just return that
+         (if (some (complement coll?) found)
+           [[x y]]   ; This is a foodspot itself
+           found)))) ; A sequence of one or more coordinate pairs
+
+;; TODO add docstring
+;; TODO add similar random selection in env_mason
+(defn perc-foodspots-pick-one
+  [rng env x y]
+  (let [x-int (math/round x)
+        y-int (math/round y)
+        found (mx/mget env x-int y-int)] ; note mget accepts floats but floors them
+    (and found   ; if nil, just return that
+         (cond (some (complement coll?) found)  [x y]  ; This is a foodspot itself
+               (= 1 (count found)  (first found))      ; Within radius of a single foodspot
+               (r/sample-from-coll rng found 1)))))    ; Within radius of more, so randomly choose.
+
+
 
 (comment
+
   (def e (make-env 100))
   (add-foodspot! 2 4 e 60 50)
   (mx/pm e)
@@ -174,5 +216,10 @@
                          [20 20] [15 15]])
   (mx/pm e)
   (env-foodspot-coords e)
+
+  (mx/mget e 4 5)
+  (mx/mget e 10 10)
+  (mx/mget e 10 11)
+
 
 )
