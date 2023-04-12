@@ -158,15 +158,15 @@
 (defn make-env
   "Creates a new environment in the form of a matrix with cells initialized
   with nils.  The size of th4e matrix will be size X scale."
-  ([size scale] 
-   (let [size* (* size scale)
+  ([scale size] 
+   (let [size* (* scale size)
          env (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
      (doseq [x (range size*)
              y (range size*)]
        (mx/mset! env x y nil)) ; this default is assumed by other functions here.
      env))
-  ([size scale perc-radius locs]
-   (let [env (make-env size scale)]
+  ([scale size perc-radius locs]
+   (let [env (make-env scale size)]
      (add-foodspots! scale perc-radius env locs)
      env)))
      
@@ -208,6 +208,7 @@
            [[x y]]   ; This is a foodspot itself
            found)))) ; A sequence of one or more coordinate pairs
 
+
 ;; TODO add similar random selection in env_mason
 (defn perc-foodspot-choose-randomly
   "Examines location [x y] in env. Returns a falsey value if no foodspot is
@@ -232,15 +233,17 @@
 
 (comment
 
-  (def e (make-env 10 2))
+  mx/pm
+
+  (def e (make-env 2 10))
   (add-foodspot! 2 3 e 5 5)
   (mx/pm e)
 
-  (def e (make-env 50 5))
+  (def e (make-env 5 50))
   (add-foodspots! 5 2 e [[30 30] [15 15]]) ; no overlap
   (mx/pm e)
 
-  (def e (make-env 50 5))
+  (def e (make-env 5 50))
   (add-foodspots! 5 2 e [[30 30] [30 20]]) ; a little bit of overlap
   (mx/pm e)
 
