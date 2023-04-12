@@ -5,11 +5,18 @@
             [utils.random :as r]
             [utils.misc :as um]))
 
+;; Note perc-foodspot fns below have different signatures from similar functions in 
+;; env_mason.clj because of differences in the approach.  In env-mason,
+;; perceptual radius is associated with the forager, whereas here it's 
+;; built into the env, and each foodspot.
+
 ;; TODO TODO:
 ;; SHOULD POINTER COORDS BE THE INTERNAL, SCALED COORDS, OR
 ;; THE EXTERNAL, UNSCALED COORDS?
 ;; ANSWER: The external unscaled ones.  And then always do the conversion
 ;; internally (as if it were OO).
+;; So ... FIXME below.
+
 ;; Maybe make the env into a pair or map that contains the scale and maybe size
 ;; as well as the matrix.  But in that case, do not destructure the map
 ;; or whatever it is in the functions that are used to look for foodspots.
@@ -176,13 +183,20 @@
              (mx/eseq env))))
 
 
-;; Note perc-foodspot fns have different signatures from similar functions in 
-;; env_mason.clj because of differences in the approach.  In env-mason,
-;; perceptual radius is associated with the forager, whereas here it's 
-;; built into the env, and each foodspot.
+;; Note that although a forager who moves continuously and always looks for
+;; food can never reach a foodspot without first getting within perceptual
+;; radius, the following functions look for that possibility, for the sake
+;; of (a) random initial states, (b) foragers who don't look while in
+;; motion, and (c) possible models of e.g. raptors who don't move across
+;; the ground.
 
-;; TODO add docstring
 (defn perc-foodspots
+  "Examines location [x y] in env. Returns a falsey value if no foodspot is
+  within the perceptual radius of that position, or the coordinates of a
+  foodspot that's perceptible that location.  These coordinates will be [x
+  y] if there's a foodspot on that very location.  Otherwise a collection
+  of all coordinates of all foodspots perceptible from that location will
+  be returned."
   [env x y]
   (let [x-int (math/round x)
         y-int (math/round y)
@@ -205,12 +219,13 @@
         y-int (math/round y)
         found (mx/mget env x-int y-int)] ; note mget accepts floats but floors them
     (and found   ; if nil, just return that
-         (cond (some (complement coll?) found)  [x y]  ; This is a foodspot itself
-               (= 1 (count found))     (first found)  ; Within radius of a single foodspot
-               :else (r/sample-from-coll rng found 1)))))    ; Within radius of more, so randomly choose.
+         (cond (some (complement coll?) found) [x y]  ; This is a foodspot itself
+               (= 1 (count found))             (first found)  ; Within radius of a single foodspot
+               :else                           (r/sample-from-coll rng found 1))))) ; Within radius of more, so randomly choose.
 
 
-;; TODO: add version of 
+;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
+;; only chooses randomly if there are mulitple equally close foodspots.
 
 
 (comment
@@ -218,11 +233,16 @@
   (def e (make-env 100))
   (add-foodspot! 2 4 e 60 50)
   (mx/pm e)
+
   (def e (make-env 100))
   (add-foodspots! 2 3 e [[10 10] 
                          [20 20] [15 15]])
   (mx/pm e)
   (env-foodspot-coords e)
+
+  (perc-foodspots e 12 12)
+  (def rng (r/make-well19937))
+  (perc-foodspot-choose-randomly rng e 12 12)
 
   (mx/mget e 4 5)
   (mx/mget e 10 10)
