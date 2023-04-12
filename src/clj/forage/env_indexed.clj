@@ -193,7 +193,7 @@
            found)))) ; A sequence of one or more coordinate pairs
 
 ;; TODO add similar random selection in env_mason
-(defn perc-foodspots-choose-randomly
+(defn perc-foodspot-choose-randomly
   "Examines location [x y] in env. Returns a falsey value if no foodspot is
   within the perceptual radius of that position, or the coordinates of a
   foodspot that's perceptible that location.  These coordinates will be [x
@@ -206,8 +206,8 @@
         found (mx/mget env x-int y-int)] ; note mget accepts floats but floors them
     (and found   ; if nil, just return that
          (cond (some (complement coll?) found)  [x y]  ; This is a foodspot itself
-               (= 1 (count founda))     (first found)  ; Within radius of a single foodspot
-               (r/sample-from-coll rng found 1)))))    ; Within radius of more, so randomly choose.
+               (= 1 (count found))     (first found)  ; Within radius of a single foodspot
+               :else (r/sample-from-coll rng found 1)))))    ; Within radius of more, so randomly choose.
 
 
 ;; TODO: add version of 
