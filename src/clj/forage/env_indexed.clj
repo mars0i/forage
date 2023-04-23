@@ -24,10 +24,6 @@
 ;; so that any destructuring only happens once during setup--not every
 ;; every time the system stops to look for foodspots.
 
-;; TODO: Rename choose from mulitple foodspots function as "random".
-;; An alternative function might assess which foodspot is closer and
-;; choose that one.
-
 
 ;; Overall strategy:
 ;; Foodspots exist in a 2D grid made with core.matrix (or some other
@@ -87,26 +83,38 @@
 
 (def default-foodspot-val :food)
 
-;; Note: Vega-lite and other coordinates I've used increase from lower
-;; left to upper right.  core.matrix uses matrix-style coords from
-;; upper left to lower right.  But that's OK.
-;; I didn't need to think about that for the MASON envs in env_mason.clj.
-;; It turns out that MASON in fact use the matrix-style rep.  From 
-;; section 5.1.1 of the version 20 MASON manual:
-;;      It’s also probably best to think of grids in traditional matrix
-;;      format, that is, as having their origin in the top let corner,
-;;      with the positive Y axis pointing down. This is because of how
-;;      MASON displays them with its portrayals, which in turn is because
-;;      Java’s graphics coordinate system is flipped in the Y axis and has
-;;      <0, 0> at the top left corner.
-
-
 ;; TODO:
 ;; What if foodspot is near edge of env?
 ;; If non-toroidal, make sure there's not an index out of bounds error.
 ;; If toroidal, then need to mod the pointers over to the other side.
 
 ;; TODO ??  Maybe only place coordinates on the actual radius of the circle?
+
+
+
+;; NOTE Because of the use of scale, this has to have a different
+;; signature from the version in env_mason.clj.
+;; 
+;; By default new-matrix will initialize with zero doubles, I don't want that 
+;; because it could be confusing.  Instead initialize with nils, which can
+;; be conj'ed onto later.  Don't use [] for this purpose: It can confuse
+;; core.matrix because it thinks the inner vectors are part of the matrix structure.
+(defn make-env
+  "Returns a new environment as a map containing a value of :size which
+  is dimension of the external representation of a size X size field, a
+  value of :scale, which specifies how much finer-grained the internal
+  representation of the field is, and :locations, whose value is a (size *
+  scale) X (size * scale) matrix which is the internal representation of
+  the field.  There will also be a key and value for internal-size.
+  All of the cells of the matrix will be initialized with nil."
+  [size scale] 
+  (let [size* (* scale size)
+        locations (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
+    (doseq [x (range size*)
+            y (range size*)]
+      (mx/mset! locations x y nil)) ; this default is assumed by other functions here.
+    {:size size, :scale scale, :locations locations}))
+
 
 ;; Values are conj'ed onto the existing value since there can be two
 ;; foodspots at one location, or more likely, foodspots with
@@ -121,6 +129,9 @@
 ;; I put scale and perc-radius before env in the parameters below to make it
 ;; easier to define custom version of these functions for specific types
 ;; of models using partial.
+;;
+;; Passing an alternate foodspot-val allows e.g. adding a value that
+;; represents various energy values gotten from eating.
 (defn add-foodspot!
   "Add foodspot to env, with its perceptual radius perc-radius, at
   scale scale, around location [x y]. All cells within
@@ -128,50 +139,58 @@
   indicate that they are within the perceptual radius of foodspot, and
   the center--the actual foodspot--will have the value passed as
   foodspot-val, or env-indexed/default-foodspot-val."
-  ([scale perc-radius env x y]
-   (add-foodspot! scale perc-radius env x y default-foodspot-val))
-  ([scale perc-radius env x y foodspot-val]
-   (mset-conj! env x y foodspot-val) ; mark foodspot location itself with a distinguishing value
-   (let [actual-radius (* scale perc-radius)  ; add pointers to foodspot in surrounding cells
-         radius-squared (* actual-radius actual-radius)]
-     (doseq [off-x (um/irange (- actual-radius) actual-radius)
-             off-y (um/irange (- actual-radius) actual-radius)
+  ([env perc-radius x y]
+   (add-foodspot! env perc-radius x y default-foodspot-val))
+  ([env perc-radius x y foodspot-val]
+   (let [scaled (partial * (:scale env))
+         size* (scaled (:size env))
+         radius* (scaled perc-radius)  ; add pointers to foodspot in surrounding cells
+         radius*-squared (* radius* radius*)
+         locs (:locations env)]
+     (mset-conj! locs (scaled x) (scaled y) foodspot-val) ; mark foodspot location itself with a distinguishing value
+     (doseq [off-x (um/irange (- radius*) radius*)
+             off-y (um/irange (- radius*) radius*)
              :when (and 
                      (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
-                     (> radius-squared (+ (* off-x off-x) (* off-y off-y))))] ; Every other point within radius needs foodspot coords
-       (mset-conj! env (+ x off-x) (+ y off-y) [x y]))))) ; add the foodspot coords
+                     (> radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; Every other point within radius needs foodspot coords
+       (mset-conj! locs                 ; add the foodspot coords
+                   (+ off-x (scaled x))
+                   (+ off-y (scaled y))
+                   [x y])))))
 
 
 (defn add-foodspots!
-  [scale perc-radius env locs]
+  [env perc-radius locs]
   (doseq [[x y] locs]
-    (add-foodspot! scale perc-radius env x y)))
+    (add-foodspot! env perc-radius x y)))
+
+(defn get-xy
+  "Returns whatever is at (external, integer) coordinates x, y in
+  environment e. Notes: Can't be used to look at intervening
+  micro-locations. Should be avoided in inner loops to avoid repeated
+  destructuring of the env map."
+  [env x y]
+  (let [scale (:scale env)]
+    (mx/mget (:locations env) (* x scale) (* y scale)))) 
 
 
-;; NOTE Because of the use of scale, this has to have a different
-;; signature from the version in env_mason.clj.
-;; 
-;; By default new-matrix will initialize with zero doubles, I don't want that 
-;; because it could be confusing.  Instead initialize with nils, which can
-;; be conj'ed onto later.  Don't use [] for this purpose: It can confuse
-;; core.matrix because it thinks the inner vectors are part of the matrix structure.
-(defn make-env
-  "Creates a new environment in the form of a matrix with cells initialized
-  with nils.  The size of th4e matrix will be size X scale."
-  ([scale size] 
-   (let [size* (* scale size)
-         env (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
-     (doseq [x (range size*)
-             y (range size*)]
-       (mx/mset! env x y nil)) ; this default is assumed by other functions here.
-     env))
-  ([scale size perc-radius locs]
-   (let [env (make-env scale size)]
-     (add-foodspots! scale perc-radius env locs)
-     env)))
-     
+(comment
+  (def scale 4)
+  (def e (make-env 6 scale))
+  (mx/shape (:locations e))
+  (add-foodspot! e 1 1 1)
+  (mx/pm (:locations e) {:formatter (fn [x] (if x (str x) "(-----)"))})
+  (mx/pm (:locations e))
+  (get-xy e 2 3)
+  (mx/mget (:locations e) (* scale 3) (* scale 3))
+
+  (def yo (mx/matrix :persistent-vector e))
+
+  (env-foodspot-coords e)
+)
 
 
+;; FIXME needs to be un-scaled
 ;; Method used below doesn't try to find the foodspots themselves.  Their
 ;; coordinates are referenced many times, so we extract them into a set.
 ;; Perhaps this method will be too slow given the size of envs in models.
@@ -233,22 +252,6 @@
 
 (comment
 
-  mx/pm
-
-  (def e (make-env 2 10))
-  (add-foodspot! 2 3 e 5 5)
-  (mx/pm e)
-
-  (def e (make-env 5 50))
-  (add-foodspots! 5 2 e [[30 30] [15 15]]) ; no overlap
-  (mx/pm e)
-
-  (def e (make-env 5 50))
-  (add-foodspots! 5 2 e [[30 30] [30 20]]) ; a little bit of overlap
-  (mx/pm e)
-
-  (env-foodspot-coords e)
-
   (perc-foodspots e 30 40)
   (def rng (r/make-well19937))
   (perc-foodspot-choose-randomly rng e 12 12)
@@ -256,6 +259,4 @@
   (mx/mget e 4 5)
   (mx/mget e 10 10)
   (mx/mget e 10 11)
-
-
 )
