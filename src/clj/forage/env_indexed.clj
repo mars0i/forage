@@ -107,31 +107,29 @@
   scale) X (size * scale) matrix which is the internal representation of
   the field.  There will also be a key and value for internal-size.
   All of the cells of the matrix will be initialized with nil."
-  [size scale] 
+  [size scale toroidal?] 
   (let [size* (* scale size)
         locations (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
     (doseq [x (range size*)
             y (range size*)]
       (mx/mset! locations x y nil)) ; this default is assumed by other functions here.
-    {:size size, :scale scale, :locations locations}))
+    {:size size, :scale scale, :toroidal? toroidal?, :locations locations}))
 
 
-;; Values are conj'ed onto the existing value since there can be two
-;; foodspots at one location, or more likely, foodspots with
-;; overlapping perceptual radii.
-;;
-;; Algorithm for scale:
-;; If scale is 1, then fill in every point s.t. distance from foodspot
-;; is <= perc-radius.  i.e. sqrt(x^2 + y^2) <= r, or x^2 + y^2 <= r^2.
-;; But suppose I want at least radius of 500.  Then if perc-radius=1,
-;; r s/b 500.  If perc-radius=2, make r=1000.  So make r = perc-radius * scale.
-;;
-;; I put scale and perc-radius before env in the parameters below to make it
-;; easier to define custom version of these functions for specific types
-;; of models using partial.
-;;
-;; Passing an alternate foodspot-val allows e.g. adding a value that
-;; represents various energy values gotten from eating.
+;; TODO: Add clipping for toroidal? = falsey, wrapping for toroidal? = truthy
+;; - Values are conj'ed onto the existing value since there can be two
+;;   foodspots at one location, or more likely, foodspots with
+;;   overlapping perceptual radii.
+;; - Algorithm for scale:
+;;   If scale is 1, then fill in every point s.t. distance from foodspot
+;;   is <= perc-radius.  i.e. sqrt(x^2 + y^2) <= r, or x^2 + y^2 <= r^2.
+;;   But suppose I want at least radius of 500.  Then if perc-radius=1,
+;;   r s/b 500.  If perc-radius=2, make r=1000.  So make r = perc-radius * scale.
+;; - I put scale and perc-radius before env in the parameters below to make it
+;;   easier to define custom version of these functions for specific types
+;;   of models using partial.
+;; - Passing an alternate foodspot-val allows e.g. adding a value that
+;;   represents various energy values gotten from eating.
 (defn add-foodspot!
   "Add foodspot to env, with its perceptual radius perc-radius, at
   scale scale, around location [x y]. All cells within
@@ -142,7 +140,10 @@
   ([env perc-radius x y]
    (add-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
-   (let [scaled (partial * (:scale env))
+   (let [raw-scaled (partial * (:scale env))
+         scaled (if (:toroidal? env)
+                  (fn [x] (raw-scaled x)) ; FIXME add mod or rem
+                  raw-scaled)
          size* (scaled (:size env))
          radius* (scaled perc-radius)  ; add pointers to foodspot in surrounding cells
          radius*-squared (* radius* radius*)
@@ -160,15 +161,18 @@
 
 
 (defn add-foodspots!
+  "Add multiple foodspots at coordinate pairs in locs, to env with
+  perceptual radius perc-radius.  (See add-foodspot! for details.)"
   [env perc-radius locs]
   (doseq [[x y] locs]
     (add-foodspot! env perc-radius x y)))
 
+
+;; TODO: Add clipping for toroidal? = falsey, wrapping for toroidal? = truthy
 (defn get-xy
   "Returns whatever is at (external, integer) coordinates x, y in
   environment e. Notes: Can't be used to look at intervening
-  micro-locations. Should be avoided in inner loops to avoid repeated
-  destructuring of the env map."
+  micro-locations. AVOID in inner loops, to avoid repeated destructuring."
   [env x y]
   (let [scale (:scale env)]
     (mx/mget (:locations env) (* x scale) (* y scale)))) 
