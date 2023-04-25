@@ -132,11 +132,8 @@
 )
 
 
-;; TODO: Add clipping for toroidal? = falsey, wrapping for toroidal? = truthy
-;; - Values are conj'ed onto the existing value since there can be two
-;;   foodspots at one location, or more likely, foodspots with
-;;   overlapping perceptual radii.
-;; - Algorithm for scale:
+;; - Note not optimally efficient, but this is only used for setup.
+;; - Basic algorithm for scale:
 ;;   If scale is 1, then fill in every point s.t. distance from foodspot
 ;;   is <= perc-radius.  i.e. sqrt(x^2 + y^2) <= r, or x^2 + y^2 <= r^2.
 ;;   But suppose I want at least radius of 500.  Then if perc-radius=1,
@@ -167,15 +164,13 @@
      (mset-conj! locs (scale-it x) (scale-it y) foodspot-val) ; mark foodspot location itself with a distinguishing value
      (doseq [off-x (um/irange (- radius*) radius*)
              off-y (um/irange (- radius*) radius*)
-             :let [x** (if toroidal? (toroidize (+ x* off-x)) (+ x* off-x))
-                   y** (if toroidal? (toroidize (+ y* off-y)) (+ y* off-y))]
+             :let [[x** y**] (if toroidal?
+                               [(toroidize (+ x* off-x)) (toroidize (+ y* off-y))]
+                               [(+ x* off-x) (+ y* off-y)])]
              :when (and 
                      (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
                      (> radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; Every other point within radius needs foodspot coords
-       (mset-conj! locs                 ; add the foodspot coords
-                   x**
-                   y**
-                   [x y])))))
+       (mset-conj! locs x** y** [x y])))))
 
 
 (defn add-foodspots!
