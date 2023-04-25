@@ -164,13 +164,15 @@
      (mset-conj! locs (scale-it x) (scale-it y) foodspot-val) ; mark foodspot location itself with a distinguishing value
      (doseq [off-x (um/irange (- radius*) radius*)
              off-y (um/irange (- radius*) radius*)
-             :let [[x** y**] (if toroidal?
-                               [(toroidize (+ x* off-x)) (toroidize (+ y* off-y))]
-                               [(+ x* off-x) (+ y* off-y)])]
-             :when (and 
-                     (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
-                     (> radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; Every other point within radius needs foodspot coords
-       (mset-conj! locs x** y** [x y])))))
+             :when (and (or toroidal?                      ; if toroidal, let all values through
+                            (and (>= x* 0) (<= x* size*)   ; if not, 
+                                 (>= y* 0) (<= y* size*)))  ;  only allow those within boundaries
+                        (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
+                        (>= radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; ignore outside circle
+       (let [[x** y**] (if toroidal? 
+                         [(toroidize (+ x* off-x)) (toroidize (+ y* off-y))]
+                         [(+ x* off-x) (+ y* off-y)])]
+         (mset-conj! locs x** y** [x y]))))))
 
 
 (defn add-foodspots!
