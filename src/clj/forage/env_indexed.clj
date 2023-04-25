@@ -195,9 +195,10 @@
 
 (comment
   (def scale 4)
-  (def e (make-env 6 scale))
+  (def e (make-env 6 scale false))
   (mx/shape (:locations e))
   (add-foodspot! e 1 1 1)
+  (add-foodspot! e 1 3 5)
   (mx/pm (:locations e) {:formatter (fn [x] (if x (str x) "(-----)"))})
   (mx/pm (:locations e))
   (get-xy e 2 3)
