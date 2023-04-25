@@ -100,13 +100,14 @@
 ;; be conj'ed onto later.  Don't use [] for this purpose: It can confuse
 ;; core.matrix because it thinks the inner vectors are part of the matrix structure.
 (defn make-env
-  "Returns a new environment as a map containing a value of :size which
-  is dimension of the external representation of a size X size field, a
-  value of :scale, which specifies how much finer-grained the internal
+  "Returns a new environment as a map containing a value of :size which is
+  dimension of the external representation of a size X size field, a value
+  of :scale, which specifies how much finer-grained the internal
   representation of the field is, and :locations, whose value is a (size *
   scale) X (size * scale) matrix which is the internal representation of
-  the field.  There will also be a key and value for internal-size.
-  All of the cells of the matrix will be initialized with nil."
+  the field.  There will also be a key and value for internal-size.  Note
+  that coordinates in env range from [0,0] to [size,size].  All of the cells
+  of the matrix will be initialized with nil."
   [size scale toroidal?] 
   (let [size* (* scale size)
         locations (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
@@ -114,6 +115,21 @@
             y (range size*)]
       (mx/mset! locations x y nil)) ; this default is assumed by other functions here.
     {:size size, :scale scale, :toroidal? toroidal?, :locations locations}))
+
+
+(defn toroidize
+  "Map a coordinate to the other size of the field, on the assumption that
+  coordinates in env range from [0,0] to [size,size]."
+  [size coord]
+  (cond (> coord size) (- coord size) ; if too far right/up, add diff to 0
+        (neg? coord)   (+ size coord) ; if below left/bottom edge, subtract from high edge
+        :else coord))
+
+(comment
+  (toroidize 100 105)
+  (toroidize 100 25)
+  (toroidize 100 -20)
+)
 
 
 ;; TODO: Add clipping for toroidal? = falsey, wrapping for toroidal? = truthy
@@ -140,23 +156,25 @@
   ([env perc-radius x y]
    (add-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
-   (let [raw-scaled (partial * (:scale env))
-         scaled (if (:toroidal? env)
-                  (fn [x] (raw-scaled x)) ; FIXME add mod or rem
-                  raw-scaled)
-         size* (scaled (:size env))
-         radius* (scaled perc-radius)  ; add pointers to foodspot in surrounding cells
+   (let [toroidal? (:toroidal? env)
+         scale-it (partial * (:scale env))
+         size* (scale-it (:size env))
+         x* (scale-it x)
+         y* (scale-it y)
+         radius* (scale-it perc-radius)  ; add pointers to foodspot in surrounding cells
          radius*-squared (* radius* radius*)
          locs (:locations env)]
-     (mset-conj! locs (scaled x) (scaled y) foodspot-val) ; mark foodspot location itself with a distinguishing value
+     (mset-conj! locs (scale-it x) (scale-it y) foodspot-val) ; mark foodspot location itself with a distinguishing value
      (doseq [off-x (um/irange (- radius*) radius*)
              off-y (um/irange (- radius*) radius*)
+             :let [x** (if toroidal? (toroidize (+ x* off-x)) (+ x* off-x))
+                   y** (if toroidal? (toroidize (+ y* off-y)) (+ y* off-y))]
              :when (and 
                      (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
                      (> radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; Every other point within radius needs foodspot coords
        (mset-conj! locs                 ; add the foodspot coords
-                   (+ off-x (scaled x))
-                   (+ off-y (scaled y))
+                   x**
+                   y**
                    [x y])))))
 
 
@@ -253,14 +271,3 @@
 ;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
 ;; only chooses randomly if there are mulitple equally close foodspots.
 
-
-(comment
-
-  (perc-foodspots e 30 40)
-  (def rng (r/make-well19937))
-  (perc-foodspot-choose-randomly rng e 12 12)
-
-  (mx/mget e 4 5)
-  (mx/mget e 10 10)
-  (mx/mget e 10 11)
-)
