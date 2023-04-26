@@ -117,20 +117,72 @@
     {:size size, :scale scale, :toroidal? toroidal?, :locations locations}))
 
 
-(defn toroidize
-  "Map a coordinate to the other size of the field, on the assumption that
-  coordinates in env range from [0,0] to [size,size]."
+(defn toroidize-coord-to-env
+  "If necessary map a coordinate to the other size of the field, on the
+  assumption that coordinates in env range from [0,0] to [size,size]."
   [size coord]
   (cond (> coord size) (- coord size) ; if too far right/up, add diff to 0
         (neg? coord)   (+ size coord) ; if below left/bottom edge, subtract from high edge
-        :else coord))
+        :else coord)) ; just return as is if already within boundaries
 
 (comment
-  (toroidize 100 105)
-  (toroidize 100 25)
-  (toroidize 100 -20)
+  (toroidize-coord-to-env 100 105)
+  (toroidize-coord-to-env 100 25)
+  (toroidize-coord-to-env 100 -20)
 )
 
+(defn toroidize-coord-pair-to-env
+  "If necessary, map a pair of coordinates to the other size of the field,
+  on the assumption that coordinates in env range from [0,0] to
+  [size,size]."
+  [size [x y]]
+  [(toroidize-coord-to-env size x) (toroidize-coord-to-env size y)])
+
+(comment
+  (toroidize-coord-pair-to-env 100 [110 105])
+  (toroidize-coord-pair-to-env 100 [110 25])
+  (toroidize-coord-pair-to-env 100 [25 125])
+  (toroidize-coord-pair-to-env 100 [-20 -10])
+)
+
+(defn toroidize-coord-pairs-to-env
+  "For exach coordinate pair in coord-pairs, if necessary, map a pair of
+  coordinates to the other size of the field, on the assumption that
+  coordinates in env range from [0,0] to [size,size]."
+  [size coord-pairs]
+  (map (partial toroidize-coord-pair-to-env size) coord-pairs))
+
+
+(defn clip-coord-pairs-to-env
+  [size coord-pairs]
+  ; TODO
+  )
+
+
+
+(defn circle-range
+  "Returns a sequence of coordinates representing a filled circle, around
+  [x y], of external size perc-radius, but scaled according to env's scale."
+  [env perc-radius x y]
+  (let [scale-it (partial * (:scale env))
+        x* (scale-it x)
+        y* (scale-it y)
+        radius* (scale-it perc-radius)  ; add pointers to foodspot in surrounding cells
+        radius*-squared (* radius* radius*)
+        locs (:locations env)]
+    (doseq [off-x (um/irange (- radius*) radius*)
+            off-y (um/irange (- radius*) radius*)
+            :when (>= radius*-squared (+ (* off-x off-x) (* off-y off-y)))] ; ignore outside circle
+      [(+ x* off-x) (+ y* off-y)])))
+
+
+
+(defn new-add-foodspot!
+  ([env perc-radius x y]
+   (add-foodspot! env perc-radius x y default-foodspot-val))
+  ([env perc-radius x y foodspot-val]
+   ;; TODO use separate component functions circle-range, etc. here.
+   ))
 
 ;; - Note not optimally efficient, but this is only used for setup.
 ;; - Basic algorithm for scale:
@@ -170,9 +222,33 @@
                         (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
                         (>= radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; ignore outside circle
        (let [[x** y**] (if toroidal? 
-                         [(toroidize (+ x* off-x)) (toroidize (+ y* off-y))]
+                         [(toroidize-coord (+ x* off-x)) (toroidize-coord (+ y* off-y))]
                          [(+ x* off-x) (+ y* off-y)])]
          (mset-conj! locs x** y** [x y]))))))
+
+
+(defn old-add-foodspot!
+  ([env perc-radius x y]
+   (add-foodspot! env perc-radius x y default-foodspot-val))
+  ([env perc-radius x y foodspot-val]
+   (let [raw-scaled (partial * (:scale env))
+         scaled (if (:toroidal? env)
+                  (fn [x] (raw-scaled x)) ; FIXME add mod or rem
+                  raw-scaled)
+         size* (scaled (:size env))
+         radius* (scaled perc-radius)  ; add pointers to foodspot in surrounding cells
+         radius*-squared (* radius* radius*)
+         locs (:locations env)]
+     (mset-conj! locs (scaled x) (scaled y) foodspot-val) ; mark foodspot location itself with a distinguishing value
+     (doseq [off-x (um/irange (- radius*) radius*)
+             off-y (um/irange (- radius*) radius*)
+             :when (and 
+                     (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
+                     (> radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; Every other point within radius needs foodspot coords
+       (mset-conj! locs                 ; add the foodspot coords
+                   (+ off-x (scaled x))
+                   (+ off-y (scaled y))
+                   [x y])))))
 
 
 (defn add-foodspots!
