@@ -153,11 +153,18 @@
   (map (partial toroidize-coord-pair-to-env size) coord-pairs))
 
 
-(defn clip-coord-pairs-to-env
-  [size coord-pairs]
-  ; TODO
-  )
+(defn within-bounds?
+  [size [x y]]
+  (and (>= x 0) (>= y 0) (<= x size) (<= y size)))
 
+(defn remove-out-of-bounds-pairs
+  [size coord-pairs]
+  (filter (partial within-bounds? size) coord-pairs))
+
+(comment
+  (remove-out-of-bounds-pairs 100 [[-2 50] [40 -30] [200 50] [65 45] [0 100] [100 0]
+                                   [125 0] [-50 150] [0 15] [25 75]])
+)
 
 
 (defn circle-range
@@ -168,8 +175,7 @@
         x* (scale-it x)
         y* (scale-it y)
         radius* (scale-it perc-radius)  ; add pointers to foodspot in surrounding cells
-        radius*-squared (* radius* radius*)
-        locs (:locations env)]
+        radius*-squared (* radius* radius*)]
     (doseq [off-x (um/irange (- radius*) radius*)
             off-y (um/irange (- radius*) radius*)
             :when (>= radius*-squared (+ (* off-x off-x) (* off-y off-y)))] ; ignore outside circle
@@ -179,7 +185,7 @@
 
 (defn new-add-foodspot!
   ([env perc-radius x y]
-   (add-foodspot! env perc-radius x y default-foodspot-val))
+   (new-add-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
    ;; TODO use separate component functions circle-range, etc. here.
    ))
@@ -222,7 +228,8 @@
                         (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
                         (>= radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; ignore outside circle
        (let [[x** y**] (if toroidal? 
-                         [(toroidize-coord (+ x* off-x)) (toroidize-coord (+ y* off-y))]
+                         [(toroidize-coord-pair-to-env (+ x* off-x))
+                          (toroidize-coord-pair-to-env (+ y* off-y))]
                          [(+ x* off-x) (+ y* off-y)])]
          (mset-conj! locs x** y** [x y]))))))
 
