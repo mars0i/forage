@@ -80,7 +80,6 @@
                     (mx/mget m x y)
                     v)))
 
-
 (def default-foodspot-val :food)
 
 ;; TODO:
@@ -117,7 +116,7 @@
     {:size size, :scale scale, :toroidal? toroidal?, :locations locations}))
 
 
-(defn toroidize-coord-to-env
+(defn toroidize-coord
   "If necessary map a coordinate to the other size of the field, on the
   assumption that coordinates in env range from [0,0] to [size,size]."
   [size coord]
@@ -126,44 +125,47 @@
         :else coord)) ; just return as is if already within boundaries
 
 (comment
-  (toroidize-coord-to-env 100 105)
-  (toroidize-coord-to-env 100 25)
-  (toroidize-coord-to-env 100 -20)
+  (toroidize-coord 100 105)
+  (toroidize-coord 100 25)
+  (toroidize-coord 100 -20)
 )
 
-(defn toroidize-coord-pair-to-env
+(defn toroidize-pair
   "If necessary, map a pair of coordinates to the other size of the field,
   on the assumption that coordinates in env range from [0,0] to
   [size,size]."
   [size [x y]]
-  [(toroidize-coord-to-env size x) (toroidize-coord-to-env size y)])
+  [(toroidize-coord size x) (toroidize-coord size y)])
 
 (comment
-  (toroidize-coord-pair-to-env 100 [110 105])
-  (toroidize-coord-pair-to-env 100 [110 25])
-  (toroidize-coord-pair-to-env 100 [25 125])
-  (toroidize-coord-pair-to-env 100 [-20 -10])
+  (toroidize-pair 100 [110 105])
+  (toroidize-pair 100 [110 25])
+  (toroidize-pair 100 [25 125])
+  (toroidize-pair 100 [-20 -10])
 )
 
-(defn toroidize-coord-pairs-to-env
-  "For exach coordinate pair in coord-pairs, if necessary, map a pair of
+(defn toroidize-pairs
+  "For each coordinate pair in coord-pairs, if necessary, map a pair of
   coordinates to the other size of the field, on the assumption that
   coordinates in env range from [0,0] to [size,size]."
   [size coord-pairs]
-  (map (partial toroidize-coord-pair-to-env size) coord-pairs))
+  (map (partial toroidize-pair size) coord-pairs))
 
 
 (defn within-bounds?
   [size [x y]]
   (and (>= x 0) (>= y 0) (<= x size) (<= y size)))
 
-(defn remove-out-of-bounds-pairs
+(defn remove-outside-pairs
   [size coord-pairs]
   (filter (partial within-bounds? size) coord-pairs))
 
 (comment
-  (remove-out-of-bounds-pairs 100 [[-2 50] [40 -30] [200 50] [65 45] [0 100] [100 0]
+  (remove-outside-pairs 100 [[-2 50] [40 -30] [200 50] [65 45] [0 100] [100 0]
                                    [125 0] [-50 150] [0 15] [25 75]])
+
+  (remove-outside-pairs 100 [[-2 -50] [-40 -30] [200 150] [165 -45] [-10 101] [101 -1]
+                                   [125 2003] [-50 150] [-17 215] [125 175]])
 )
 
 
@@ -182,13 +184,68 @@
       [(+ x* off-x) (+ y* off-y)])))
 
 
+(defn make-toroidal-circle-range 
+  "Returns a sequence of coordinates representing a filled circle, around
+  [x y], of external size perc-radius, scaled according to env's scale, and
+  wrapped toroidally if necessary."
+  [env perc-radius x y]
+  (toroidize-pairs (* (:size env) (:scale env))
+                   (circle-range env perc-radius x y)))
 
-(defn new-add-foodspot!
+(defn make-toroidal-donut
+  "Does the same thing as make-toroidal-circle-range, but removes the
+  coordinates for the center point."
+  [env perc-radius x y]
+  (remove (partial = [x y])  ; will fail if numbers are not the same type
+          (make-toroidal-circle-range env perc-radius x y)))
+
+(defn make-trimmed-circle-range 
+  "Returns a sequence of coordinates representing a filled circle, around
+  [x y], of external size perc-radius, scaled according to env's scale, and
+  trimmed to the dimensions of env if necessary: points not falling within
+  the environment are not included."
+  [env perc-radius x y]
+  (remove-outside-pairs (* (:size env) (:scale env))
+                        (circle-range env perc-radius x y)))
+
+(defn make-trimmed-donut
+  "Does the same thing as make-trimmed-circle-range, but removes the
+  coordinates for the center point."
+  [env perc-radius x y]
+  (remove (partial = [x y])  ; will fail if numbers are not the same type
+          (make-trimmed-circle-range env perc-radius x y)))
+
+(defn add-toroidal-foodspot!
   ([env perc-radius x y]
    (new-add-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
-   ;; TODO use separate component functions circle-range, etc. here.
-   ))
+   (let [locs (:locs env)]
+     (doseq [[x* y*] (make-toroidal-donut env perc-radius x y)] ; donut, i.e. leave out center
+       (mset-conj! locs x* y* [x y])) ; i.e. we set each cell to pair that points to the center
+     (mset-conj! locs x y foodspot-val)))) ; center gets special value
+
+(defn add-toroidal-foodspots!
+  "Add multiple foodspots at coordinate pairs in locs, to env with
+  perceptual radius perc-radius.  (See add-foodspot! for details.)"
+  [env perc-radius locs]
+  (doseq [[x y] locs]
+    (add-toroidal-foodspot! env perc-radius x y)))
+
+(defn add-trimmed-foodspot!
+  ([env perc-radius x y]
+   (new-add-foodspot! env perc-radius x y default-foodspot-val))
+  ([env perc-radius x y foodspot-val]
+   (let [locs (:locs env)]
+     (doseq [[x* y*] (make-trimmed-donut env perc-radius x y)] ; donut, i.e. leave out center
+       (mset-conj! locs x* y* [x y])) ; i.e. we set each cell to pair that points to the center
+     (mset-conj! locs x y foodspot-val)))) ; center gets special value
+
+(defn add-trimmed-foodspots!
+  "Add multiple foodspots at coordinate pairs in locs, to env with
+  perceptual radius perc-radius.  (See add-foodspot! for details.)"
+  [env perc-radius locs]
+  (doseq [[x y] locs]
+    (add-trimmed-foodspot! env perc-radius x y)))
 
 ;; - Note not optimally efficient, but this is only used for setup.
 ;; - Basic algorithm for scale:
@@ -201,7 +258,7 @@
 ;;   of models using partial.
 ;; - Passing an alternate foodspot-val allows e.g. adding a value that
 ;;   represents various energy values gotten from eating.
-(defn add-foodspot!
+(defn old-add-foodspot!
   "Add foodspot to env, with its perceptual radius perc-radius, at
   scale scale, around location [x y]. All cells within
   scale*perc-radius of (x y) will have the value [x y] conj'ed to
@@ -228,13 +285,13 @@
                         (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
                         (>= radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; ignore outside circle
        (let [[x** y**] (if toroidal? 
-                         [(toroidize-coord-pair-to-env (+ x* off-x))
-                          (toroidize-coord-pair-to-env (+ y* off-y))]
+                         [(toroidize-pair (+ x* off-x))
+                          (toroidize-pair (+ y* off-y))]
                          [(+ x* off-x) (+ y* off-y)])]
          (mset-conj! locs x** y** [x y]))))))
 
 
-(defn old-add-foodspot!
+(defn older-add-foodspot!
   ([env perc-radius x y]
    (add-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
@@ -258,12 +315,12 @@
                    [x y])))))
 
 
-(defn add-foodspots!
-  "Add multiple foodspots at coordinate pairs in locs, to env with
-  perceptual radius perc-radius.  (See add-foodspot! for details.)"
-  [env perc-radius locs]
-  (doseq [[x y] locs]
-    (add-foodspot! env perc-radius x y)))
+;(defn add-foodspots!
+;  "Add multiple foodspots at coordinate pairs in locs, to env with
+;  perceptual radius perc-radius.  (See add-foodspot! for details.)"
+;  [env perc-radius locs]
+;  (doseq [[x y] locs]
+;    (add-foodspot! env perc-radius x y)))
 
 
 ;; TODO: Add clipping for toroidal? = falsey, wrapping for toroidal? = truthy
@@ -278,10 +335,16 @@
 
 (comment
   (def scale 4)
-  (def e (make-env 6 scale false))
-  (mx/shape (:locations e))
-  (add-foodspot! e 1 1 1)
-  (add-foodspot! e 1 3 5)
+  (def e1 (make-env 6 scale false))
+  (def e2 (make-env 6 scale false))
+  (def e3 (make-env 6 scale false))
+  (mx/shape (:locations e1))
+  (older-add-foodspot! e1 1 3 5)
+  (old-add-foodspot! e2 1 3 5)
+  (add-trimmed-foodspot! e3 1 3 5)
+
+  (= (mx/matrix :persistent-vector e1) (mx/matrix :persistent-vector e2))
+
   (mx/pm (:locations e) {:formatter (fn [x] (if x (str x) "(-----)"))})
   (mx/pm (:locations e))
   (get-xy e 2 3)
