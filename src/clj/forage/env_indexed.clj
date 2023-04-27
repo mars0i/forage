@@ -216,8 +216,14 @@
           (make-trimmed-circle-range env perc-radius x y)))
 
 (defn add-toroidal-foodspot!
+  "Add foodspot to env, with its perceptual radius perc-radius, at scale
+  scale, around location [x y], but wrapped toroidally if necessary. All
+  cells within scale*perc-radius of (x y) will have the value [x y] conj'ed
+  to indicate that they are within the perceptual radius of foodspot, and
+  the center--the actual foodspot--will have the value passed as
+  foodspot-val, or env-indexed/default-foodspot-val."
   ([env perc-radius x y]
-   (new-add-foodspot! env perc-radius x y default-foodspot-val))
+   (add-toroidal-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
    (let [locs (:locs env)]
      (doseq [[x* y*] (make-toroidal-donut env perc-radius x y)] ; donut, i.e. leave out center
@@ -226,14 +232,23 @@
 
 (defn add-toroidal-foodspots!
   "Add multiple foodspots at coordinate pairs in locs, to env with
-  perceptual radius perc-radius.  (See add-foodspot! for details.)"
+  perceptual radius perc-radius. See add-toroidal-foodspot! for further
+  details."
   [env perc-radius locs]
   (doseq [[x y] locs]
     (add-toroidal-foodspot! env perc-radius x y)))
 
 (defn add-trimmed-foodspot!
+  "Add foodspot to env, with its perceptual radius perc-radius, at scale
+  scale, around location [x y], but trimmed to fit within the environment:
+  points within the radius that are outside the boundaries of the envirment
+  won't be included. All cells within scale*perc-radius of (x y) and within
+  the environment boundaries will have the value [x y] conj'ed to indicate
+  that they are within the perceptual radius of foodspot, and the
+  center--the actual foodspot--will have the value passed as foodspot-val,
+  or env-indexed/default-foodspot-val."
   ([env perc-radius x y]
-   (new-add-foodspot! env perc-radius x y default-foodspot-val))
+   (add-trimmed-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
    (let [locs (:locs env)]
      (doseq [[x* y*] (make-trimmed-donut env perc-radius x y)] ; donut, i.e. leave out center
@@ -242,7 +257,8 @@
 
 (defn add-trimmed-foodspots!
   "Add multiple foodspots at coordinate pairs in locs, to env with
-  perceptual radius perc-radius.  (See add-foodspot! for details.)"
+  perceptual radius perc-radius. See add-trimmed-foodspot! for further
+  details."
   [env perc-radius locs]
   (doseq [[x y] locs]
     (add-trimmed-foodspot! env perc-radius x y)))
@@ -266,7 +282,7 @@
   the center--the actual foodspot--will have the value passed as
   foodspot-val, or env-indexed/default-foodspot-val."
   ([env perc-radius x y]
-   (add-foodspot! env perc-radius x y default-foodspot-val))
+   (old-add-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
    (let [toroidal? (:toroidal? env)
          scale-it (partial * (:scale env))
@@ -293,7 +309,7 @@
 
 (defn older-add-foodspot!
   ([env perc-radius x y]
-   (add-foodspot! env perc-radius x y default-foodspot-val))
+   (older-add-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
    (let [raw-scaled (partial * (:scale env))
          scaled (if (:toroidal? env)
