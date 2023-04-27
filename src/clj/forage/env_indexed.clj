@@ -115,6 +115,15 @@
       (mx/mset! locations x y nil)) ; this default is assumed by other functions here.
     {:size size, :scale scale, :toroidal? toroidal?, :locations locations}))
 
+(defn scale-coord
+  "Scale value x by the :scale in env.  (Not for inner loops.)"
+  [env x]
+  (* x (:scale env)))
+
+(defn scale-xy
+  "Scale pair [x y] by the :scale in env.  (Not for inner loops.)"
+  [env [x y]]
+  [(* x (:scale env)) (* y (:scale env))])
 
 (defn toroidize-coord
   "If necessary map a coordinate to the other size of the field, on the
@@ -178,9 +187,9 @@
         y* (scale-it y)
         radius* (scale-it perc-radius)  ; add pointers to foodspot in surrounding cells
         radius*-squared (* radius* radius*)]
-    (doseq [off-x (um/irange (- radius*) radius*)
-            off-y (um/irange (- radius*) radius*)
-            :when (>= radius*-squared (+ (* off-x off-x) (* off-y off-y)))] ; ignore outside circle
+    (for [off-x (um/irange (- radius*) radius*)
+          off-y (um/irange (- radius*) radius*)
+          :when (>= radius*-squared (+ (* off-x off-x) (* off-y off-y)))] ; ignore outside circle
       [(+ x* off-x) (+ y* off-y)])))
 
 
@@ -215,6 +224,15 @@
   (remove (partial = [x y])  ; will fail if numbers are not the same type
           (make-trimmed-circle-range env perc-radius x y)))
 
+(comment
+  (remove (partial = [4 5]) [[1 2] [3 4] [4 5] [6 7]])
+
+  (def e (make-env 5 1 false))
+  (circle-range e 2 2 2)
+  (make-trimmed-circle-range e 2 2 2)
+  (make-trimmed-donut e 2 2 2)
+)
+
 (defn add-toroidal-foodspot!
   "Add foodspot to env, with its perceptual radius perc-radius, at scale
   scale, around location [x y], but wrapped toroidally if necessary. All
@@ -225,10 +243,10 @@
   ([env perc-radius x y]
    (add-toroidal-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
-   (let [locs (:locs env)]
+   (let [locs (:locations env)]
      (doseq [[x* y*] (make-toroidal-donut env perc-radius x y)] ; donut, i.e. leave out center
        (mset-conj! locs x* y* [x y])) ; i.e. we set each cell to pair that points to the center
-     (mset-conj! locs x y foodspot-val)))) ; center gets special value
+     (mset-conj! locs (scale-coord env x) (scale-coord env y) foodspot-val)))) ; center gets special value
 
 (defn add-toroidal-foodspots!
   "Add multiple foodspots at coordinate pairs in locs, to env with
@@ -250,10 +268,10 @@
   ([env perc-radius x y]
    (add-trimmed-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
-   (let [locs (:locs env)]
+   (let [locs (:locations env)]
      (doseq [[x* y*] (make-trimmed-donut env perc-radius x y)] ; donut, i.e. leave out center
        (mset-conj! locs x* y* [x y])) ; i.e. we set each cell to pair that points to the center
-     (mset-conj! locs x y foodspot-val)))) ; center gets special value
+     (mset-conj! locs (scale-coord env x) (scale-coord env y) foodspot-val)))) ; center gets special value
 
 (defn add-trimmed-foodspots!
   "Add multiple foodspots at coordinate pairs in locs, to env with
@@ -350,20 +368,40 @@
 
 
 (comment
-  (def scale 4)
-  (def e1 (make-env 6 scale false))
-  (def e2 (make-env 6 scale false))
-  (def e3 (make-env 6 scale false))
+  (use 'clojure.repl) ; for pst
+
   (mx/shape (:locations e1))
+
+  (def scale 4)
+
+  (def e1 (make-env 6 scale false))
+  (mx/pm (:locations e1))
   (older-add-foodspot! e1 1 3 5)
-  (old-add-foodspot! e2 1 3 5)
+  (get-xy e1 3 5)
+
+  (def e3 (make-env 6 scale false))
+  (mx/pm (:locations e3))
   (add-trimmed-foodspot! e3 1 3 5)
+  ;(add-toroidal-foodspot! e3 1 3 5)
+  (get-xy e3 3 5)
+
+  (pst)
+
+  (make-trimmed-donut e2 1 3 5) 
+  (make-trimmed-circle-range e2 1 3 5) 
+  (circle-range e2 1 3 5) 
+  (make-toroidal-donut e2 1 3 5) 
+
+  (def e2 (make-env 6 scale false))
+  (mx/pm (:locations e2))
+  ;; broken:
+  (old-add-foodspot! e2 1 3 5)
+
+
 
   (= (mx/matrix :persistent-vector e1) (mx/matrix :persistent-vector e2))
 
-  (mx/pm (:locations e) {:formatter (fn [x] (if x (str x) "(-----)"))})
-  (mx/pm (:locations e))
-  (get-xy e 2 3)
+  (mx/pm (:locations e1) {:formatter (fn [x] (if x (str x) "(-----)"))})
   (mx/mget (:locations e) (* scale 3) (* scale 3))
 
   (def yo (mx/matrix :persistent-vector e))
