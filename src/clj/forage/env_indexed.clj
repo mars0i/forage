@@ -167,7 +167,7 @@
 
 (defn within-bounds?
   [size [x y]]
-  (and (>= x 0) (>= y 0) (<= x size) (<= y size)))
+  (and (>= x 0) (>= y 0) (< x size) (< y size)))
 
 (defn remove-outside-pairs
   [size coord-pairs]
