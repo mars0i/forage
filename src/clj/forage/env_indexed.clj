@@ -289,39 +289,6 @@
   (doseq [[x y] locs]
     (add-trimmed-foodspot! env perc-radius x y)))
 
-;; DOESN'T WORK, AND SUPERSEDED
-(defn old-add-foodspot!
-  "Add foodspot to env, with its perceptual radius perc-radius, at
-  scale scale, around location [x y]. All cells within
-  scale*perc-radius of (x y) will have the value [x y] conj'ed to
-  indicate that they are within the perceptual radius of foodspot, and
-  the center--the actual foodspot--will have the value passed as
-  foodspot-val, or env-indexed/default-foodspot-val."
-  ([env perc-radius x y]
-   (old-add-foodspot! env perc-radius x y default-foodspot-val))
-  ([env perc-radius x y foodspot-val]
-   (let [toroidal? (:toroidal? env)
-         scale-it (partial * (:scale env))
-         size* (scale-it (:size env))
-         x* (scale-it x)
-         y* (scale-it y)
-         radius* (scale-it perc-radius)  ; add pointers to foodspot in surrounding cells
-         radius*-squared (* radius* radius*)
-         locs (:locations env)]
-     (mset-conj! locs (scale-it x) (scale-it y) foodspot-val) ; mark foodspot location itself with a distinguishing value
-     (doseq [off-x (um/irange (- radius*) radius*)
-             off-y (um/irange (- radius*) radius*)
-             :when (and (or toroidal?                      ; if toroidal, let all values through
-                            (and (>= x* 0) (<= x* size*)   ; if not, 
-                                 (>= y* 0) (<= y* size*)))  ;  only allow those within boundaries
-                        (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
-                        (>= radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; ignore outside circle
-       (let [[x** y**] (if toroidal? 
-                         [(toroidize-pair (+ x* off-x))
-                          (toroidize-pair (+ y* off-y))]
-                         [(+ x* off-x) (+ y* off-y)])]
-         (mset-conj! locs x** y** [x y]))))))
-
 
 (defn older-add-foodspot!
   ([env perc-radius x y]
