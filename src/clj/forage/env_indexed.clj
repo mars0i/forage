@@ -205,8 +205,10 @@
   "Does the same thing as make-toroidal-circle-range, but removes the
   coordinates for the center point."
   [env perc-radius x y]
-  (remove (partial = [x y])  ; will fail if numbers are not the same type
-          (make-toroidal-circle-range env perc-radius x y)))
+  (let [x* (scale-coord env x)
+        y* (scale-coord env y)]
+    (remove (partial = [x* y*])  ; will fail if numbers are not the same type
+            (make-toroidal-circle-range env perc-radius x y))))
 
 (defn make-trimmed-circle-range 
   "Returns a sequence of coordinates representing a filled circle, around
@@ -221,16 +223,20 @@
   "Does the same thing as make-trimmed-circle-range, but removes the
   coordinates for the center point."
   [env perc-radius x y]
-  (remove (partial = [x y])  ; will fail if numbers are not the same type
-          (make-trimmed-circle-range env perc-radius x y)))
+  (let [x* (scale-coord env x)
+        y* (scale-coord env y)]
+    (remove (partial = [x* y*])  ; will fail if numbers are not the same type
+            (make-trimmed-circle-range env perc-radius x y))))
 
 (comment
   (remove (partial = [4 5]) [[1 2] [3 4] [4 5] [6 7]])
 
   (def e (make-env 5 1 false))
-  (circle-range e 2 2 2)
-  (make-trimmed-circle-range e 2 2 2)
-  (make-trimmed-donut e 2 2 2)
+  (mx/pm (:locations e))
+  (mx/shape (:locations e))
+  (circle-range e 1 2 3)
+  (make-trimmed-circle-range e 1 2 3)
+  (make-trimmed-donut e 1 2 3)
 )
 
 (defn add-toroidal-foodspot!
@@ -372,18 +378,22 @@
 
   (mx/shape (:locations e1))
 
-  (def scale 4)
+  (def scale 2)
 
-  (def e1 (make-env 6 scale false))
+  (def e1 (make-env 5 scale false))
   (mx/pm (:locations e1))
-  (older-add-foodspot! e1 1 3 5)
-  (get-xy e1 3 5)
+  (mx/shape (:locations e1))
+  (older-add-foodspot! e1 1 2 3)
+  (get-xy e1 2 3)
 
-  (def e3 (make-env 6 scale false))
+  (def e3 (make-env 5 scale false))
+  (mx/shape (:locations e3))
   (mx/pm (:locations e3))
-  (add-trimmed-foodspot! e3 1 3 5)
-  ;(add-toroidal-foodspot! e3 1 3 5)
-  (get-xy e3 3 5)
+  (add-trimmed-foodspot! e3 1 2 3)
+  (circle-range e3 1 2 3)
+  (make-trimmed-circle-range e3 1 2 3)
+  (make-trimmed-donut e3 1 2 3)
+  (get-xy e3 2 3)
 
   (pst)
 
