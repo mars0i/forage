@@ -353,8 +353,6 @@
   (make-trimmed-donut e3 3 2 3)
   (get-xy e3 2 3)
 
-  (mx/get-shape e1)
-
   (pst)
 
   (make-trimmed-donut e2 1 3 5) 
