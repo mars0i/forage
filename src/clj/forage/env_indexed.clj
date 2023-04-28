@@ -99,9 +99,10 @@
 ;; signature from the version in env_mason.clj.
 ;; 
 ;; By default new-matrix will initialize with zero doubles, I don't want that 
-;; because it could be confusing.  Instead initialize with nils, which can
-;; be conj'ed onto later.  Don't use [] for this purpose: It can confuse
-;; core.matrix because it thinks the inner vectors are part of the matrix structure.
+;; because it could be confusing.  Instead initialize with empty sets,
+;; which can be conj'ed onto later.  Don't use nil or [] for this purpose: It can 
+;; confuse core.matrix/pm when there is added data in the first column of the
+;; matrix.
 (defn make-env
   "Returns a new environment as a map containing a value of :size which is
   dimension of the external representation of a size X size field, a value
@@ -116,7 +117,7 @@
         locations (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
     (doseq [row (range size*)
             col (range size*)]
-      (mx/mset! locations row col nil)) ; this default is assumed by other functions here.
+      (mx/mset! locations row col #{})) ; this default is assumed by other functions here.
     {:size size, :scale scale, :toroidal? toroidal?, :locations locations}))
 
 (defn scale-coord
