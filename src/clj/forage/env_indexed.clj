@@ -114,9 +114,9 @@
   [size scale toroidal?] 
   (let [size* (* scale size)
         locations (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
-    (doseq [x (range size*)
-            y (range size*)]
-      (mx/mset! locations x y nil)) ; this default is assumed by other functions here.
+    (doseq [row (range size*)
+            col (range size*)]
+      (mx/mset! locations row col nil)) ; this default is assumed by other functions here.
     {:size size, :scale scale, :toroidal? toroidal?, :locations locations}))
 
 (defn scale-coord
@@ -252,9 +252,11 @@
    (add-toroidal-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
    (let [locs (:locations env)]
+     ;; NOTE reversed order of x and y because the internal
+     ;; representation uses traditional matrix indexing:
      (doseq [[x* y*] (make-toroidal-donut env perc-radius x y)] ; donut, i.e. leave out center
-       (mset-conj! locs x* y* [x y])) ; i.e. we set each cell to pair that points to the center
-     (mset-conj! locs (scale-coord env x) (scale-coord env y) foodspot-val)))) ; center gets special value
+       (mset-conj! locs y* x* [x y])) ; i.e. we set each cell to pair that points to the center
+     (mset-conj! locs (scale-coord env y) (scale-coord env x) foodspot-val)))) ; center gets special value
 
 (defn add-toroidal-foodspots!
   "Add multiple foodspots at coordinate pairs in locs, to env with
@@ -277,9 +279,11 @@
    (add-trimmed-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
    (let [locs (:locations env)]
+     ;; NOTE reversed order of x and y because the internal
+     ;; representation uses traditional matrix indexing:
      (doseq [[x* y*] (make-trimmed-donut env perc-radius x y)] ; donut, i.e. leave out center
-       (mset-conj! locs x* y* [x y])) ; i.e. we set each cell to pair that points to the center
-     (mset-conj! locs (scale-coord env x) (scale-coord env y) foodspot-val)))) ; center gets special value
+       (mset-conj! locs y* x* [x y])) ; i.e. we set each cell to pair that points to the center
+     (mset-conj! locs (scale-coord env y) (scale-coord env x) foodspot-val)))) ; center gets special value
 
 (defn add-trimmed-foodspots!
   "Add multiple foodspots at coordinate pairs in locs, to env with
@@ -302,15 +306,17 @@
          radius* (scaled perc-radius)  ; add pointers to foodspot in surrounding cells
          radius*-squared (* radius* radius*)
          locs (:locations env)]
-     (mset-conj! locs (scaled x) (scaled y) foodspot-val) ; mark foodspot location itself with a distinguishing value
+     ;; NOTE reversed order of x and y because the internal
+     ;; representation uses traditional matrix indexing:
+     (mset-conj! locs (scaled y) (scaled x) foodspot-val) ; mark foodspot location itself with a distinguishing value
      (doseq [off-x (um/irange (- radius*) radius*)
              off-y (um/irange (- radius*) radius*)
              :when (and 
                      (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
                      (> radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; Every other point within radius needs foodspot coords
        (mset-conj! locs                 ; add the foodspot coords
-                   (+ off-x (scaled x))
-                   (+ off-y (scaled y))
+                   (+ off-x (scaled y))
+                   (+ off-y (scaled x))
                    [x y])))))
 
 
@@ -322,7 +328,9 @@
   micro-locations. AVOID in inner loops, to avoid repeated destructuring."
   [env x y]
   (let [scale (:scale env)]
-    (mx/mget (:locations env) (* x scale) (* y scale)))) 
+    ;; NOTE reversed order of x and y because the internal
+    ;; representation uses traditional matrix indexing:
+    (mx/mget (:locations env) (* y scale) (* x scale)))) 
 
 
 (comment
@@ -331,19 +339,21 @@
   (def scale 4)
 
   (def e1 (make-env 5 scale false))
-  (mx/pm (:locations e1))
   (mx/shape (:locations e1))
-  (older-add-foodspot! e1 1 2 3)
+  (mx/pm (:locations e1))
+  (older-add-foodspot! e1 2 2 3)
   (get-xy e1 2 3)
 
   (def e3 (make-env 5 scale false))
   (mx/shape (:locations e3))
   (mx/pm (:locations e3))
-  (add-trimmed-foodspot! e3 3 2 3)
+  (add-trimmed-foodspot! e3 2 2 3)
   (circle-range e3 3 2 3)
   (make-trimmed-circle-range e3 3 2 3)
   (make-trimmed-donut e3 3 2 3)
   (get-xy e3 2 3)
+
+  (mx/get-shape e1)
 
   (pst)
 
