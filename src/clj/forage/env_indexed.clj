@@ -72,25 +72,29 @@
 
 ;; core.matrix helper function
 (defn mset-conj!
-  "Sets element [x y] of core.matrix matrix m to a new value which is v
-  conj'ed onto the old value of m at [x y]. The old value must be a
-  collection."
-  [m x y v]
-  (mx/mset! m x y (conj 
-                    (mx/mget m x y)
-                    v)))
+  "Sets element [rows-down columns-right] of core.matrix matrix mat to a
+  new value which is value conj'ed onto the old value of mat at [rows-down
+  columns-right]. The old value must be a collection.  Note that
+  core.matrix uses tradition"
+  [mat rows-down columns-right value]
+  (mx/mset! mat rows-down columns-right
+            (conj (mx/mget mat rows-down columns-right) value)))
 
 (def default-foodspot-val :food)
 
 ;; TODO:
 ;; What if foodspot is near edge of env?
-;; If non-toroidal, make sure there's not an index out of bounds error.
+;; If non-toroidal, make sure there's not an index-out-of-bounds error.
 ;; If toroidal, then need to mod the pointers over to the other side.
 
 ;; TODO ??  Maybe only place coordinates on the actual radius of the circle?
 
 
 
+;; TODO Currently, toroidal? has no effect.  Should it?  Or should
+;; this distinction just be built into functions that work on the env
+;; (as it is at present)?
+;;
 ;; NOTE Because of the use of scale, this has to have a different
 ;; signature from the version in env_mason.clj.
 ;; 
@@ -172,7 +176,6 @@
 (comment
   (remove-outside-pairs 100 [[-2 50] [40 -30] [200 50] [65 45] [0 100] [100 0]
                                    [125 0] [-50 150] [0 15] [25 75]])
-
   (remove-outside-pairs 100 [[-2 -50] [-40 -30] [200 150] [165 -45] [-10 101] [101 -1]
                                    [125 2003] [-50 150] [-17 215] [125 175]])
 )
@@ -230,7 +233,6 @@
 
 (comment
   (remove (partial = [4 5]) [[1 2] [3 4] [4 5] [6 7]])
-
   (def e (make-env 5 1 false))
   (mx/pm (:locations e))
   (mx/shape (:locations e))
@@ -287,17 +289,7 @@
   (doseq [[x y] locs]
     (add-trimmed-foodspot! env perc-radius x y)))
 
-;; - Note not optimally efficient, but this is only used for setup.
-;; - Basic algorithm for scale:
-;;   If scale is 1, then fill in every point s.t. distance from foodspot
-;;   is <= perc-radius.  i.e. sqrt(x^2 + y^2) <= r, or x^2 + y^2 <= r^2.
-;;   But suppose I want at least radius of 500.  Then if perc-radius=1,
-;;   r s/b 500.  If perc-radius=2, make r=1000.  So make r = perc-radius * scale.
-;; - I put scale and perc-radius before env in the parameters below to make it
-;;   easier to define custom version of these functions for specific types
-;;   of models using partial.
-;; - Passing an alternate foodspot-val allows e.g. adding a value that
-;;   represents various energy values gotten from eating.
+;; DOESN'T WORK, AND SUPERSEDED
 (defn old-add-foodspot!
   "Add foodspot to env, with its perceptual radius perc-radius, at
   scale scale, around location [x y]. All cells within
@@ -355,13 +347,6 @@
                    [x y])))))
 
 
-;(defn add-foodspots!
-;  "Add multiple foodspots at coordinate pairs in locs, to env with
-;  perceptual radius perc-radius.  (See add-foodspot! for details.)"
-;  [env perc-radius locs]
-;  (doseq [[x y] locs]
-;    (add-foodspot! env perc-radius x y)))
-
 
 ;; TODO: Add clipping for toroidal? = falsey, wrapping for toroidal? = truthy
 (defn get-xy
@@ -376,9 +361,7 @@
 (comment
   (use 'clojure.repl) ; for pst
 
-  (mx/shape (:locations e1))
-
-  (def scale 2)
+  (def scale 4)
 
   (def e1 (make-env 5 scale false))
   (mx/pm (:locations e1))
@@ -389,10 +372,10 @@
   (def e3 (make-env 5 scale false))
   (mx/shape (:locations e3))
   (mx/pm (:locations e3))
-  (add-trimmed-foodspot! e3 1 2 3)
-  (circle-range e3 1 2 3)
-  (make-trimmed-circle-range e3 1 2 3)
-  (make-trimmed-donut e3 1 2 3)
+  (add-trimmed-foodspot! e3 3 2 3)
+  (circle-range e3 3 2 3)
+  (make-trimmed-circle-range e3 3 2 3)
+  (make-trimmed-donut e3 3 2 3)
   (get-xy e3 2 3)
 
   (pst)
