@@ -89,7 +89,9 @@
 
 ;; TODO ??  Maybe only place coordinates on the actual radius of the circle?
 
-
+; Must work with conj and possibly other things:
+;(def env-loc-initializer nil)
+(def env-loc-initializer #{})
 
 ;; TODO Currently, toroidal? has no effect.  Should it?  Or should
 ;; this distinction just be built into functions that work on the env
@@ -117,7 +119,7 @@
         locations (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
     (doseq [row (range size*)
             col (range size*)]
-      (mx/mset! locations row col #{})) ; this default is assumed by other functions here.
+      (mx/mset! locations row col env-loc-initializer)) ; this default is assumed by other functions here.
     {:size size, :scale scale, :toroidal? toroidal?, :locations locations}))
 
 (defn scale-coord
