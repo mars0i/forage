@@ -14,7 +14,7 @@ of the needed libraries *except* MASON 20 (see below).
 
 ---
 
-This project uses a couple of classes from MASON, a Java library for
+Currently, this project uses a couple of classes from MASON, a Java library for
 agent-based modeling.  (However, the simulations in this project are
 not agent-based at present.)  To use MASON, download mason.20.jar from
 https://cs.gmu.edu/~eclab/projects/mason .  (If you were going to use
