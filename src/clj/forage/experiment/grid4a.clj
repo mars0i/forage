@@ -4,7 +4,7 @@
 (ns forage.experiment.grid4a
   (:require [forage.core.run :as fr]
             [forage.core.food :as f]
-            [forage.mason.foodspot :as mf]
+            [forage.core.env-mason :as mf]
             [utils.random :as r]
             [utils.math :as m]))
 

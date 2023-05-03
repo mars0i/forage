@@ -7,7 +7,7 @@
   (:require [forage.core.run :as fr]
             [forage.core.food :as f]
             [forage.core.walks :as w]
-            [forage.mason.foodspot :as mf]
+            [forage.core.env-mason :as mf]
             [utils.random :as r]
             [utils.math :as m]
             ;; note difference: e.g. numeric-tower/sqrt returns integer if args are

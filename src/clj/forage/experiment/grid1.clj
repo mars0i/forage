@@ -5,7 +5,7 @@
    [forage.core.walks :as w]
    [forage.core.food :as f]
    [forage.io :as io]
-   [forage.mason.foodspot :as mf]
+   [forage.core.env-mason :as mf]
    [utils.math :as m]
    [utils.random :as r]))
 

@@ -2,7 +2,7 @@
 (ns forage.experiment.fournier6
   (:require [forage.core.run :as fr]
             [forage.core.food :as f]
-            [forage.mason.foodspot :as mf]
+            [forage.core.env-mason :as mf]
             [utils.random :as r]
             [utils.math :as m]))
 
@@ -83,7 +83,7 @@
 
   ;; Note lookups are toroidal above, so plots might not be accurate.
   ;; display straight walk:
-  (require '[forage.mason.foodspot :as mf])
+  (require '[forage.core.env-mason :as mf])
   (require '[utils.math :as m])
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])

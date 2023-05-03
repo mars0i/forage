@@ -3,7 +3,7 @@
 (ns forage.experiment.fournier8
   (:require [forage.core.run :as fr]
             [forage.core.food :as f]
-            [forage.mason.foodspot :as mf]
+            [forage.core.env-mason :as mf]
             [utils.random :as r]
             [utils.fractal :as uf]
             [utils.math :as m]
