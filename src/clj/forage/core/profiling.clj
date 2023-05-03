@@ -1,9 +1,9 @@
 ;; For profiling and benchmarking
-(ns forage.profiling
+(ns forage.core.profiling
   (:require
-   [forage.walks :as w]
-   [forage.food :as f]
-   [forage.mason.foodspot :as mf]
+   [forage.core.walks :as w]
+   [forage.core.food :as f]
+   [forage.env-mason :as mf]
    [utils.math :as m]
    [utils.random :as r]
    ;[criterium.core :as crit]

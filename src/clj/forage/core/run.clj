@@ -1,4 +1,4 @@
-(ns forage.run
+(ns forage.core.run
   (:require [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             [clojure.pprint :refer [cl-format]]
@@ -7,9 +7,9 @@
             [utils.math :as m]
             [utils.random :as r]
             [forage.viz.hanami :as h]
-            [forage.env-mason :as em] ;[forage.mason.foodspot :as mf]
-            [forage.walks :as w]
-            [forage.food :as f]))
+            [forage.core.env-mason :as em] ;[forage.mason.foodspot :as mf]
+            [forage.core.walks :as w]
+            [forage.core.food :as f]))
 
 ;; NOTE write-foodwalk-plots has been moved to forage/viz/hanami.clj
 

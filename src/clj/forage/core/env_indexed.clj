@@ -1,5 +1,5 @@
 ;; Future home of replacement for env-mason.
-(ns forage.env-indexed
+(ns forage.core.env-indexed
   (:require [clojure.math :as math]
             [clojure.core.matrix :as mx]
             [utils.random :as r]

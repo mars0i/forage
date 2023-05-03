@@ -4,9 +4,9 @@
   (:require [aerial.hanami.common :as hc]
             [aerial.hanami.templates :as ht]
             [oz.core :as oz]
-            [forage.env-mason :as em] ;[forage.mason.foodspot :as mf]
-            [forage.food :as f]
-            [forage.walks :as w]
+            [forage.core.env-mason :as em] ;[forage.mason.foodspot :as mf]
+            [forage.core.food :as f]
+            [forage.core.walks :as w]
             [utils.hanami :as uh] ; replace if grid-chart becomes non-local
             [utils.toroidal :as tor]
             [utils.math :as m]))
@@ -173,7 +173,7 @@
 (defn split-foodgrid
   "For testing: If a set of coordinates is divided into two
   equally-sized subsets, one concatenated onto the other (produced, for
-  example, by forage.food/slide-grid), this formats the coordinates for
+  example, by forage.core.food/slide-grid), this formats the coordinates for
   Vega-Lite and adds different labels two the two subsets."
   [coords]
   (let [len (count coords)
@@ -315,7 +315,7 @@
 ;; FIXME IS THERE A LEAK IN THIS?  I don't think there should be,
 ;; but seems like there might be.
 ;; 
-;; SEE ALSO forage.run/write-found-coords.
+;; SEE ALSO forage.core.run/write-found-coords.
 ;; 
 ;; Maybe ought to be merged with other looping functions above.
 ;; But maybe not: levy-experiments and straight-experiments are designed to

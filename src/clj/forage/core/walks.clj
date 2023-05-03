@@ -1,5 +1,5 @@
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
-(ns forage.walks
+(ns forage.core.walks
     (:require [utils.math :as m]
               [utils.spiral :as spiral]
               [utils.random :as r]))

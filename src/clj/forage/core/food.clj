@@ -1,7 +1,7 @@
 ;; Functions for placing foodspots (resources, "targets") in 2D 
 ;; (rectangular) spatial coordinates.
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
-(ns forage.food
+(ns forage.core.food
   (:require [utils.math :as m]
             [utils.fractal :as uf]
             [utils.misc :as misc]))
