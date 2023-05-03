@@ -1,8 +1,8 @@
 ;; STRAIGHT RUNS - FOURNIER ENVIRONMENT WITHOUT CENTER
 (ns forage.experiment.fournier2
-  (:require [forage.run :as fr]
-            [forage.food :as f]
-            [forage.mason.foodspot :as mf]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.env-mason :as mf]
             [utils.random :as r]
             [utils.math :as m]))
 
@@ -41,13 +41,13 @@
                               (params :fournier-levels))))
 
 (comment
-  (require '[forage.run :as fr])
+  (require '[forage.core.run :as fr])
 
   (time (def summary (fr/straight-experiments fr/default-file-prefix env params)))
 
 
 
-  (require '[forage.mason.foodspot :as mf])
+  (require '[forage.core.env-mason :as mf])
   (require '[utils.math :as m])
   (def look-fn (partial mf/perc-foodspots-exactly env (params :perc-radius)))
   (time (def raw (mapv (partial fr/straight-run look-fn params)

@@ -3,9 +3,9 @@
 ;; the distribution of found foodspots in a grid.  Changes
 ;; in paramters are for that purpose.
 (ns forage.experiment.grid10founddist
-  (:require [forage.run :as fr]
-            [forage.food :as f]
-            [forage.walks :as w]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.walks :as w]
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
             [utils.math :as m]

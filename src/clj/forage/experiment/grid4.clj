@@ -1,7 +1,7 @@
 ;; LARGE ENVIRONMENT, SPARSER FOODSPOTS
 (ns forage.experiment.grid4
   (:require
-   [forage.run :as fr]
+   [forage.core.run :as fr]
    [utils.random :as r]
    [utils.math :as m]))
 

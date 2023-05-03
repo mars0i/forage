@@ -15,8 +15,8 @@
 ;;      x = 2/3 o
 ;;
 (ns forage.experiment.fournier7
-  (:require [forage.run :as fr]
-            [forage.food :as f]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
             [utils.fractal :as uf]
@@ -97,7 +97,7 @@
   ;; display straight walk:
   (require '[utils.fractal :as uf])
   (require '[utils.random :as r])
-  (require '[forage.run :as fr])
+  (require '[forage.core.run :as fr])
   (require '[forage.viz.hanami :as h])
   (require '[utils.hanami :as uh])
   (require '[aerial.hanami.common :as hc])

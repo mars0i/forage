@@ -1,9 +1,9 @@
 ;; spiral20.clj
 ;; Copied from grid19slide.clj and heavily modified.
 (ns forage.experiment.spiral20
-  (:require [forage.run :as fr]
-            [forage.food :as f]
-            [forage.walks :as w]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.walks :as w]
             [utils.spiral :as sp]
             [forage.env-mason :as em]
             [utils.random :as r]))

@@ -1,6 +1,6 @@
 (ns forage.experiment.grid2
   (:require
-   [forage.run :as fr]
+   [forage.core.run :as fr]
    [utils.random :as r]
    [utils.math :as m]))
 

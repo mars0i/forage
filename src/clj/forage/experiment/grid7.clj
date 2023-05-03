@@ -2,9 +2,9 @@
 ;; Otherwise identical to grid6 before the comment section.
 ;; (Also similar to grid5.)
 (ns forage.experiment.grid7
-  (:require [forage.run :as fr]
-            [forage.food :as f]
-            [forage.walks :as w]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.walks :as w]
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
             [utils.math :as m]))

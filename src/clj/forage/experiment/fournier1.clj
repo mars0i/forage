@@ -4,7 +4,7 @@
 (ns forage.experiment.fournier1
   (:require [forage.run :as fr]
             [forage.food :as f]
-            [forage.mason.foodspot :as mf]
+            [forage.core.env-mason :as mf]
             [utils.random :as r]
             [utils.math :as m]))
 

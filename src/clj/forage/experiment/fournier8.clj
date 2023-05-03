@@ -1,8 +1,8 @@
 ;; Started from fournier7.clj, but this one will have only a single
 ;; Fournier "universe", though embedded in a toroidal environment
 (ns forage.experiment.fournier8
-  (:require [forage.run :as fr]
-            [forage.food :as f]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
             [utils.fractal :as uf]

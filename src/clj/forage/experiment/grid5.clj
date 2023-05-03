@@ -1,8 +1,8 @@
 ;; Experiments with foodspots on grids with various dimensions
 (ns forage.experiment.grid5
-  (:require [forage.run :as fr]
-            [forage.food :as f]
-            [forage.walks :as w]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.walks :as w]
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
             [utils.math :as m]))

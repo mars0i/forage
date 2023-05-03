@@ -33,8 +33,8 @@
 (comment
 
   ;(def unifrecs (map vector unifnums)) ; wrap each number in a vector
-  (require 'forage.run :reload)
-  (forage.run/spit-csv "data.txt" (take 100000000 (map vector (repeatedly #(r/next-double rng)))))
+  (require 'forage.core.run :reload)
+  (forage.core.run/spit-csv "data.txt" (take 100000000 (map vector (repeatedly #(r/next-double rng)))))
 
   (require '[oz.core :as oz])
   (oz/start-server!)

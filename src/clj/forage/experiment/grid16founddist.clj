@@ -9,9 +9,9 @@
 ;;    The experiment (in comments) uses destructive searches.
 ;; (Originally based on grid9, which was based on grid8, from grid7.)
 (ns forage.experiment.grid16founddist
-  (:require [forage.run :as fr]
-            [forage.food :as f]
-            [forage.walks :as w]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.walks :as w]
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
             [utils.math :as m]

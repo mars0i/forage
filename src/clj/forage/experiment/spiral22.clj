@@ -1,9 +1,9 @@
 (ns forage.experiment.spiral22
   (:require ;[criterium.core :as crit]
             ;[clj-async-profiler.core :as prof]
-            [forage.run :as fr]
-            [forage.food :as f]
-            [forage.walks :as w]
+            [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.walks :as w]
             [forage.env-mason :as em]
             [utils.random :as r]
             [utils.spiral :as sp]))

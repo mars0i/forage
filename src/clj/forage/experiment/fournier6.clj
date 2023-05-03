@@ -1,7 +1,7 @@
 ;; like fournier5.clj but with no cluster in the center
 (ns forage.experiment.fournier6
-  (:require [forage.run :as fr]
-            [forage.food :as f]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
             [utils.math :as m]))
@@ -70,7 +70,7 @@
 (def look-fn (partial mf/perc-foodspots-exactly-toroidal env (params :perc-radius)))
 
 (comment
-  (require '[forage.run :as fr])
+  (require '[forage.core.run :as fr])
   (require '[utils.random :as r])
 
   ;; REAL EXPERIMENTS
@@ -97,7 +97,7 @@
   (oz/view! (h/vega-envwalk-plot env 1100 500 raw))
 
 
-  (require '[forage.run :as fr])
+  (require '[forage.core.run :as fr])
   (require '[utils.random :as r])
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])

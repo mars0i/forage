@@ -2,8 +2,8 @@
 ;; Version of grid4.clj for new env-passing version of levy-experiment
 ;; (I wanted to preserve the old one since I used it to generate data.)
 (ns forage.experiment.grid4a
-  (:require [forage.run :as fr]
-            [forage.food :as f]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
             [forage.mason.foodspot :as mf]
             [utils.random :as r]
             [utils.math :as m]))
@@ -60,7 +60,7 @@
 
 
 (comment
-  (require '[forage.run :as fr])
+  (require '[forage.core.run :as fr])
   (require '[utils.random :as r])
   (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params exponents1 walks-per-combo))
   (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params exponents2 walks-per-combo))

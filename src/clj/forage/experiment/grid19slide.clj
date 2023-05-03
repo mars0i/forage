@@ -14,8 +14,8 @@
 ;; i.e. up to the experiments comment section.
 ;; Similar to grid5.
 (ns forage.experiment.grid19slide
-  (:require [forage.run :as fr]
-            [forage.food :as f]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
             [forage.env-mason :as em]
             [utils.random :as r]))
 

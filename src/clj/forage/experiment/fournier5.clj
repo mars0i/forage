@@ -1,8 +1,8 @@
 ;; Used for early April PSA paper (?)
 (ns forage.experiment.fournier5
-  (:require [forage.run :as fr]
-            [forage.food :as f]
-            [forage.mason.foodspot :as mf]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.env-mason :as mf]
             [utils.random :as r]
             [utils.math :as m]))
 
@@ -102,7 +102,7 @@
 )
 
 (comment
-  (require '[forage.run :as fr])
+  (require '[forage.core.run :as fr])
   (require '[utils.random :as r])
 
   ;; REAL EXPERIMENTS
@@ -118,7 +118,7 @@
 
   ;; Note lookups are toroidal above, so plots might not be accurate.
   ;; display straight walk:
-  (require '[forage.mason.foodspot :as mf])
+  (require '[forage.core.env-mason :as mf])
   (require '[utils.math :as m])
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
@@ -131,7 +131,7 @@
 
   (oz/view! (h/vega-envwalk-plot env 1100 500 raw))
 
-  (require '[forage.run :as fr])
+  (require '[forage.core.run :as fr])
   (require '[utils.random :as r])
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
@@ -146,9 +146,9 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Create plot files of example runs using run/write-foodwalk-plots
 
-  (require '[forage.run :as fr])
+  (require '[forage.core.run :as fr])
   (require '[utils.random :as r])
-  (require '[forage.walks :as w])
+  (require '[forage.core.walks :as w])
   (def seed 9178237170000800769) ; Used for sims for PSA paper, I think
   (def seed (r/make-seed))
   (def rng (r/make-well19937 seed))

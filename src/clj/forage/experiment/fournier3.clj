@@ -7,9 +7,9 @@
 ;;   - center cluster without center foodspot
 ;;
 (ns forage.experiment.fournier3
-  (:require [forage.run :as fr]
-            [forage.food :as f]
-            [forage.mason.foodspot :as mf]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.env-mason :as mf]
             [utils.random :as r]
             [utils.math :as m]))
 
@@ -78,7 +78,7 @@
                                 (params :fournier-levels)))))
 
 (comment
-  (require '[forage.run :as fr])
+  (require '[forage.core.run :as fr])
   (require '[utils.random :as r])
 
   ;; TESTING PARAMS
@@ -98,7 +98,7 @@
   (time (def data (fr/straight-experiments fr/default-file-prefix env straight-params)))
 
   ;; display straight walk:
-  (require '[forage.mason.foodspot :as mf])
+  (require '[forage.core.env-mason :as mf])
   (require '[utils.math :as m])
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])

@@ -6,9 +6,9 @@
 ;; Odd thing: ballistic searches go outside env, but then
 ;; I restart them in center.
 (ns forage.experiment.fournier1
-  (:require [forage.run :as fr]
-            [forage.food :as f]
-            [forage.mason.foodspot :as mf]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.env-mason :as mf]
             [utils.random :as r]
             [utils.math :as m]))
 
@@ -63,7 +63,7 @@
                               (params :fournier-levels))))
 
 (comment
-  (require '[forage.run :as fr])
+  (require '[forage.core.run :as fr])
   (require '[utils.random :as r])
 
   (time (fr/levy-experiments fr/default-file-prefix env (r/make-seed) params all-exponents walks-per-combo))

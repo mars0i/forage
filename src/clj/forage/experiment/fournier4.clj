@@ -8,9 +8,9 @@
 ;;   - center cluster without center foodspot
 ;;
 (ns forage.experiment.fournier4
-  (:require [forage.run :as fr]
-            [forage.food :as f]
-            [forage.mason.foodspot :as mf]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.env-mason :as mf]
             [utils.random :as r]
             [utils.math :as m]))
 
@@ -70,7 +70,7 @@
 (def look-fn (partial mf/perc-foodspots-exactly-toroidal env (params :perc-radius)))
 
 (comment
-  (require '[forage.run :as fr])
+  (require '[forage.core.run :as fr])
   (require '[utils.random :as r])
 
   ;; REAL EXPERIMENTS
@@ -88,7 +88,7 @@
 
   ;; Note lookups are toroidal above, so plots might not be accurate.
   ;; display straight walk:
-  (require '[forage.mason.foodspot :as mf])
+  (require '[forage.core.env-mason :as mf])
   (require '[utils.math :as m])
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])

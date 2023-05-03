@@ -2,8 +2,8 @@
 ;; the power law.
 (ns forage.experiment.grid1
   (:require
-   [forage.walks :as w]
-   [forage.food :as f]
+   [forage.core.walks :as w]
+   [forage.core.food :as f]
    [forage.io :as io]
    [forage.mason.foodspot :as mf]
    [utils.math :as m]
@@ -121,7 +121,7 @@
   generated sequence from start until the point from which the foodspots
   were found, and (c) the entire generated sequence (a single line segment)
   including the stop after the foodspots were found.  See
-  forage.walks/straight-foodwalk for further details."
+  forage.core.walks/straight-foodwalk for further details."
   [init-dir]
   (w/straight-foodwalk (partial mf/perc-foodspots-exactly env perc-radius) ; env, perc-radius above
                        look-eps maxpathlen                                 ; also above

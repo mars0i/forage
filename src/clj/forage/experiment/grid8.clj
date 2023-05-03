@@ -3,9 +3,9 @@
 ;; i.e. up to the experiments comment section.
 ;; Similar to grid5.
 (ns forage.experiment.grid8
-  (:require [forage.run :as fr]
-            [forage.food :as f]
-            [forage.walks :as w]
+  (:require [forage.core.run :as fr]
+            [forage.core.food :as f]
+            [forage.core.walks :as w]
             [forage.env-mason :as env]
             [utils.random :as r]
             [utils.math :as m]))
