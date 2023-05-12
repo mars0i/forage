@@ -10,6 +10,45 @@
 ;; perceptual radius is associated with the forager, whereas here it's 
 ;; built into the env, and each foodspot.
 
+;; TODO Currently, the toroidal? field has no effect.  Should it?  Or should
+;; this distinction just be built into functions that work on the env?
+;; e.g. I could write make-donut and call it on an env, which calls make-toroidal-donut or
+;; make-trimmed donut depending on whether env's toroidal? is true.
+;; This would be OK for initializing an environment, or even for adding
+;; footspots during runtime--because that presumbably doesn't happen often.
+;; Even if I'm creating targets during runs, the main cost is probably
+;; adding the pointers to the actual target, not checking toroidal?.
+;;
+;; In the old MASON-based system, *paths aren't toroidal*, except when I
+;; want to display them as such, and then I run them through special code
+;; for that.
+;; Rather, paths ignore boundaries, but target lookup is toroidal.  That's
+;; MASON functionality that I use.
+;; I don't want to start generating toroidal paths, so I want to again have
+;; the look-fns build in toroidal or non-toroidal lookup.
+;; OH BUT MAYBE the current conception in env-indexed isn't quite fitting.
+;; I'm making perc radii toroidal (because otherwise I can't represent them
+;; in a matrix whose dimensions are too small).
+;; BUT NO I THINK IT WORKS.  e.g. suppose the perc radius goes off the right
+;; side of the matrix and is reflected over to the left side.  Then when
+;; going through the walk looking for food, suppose the path crosses out
+;; of the right boundary below (let's say) where the bottom of the perc
+;; radius is.  Then the wrapped path will be below the wrapped perc radius.
+;; And it might eventually get high enough quickly enough to hit the
+;; radius.  But that's all OK.  The look-fn is going to do the toroidal
+;; transformation on the path (which actually is going off into the ether),
+;; and it will then find the wrapped points from the perc radius.
+
+
+;; Todo? Nah: Maybe only place coordinates on the actual radius of the circle?
+;; It doesn't really matter for initializing an env, but if I start
+;; recreating targets during runs, if that happens a lot, initializing
+;; rings rather than discs might be faster.
+;; ON THE OTHER HAND, if a forager starts out at a random location, and I
+;; use rings, the forager won't know if its inside the perceptual radius.
+;; (Note that if I make rings, there's no need to have *-donut functions.)
+
+
 ;; TODO TODO:
 ;; SHOULD POINTER COORDS BE THE INTERNAL, SCALED COORDS, OR
 ;; THE EXTERNAL, UNSCALED COORDS?
@@ -74,28 +113,21 @@
 (defn mset-conj!
   "Sets element [rows-down columns-right] of core.matrix matrix mat to a
   new value which is value conj'ed onto the old value of mat at [rows-down
-  columns-right]. The old value must be a collection.  Note that
-  core.matrix uses tradition"
+  columns-right]. The old value must be a collection.  (Note core.matrix
+  uses tradition matrix indexing with 0,0 indicating the upper left
+  corner.)"
   [mat rows-down columns-right value]
   (mx/mset! mat rows-down columns-right
             (conj (mx/mget mat rows-down columns-right) value)))
 
 (def default-foodspot-val :food)
 
-;; TODO:
-;; What if foodspot is near edge of env?
-;; If non-toroidal, make sure there's not an index-out-of-bounds error.
-;; If toroidal, then need to mod the pointers over to the other side.
-
-;; TODO ??  Maybe only place coordinates on the actual radius of the circle?
-
 ; Must work with conj and possibly other things:
 ;(def env-loc-initializer nil)
 (def env-loc-initializer #{})
 
-;; TODO Currently, toroidal? has no effect.  Should it?  Or should
-;; this distinction just be built into functions that work on the env
-;; (as it is at present)?
+;; TODO Currently, the toroidal? field has no effect.  Should it?  Or should
+;; this distinction just be built into functions that work on the env?
 ;;
 ;; NOTE Because of the use of scale, this has to have a different
 ;; signature from the version in env_mason.clj.
@@ -167,22 +199,20 @@
   [size coord-pairs]
   (map (partial toroidize-pair size) coord-pairs))
 
-
 (defn within-bounds?
   [size [x y]]
   (and (>= x 0) (>= y 0) (< x size) (< y size)))
 
-(defn remove-outside-pairs
+(defn trim-outside-pairs
   [size coord-pairs]
   (filter (partial within-bounds? size) coord-pairs))
 
 (comment
-  (remove-outside-pairs 100 [[-2 50] [40 -30] [200 50] [65 45] [0 100] [100 0]
+  (trim-outside-pairs 100 [[-2 50] [40 -30] [200 50] [65 45] [0 100] [100 0]
                                    [125 0] [-50 150] [0 15] [25 75]])
-  (remove-outside-pairs 100 [[-2 -50] [-40 -30] [200 150] [165 -45] [-10 101] [101 -1]
+  (trim-outside-pairs 100 [[-2 -50] [-40 -30] [200 150] [165 -45] [-10 101] [101 -1]
                                    [125 2003] [-50 150] [-17 215] [125 175]])
 )
-
 
 (defn circle-range
   "Returns a sequence of coordinates representing a filled circle, around
@@ -222,7 +252,7 @@
   trimmed to the dimensions of env if necessary: points not falling within
   the environment are not included."
   [env perc-radius x y]
-  (remove-outside-pairs (* (:size env) (:scale env))
+  (trim-outside-pairs (* (:size env) (:scale env))
                         (circle-range env perc-radius x y)))
 
 (defn make-trimmed-donut
