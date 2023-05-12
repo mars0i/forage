@@ -38,6 +38,12 @@
 ;; radius.  But that's all OK.  The look-fn is going to do the toroidal
 ;; transformation on the path (which actually is going off into the ether),
 ;; and it will then find the wrapped points from the perc radius.
+;; 
+;; TODO:
+;; SO I DO NOT WANT TO USE THE TOROIDAL? FIELD AT RUN TIME TO DECIDE WHERE
+;; THE LOOK-FN SHOULD LOOK for the perc radius elements.  That's an
+;; unnecessary step.  Build it into the look fn, and make sure you're using
+;; the right one for a given env.
 
 
 ;; Todo? Nah: Maybe only place coordinates on the actual radius of the circle?
