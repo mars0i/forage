@@ -38,6 +38,8 @@
 ;; radius.  But that's all OK.  The look-fn is going to do the toroidal
 ;; transformation on the path (which actually is going off into the ether),
 ;; and it will then find the wrapped points from the perc radius.
+;;
+;; See notes.forage/models/EnvIndexedToroidalNts.{fig,pdf}.
 ;; 
 ;; TODO:
 ;; SO I DO NOT WANT TO USE THE TOROIDAL? FIELD AT RUN TIME TO DECIDE WHERE
@@ -132,8 +134,11 @@
 ;(def env-loc-initializer nil)
 (def env-loc-initializer #{})
 
-;; TODO Currently, the toroidal? field has no effect.  Should it?  Or should
-;; this distinction just be built into functions that work on the env?
+;; Environments do not encode whether they are toroidal or not.  You have
+;; to enforce this with code that (a) makes foodspots/targets, and (b) look-fns.
+;; I don't want to dispatch on toroidal-ness in look-fns--they should just
+;; run, for efficiency.  (If I rewrite this in a statically typed language,
+;; this will change.)
 ;;
 ;; NOTE Because of the use of scale, this has to have a different
 ;; signature from the version in env_mason.clj.
@@ -152,13 +157,13 @@
   the field.  There will also be a key and value for internal-size.  Note
   that coordinates in env range from [0,0] to [size,size].  All of the cells
   of the matrix will be initialized with nil."
-  [size scale toroidal?] 
+  [size scale] 
   (let [size* (* scale size)
         locations (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
     (doseq [row (range size*)
             col (range size*)]
       (mx/mset! locations row col env-loc-initializer)) ; this default is assumed by other functions here.
-    {:size size, :scale scale, :toroidal? toroidal?, :locations locations}))
+    {:size size, :scale scale, :locations locations}))
 
 (defn scale-coord
   "Scale value x by the :scale in env.  (Not for inner loops.)"
