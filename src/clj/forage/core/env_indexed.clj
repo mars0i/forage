@@ -10,44 +10,6 @@
 ;; perceptual radius is associated with the forager, whereas here it's 
 ;; built into the env, and each foodspot.
 
-;; TODO Currently, the toroidal? field has no effect.  Should it?  Or should
-;; this distinction just be built into functions that work on the env?
-;; e.g. I could write make-donut and call it on an env, which calls make-toroidal-donut or
-;; make-trimmed donut depending on whether env's toroidal? is true.
-;; This would be OK for initializing an environment, or even for adding
-;; footspots during runtime--because that presumbably doesn't happen often.
-;; Even if I'm creating targets during runs, the main cost is probably
-;; adding the pointers to the actual target, not checking toroidal?.
-;;
-;; In the old MASON-based system, *paths aren't toroidal*, except when I
-;; want to display them as such, and then I run them through special code
-;; for that.
-;; Rather, paths ignore boundaries, but target lookup is toroidal.  That's
-;; MASON functionality that I use.
-;; I don't want to start generating toroidal paths, so I want to again have
-;; the look-fns build in toroidal or non-toroidal lookup.
-;; OH BUT MAYBE the current conception in env-indexed isn't quite fitting.
-;; I'm making perc radii toroidal (because otherwise I can't represent them
-;; in a matrix whose dimensions are too small).
-;; BUT NO I THINK IT WORKS.  e.g. suppose the perc radius goes off the right
-;; side of the matrix and is reflected over to the left side.  Then when
-;; going through the walk looking for food, suppose the path crosses out
-;; of the right boundary below (let's say) where the bottom of the perc
-;; radius is.  Then the wrapped path will be below the wrapped perc radius.
-;; And it might eventually get high enough quickly enough to hit the
-;; radius.  But that's all OK.  The look-fn is going to do the toroidal
-;; transformation on the path (which actually is going off into the ether),
-;; and it will then find the wrapped points from the perc radius.
-;;
-;; See notes.forage/models/EnvIndexedToroidalNts.{fig,pdf}.
-;; 
-;; TODO:
-;; SO I DO NOT WANT TO USE THE TOROIDAL? FIELD AT RUN TIME TO DECIDE WHERE
-;; THE LOOK-FN SHOULD LOOK for the perc radius elements.  That's an
-;; unnecessary step.  Build it into the look fn, and make sure you're using
-;; the right one for a given env.
-
-
 ;; Todo? Nah: Maybe only place coordinates on the actual radius of the circle?
 ;; It doesn't really matter for initializing an env, but if I start
 ;; recreating targets during runs, if that happens a lot, initializing
@@ -133,6 +95,13 @@
 ; Must work with conj and possibly other things:
 ;(def env-loc-initializer nil)
 (def env-loc-initializer #{})
+;; nil was confusing core.matrix/pm because it does a conversion to Clojure
+;; vectors, and then does a test that uses count to figure out how many
+;; dimensions the matrix/array has.  This causes pm to fail iff there's 
+;; non-nil sequence in the first column.  Using sets prevents this.
+;; See issue I submitted https://github.com/mikera/core.matrix/issues/361
+;; But I could go back to nils if I stop using pm.
+
 
 ;; Environments do not encode whether they are toroidal or not.  You have
 ;; to enforce this with code that (a) makes foodspots/targets, and (b) look-fns.
@@ -365,6 +334,9 @@
 
 
 
+;; TODO: Revise or add another function to get things between scaled
+;; locations.  Need to round.  Fastmath has floor and ceil with a scale
+;; param, but none of the three round functions/macros (round, rint, qround) do that.
 ;; TODO: Add clipping for toroidal? = falsey, wrapping for toroidal? = truthy
 (defn get-xy
   "Returns whatever is at (external, integer) coordinates x, y in
