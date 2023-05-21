@@ -5,6 +5,9 @@
             [utils.random :as r]
             [utils.misc :as um]))
 
+
+;; TODO Experiment using fastmath to speed this up.
+
 ;; Note perc-foodspot fns below have different signatures from similar functions in 
 ;; env_mason.clj because of differences in the approach.  In env-mason,
 ;; perceptual radius is associated with the forager, whereas here it's 
@@ -129,7 +132,7 @@
   [size scale] 
   (let [size* (* scale size)
         locations (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
-    (doseq [row (range size*)
+    (doseq [row (range size*)  ; note zero-based
             col (range size*)]
       (mx/mset! locations row col env-loc-initializer)) ; this default is assumed by other functions here.
     {:size size, :scale scale, :locations locations}))
@@ -307,50 +310,45 @@
     (add-trimmed-foodspot! env perc-radius x y)))
 
 
-(defn older-add-foodspot!
-  ([env perc-radius x y]
-   (older-add-foodspot! env perc-radius x y default-foodspot-val))
-  ([env perc-radius x y foodspot-val]
-   (let [raw-scaled (partial * (:scale env))
-         scaled (if (:toroidal? env)
-                  (fn [x] (raw-scaled x)) ; FIXME add mod or rem
-                  raw-scaled)
-         size* (scaled (:size env))
-         radius* (scaled perc-radius)  ; add pointers to foodspot in surrounding cells
-         radius*-squared (* radius* radius*)
-         locs (:locations env)]
-     ;; NOTE reversed order of x and y because the internal
-     ;; representation uses traditional matrix indexing:
-     (mset-conj! locs (scaled y) (scaled x) foodspot-val) ; mark foodspot location itself with a distinguishing value
-     (doseq [off-x (um/irange (- radius*) radius*)
-             off-y (um/irange (- radius*) radius*)
-             :when (and 
-                     (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
-                     (> radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; Every other point within radius needs foodspot coords
-       (mset-conj! locs                 ; add the foodspot coords
-                   (+ off-x (scaled y))
-                   (+ off-y (scaled x))
-                   [x y])))))
+;; Algorithm:
+;;   Multiply input to get right dimensions for internal matrix.
+;;   Round to get integer coordinates.
+(defn raw-env-locs-getxy
+  "Returns whatever is at (external) coordinates x, y in locations matrix loc.
+  Non-integer coordinates will be run through clojure.math/round after scaling."
+  [locs scale x y]
+  (let [x' (math/round (* x scale))  ; mget would automatically floor
+        y' (math/round (* y scale))] ; or fastmath/rint, i.e. java Math/rint? Nah.
+    ;; x, y reversed since core.matrix uses trad matrix indexing:
+    (mx/mget locs x' y')))
 
-
-
-;; TODO: Revise or add another function to get things between scaled
-;; locations.  Need to round.  Fastmath has floor and ceil with a scale
-;; param, but none of the three round functions/macros (round, rint, qround) do that.
-;; TODO: Add clipping for toroidal? = falsey, wrapping for toroidal? = truthy
-(defn get-xy
-  "Returns whatever is at (external, integer) coordinates x, y in
-  environment e. Notes: Can't be used to look at intervening
-  micro-locations. AVOID in inner loops, to avoid repeated destructuring."
+(defn raw-env-getxy
+  "Returns whatever is at (external) coordinates x, y in environment e.
+  Notes: Possibly avoid in inner loops; instead use env-mat-getxy instead
+  after extracting locations and scale from env once.."
   [env x y]
-  (let [scale (:scale env)]
-    ;; NOTE reversed order of x and y because the internal
-    ;; representation uses traditional matrix indexing:
-    (mx/mget (:locations env) (* y scale) (* x scale)))) 
+  (raw-env-mat-getxy (:locations env) (:scale env) x y))
+
+;; TODO: Add clipping for toroidal? = falsey, wrapping for toroidal? = truthy
+
+(defn trimmed-env-locs-getxy
+  [locs scale x y]
+  (if (or (neg? x) (neg? y)
+          (>= x scale) (>= y scale))
+    nil
+    (raw-env-locs-getxy locs scale x y)))
+
+
 
 
 (comment
   (use 'clojure.repl) ; for pst
+
+  (def m (mx/matrix [[1 2 3] [4 5 6] [7 8 9]]))
+  (mx/pm m)
+  (mx/mget m 0.9 1.9) ; mget floors float coordinates
+  (mx/mget m (math/round 0.9999999999999999) 1)
+  (math/round 100000.9999999999999999)
 
   (def scale 4)
 
@@ -452,4 +450,31 @@
 
 ;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
 ;; only chooses randomly if there are mulitple equally close foodspots.
+
+
+(defn older-add-foodspot!
+  ([env perc-radius x y]
+   (older-add-foodspot! env perc-radius x y default-foodspot-val))
+  ([env perc-radius x y foodspot-val]
+   (let [raw-scaled (partial * (:scale env))
+         scaled (if (:toroidal? env)
+                  (fn [x] (raw-scaled x)) ; FIXME add mod or rem
+                  raw-scaled)
+         size* (scaled (:size env))
+         radius* (scaled perc-radius)  ; add pointers to foodspot in surrounding cells
+         radius*-squared (* radius* radius*)
+         locs (:locations env)]
+     ;; NOTE reversed order of x and y because the internal
+     ;; representation uses traditional matrix indexing:
+     (mset-conj! locs (scaled y) (scaled x) foodspot-val) ; mark foodspot location itself with a distinguishing value
+     (doseq [off-x (um/irange (- radius*) radius*)
+             off-y (um/irange (- radius*) radius*)
+             :when (and 
+                     (or (not= 0 off-x) (not= 0 off-y)) ; skip foodspot location itself
+                     (> radius*-squared (+ (* off-x off-x) (* off-y off-y))))] ; Every other point within radius needs foodspot coords
+       (mset-conj! locs                 ; add the foodspot coords
+                   (+ off-x (scaled y))
+                   (+ off-y (scaled x))
+                   [x y])))))
+
 
