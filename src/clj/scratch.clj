@@ -1,7 +1,9 @@
 ;; File for misc experiments.  Think of it as a repl.
 (ns scratch
   (:require
-    [clojure.core.matrix :as mx]
+    [clojure.repl :refer :all] ; doc, apropos, dir, find-doc, pst, etc.
+    [fastmath.core :as m]
+    ;[clojure.core.matrix :as mx]
    ;[utils.random :as ur]
    ;[utils.math :as um]
    ;[utils.toroidal :as t]
@@ -22,24 +24,32 @@
 
 
 (comment
-  (def m (mx/matrix :ndarray [[nil nil nil] [nil nil nil] [nil nil nil]]))
-  (mx/mset! m 0 1 (list :a))
-  (mx/pm m) ; succeeds
-  (mx/mset! m 0 0 (list :a))
-  (mx/shape m) ; => [3 3]
-  (mx/pm m)
-; eval (effective-root-form): (mx/pm m)
-; (err) Execution error (ExceptionInfo) at clojure.core.matrix.impl.persistent-vector/eval22141$fn (persistent_vector.cljc:571).
-; (err) Can't convert to persistent vector array: inconsistent shape.
-  (mx/mset! m 0 0 nil) ; This fixes the problem
+  (doc m/rint)
+  (class 1.234e100)
+  (m/rint 1.234e100)
+  (class (m/rint 1.234e100))
+  (m/round 1.234e100)
+  Long/MAX_VALUE
+  (class (m/round 1.234e100))
 
-;; These are also not OK:
-  (mx/mset! m 1 0 (range 1))
-  (mx/mset! m 2 0 [:a])
+  (m/rint 4.5)
+  (m/rint 5.5)
+  (m/round 4.5)
 
-  ;; These don't cause problems:
-  (mx/mset! m 0 0 #{:a})
-  (mx/mset! m 0 0 {:a 1})
+  ;; This is standard Java rint behavior .5 is rounded to nearest even integer:
+  (m/rint 42.5) ; rounds down
+  (m/rint 43.5) ; rounds up
+  ;; In fastmath's scaled version, the behavior is less obviously consistent:
+  (m/rint 42.05 0.1) ; rounds down
+  (m/rint 42.15 0.1) ; rounds down
+  (m/rint 42.25 0.1) ; rounds down
+  (m/rint 42.35 0.1) ; rounds up
+  (m/rint 42.45 0.1) ; rounds down
+  (m/rint 42.55 0.1) ; rounds down
+  (m/rint 42.65 0.1) ; rounds down
+  (m/rint 42.75 0.1) ; rounds up
+  (m/rint 42.85 0.1) ; rounds down
+  (m/rint 42.95 0.1) ; rounds up
 )
 
 

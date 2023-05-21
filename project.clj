@@ -11,7 +11,8 @@
                  [org.apache.commons/commons-rng-client-api "1.4"]
                  [org.apache.commons/commons-rng-sampling "1.4"]
                  ;[generateme/fastmath "2.1.8"]
-                 [generateme/fastmath "2.1.9-SNAPSHOT"]
+                 ;[generateme/fastmath "2.1.9-SNAPSHOT"]
+                 [generateme/fastmath "2.2.2-SNAPSHOT"]
                  [org.flatland/ordered "1.15.10"] ; for ordered-set
                  [net.mikera/core.matrix "0.62.0"] ; should switch to 0.63.0
                  [aerial.hanami "0.17.0"]

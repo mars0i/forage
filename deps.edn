@@ -7,7 +7,8 @@
         org.apache.commons/commons-rng-client-api {:mvn/version "1.4"}
         org.apache.commons/commons-rng-sampling {:mvn/version "1.4"}
         ;generateme/fastmath {:mvn/version "2.1.8"}
-        generateme/fastmath {:mvn/version "2.1.9-SNAPSHOT"} ; needed for stats/wmean
+        ;generateme/fastmath {:mvn/version "2.1.9-SNAPSHOT"} ; needed for stats/wmean
+        generateme/fastmath {:mvn/version "2.2.2-SNAPSHOT"} ; adds rint with scale arg
         org.flatland/ordered {:mvn/version "1.15.10"} ; for ordered-set
         net.mikera/core.matrix {:mvn/version "0.62.0"} ; SWITCH TO 0.63.0 when I have wifi
         aerial.hanami/aerial.hanami {:mvn/version "0.17.0"}
