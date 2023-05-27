@@ -69,7 +69,7 @@
 
 ; Must work with conj and possibly other things:
 ;(def env-loc-initializer nil)
-(def env-loc-initializer #{})
+(def env-loc-initializer #{})  ; NOTE Some functions below may assume this, e.g. env-foodspot-coords
 ;; nil was confusing core.matrix/pm because it does a conversion to Clojure
 ;; vectors, and then does a test that uses count to figure out how many
 ;; dimensions the matrix/array has.  This causes pm to fail iff there's 
@@ -354,6 +354,7 @@
 )
 
 
+;; FIXME NOT RIGHT
 ;; FIXME needs to be un-scaled
 ;; Method used below doesn't try to find the foodspots themselves.  Their
 ;; coordinates are referenced many times, so we extract them into a set.
@@ -367,7 +368,6 @@
              (comp cat (filter coll?)) ; Each elt is coll of pairs or single values--we want pairs.
              (mx/eseq env))))
 
-
 ;; Note that although a forager who moves continuously and always looks for
 ;; food can never reach a foodspot without first getting within perceptual
 ;; radius, the following functions look for that possibility, for the sake
@@ -375,6 +375,7 @@
 ;; motion, and (c) possible models of e.g. raptors who don't move across
 ;; the ground.
 
+;; FIXME probably wrong
 (defn perc-foodspots
   "Examines location [x y] in env. Returns a falsey value if no foodspot is
   within the perceptual radius of that position, or the coordinates of a
@@ -392,6 +393,7 @@
            found)))) ; A sequence of one or more coordinate pairs
 
 
+;; FIXME probably wrong
 ;; TODO add similar random selection in env_mason
 (defn perc-foodspot-choose-randomly
   "Examines location [x y] in env. Returns a falsey value if no foodspot is
