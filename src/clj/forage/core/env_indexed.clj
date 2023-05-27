@@ -21,22 +21,6 @@
 ;; use rings, the forager won't know if its inside the perceptual radius.
 ;; (Note that if I make rings, there's no need to have *-donut functions.)
 
-
-;; TODO TODO:
-;; SHOULD POINTER COORDS BE THE INTERNAL, SCALED COORDS, OR
-;; THE EXTERNAL, UNSCALED COORDS?
-;; ANSWER: The external unscaled ones.  And then always do the conversion
-;; internally (as if it were OO).
-;; So ... FIXME below.
-
-;; Maybe make the env into a pair or map that contains the scale and maybe size
-;; as well as the matrix.  But in that case, do not destructure the map
-;; or whatever it is in the functions that are used to look for foodspots.
-;; Or don't create the working versions of those using partial.  Make it
-;; so that any destructuring only happens once during setup--not every
-;; every time the system stops to look for foodspots.
-
-
 ;; Overall strategy:
 ;; Foodspots exist in a 2D grid made with core.matrix (or some other
 ;; arbitrary-content 2D structure) using one of the pure Clojure matrix implementations.
@@ -46,12 +30,6 @@
 ;; coordinates, are marked with a collection containing points to the
 ;; foodspot it's a radius around.  This is the size of the perceptual
 ;; radius, but it's around the foodspots.
-
-;; These should perhaps be marked with the coordinates of the foodspoot
-;; that that can be recorded.
-
-;; Alternatively, if all search paths are continuous in 2D, one might only fill in
-;; the slots on the perimeter.
 
 ;; When a walk reaches a check point, mod, or better yet round its coords it to
 ;; get the indexes into the matrix and check whether it's in the radius
@@ -65,13 +43,7 @@
 ;; decide what is close enough.  So in addition to it probably being faster
 ;; to look up targets this way, I don't need to check for them as often.
 
-
-;; The representation should have a scale, so that e.g. we represent a
-;; distance of 1 as 100 cells.  Otherwise, if a distance of 1 was the cell
-;; dimension, then perceptual radius 1 would be represented by a Moore or
-;; von Neumann neighborhood, which is not a good approximation of circle.
-
-;; NOTE there if I use regular Clojure vectors, I can use Clojure indexing:
+;; NOTE If I use regular Clojure vectors, I can use Clojure indexing:
 ;;   (def foo (mx/new-matrix :persistent-vector 4 4))
 ;;   ((foo 0) 0) ;=> 0.0
 ;; But I can't mset! the values, which is inconvenient: it means that I
@@ -314,31 +286,53 @@
 ;;   Multiply input to get right dimensions for internal matrix.
 ;;   Round to get integer coordinates.
 (defn raw-env-locs-getxy
-  "Returns whatever is at (external) coordinates x, y in locations matrix loc.
-  Non-integer coordinates will be run through clojure.math/round after scaling."
+  "Returns whatever is at (external) coordinates x, y in locations matrix locs.
+  Non-integer coordinates will be run through clojure.math/round after scaling.
+  Coordinates must be legal for locs."
   [locs scale x y]
   (let [x' (math/round (* x scale))  ; mget would automatically floor
         y' (math/round (* y scale))] ; or fastmath/rint, i.e. java Math/rint? Nah.
     ;; x, y reversed since core.matrix uses trad matrix indexing:
     (mx/mget locs x' y')))
 
+; Notes: Possibly avoid in inner loops; instead use env-mat-getxy after 
+; extracting locations and scale from env once."
 (defn raw-env-getxy
   "Returns whatever is at (external) coordinates x, y in environment e.
-  Notes: Possibly avoid in inner loops; instead use env-mat-getxy instead
-  after extracting locations and scale from env once.."
+  Coordinates must be legal for the :locations matrix in e."
   [env x y]
-  (raw-env-mat-getxy (:locations env) (:scale env) x y))
+  (raw-env-locs-getxy (:locations env) (:scale env) x y))
 
-;; TODO: Add clipping for toroidal? = falsey, wrapping for toroidal? = truthy
-
+;; Returns false rather than nil because under some schemes, I initialize
+;; cells with nil.  If so, and if this functionr returned nil to indicate
+;; out of bounds, there would be no way of finding this out from the return
+;; value.
 (defn trimmed-env-locs-getxy
-  [locs scale x y]
+  "After scaling by scale, returns the contents of matrix locs at (x,y), or
+  false if coordinates are outside the boundaries of locs."
+  [locs size scale x y]
   (if (or (neg? x) (neg? y)
-          (>= x scale) (>= y scale))
-    nil
+          (>= x size) (>= y size))
+    false
     (raw-env-locs-getxy locs scale x y)))
 
+(defn trimmed-env-getxy
+  "After scaling by scale, returns the contents of :locations locs at
+  (x,y), or false if coordinates are outside the boundaries of locs."
+  [env x y]
+  (trimmed-env-locs-getxy (:locations env) (:size env) (:scale env) x y))
 
+(defn toroidal-env-locs-getxy
+  "After possible toroidal wrapping using size, and scaling by scale,
+  returns the contents of matrix locs at (x,y)."
+  [locs size scale x y]
+  (raw-env-locs-getxy locs scale (rem x size) (rem y size)))
+
+(defn toroidal-env-getxy
+  "After possible toroidal wrapping using :size, and scaling by :scale,
+  returns the contents of the :locations matrix at (x,y)."
+  [env x y]
+  (toroidal-env-locs-getxy (:locations env) (:size env) (:scale env) x y))
 
 
 (comment
@@ -352,7 +346,7 @@
 
   (def scale 4)
 
-  (def e1 (make-env 5 scale false))
+  (def e1 (make-env 5 scale))
   (mx/shape (:locations e1))
   (mx/pm (:locations e1))
   (older-add-foodspot! e1 2 2 3)
