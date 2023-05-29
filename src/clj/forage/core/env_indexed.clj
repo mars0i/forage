@@ -2,6 +2,7 @@
 (ns forage.core.env-indexed
   (:require [clojure.math :as math]
             [clojure.core.matrix :as mx]
+            [clojure.core.matrix.selection :as mxsel] ; name of namespace changed between 0.44 and 0.63
             [utils.random :as r]
             [utils.misc :as um]))
 
@@ -229,6 +230,14 @@
   (make-trimmed-donut e 1 2 3)
 )
 
+;; FIXME BUG: For all of the foodpot adders, I think:
+;; It ought to be possible to specific non-integer coordinates
+;; for foodspots, and have them translated into internal integer
+;; coordinates (after rounding).  However, this just slaps the provided
+;; coordinates into the cells as is, and in addition, ends up sticking
+;; a coordinate pair in with the foodspot itself.
+;; Also make sure that non-integer perc-radii work.
+
 (defn add-toroidal-foodspot!
   "Add foodspot to env, with its perceptual radius perc-radius, at scale
   scale, around location [x y], but wrapped toroidally if necessary. All
@@ -345,28 +354,44 @@
   (mx/shape (:locations e))
   (add-toroidal-foodspot! e 4 2 3)
   (mx/pm (:locations e))
+
+  (def e' (make-env 10 scale))
+  ;; Currently doesn't work right:
+  (add-toroidal-foodspot! e' 4.5 2.25 3.3)
+  (mx/pm (:locations e'))
+
   (mx/mget (:locations e) (* scale 3) (* scale 2)) ; remember matrix indexing is y, x from upperleft
   (raw-env-getxy e 2 3) ; doesn't use matrix indexing
   (add-toroidal-foodspot! e 2 6 4)
-  (raw-env-getxy e 6 4) ; doesn't use matrix indexing
+  (rawenv-getxy e 6 4) ; doesn't use matrix indexing
   (add-toroidal-foodspot! e 2 2 4)
   (raw-env-getxy e 2 4) ; doesn't use matrix indexing
+  (env-foodspot-coords e)
 )
 
-
-;; FIXME NOT RIGHT
-;; FIXME needs to be un-scaled
 ;; Method used below doesn't try to find the foodspots themselves.  Their
 ;; coordinates are referenced many times, so we extract them into a set.
-;; Perhaps this method will be too slow given the size of envs in models.
-;; A more bespoke method might be needed (perhaps using mx/ereduce).
+;; A more bespoke method might be faster (perhaps using mx/ereduce).
+(defn locs-foodspot-coords
+  "Returns a collection of the external coordinates of foodspots in matrix locs."
+  [locs]
+  (-> (into #{} cat (mx/eseq locs))
+      (disj default-foodspot-val)))
+
 (defn env-foodspot-coords
-  "Returns a sequence of the coordinates off all foodspots in environment
-  env."
+  "Returns a collection of the external coordinates off foodspots in the
+  :locations matrix in environment env."
   [env]
-  (seq (into #{}
-             (comp cat (filter coll?)) ; Each elt is coll of pairs or single values--we want pairs.
-             (mx/eseq env))))
+  (locs-foodspot-coords (:locations env)))
+
+
+
+(comment
+  (seq #{})
+  (seq (into #{} (range 10)))
+  (empty? #{})
+  (into #{} cat [#{1 2} #{3 4 2}])
+)
 
 ;; Note that although a forager who moves continuously and always looks for
 ;; food can never reach a foodspot without first getting within perceptual
