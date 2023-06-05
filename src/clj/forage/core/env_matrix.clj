@@ -1,11 +1,20 @@
-;; ABANDONED.  See env_matrix.clj for new version.
 ;; Future home of replacement for env-mason.
-(ns forage.core.env-indexed
+(ns forage.core.env-matrix
   (:require [clojure.math :as math]
             [clojure.core.matrix :as mx]
             [clojure.core.matrix.selection :as mxsel] ; name of namespace changed between 0.44 and 0.63
             [utils.random :as r]
             [utils.misc :as um]))
+
+;; NOTE When this was env_indexed.clj, the goal was to provide a (kind of)
+;; drop-in replacement for env_mason.clj.  That meant converting between
+;; external coordinates corresponding to the ones used by env-mason, and
+;; internal coordinates in matrices that gave a more fined-grained resolution.
+;; I decided that keeping track of the conversion between these two scales
+;; was more trouble than it was worth.  So I'm instead going to just change
+;; the scale in new experiments that use this namespace.  Those experiments
+;; will be in forage/matruns rather than forage/experiment, to distinguish
+;; them.
 
 
 ;; TODO Experiment using fastmath to speed this up.
