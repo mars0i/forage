@@ -94,41 +94,32 @@
 ;; I don't want to dispatch on toroidal-ness in look-fns--they should just
 ;; run, for efficiency.  (If I rewrite this in a statically typed language,
 ;; this will change.)
-;;
-;; NOTE Because of the use of scale, this has to have a different
-;; signature from the version in env_mason.clj.
-;; 
+
 ;; By default new-matrix will initialize with zero doubles, I don't want that 
 ;; because it could be confusing.  Instead initialize with empty sets,
 ;; which can be conj'ed onto later.  Don't use nil or [] for this purpose: It can 
-;; confuse core.matrix/pm when there is added data in the first column of the
-;; matrix.
+;; confuse core.matrix/pm when there is added data in the first column of the matrix.
+
+;; TODO ? Use raw matrix, get rid of :size, since you can get this from core.matrix/shape.
 (defn make-env
   "Returns a new environment as a map containing a value of :size which is
-  dimension of the external representation of a size X size field, a value
-  of :scale, which specifies how much finer-grained the internal
-  representation of the field is, and :locations, whose value is a (size *
-  scale) X (size * scale) matrix which is the internal representation of
-  the field.  There will also be a key and value for internal-size.  Note
-  that coordinates in env range from [0,0] to [size,size].  All of the cells
-  of the matrix will be initialized with nil."
-  [size scale] 
-  (let [size* (* scale size)
-        locations (mx/new-matrix :ndarray size* size*)] ;; Use ndarray internally so mset! works
-    (doseq [row (range size*)  ; note zero-based
-            col (range size*)]
+  dimension size X size matrix and :locations, whose value is the matrix.
+  that coordinates in env range from [0,0] to [size-1,size-1].  All of the
+  cells of the matrix will be initialized with env-loc-initializer."
+  [size]
+  (let [locations (mx/new-matrix :ndarray size size)] ;; Use ndarray internally so mset! works
+    (doseq [row (range size)  ; note zero-based
+            col (range size)]
       (mx/mset! locations row col env-loc-initializer)) ; this default is assumed by other functions here.
-    {:size size, :scale scale, :locations locations}))
+    {:size size, :locations locations}))
 
-(defn scale-coord
-  "Scale value x by the :scale in env.  (Not for inner loops.)"
-  [env x]
-  (* x (:scale env)))
+(comment
+  (def e (make-env 5))
+  (mx/pm (:locations e))
+  (mx/shape (:locations e))
+  (mx/mget (:locations e) 4 4)
 
-(defn scale-xy
-  "Scale pair [x y] by the :scale in env.  (Not for inner loops.)"
-  [env [x y]]
-  [(* x (:scale env)) (* y (:scale env))])
+)
 
 (defn toroidize-coord
   "If necessary map a coordinate to the other size of the field, on the
@@ -181,18 +172,14 @@
 )
 
 (defn circle-range
-  "Returns a sequence of coordinates representing a filled circle, around
-  [x y], of external size perc-radius, but scaled according to env's scale."
-  [env perc-radius x y]
-  (let [scale-it (partial * (:scale env))
-        x* (scale-it x)
-        y* (scale-it y)
-        radius* (scale-it perc-radius)  ; add pointers to foodspot in surrounding cells
-        radius*-squared (* radius* radius*)]
-    (for [off-x (um/irange (- radius*) radius*)
-          off-y (um/irange (- radius*) radius*)
-          :when (>= radius*-squared (+ (* off-x off-x) (* off-y off-y)))] ; ignore outside circle
-      [(+ x* off-x) (+ y* off-y)])))
+  "Returns a sequence of coordinates representing a filled circle around
+  [x y] of size radius."
+  [radius x y]
+  (let [radius-squared (* radius radius)]
+    (for [off-x (um/irange (- radius) radius)
+          off-y (um/irange (- radius) radius)
+          :when (>= radius-squared (+ (* off-x off-x) (* off-y off-y)))] ; ignore outside circle
+      [(+ x off-x) (+ y off-y)])))
 
 
 (defn make-toroidal-circle-range 
@@ -206,29 +193,25 @@
 (defn make-toroidal-donut
   "Does the same thing as make-toroidal-circle-range, but removes the
   coordinates for the center point."
-  [env perc-radius x y]
-  (let [x* (scale-coord env x)
-        y* (scale-coord env y)]
-    (remove (partial = [x* y*])  ; will fail if numbers are not the same type
-            (make-toroidal-circle-range env perc-radius x y))))
+  [env radius x y]
+  (remove (partial = [x y])  ; will fail if numbers are not the same type
+          (make-toroidal-circle-range env radius x y)))
 
 (defn make-trimmed-circle-range 
   "Returns a sequence of coordinates representing a filled circle, around
   [x y], of external size perc-radius, scaled according to env's scale, and
   trimmed to the dimensions of env if necessary: points not falling within
   the environment are not included."
-  [env perc-radius x y]
+  [env radius x y]
   (trim-outside-pairs (* (:size env) (:scale env))
-                        (circle-range env perc-radius x y)))
+                        (circle-range env radius x y)))
 
 (defn make-trimmed-donut
   "Does the same thing as make-trimmed-circle-range, but removes the
   coordinates for the center point."
-  [env perc-radius x y]
-  (let [x* (scale-coord env x)
-        y* (scale-coord env y)]
-    (remove (partial = [x* y*])  ; will fail if numbers are not the same type
-            (make-trimmed-circle-range env perc-radius x y))))
+  [env radius x y]
+  (remove (partial = [x y])  ; will fail if numbers are not the same type
+          (make-trimmed-circle-range env radius x y)))
 
 (comment
   (remove (partial = [4 5]) [[1 2] [3 4] [4 5] [6 7]])
@@ -240,7 +223,7 @@
   (make-trimmed-donut e 1 2 3)
 )
 
-;; FIXME BUG: For all of the foodpot adders, I think:
+;; FIXME BUG: For all of the foodspot adders, I think:
 ;; It ought to be possible to specific non-integer coordinates
 ;; for foodspots, and have them translated into internal integer
 ;; coordinates (after rounding).  However, this just slaps the provided
@@ -263,7 +246,7 @@
      ;; representation uses traditional matrix indexing:
      (doseq [[x* y*] (make-toroidal-donut env perc-radius x y)] ; donut, i.e. leave out center
        (mset-conj! locs y* x* [x y])) ; i.e. we set each cell to pair that points to the center
-     (mset-conj! locs (scale-coord env y) (scale-coord env x) foodspot-val)))) ; center gets special value
+     (mset-conj! locs y x foodspot-val)))) ; center gets special value
 
 (defn add-toroidal-foodspots!
   "Add multiple foodspots at coordinate pairs in locs, to env with
@@ -290,7 +273,7 @@
      ;; representation uses traditional matrix indexing:
      (doseq [[x* y*] (make-trimmed-donut env perc-radius x y)] ; donut, i.e. leave out center
        (mset-conj! locs y* x* [x y])) ; i.e. we set each cell to pair that points to the center
-     (mset-conj! locs (scale-coord env y) (scale-coord env x) foodspot-val)))) ; center gets special value
+     (mset-conj! locs y x foodspot-val)))) ; center gets special value
 
 (defn add-trimmed-foodspots!
   "Add multiple foodspots at coordinate pairs in locs, to env with
@@ -301,58 +284,52 @@
     (add-trimmed-foodspot! env perc-radius x y)))
 
 
-;; Algorithm:
-;;   Multiply input to get right dimensions for internal matrix.
-;;   Round to get integer coordinates.
 (defn raw-env-locs-getxy
-  "Returns whatever is at (external) coordinates x, y in locations matrix locs.
-  Non-integer coordinates will be run through clojure.math/round after scaling.
+  "Returns whatever is at (external) coordinates x, y in locations matrix
+  locs. Non-integer coordinates will be run through clojure.math/round.
   Coordinates must be legal for locs."
-  [locs scale x y]
-  ;; Note coordinates reversed for matrix row,col indexing:
-  (let [y' (math/round (* x scale))  ; mget would automatically floor
-        x' (math/round (* y scale))] ; or fastmath/rint, i.e. java Math/rint? Nah.
-    ;; x, y reversed since core.matrix uses trad matrix indexing:
-    (mx/mget locs x' y')))
+  [locs x y]
+  (let [x' (math/round x)  ; mget would automatically floor
+        y' (math/round y)] ; or use fastmath/rint, i.e. java Math/rint? Nah.
+    (mx/mget locs y' x'))) ; Note x, y reversed since core.matrix uses trad matrix indexing
 
 ; Notes: Possibly avoid in inner loops; instead use env-mat-getxy after 
 ; extracting locations and scale from env once."
 (defn raw-env-getxy
   "Returns whatever is at (external) coordinates x, y in environment e.
-  Coordinates must be legal for the :locations matrix in e."
+  Coordinates must be legal for the :locations matrix in env."
   [env x y]
-  (raw-env-locs-getxy (:locations env) (:scale env) x y))
+  (raw-env-locs-getxy (:locations env) x y))
 
 ;; Returns false rather than nil because under some schemes, I initialize
-;; cells with nil.  If so, and if this functionr returned nil to indicate
-;; out of bounds, there would be no way of finding this out from the return
-;; value.
+;; cells with nil.  If so, and if this functionr returned nil to indicate out
+;; out of bounds, there would be no way of finding this out from the return value.
 (defn trimmed-env-locs-getxy
   "After scaling by scale, returns the contents of matrix locs at (x,y), or
   false if coordinates are outside the boundaries of locs."
-  [locs size scale x y]
+  [locs size x y]
   (if (or (neg? x) (neg? y)
           (>= x size) (>= y size))
     false
-    (raw-env-locs-getxy locs scale x y)))
+    (raw-env-locs-getxy locs x y)))
 
 (defn trimmed-env-getxy
   "After scaling by scale, returns the contents of :locations locs at
   (x,y), or false if coordinates are outside the boundaries of locs."
   [env x y]
-  (trimmed-env-locs-getxy (:locations env) (:size env) (:scale env) x y))
+  (trimmed-env-locs-getxy (:locations env) (:scale env) x y))
 
 (defn toroidal-env-locs-getxy
   "After possible toroidal wrapping using size, and scaling by scale,
   returns the contents of matrix locs at (x,y)."
-  [locs size scale x y]
-  (raw-env-locs-getxy locs scale (rem x size) (rem y size)))
+  [locs size x y]
+  (raw-env-locs-getxy locs (rem x size) (rem y size)))
 
 (defn toroidal-env-getxy
   "After possible toroidal wrapping using :size, and scaling by :scale,
   returns the contents of the :locations matrix at (x,y)."
   [env x y]
-  (toroidal-env-locs-getxy (:locations env) (:size env) (:scale env) x y))
+  (toroidal-env-locs-getxy (:locations env) (:size env) x y))
 
 
 (comment
