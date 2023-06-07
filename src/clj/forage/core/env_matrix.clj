@@ -16,51 +16,16 @@
 ;; will be in forage/matruns rather than forage/experiment, to distinguish
 ;; them.
 
-
 ;; TODO Experiment using fastmath to speed this up.
 
-;; Note perc-foodspot fns below have different signatures from similar functions in 
-;; env_mason.clj because of differences in the approach.  In env-mason,
-;; perceptual radius is associated with the forager, whereas here it's 
-;; built into the env, and each foodspot.
 
-;; Todo? Nah: Maybe only place coordinates on the actual radius of the circle?
-;; It doesn't really matter for initializing an env, but if I start
-;; recreating targets during runs, if that happens a lot, initializing
-;; rings rather than discs might be faster.
-;; ON THE OTHER HAND, if a forager starts out at a random location, and I
-;; use rings, the forager won't know if its inside the perceptual radius.
-;; (Note that if I make rings, there's no need to have *-donut functions.)
-
-;; Overall strategy:
-;; Foodspots exist in a 2D grid made with core.matrix (or some other
-;; arbitrary-content 2D structure) using one of the pure Clojure matrix implementations.
-;; A foodspot is represented by a special marker (maybe true, or a number
-;; representing nutritional value or an id).
-;; The points around a foodspot, up to a radius in some integer-rounded 
-;; coordinates, are marked with a collection containing points to the
-;; foodspot it's a radius around.  This is the size of the perceptual
-;; radius, but it's around the foodspots.
-
-;; When a walk reaches a check point, mod, or better yet round its coords it to
-;; get the indexes into the matrix and check whether it's in the radius
-;; of the foodspot.  Since indexes are integers 0, 1, 2, ..., this could be done 
-;; every sqrt(2) along the path, since that's the farthest distance between two
-;; cells.  NO, it should be every 1, since that's the shortest distance
-;; between two cells.
-;; (Whereas with the MASON Continous2D system, I worried that one could
-;; miss targets on the edge of the perc radius if you had check intervals
-;; that were two large, here were are just letting the grid representation
-;; decide what is close enough.  So in addition to it probably being faster
-;; to look up targets this way, I don't need to check for them as often.
-
-;; NOTE If I use regular Clojure vectors, I can use Clojure indexing:
-;;   (def foo (mx/new-matrix :persistent-vector 4 4))
-;;   ((foo 0) 0) ;=> 0.0
-;; But I can't mset! the values, which is inconvenient: it means that I
-;; have to create the entire environment at once.  If I want
-;; persistent-vectors, though, I could create it as an ndarray and then
-;; convert it.
+;; FIXME BUG: For all of the foodspot adders, I think:
+;; It ought to be possible to specific non-integer coordinates
+;; for foodspots, and have them translated into internal integer
+;; coordinates (after rounding).  However, this just slaps the provided
+;; coordinates into the cells as is, and in addition, ends up sticking
+;; a coordinate pair in with the foodspot itself.
+;; Also make sure that non-integer perc-radii work.
 
 (mx/set-current-implementation :ndarray) 
 ;; don't use this: (mx/set-current-implementation :persistent-vector)
@@ -88,12 +53,6 @@
 ;; See issue I submitted https://github.com/mikera/core.matrix/issues/361
 ;; But I could go back to nils if I stop using pm.
 
-
-;; Environments do not encode whether they are toroidal or not.  You have
-;; to enforce this with code that (a) makes foodspots/targets, and (b) look-fns.
-;; I don't want to dispatch on toroidal-ness in look-fns--they should just
-;; run, for efficiency.  (If I rewrite this in a statically typed language,
-;; this will change.)
 
 ;; By default new-matrix will initialize with zero doubles, I don't want that 
 ;; because it could be confusing.  Instead initialize with empty sets,
@@ -184,11 +143,9 @@
 
 (defn make-toroidal-circle-range 
   "Returns a sequence of coordinates representing a filled circle, around
-  [x y], of external size perc-radius, scaled according to env's scale, and
-  wrapped toroidally if necessary."
+  [x y], of external size perc-radius, wrapped toroidally if necessary."
   [env perc-radius x y]
-  (toroidize-pairs (* (:size env) (:scale env))
-                   (circle-range env perc-radius x y)))
+  (toroidize-pairs (:size env) (circle-range perc-radius x y)))
 
 (defn make-toroidal-donut
   "Does the same thing as make-toroidal-circle-range, but removes the
@@ -199,12 +156,10 @@
 
 (defn make-trimmed-circle-range 
   "Returns a sequence of coordinates representing a filled circle, around
-  [x y], of external size perc-radius, scaled according to env's scale, and
-  trimmed to the dimensions of env if necessary: points not falling within
-  the environment are not included."
+  [x y], of external size perc-radius, trimmed to the dimensions of env if
+  necessary: points not falling within the environment are not included."
   [env radius x y]
-  (trim-outside-pairs (* (:size env) (:scale env))
-                        (circle-range env radius x y)))
+  (trim-outside-pairs (:size env) (circle-range env radius x y)))
 
 (defn make-trimmed-donut
   "Does the same thing as make-trimmed-circle-range, but removes the
@@ -232,12 +187,12 @@
 ;; Also make sure that non-integer perc-radii work.
 
 (defn add-toroidal-foodspot!
-  "Add foodspot to env, with its perceptual radius perc-radius, at scale
-  scale, around location [x y], but wrapped toroidally if necessary. All
-  cells within scale*perc-radius of (x y) will have the value [x y] conj'ed
-  to indicate that they are within the perceptual radius of foodspot, and
-  the center--the actual foodspot--will have the value passed as
-  foodspot-val, or env-indexed/default-foodspot-val."
+  "Add foodspot to env, with its perceptual radius perc-radius around
+  location [x y], but wrapped toroidally if necessary. All cells within
+  perc-radius of (x y) will have the value [x y] conj'ed to indicate that
+  they are within the perceptual radius of foodspot, and the center--the
+  actual foodspot--will have the value passed as foodspot-val, or
+  env-indexed/default-foodspot-val."
   ([env perc-radius x y]
    (add-toroidal-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
@@ -257,14 +212,14 @@
     (add-toroidal-foodspot! env perc-radius x y)))
 
 (defn add-trimmed-foodspot!
-  "Add foodspot to env, with its perceptual radius perc-radius, at scale
-  scale, around location [x y], but trimmed to fit within the environment:
-  points within the radius that are outside the boundaries of the envirment
-  won't be included. All cells within scale*perc-radius of (x y) and within
-  the environment boundaries will have the value [x y] conj'ed to indicate
-  that they are within the perceptual radius of foodspot, and the
-  center--the actual foodspot--will have the value passed as foodspot-val,
-  or env-indexed/default-foodspot-val."
+  "Add foodspot to env, with its perceptual radius perc-radius around
+  location [x y], but trimmed to fit within the environment: points within
+  the radius that are outside the boundaries of the envirment won't be
+  included. All cells within perc-radius of (x y) and within the
+  environment boundaries will have the value [x y] conj'ed to indicate that
+  they are within the perceptual radius of foodspot, and the center--the
+  actual foodspot--will have the value passed as foodspot-val, or
+  env-indexed/default-foodspot-val."
   ([env perc-radius x y]
    (add-trimmed-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
@@ -293,8 +248,7 @@
         y' (math/round y)] ; or use fastmath/rint, i.e. java Math/rint? Nah.
     (mx/mget locs y' x'))) ; Note x, y reversed since core.matrix uses trad matrix indexing
 
-; Notes: Possibly avoid in inner loops; instead use env-mat-getxy after 
-; extracting locations and scale from env once."
+; Notes: Possibly avoid in inner loops; instead use env-mat-getxy.
 (defn raw-env-getxy
   "Returns whatever is at (external) coordinates x, y in environment e.
   Coordinates must be legal for the :locations matrix in env."
@@ -305,8 +259,8 @@
 ;; cells with nil.  If so, and if this functionr returned nil to indicate out
 ;; out of bounds, there would be no way of finding this out from the return value.
 (defn trimmed-env-locs-getxy
-  "After scaling by scale, returns the contents of matrix locs at (x,y), or
-  false if coordinates are outside the boundaries of locs."
+  "Returns the contents of matrix locs at (x,y), or false if coordinates
+  are outside the boundaries of locs."
   [locs size x y]
   (if (or (neg? x) (neg? y)
           (>= x size) (>= y size))
@@ -314,20 +268,20 @@
     (raw-env-locs-getxy locs x y)))
 
 (defn trimmed-env-getxy
-  "After scaling by scale, returns the contents of :locations locs at
-  (x,y), or false if coordinates are outside the boundaries of locs."
+  "Returns the contents of :locations locs at (x,y), or false if
+  coordinates are outside the boundaries of locs."
   [env x y]
-  (trimmed-env-locs-getxy (:locations env) (:scale env) x y))
+  (trimmed-env-locs-getxy (:locations env) (:size env) x y))
 
 (defn toroidal-env-locs-getxy
-  "After possible toroidal wrapping using size, and scaling by scale,
-  returns the contents of matrix locs at (x,y)."
+  "After possible toroidal wrapping using size, returns the contents of
+  matrix locs at (x,y)."
   [locs size x y]
   (raw-env-locs-getxy locs (rem x size) (rem y size)))
 
 (defn toroidal-env-getxy
-  "After possible toroidal wrapping using :size, and scaling by :scale,
-  returns the contents of the :locations matrix at (x,y)."
+  "After possible toroidal wrapping using :size, returns the contents of
+  the :locations matrix at (x,y)."
   [env x y]
   (toroidal-env-locs-getxy (:locations env) (:size env) x y))
 
@@ -335,14 +289,12 @@
 (comment
   (use 'clojure.repl) ; for pst
 
-  (def scale 5)
-
-  (def e (make-env 10 scale))
+  (def e (make-env 50))
   (mx/shape (:locations e))
   (add-toroidal-foodspot! e 4 2 3)
   (mx/pm (:locations e))
 
-  (def e' (make-env 10 scale))
+  (def e' (make-env 50))
   ;; Currently doesn't work right:
   (add-toroidal-foodspot! e' 4.5 2.25 3.3)
   (mx/pm (:locations e'))
