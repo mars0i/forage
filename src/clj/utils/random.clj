@@ -379,10 +379,11 @@
   (powerlaw-cumulative 0.5285 16.18435699 2.1706 7.55453491) ; => 0.3989374083781279
 )
 
+;; There are other sampling functions in random-utils
 (defn sample-from-coll
   "Returns num-samples elements randomly selected without replacement 
   from collection xs."
-  [rng xs num-samples]
+  [rng num-samples xs]
   (ListSampler/sample rng xs num-samples))
 
 (comment

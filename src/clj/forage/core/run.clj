@@ -122,7 +122,7 @@
   "Returns the coordinates of a random foodspot in env.  The last argument, which
   would normally be a foodwalk from the previous run, will be ignored."
   [rng env _]
-  (let [coords (first (r/sample-from-coll rng (em/env-foodspot-coords env) 1))]
+  (let [coords (first (r/sample-from-coll rng 1 (em/env-foodspot-coords env)))]
     ;(println "start of walk:" coords) ; DEBUG
     coords))
 
