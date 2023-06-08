@@ -23,6 +23,7 @@
       candidate
       (recur (apply rand-fn addl-args)))))
 
+;; See also utils.random/sample-from-col
 (defn sample-one
   "Given a non-empty collection, returns a single randomly-chosen element."
   [rng xs]
@@ -32,8 +33,8 @@
       (nth xs 
            (r/rand-idx rng len)))))
 
+;; See also utils.random/sample-from-col
 ;; lazy
-;(def sample-with-repl sample-with-repl-3) ; see samplingtests2.xlsx
 (defn sample-with-repl
   "Return num-samples from coll, sampled with replacement."
   [rng num-samples coll]
@@ -41,6 +42,7 @@
     (for [_ (range num-samples)]
       (nth coll (r/rand-idx rng size)))))
 
+;; See also utils.random/sample-from-col
 ;; lazy if more than one sample
 ;; (deal with license issues)
 ; Derived from Incanter's algorithm from sample-uniform for sampling without replacement."
