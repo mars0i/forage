@@ -155,7 +155,7 @@
   ; (out) group 4 [exponent 2.5, init-dir nil] ... 
   ; (out) num found=1043.0, efficiency=0.0000005413558295774363
 
-(count data-rng-asymm)
+  (count data-rng-asymm)
 
 
   ;; Write the found coordinates to csv files for later analysis:
