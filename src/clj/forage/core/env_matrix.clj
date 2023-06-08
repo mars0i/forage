@@ -1,9 +1,9 @@
-;; Future home of replacement for env-mason.
+;; Replacement for env-mason.
 (ns forage.core.env-matrix
   (:require [clojure.math :as math]
-            [clojure.core.matrix :as mx]
+	    [clojure.core.matrix :as mx]
             [clojure.core.matrix.selection :as mxsel] ; name of namespace changed between 0.44 and 0.63
-            [utils.random :as r]
+	    [utils.random :as r]
             [utils.misc :as um]))
 
 ;; NOTE When this was env_indexed.clj, the goal was to provide a (kind of)
@@ -312,68 +312,67 @@
 ;; coordinates are referenced many times, so we extract them into a set.
 ;; A more bespoke method might be faster (perhaps using mx/ereduce).
 (defn locs-foodspot-coords
-  "Returns a collection of the external coordinates of foodspots in matrix locs."
+  "Returns a collection of the coordinates of foodspots in matrix locs."
   [locs]
   (-> (into #{} cat (mx/eseq locs))
       (disj default-foodspot-val)))
 
 (defn env-foodspot-coords
-  "Returns a collection of the external coordinates off foodspots in the
-  :locations matrix in environment env."
+  "Returns a collection of the coordinates off foodspots in the :locations
+  matrix in environment env."
   [env]
   (locs-foodspot-coords (:locations env)))
 
 
+;; NOTE Although a forager who moves continuously and always looks for
+;; food can never reach a foodspot without first hitting the perceptual
+;; radius exactly, the following functions allow for the possibility that
+;; the forager has suddenly parachuted into the middle of the region
+;; within the perc-radius.  This accomodates:
+;;   (a) Random initial states.
+;;   (b) Foragers who don't look while in motion.
+;;    (c) Possible models of e.g. raptors who don't move across the ground.
 
-(comment
-  (seq #{})
-  (seq (into #{} (range 10)))
-  (empty? #{})
-  (into #{} cat [#{1 2} #{3 4 2}])
-)
-
-;; Note that although a forager who moves continuously and always looks for
-;; food can never reach a foodspot without first getting within perceptual
-;; radius, the following functions look for that possibility, for the sake
-;; of (a) random initial states, (b) foragers who don't look while in
-;; motion, and (c) possible models of e.g. raptors who don't move across
-;; the ground.
-
-;; FIXME probably wrong
-(defn perc-foodspots
+(defn perc-foodspot
   "Examines location [x y] in env. Returns a falsey value if no foodspot is
   within the perceptual radius of that position, or the coordinates of a
-  foodspot that's perceptible that location.  These coordinates will be [x
-  y] if there's a foodspot on that very location.  Otherwise a collection
-  of all coordinates of all foodspots perceptible from that location will
-  be returned."
+  foodspot that's perceptible that location.  These coordinates will be
+  Otherwise this returns the foodspot chosen by function chooser from the
+  collection of all coordinates of all foodspots perceptible from that
+  location."
+  [chooser env x y]
+  (let [x-int (math/round x) ; mget accepts floats but floors them
+        y-int (math/round y) ; we want round, not floor
+        whats-here (mx/mget env x-int y-int)]
+    (if (default-foodspot-val whats-here)
+      [x-int y-int] ; we're on a foodspot (after rounding)
+      (if-let [found-coords (seq whats-here)] ; collection of coordinates is not empty
+        (chooser found-coords) ; chooser can assume found-coords is non-empty
+        nil))))
+
+(defn perc-first-foodspot 
+  "Examines location [x y] in env. Returns a falsey value if no foodspot is
+  within the perceptual radius of that position, or the coordinates of a
+  foodspot that's perceptible that location.  These coordinates will be
+  [(round x) (round y)] if there's a foodspot on that very location.
+  Otherwise this returns the first foodspot from the collection of all
+  coordinates of all foodspots perceptible from that location."
   [env x y]
-  (let [x-int (math/round x)
-        y-int (math/round y)
-        found (mx/mget env x-int y-int)] ; note mget accepts floats but floors them
-    (and found   ; if nil, just return that
-         (if (some (complement coll?) found)
-           [[x y]]   ; This is a foodspot itself
-           found)))) ; A sequence of one or more coordinate pairs
+  (perc-foodspot first env x y))
 
-
-;; FIXME probably wrong
-;; TODO add similar random selection in env_mason
-(defn perc-foodspot-choose-randomly
-  "Examines location [x y] in env. Returns a falsey value if no foodspot is
-  within the perceptual radius of that position, or the coordinates of a
-  foodspot that's perceptible that location.  These coordinates will be [x
-  y] if there's a foodspot on that very location.  Otherwise there are one
-  more or more foodspots perceptible from that location; a randomly chosen
-  one of them will be returned."
-  [rng env x y]
-  (let [x-int (math/round x)
-        y-int (math/round y)
-        found (mx/mget env x-int y-int)] ; note mget accepts floats but floors them
-    (and found   ; if nil, just return that
-         (cond (some (complement coll?) found) [x y]  ; This is a foodspot itself
-               (= 1 (count found))             (first found)  ; Within radius of a single foodspot
-               :else                           (r/sample-from-coll rng found 1))))) ; Within radius of more, so randomly choose.
+(defn make-foodspot-sampler
+  "Creates a function that can sample from found coordinates.  Use this
+  function to create a chooser function to be passed to perc-foodspot.
+  (This strategy avoids repeatedly creating a PRNG inside the chooser
+  function inside the perc-foodspot function every time it's called.)
+  Example:
+    (def rand-chooser (make-foodspot-sampler (r/make-well199937)))
+    (perc-foodspot rand-chooser my-env 42.3 77.98)"
+  [rng]
+  (fn [coll]
+    (if (= 1 (count coll)) ; don't bother sampling if only one
+      (first coll)
+      (r/sample-from-coll rng 1 coll))))
 
 
 ;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
