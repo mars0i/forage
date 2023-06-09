@@ -4,12 +4,14 @@
   (:require [aerial.hanami.common :as hc]
             [aerial.hanami.templates :as ht]
             [oz.core :as oz]
-            [forage.core.env-mason :as em] ;[forage.mason.foodspot :as mf]
+            [forage.core.env-mason :as em]
+            ;[forage.core.env-matrix :as em] ; NOTE to undo old alias: (ns-unalias *ns* 'em)
             [forage.core.food :as f]
             [forage.core.walks :as w]
             [utils.hanami :as uh] ; replace if grid-chart becomes non-local
             [utils.toroidal :as tor]
             [utils.math :as m]))
+
 
 ;; Note field names have to be strings, not keywords, in order
 ;; for vega-lite to make full use of them.
@@ -254,6 +256,7 @@
   [env-sz plot-dim food-distance]
   (vega-food-plot (make-linegrid "" food-distance env-sz env-sz) 
                   env-sz plot-dim 0))
+
 
 (defn vega-env-plot
   "Plot foodspot display radii on where foodspots from env are.
