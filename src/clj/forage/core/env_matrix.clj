@@ -72,6 +72,11 @@
       (mx/mset! locations row col env-loc-initializer)) ; this default is assumed by other functions here.
     {:size size, :locations locations}))
 
+(defn env-size
+  "Return the width (= height) of env."
+  [env]
+  (:size env))
+
 (comment
   (def e (make-env 5))
   (mx/pm (:locations e))
@@ -132,14 +137,26 @@
 
 (defn circle-range
   "Returns a sequence of coordinates representing a filled circle around
-  [x y] of size radius."
+  [x y] of size radius.  (radius is rounded to the nearest integer before
+  being squared.)"
   [radius x y]
-  (let [radius-squared (* radius radius)]
-    (for [off-x (um/irange (- radius) radius)
-          off-y (um/irange (- radius) radius)
+  (let [round-x (math/round x) ; round returns longs
+        round-y (math/round y)
+        ceil-radius  (long (math/ceil radius))  ; will be clipped by radius-squared anyway
+        radius-squared (* radius radius)] ; We use the precise, maybe double vals for clipping.
+    (for [off-x (um/irange (- ceil-radius) ceil-radius)
+          off-y (um/irange (- ceil-radius) ceil-radius)
           :when (>= radius-squared (+ (* off-x off-x) (* off-y off-y)))] ; ignore outside circle
-      [(+ x off-x) (+ y off-y)])))
+      [(+ round-x off-x) (+ round-y off-y)])))
 
+(comment 
+  (= (int 25) (long 25))
+  (= (int 25) (float 25))
+  (= (float 25) (double 25))
+  (== (int 25) (long 25))
+  (== (int 25) (float 25))
+  (== (float 25) (double 25))
+)
 
 (defn make-toroidal-circle-range 
   "Returns a sequence of coordinates representing a filled circle, around
@@ -151,8 +168,10 @@
   "Does the same thing as make-toroidal-circle-range, but removes the
   coordinates for the center point."
   [env radius x y]
-  (remove (partial = [x y])  ; will fail if numbers are not the same type
-          (make-toroidal-circle-range env radius x y)))
+  (let [round-x (math/round x)
+        round-y (math/round y)]
+    (remove (partial = [round-x round-y]) ; circle-range will have rounded.
+            (make-toroidal-circle-range env radius x y)))) ; use raw x, y for radius calculation
 
 (defn make-trimmed-circle-range 
   "Returns a sequence of coordinates representing a filled circle, around
@@ -196,11 +215,13 @@
   ([env perc-radius x y]
    (add-toroidal-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
-   (let [locs (:locations env)]
+   (let [locs (:locations env)
+         round-x (math/round x)
+         round-y (math/round y)]
      ;; NOTE reversed order of x and y because the internal
      ;; representation uses traditional matrix indexing:
      (doseq [[x* y*] (make-toroidal-donut env perc-radius x y)] ; donut, i.e. leave out center
-       (mset-conj! locs y* x* [x y])) ; i.e. we set each cell to pair that points to the center
+       (mset-conj! locs y* x* [round-x round-y])) ; i.e. we set each cell to pair that points to the center
      (mset-conj! locs y x foodspot-val)))) ; center gets special value
 
 (defn add-toroidal-foodspots!
@@ -286,31 +307,6 @@
   (toroidal-env-locs-getxy (:locations env) (:size env) x y))
 
 
-(comment
-  (use 'clojure.repl) ; for pst
-
-  (def e (make-env 50))
-  (mx/shape (:locations e))
-  (add-toroidal-foodspot! e 4 2 3)
-  (mx/pm (:locations e))
-
-  (def e' (make-env 50))
-  ;; Currently doesn't work right:
-  (add-toroidal-foodspot! e' 4.5 2.25 3.3)
-  (mx/pm (:locations e'))
-
-  (mx/mget (:locations e) (* scale 3) (* scale 2)) ; remember matrix indexing is y, x from upperleft
-  (raw-env-getxy e 2 3) ; doesn't use matrix indexing
-  (add-toroidal-foodspot! e 2 6 4)
-  (rawenv-getxy e 6 4) ; doesn't use matrix indexing
-  (add-toroidal-foodspot! e 2 2 4)
-  (raw-env-getxy e 2 4) ; doesn't use matrix indexing
-  (env-foodspot-coords e)
-
-  (locs-foodspot-coords (:locations e))
-  (env-foodspot-coords e)
-)
-
 ;; Method used below doesn't try to find the foodspots themselves.  Their
 ;; coordinates are referenced many times, so we extract them into a set.
 ;; A more bespoke method might be faster (perhaps using mx/ereduce).
@@ -325,6 +321,33 @@
   matrix in environment env."
   [env]
   (locs-foodspot-coords (:locations env)))
+
+
+(comment
+  (use 'clojure.repl) ; for pst
+
+  (def size 50)
+  (def e (make-env size))
+  (mx/shape (:locations e))
+  (mx/pm (:locations e))
+  (add-toroidal-foodspot! e 4 2 3)
+  (add-toroidal-foodspot! e 4.5 2.75 3.3)
+  (add-toroidal-foodspot! e 2 6 4)
+  (add-toroidal-foodspot! e 2 44.17 29.8)
+  (rawenv-getxy e 6 4) ; doesn't use matrix indexing
+  (raw-env-getxy e 2 4) ; doesn't use matrix indexing
+
+  (locs-foodspot-coords (:locations e))
+  (env-foodspot-coords e)
+
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+
+  (def plot (h/vega-env-plot e 400 0.5))
+  (oz/view! plot)
+)
+
 
 
 ;; NOTE Although a forager who moves continuously and always looks for
