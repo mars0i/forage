@@ -41,6 +41,18 @@
   (mx/mset! mat rows-down columns-right
             (conj (mx/mget mat rows-down columns-right) value)))
 
+;; TODO should order of results be swapped?
+(defn filter-coords
+  "Returns the coordinate pairs for elements in matrix mat for which
+  pred returns truthy."
+  [mat pred]
+  (let [[h w] (mx/shape mat)]
+    (for [x (range w)
+          y (range h)
+          :when (pred (mx/mget mat x y))]
+      [x y])))
+
+
 (def default-foodspot-val :food)
 
 ; Must work with conj and possibly other things:
@@ -339,13 +351,22 @@
 
   (locs-foodspot-coords (:locations e))
   (env-foodspot-coords e)
+  (filter-coords (:locations e) seq)
 
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  (def plot (h/vega-env-plot e 400 0.5))
-  (oz/view! plot)
+  (def foodspots (h/vega-env-plot e 400 0.75))
+  (oz/view! foodspots)
+  (def in-radii (h/vega-food-plot
+                  (h/add-point-labels "food" 
+                                      (map reverse ; because matrix coords
+                                           (filter-coords (:locations e) seq)))
+                  (env-size e)
+                  400
+                  0.75))
+  (oz/view! in-radii)
 )
 
 
