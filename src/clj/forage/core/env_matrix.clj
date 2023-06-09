@@ -54,10 +54,10 @@
 ;; But I could go back to nils if I stop using pm.
 
 
-;; By default new-matrix will initialize with zero doubles, I don't want that 
+;; By default mx/new-matrix initializes with zero doubles.  I don't want that 
 ;; because it could be confusing.  Instead initialize with empty sets,
-;; which can be conj'ed onto later.  Don't use nil or [] for this purpose: It can 
-;; confuse core.matrix/pm when there is added data in the first column of the matrix.
+;; which can be conj'ed onto later.  (Don't use nil or [] for this purpose: It can 
+;; confuse core.matrix/pm when there is added data in the first column of the matrix.)
 
 ;; TODO ? Use raw matrix, get rid of :size, since you can get this from core.matrix/shape.
 (defn make-env
@@ -306,6 +306,9 @@
   (add-toroidal-foodspot! e 2 2 4)
   (raw-env-getxy e 2 4) ; doesn't use matrix indexing
   (env-foodspot-coords e)
+
+  (locs-foodspot-coords (:locations e))
+  (env-foodspot-coords e)
 )
 
 ;; Method used below doesn't try to find the foodspots themselves.  Their
@@ -377,6 +380,3 @@
 
 ;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
 ;; only chooses randomly if there are mulitple equally close foodspots.
-
-
-
