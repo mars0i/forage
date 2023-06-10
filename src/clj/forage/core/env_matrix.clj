@@ -66,15 +66,22 @@
 ;; But I could go back to nils if I stop using pm.
 
 
+(defrecord MatEnv [size locs])
+
+(comment
+  (def me1 (->MatEnv 2 [[#{} #{}][#{} #{}]]))
+  (def me2 (MatEnv. 2 [[#{} #{}][#{} #{}]]))
+  (class me1)
+  (class me2)
+)
+
 ;; By default mx/new-matrix initializes with zero doubles.  I don't want that 
 ;; because it could be confusing.  Instead initialize with empty sets,
 ;; which can be conj'ed onto later.  (Don't use nil or [] for this purpose: It can 
 ;; confuse core.matrix/pm when there is added data in the first column of the matrix.)
-
-;; TODO ? Use raw matrix, get rid of :size, since you can get this from core.matrix/shape.
 (defn make-env
   "Returns a new environment as a map containing a value of :size which is
-  dimension size X size matrix and :locations, whose value is the matrix.
+  dimension size X size matrix and :locs, whose value is the matrix.
   that coordinates in env range from [0,0] to [size-1,size-1].  All of the
   cells of the matrix will be initialized with env-loc-initializer."
   [size]
@@ -82,7 +89,7 @@
     (doseq [row (range size)  ; note zero-based
             col (range size)]
       (mx/mset! locations row col env-loc-initializer)) ; this default is assumed by other functions here.
-    {:size size, :locations locations}))
+    (->MatEnv size locations)))
 
 (defn env-size
   "Return the width (= height) of env."
@@ -91,9 +98,9 @@
 
 (comment
   (def e (make-env 5))
-  (mx/pm (:locations e))
-  (mx/shape (:locations e))
-  (mx/mget (:locations e) 4 4)
+  (mx/pm (:locs e))
+  (mx/shape (:locs e))
+  (mx/mget (:locs e) 4 4)
 
 )
 
@@ -202,8 +209,8 @@
 (comment
   (remove (partial = [4 5]) [[1 2] [3 4] [4 5] [6 7]])
   (def e (make-env 5 1 false))
-  (mx/pm (:locations e))
-  (mx/shape (:locations e))
+  (mx/pm (:locs e))
+  (mx/shape (:locs e))
   (circle-range e 1 2 3)
   (make-trimmed-circle-range e 1 2 3)
   (make-trimmed-donut e 1 2 3)
@@ -227,7 +234,7 @@
   ([env perc-radius x y]
    (add-toroidal-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
-   (let [locs (:locations env)
+   (let [locs (:locs env)
          round-x (math/round x)
          round-y (math/round y)]
      ;; NOTE reversed order of x and y because the internal
@@ -256,7 +263,7 @@
   ([env perc-radius x y]
    (add-trimmed-foodspot! env perc-radius x y default-foodspot-val))
   ([env perc-radius x y foodspot-val]
-   (let [locs (:locations env)]
+   (let [locs (:locs env)]
      ;; NOTE reversed order of x and y because the internal
      ;; representation uses traditional matrix indexing:
      (doseq [[x* y*] (make-trimmed-donut env perc-radius x y)] ; donut, i.e. leave out center
@@ -284,9 +291,9 @@
 ; Notes: Possibly avoid in inner loops; instead use env-mat-getxy.
 (defn raw-env-getxy
   "Returns whatever is at (external) coordinates x, y in environment e.
-  Coordinates must be legal for the :locations matrix in env."
+  Coordinates must be legal for the :locs matrix in env."
   [env x y]
-  (raw-env-locs-getxy (:locations env) x y))
+  (raw-env-locs-getxy (:locs env) x y))
 
 ;; Returns false rather than nil because under some schemes, I initialize
 ;; cells with nil.  If so, and if this functionr returned nil to indicate out
@@ -301,10 +308,10 @@
     (raw-env-locs-getxy locs x y)))
 
 (defn trimmed-env-getxy
-  "Returns the contents of :locations locs at (x,y), or false if
+  "Returns the contents of :locs locs at (x,y), or false if
   coordinates are outside the boundaries of locs."
   [env x y]
-  (trimmed-env-locs-getxy (:locations env) (:size env) x y))
+  (trimmed-env-locs-getxy (:locs env) (:size env) x y))
 
 (defn toroidal-env-locs-getxy
   "After possible toroidal wrapping using size, returns the contents of
@@ -314,9 +321,9 @@
 
 (defn toroidal-env-getxy
   "After possible toroidal wrapping using :size, returns the contents of
-  the :locations matrix at (x,y)."
+  the :locs matrix at (x,y)."
   [env x y]
-  (toroidal-env-locs-getxy (:locations env) (:size env) x y))
+  (toroidal-env-locs-getxy (:locs env) (:size env) x y))
 
 
 ;; Method used below doesn't try to find the foodspots themselves.  Their
@@ -329,19 +336,19 @@
       (disj default-foodspot-val)))
 
 (defn env-foodspot-coords
-  "Returns a collection of the coordinates off foodspots in the :locations
+  "Returns a collection of the coordinates off foodspots in the :locs
   matrix in environment env."
   [env]
-  (locs-foodspot-coords (:locations env)))
+  (locs-foodspot-coords (:locs env)))
 
 
 (comment
   (use 'clojure.repl) ; for pst
 
   (def size 50)
+  (mx/shape (:locs e))
+  (mx/pm (:locs e))
   (def e (make-env size))
-  (mx/shape (:locations e))
-  (mx/pm (:locations e))
   (add-toroidal-foodspot! e 4 2 3)
   (add-toroidal-foodspot! e 4.5 2.75 3.3)
   (add-toroidal-foodspot! e 2 6 4)
@@ -349,9 +356,9 @@
   (rawenv-getxy e 6 4) ; doesn't use matrix indexing
   (raw-env-getxy e 2 4) ; doesn't use matrix indexing
 
-  (locs-foodspot-coords (:locations e))
+  (locs-foodspot-coords (:locs e))
   (env-foodspot-coords e)
-  (filter-coords (:locations e) seq)
+  (filter-coords (:locs e) seq)
 
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
@@ -362,7 +369,7 @@
   (def in-radii (h/vega-food-plot
                   (h/add-point-labels "food" 
                                       (map reverse ; because matrix coords
-                                           (filter-coords (:locations e) seq)))
+                                           (filter-coords (:locs e) seq)))
                   (env-size e)
                   400
                   0.75))
