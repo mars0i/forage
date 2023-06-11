@@ -1,3 +1,10 @@
+;; ABANDONED
+;; I think this is a bad idea. Some of the functions worth adding might end
+;; being used in performance-critical sections, protocols do runtime
+;; dispatch.  The perf hit might be negligible, but I just don't really
+;; need this, I think.  Better to just change namespaces by hand or something.
+
+
 ;; protocol for environments
 ;; I'd rather implement this all in one place rather than in the
 ;; source files for env implementations.
