@@ -1,6 +1,4 @@
 (ns forage.core.run
-  "High-level functions for running foraging experiments.  See examples
-  in the experiments directory for illustrations of use."
   (:require [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             [clojure.pprint :refer [cl-format]]
@@ -9,16 +7,18 @@
             [utils.math :as m]
             [utils.random :as r]
             [forage.viz.hanami :as h]
-            [forage.core.env-mason :as em] ;[forage.mason.foodspot :as mf]
+            [forage.core.env-setup]
+            [forage.core.env-mason :as emas]
+            [forage.core.env-matrix :as emat]
             [forage.core.walks :as w]
             [forage.core.food :as f]))
 
-;; NOTE write-foodwalk-plots has been moved to forage/viz/hanami.clj
+(alias 'env forage.core.env-setup/env)
 
 (def default-dirname "../../data.foraging/forage/")
 (def default-file-prefix default-dirname) ; for backward compatibility
 
-;; small utility functions later:
+;; small utility functions defined later:
 (declare ignore-food append-row append-labels spit-csv double-to-dotless)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -42,7 +42,7 @@
   [default-loc fw]
   (if fw
     (if-let [found (first fw)]
-      (em/foodspot-coords (first found)) ; if two or more found, ignore others
+      (emas/foodspot-coords (first found)) ; if two or more found, ignore others
       (last (second fw))) ; could also use third
     default-loc))
 
@@ -62,7 +62,7 @@
   [default-loc fw]
   (if fw
     (if-let [found (first fw)]
-      (em/foodspot-coords (first found)) ; if two or more found, ignore others
+      (emas/foodspot-coords (first found)) ; if two or more found, ignore others
       nil)
     default-loc))
 
@@ -72,7 +72,7 @@
   "Returns the coordinates of a random foodspot in env.  The last argument, which
   would normally be a foodwalk from the previous run, will be ignored."
   [rng env _]
-  (let [coords (first (r/sample-from-coll rng 1 (em/env-foodspot-coords env)))]
+  (let [coords (first (r/sample-from-coll rng 1 (emas/env-foodspot-coords env)))]
     ;(println "start of walk:" coords) ; DEBUG
     coords))
 
@@ -104,7 +104,7 @@
 (comment
   (def yo (levy-run (r/make-well19937) noctr-look-fn nil params 2 [half-size half-size]))
   (first yo)
-  (em/foodspot-coords (first (first yo)))
+  (emas/foodspot-coords (first (first yo)))
   (last (second yo))
 )
 
@@ -132,7 +132,7 @@
         (recur (dec n)
                fw
                (+ n-segments (w/count-segments-until-found fw))
-               (conj found (em/foodspot-coords-if-found (first fw)))
+               (conj found (emas/foodspot-coords-if-found (first fw)))
                (conj lengths (w/path-until-found-length fw)))))))
 
 
@@ -238,7 +238,9 @@
 
 
 (defn levy-experiments
-  "Uses seed to seed a PRNG unless rng is provided, in which case seed
+  "DEPRECATED: For new code use walk-experiments.
+
+  Uses seed to seed a PRNG unless rng is provided, in which case seed
   is only used for informational purposes in file output.  Uses
   parameters in the params map.  Then for each exponent in exponents,
   creates a powerlaw (Pareto) distribution using that exponent, and runs
@@ -268,11 +270,12 @@
        - :rng; value is PRNG object with state as it was at end of runs."
   ([dirname env params exponents walks-per-combo seed]
    (levy-experiments dirname env params exponents walks-per-combo seed 
-                     (partial em/perc-foodspots-exactly env (params :perc-radius))))
+                     (partial emas/perc-foodspots-exactly env (params :perc-radius))))
   ([dirname env params exponents walks-per-combo seed look-fn]
    (levy-experiments dirname env params exponents walks-per-combo seed 
                      look-fn (r/make-well19937 seed)))
   ([dirname env params exponents walks-per-combo seed look-fn rng]
+   (println "DEPRECATED: For new code, use walk-experiments rather than levy-experiments.")
    (let [num-dirs (params :num-dirs)
          init-dirs (if num-dirs
                      (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
@@ -345,7 +348,6 @@
      look-fn (params :look-eps) (params :maxpathlen)
      ((params :init-loc-fn) nil) init-dir)))
 
-
 ;; TODO Add dir-dist arg--for random direction--pass it to straight-run.
 ;; TODO Modify further for new :init-loc-fn parameter?  
 ;; Currently always passes nil to the init-loc-fn.
@@ -353,18 +355,21 @@
 ;; TODO Return data?
 ;; TODO Return foodspots?
 (defn straight-experiments
-  "Runs straight-segment food searches using parameters in params for each
+  "DEPRECATED: For new code use walk-experiments.
+
+  Runs straight-segment food searches using parameters in params for each
   specified there. Creates two files, one containing the fixed parameters
   of the run, and the other containing the results listed for each direction
   specified by :max-frac and :num-dirs.  Filenames include an id constructed
   from arbitrary data.  Returns the resulting data."
   [file-prefix env params]
+  (println "DEPRECATED: For new code, use walk-experiments rather than levy-experiments.")
   (flush)
   (let [num-dirs (params :num-dirs)
         dir-increment (/ (* m/pi (params :max-frac)) num-dirs)
         init-dirs (mapv (partial * dir-increment)
                         (range (inc num-dirs))) ; inc to include range max
-        look-fn (partial em/perc-foodspots-exactly env (params :perc-radius))
+        look-fn (partial emas/perc-foodspots-exactly env (params :perc-radius))
         id (r/make-seed)
         sorted-params (into (sorted-map) params) ; for writing param file
         param-filename (str file-prefix "straight_param" id ".csv")

@@ -4,14 +4,16 @@
   (:require [aerial.hanami.common :as hc]
             [aerial.hanami.templates :as ht]
             [oz.core :as oz]
-            [forage.core.env-mason :as em]
-            ;[forage.core.env-matrix :as em] ; NOTE to undo old alias: (ns-unalias *ns* 'em)
+            [forage.core.env-setup]
+            [forage.core.env-mason :as emas]
+            [forage.core.env-matrix :as emat]
             [forage.core.food :as f]
             [forage.core.walks :as w]
             [utils.hanami :as uh] ; replace if grid-chart becomes non-local
             [utils.toroidal :as tor]
             [utils.math :as m]))
 
+(alias 'env forage.core.env-setup/env)
 
 ;; Note field names have to be strings, not keywords, in order
 ;; for vega-lite to make full use of them.
@@ -264,8 +266,8 @@
   Vega-Lite size for foodspots in perc-radius units: a display-radius
   of 1 is the perc-radius of a forager."
   [env plot-dim display-radius]
-  (vega-food-plot (add-point-labels "food" (em/env-foodspot-coords env))
-                  (em/env-size env)
+  (vega-food-plot (add-point-labels "food" (emas/env-foodspot-coords env))
+                  (emas/env-size env)
                   plot-dim
                   display-radius))
 
@@ -281,7 +283,7 @@
   display-radius uses units based on simulation values.)"
   [env plot-dim stroke-width display-radius walk-stops]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
-        data-dim (em/env-size env)
+        data-dim (emas/env-size env)
         toroidal-walk (tor/toroidal-to-vega-lite "piece" (tor/wrap-path 0 data-dim walk-stops))
         walk-plot (vega-walk-plot plot-dim data-dim stroke-width toroidal-walk)]
     (hc/xform
@@ -307,7 +309,7 @@
   based on simulation values.)"
   [env plot-dim stroke-width display-radius foodwalks]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
-        data-dim (em/env-size env)
+        data-dim (emas/env-size env)
         did-couldve-plots (mapcat
                             (partial did-couldve-walk-plot plot-dim data-dim stroke-width)
                            foodwalks)]
