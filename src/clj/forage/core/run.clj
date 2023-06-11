@@ -1,4 +1,6 @@
 (ns forage.core.run
+  "High-level functions for running foraging experiments.  See examples
+  in the experiments directory for illustrations of use."
   (:require [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             [clojure.pprint :refer [cl-format]]
@@ -18,58 +20,6 @@
 
 ;; small utility functions later:
 (declare ignore-food append-row append-labels spit-csv double-to-dotless)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; EXAMPLE PARAMETERS AND OTHER SETUP CODE NEEDED BY FUNCTIONS BELOW
-(comment
-  ;; defs only for reuse in params map:
-  (def half-size 5000) ; half the full width of the env
-  (def init-food 1000) ; distance between foodspots on a grid
-
-  (def params (sorted-map ; sort so labels match values
-               :food-distance       init-food
-               :perc-radius         1  ; distance that an animal can "see" in searching for food
-               :powerlaw-min        1
-               :env-size            (* 2 half-size)
-               :env-discretization  5 ; for Continuous2D; see foodspot.clj
-               :init-loc-fn         (constantly [half-size half-size]) ; always start in center
-               ;:init-loc-fn         (partial fr/end-of-walk [half-size half-size]) ; start from end of previous foodwalk, after starting in center.
-               ;:init-loc-fn         (partial fr/end-of-walk-if-found [half-size half-size]) ; start from end of previous foodwalk if it successful
-               :init-pad            nil ; if truthy, initial loc offset by this in rand dir
-               :maxpathlen          (* 2000 half-size) ; max total length of search path
-               :trunclen            1500 ; max length of any line segment
-               :look-eps            0.2    ; increment within segments for food check
-               :num-dirs            nil    ; split range this many times + 1 (includes range max); nil for random
-               :max-frac            0.25   ; proportion of pi to use as maximum direction (0 is min) ; ignored if num-dirs is falsey
-               :basename            "levy"
-               :dirname             default-dirname
-               ))
-
-  ;; NON-RANDOM STRAIGHT RUNS that systematically try a series of directions:
-  ;; For Levy walks, :num-dirs is set to nil to ensure random initial directions.
-  ;; So this has to be overridden for a pre-specified spread of straight walks:
-  (def straight-params (assoc params :num-dirs 100))
-
-  ;; NON-DESTRUCTIVE/ASSYMETRIC SEARCH:
-  (def assym-params (assoc params :init-pad (* 2 (params :perc-radius))))
-
-  ;; ENV AND LOOK-FN FOR DESTRUCTIVE/SYMMETRIC SEARCH:
-  (def nocenter-env (em/make-env (params :env-discretization)
-                                 (params :env-size)
-                                 (f/centerless-rectangular-grid (params :food-distance)
-                                                                (params :env-size)
-                                                                (params :env-size))))
-  (def noctr-look-fn (partial em/perc-foodspots-exactly-toroidal nocenter-env (params :perc-radius)))
-
-  ;; ENV AND LOOK-FN FOR NONDESTRUCTIVE/ASYMMETRIC SEARCH;
-  (def centered-env (em/make-env (params :env-discretization)
-                                 (params :env-size)
-                                 (f/rectangular-grid (params :food-distance)
-                                                     (params :env-size)
-                                                     (params :env-size))))
-  (def ctrd-look-fn (partial em/perc-foodspots-exactly-toroidal centered-env (params :perc-radius)))
-)
-;; END OF EXAMPLE SETUP PARAMS, ETC.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; THE IMPORTANT STUFF ...
