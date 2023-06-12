@@ -60,7 +60,7 @@
      env)))
 
 (defn env-size
-  "Returns the width (assumed to be equal to height) of env."
+  "Return the width (= height) of env."
   [^Continuous2D env]
   (.width env))
 
@@ -78,8 +78,8 @@
 (def all-foodspots env-foodspots)
 
 (defn env-foodspot-coords
-  "Returns coordinate pairs of all foodspots in environment env, or nil
-  if there are none."
+  "Returns a collection of coordinate pairs of all foodspots in environment
+  env, or nil if there are none."
   [^Continuous2D env]
   (seq (map foodspot-coords (.getAllObjects env))))
 
