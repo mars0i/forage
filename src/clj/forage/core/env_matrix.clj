@@ -325,21 +325,35 @@
   [env x y]
   (toroidal-env-locs-getxy (:locs env) (:size env) x y))
 
+;; Currently, a foodspot is simply a pair of coordinates in this
+;; environment implementation.  Perhaps later it might be valuable
+;; to add additional information, but add it as additional elements
+;; to the sequence of two coordinates.  This version of foodspot-coords
+;; is designed to work with that case (but would be slow if repeatedly
+;; called in an inner loop).
+(defn foodspot-coords 
+  [[x y]]
+  "Returns the coordinates of a foodspot."
+  [x y])
 
 ;; Method used below doesn't try to find the foodspots themselves.  Their
 ;; coordinates are referenced many times, so we extract them into a set.
 ;; A more bespoke method might be faster (perhaps using mx/ereduce).
 (defn locs-foodspot-coords
-  "Returns a collection of the coordinates of foodspots in matrix locs."
+  "Returns a collection of coordinate pairs of all foodspots in matrix
+  locs, or nil if there are none."
   [locs]
   (-> (into #{} cat (mx/eseq locs))
-      (disj default-foodspot-val)))
+      (disj default-foodspot-val)
+      (seq)))
 
 (defn env-foodspot-coords
-  "Returns a collection of the coordinates off foodspots in the :locs
-  matrix in environment env."
+  "Returns a collection of coordinate pairs of all foodspots in environment
+  env, or nil if there are none."
   [env]
   (locs-foodspot-coords (:locs env)))
+
+
 
 
 (comment
