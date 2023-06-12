@@ -7,13 +7,17 @@
             [utils.math :as m]
             [utils.random :as r]
             [forage.viz.hanami :as h]
-            [forage.core.env-setup]
+            [forage.core.walks :as w]
+            [forage.core.food :as f]
             [forage.core.env-mason :as emas]
             [forage.core.env-matrix :as emat]
-            [forage.core.walks :as w]
-            [forage.core.food :as f]))
-
-(alias 'env forage.core.env-setup/env)
+            [forage.core.env]))
+;; Code below can explicitly refer either to env-mason or env-matrix
+;; using the alias above, or to whichever one is globally selected
+;; in env.clj via the alias below.  (This allows legacy functions to
+;; refer to env-mason, but to allow other functions to use whichever
+;; environment implementation is currently selected.)
+(alias 'env forage.core.env/env)
 
 (def default-dirname "../../data.foraging/forage/")
 (def default-file-prefix default-dirname) ; for backward compatibility
@@ -42,7 +46,7 @@
   [default-loc fw]
   (if fw
     (if-let [found (first fw)]
-      (emas/foodspot-coords (first found)) ; if two or more found, ignore others
+      (env/foodspot-coords (first found)) ; if two or more found, ignore others
       (last (second fw))) ; could also use third
     default-loc))
 
@@ -62,7 +66,7 @@
   [default-loc fw]
   (if fw
     (if-let [found (first fw)]
-      (emas/foodspot-coords (first found)) ; if two or more found, ignore others
+      (env/foodspot-coords (first found)) ; if two or more found, ignore others
       nil)
     default-loc))
 
@@ -72,7 +76,7 @@
   "Returns the coordinates of a random foodspot in env.  The last argument, which
   would normally be a foodwalk from the previous run, will be ignored."
   [rng env _]
-  (let [coords (first (r/sample-from-coll rng 1 (emas/env-foodspot-coords env)))]
+  (let [coords (first (r/sample-from-coll rng 1 (env/env-foodspot-coords env)))]
     ;(println "start of walk:" coords) ; DEBUG
     coords))
 
@@ -104,7 +108,7 @@
 (comment
   (def yo (levy-run (r/make-well19937) noctr-look-fn nil params 2 [half-size half-size]))
   (first yo)
-  (emas/foodspot-coords (first (first yo)))
+  (env/foodspot-coords (first (first yo)))
   (last (second yo))
 )
 

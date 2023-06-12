@@ -4,16 +4,20 @@
   (:require [aerial.hanami.common :as hc]
             [aerial.hanami.templates :as ht]
             [oz.core :as oz]
-            [forage.core.env-setup]
-            [forage.core.env-mason :as emas]
-            [forage.core.env-matrix :as emat]
-            [forage.core.food :as f]
-            [forage.core.walks :as w]
             [utils.hanami :as uh] ; replace if grid-chart becomes non-local
             [utils.toroidal :as tor]
-            [utils.math :as m]))
-
-(alias 'env forage.core.env-setup/env)
+            [utils.math :as m]
+            [forage.core.food :as f]
+            [forage.core.walks :as w]
+            [forage.core.env-mason :as emas]
+            [forage.core.env-matrix :as emat]
+            [forage.core.env]))
+;; Code below can explicitly refer either to env-mason or env-matrix
+;; using the alias above, or to whichever one is globally selected
+;; in env.clj via the alias below.  (This allows legacy functions to
+;; refer to env-mason, but to allow other functions to use whichever
+;; environment implementation is currently selected.)
+(alias 'env forage.core.env/env)
 
 ;; Note field names have to be strings, not keywords, in order
 ;; for vega-lite to make full use of them.
@@ -266,8 +270,8 @@
   Vega-Lite size for foodspots in perc-radius units: a display-radius
   of 1 is the perc-radius of a forager."
   [env plot-dim display-radius]
-  (vega-food-plot (add-point-labels "food" (emas/env-foodspot-coords env))
-                  (emas/env-size env)
+  (vega-food-plot (add-point-labels "food" (env/env-foodspot-coords env))
+                  (env/env-size env)
                   plot-dim
                   display-radius))
 
@@ -283,7 +287,7 @@
   display-radius uses units based on simulation values.)"
   [env plot-dim stroke-width display-radius walk-stops]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
-        data-dim (emas/env-size env)
+        data-dim (env/env-size env)
         toroidal-walk (tor/toroidal-to-vega-lite "piece" (tor/wrap-path 0 data-dim walk-stops))
         walk-plot (vega-walk-plot plot-dim data-dim stroke-width toroidal-walk)]
     (hc/xform
@@ -309,7 +313,7 @@
   based on simulation values.)"
   [env plot-dim stroke-width display-radius foodwalks]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
-        data-dim (emas/env-size env)
+        data-dim (env/env-size env)
         did-couldve-plots (mapcat
                             (partial did-couldve-walk-plot plot-dim data-dim stroke-width)
                            foodwalks)]
