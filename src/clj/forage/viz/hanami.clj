@@ -9,8 +9,8 @@
             [utils.math :as m]
             [forage.core.food :as f]
             [forage.core.walks :as w]
-            [forage.core.env-mason :as emas]
-            [forage.core.env-matrix :as emat]
+            [forage.core.env-mason :as masonenv]
+            [forage.core.env-matrix :as matrixenv]
             [forage.core.env]))
 ;; Code below can explicitly refer either to env-mason or env-matrix
 ;; using the alias above, or to whichever one is globally selected

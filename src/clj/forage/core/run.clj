@@ -9,8 +9,8 @@
             [forage.viz.hanami :as h]
             [forage.core.walks :as w]
             [forage.core.food :as f]
-            [forage.core.env-mason :as emas]
-            [forage.core.env-matrix :as emat]
+            [forage.core.env-mason :as masonenv]
+            [forage.core.env-matrix :as matrixenv]
             [forage.core.env]))
 ;; Code below can explicitly refer either to env-mason or env-matrix
 ;; using the alias above, or to whichever one is globally selected
@@ -136,7 +136,7 @@
         (recur (dec n)
                fw
                (+ n-segments (w/count-segments-until-found fw))
-               (conj found (emas/foodspot-coords-if-found (first fw)))
+               (conj found (masonenv/foodspot-coords-if-found (first fw)))
                (conj lengths (w/path-until-found-length fw)))))))
 
 
@@ -274,7 +274,7 @@
        - :rng; value is PRNG object with state as it was at end of runs."
   ([dirname env params exponents walks-per-combo seed]
    (levy-experiments dirname env params exponents walks-per-combo seed 
-                     (partial emas/perc-foodspots-exactly env (params :perc-radius))))
+                     (partial masonenv/perc-foodspots-exactly env (params :perc-radius))))
   ([dirname env params exponents walks-per-combo seed look-fn]
    (levy-experiments dirname env params exponents walks-per-combo seed 
                      look-fn (r/make-well19937 seed)))
@@ -373,7 +373,7 @@
         dir-increment (/ (* m/pi (params :max-frac)) num-dirs)
         init-dirs (mapv (partial * dir-increment)
                         (range (inc num-dirs))) ; inc to include range max
-        look-fn (partial emas/perc-foodspots-exactly env (params :perc-radius))
+        look-fn (partial masonenv/perc-foodspots-exactly env (params :perc-radius))
         id (r/make-seed)
         sorted-params (into (sorted-map) params) ; for writing param file
         param-filename (str file-prefix "straight_param" id ".csv")
