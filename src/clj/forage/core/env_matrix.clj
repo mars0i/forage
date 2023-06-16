@@ -399,15 +399,13 @@
 ;; within the perc-radius.  This accomodates:
 ;;   (a) Random initial states.
 ;;   (b) Foragers who don't look while in motion.
-;;    (c) Possible models of e.g. raptors who don't move across the ground.
+;;   (c) Possible models of e.g. raptors who don't move across the ground.
 
 (defn perc-foodspot
   "Examines location [x y] in env. Returns a falsey value if no foodspot is
   within the perceptual radius of that position, or the coordinates of a
-  foodspot that's perceptible that location.  These coordinates will be
-  Otherwise this returns the foodspot chosen by function chooser from the
-  collection of all coordinates of all foodspots perceptible from that
-  location."
+  foodspot chosen by function chooser from the collection of all
+  coordinates of all foodspots perceptible from that location."
   [chooser env x y]
   (let [x-int (math/round x) ; mget accepts floats but floors them
         y-int (math/round y) ; we want round, not floor
