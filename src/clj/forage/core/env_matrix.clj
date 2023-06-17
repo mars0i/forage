@@ -1,6 +1,7 @@
 ;; Replacement for env-mason.
 (ns forage.core.env-matrix
   (:require [clojure.math :as math]
+            [clojure.set :as sets]
 	    [clojure.core.matrix :as mx]
             [clojure.core.matrix.selection :as mxsel] ; name of namespace changed between 0.44 and 0.63
 	    [utils.random :as r]
@@ -401,7 +402,22 @@
 ;;   (b) Foragers who don't look while in motion.
 ;;   (c) Possible models of e.g. raptors who don't move across the ground.
 
-(defn perc-foodspot
+(defn perc-foodspots
+  "Examines location [x y] in env. Returns a falsey value if no foodspot is
+  within the perceptual radius of that position, or a sequence (not merely
+  collection) of coordinates of all foodspots within perceptual radii.  If
+  the forager is *on* a foodspot, it will be listed first."
+  [chooser env x y]
+  (let [x-int (math/round x) ; mget accepts floats but floors them
+        y-int (math/round y) ; we want round, not floor
+        whats-here (mx/mget env x-int y-int)
+        foodspot-here (default-foodspot-val whats-here)
+        foodspots-near (seq (sets/select vector? whats-here))] ; seq nilifies empty set
+    (if foodspot-here
+      (cons [x-int y-int] foodspots-near)
+      foodspots-near)))
+
+(defn OBSOLETE-perc-foodspot
   "Examines location [x y] in env. Returns a falsey value if no foodspot is
   within the perceptual radius of that position, or the coordinates of a
   foodspot chosen by function chooser from the collection of all
@@ -424,7 +440,7 @@
   Otherwise this returns the first foodspot from the collection of all
   coordinates of all foodspots perceptible from that location."
   [env x y]
-  (perc-foodspot first env x y))
+  (OBSOLETE-perc-foodspot first env x y))
 
 (defn make-foodspot-sampler
   "Creates a function that can sample from found coordinates.  Use this
