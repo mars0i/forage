@@ -542,12 +542,13 @@
 ;; (Example: a composite walk that contains Archimedean spirals.)
 (defn foodwalk
   "Given stop-walk, a representation of a possible walk as a sequence of
-  location coordinate pairs, returns a triple produced by trim-full-walk,
-  which has been passed the result of calling path-with-food on the
-  arguments to foodwalk with the original stop-walk conj'ed onto the
-  result."
+  location coordinate pairs, returns a triple produced by trim-full-walk.
+  That is, returns a vector triple containing (a) a sequence of found
+  foodspots or nil if none found, (b) the generated sequence from start
+  until the point from which the foodspots were found or the entire
+  sequence if no foodspots were found, and (c) a subsequence containing the
+  remaining stops, if any, after the foodspots were found."
   [look-fn look-eps stop-walk]
-  ;(println)(pr look-fn look-eps (class stop-walk) (count stop-walk) (take 2 stop-walk)) ; DEBUG
   (trim-full-walk (conj (path-with-food look-fn look-eps stop-walk)
                         stop-walk)))
 
