@@ -402,20 +402,53 @@
 ;;   (b) Foragers who don't look while in motion.
 ;;   (c) Possible models of e.g. raptors who don't move across the ground.
 
+(defn choose-foodspot-here-or-whatever
+  "foodspot-here is falsey, or is an integer coordinate pair representing
+  the location of a foodspot the forager is precisely on after rounding.
+  foodspots-near is a set of other foodspots within perceptual radius. If
+  foodspot-here is non-falsey, this function selects it as the foodspot to
+  be used by consing it onto foodspots-near (so that foodspot-here is
+  first). Otherwise, this function simply returns foodspots-near in
+  whatever ordering seq gives it."
+  [foodspot-here foodspots-near]
+  (if foodspot-here
+    (cons foodspot-here foodspots-near)
+    (seq foodspots-near)))
+
 (defn perc-foodspots
   "Examines location [x y] in env. Returns a falsey value if no foodspot is
   within the perceptual radius of that position, or a sequence (not merely
-  collection) of coordinates of all foodspots within perceptual radii.  If
-  the forager is *on* a foodspot, it will be listed first."
-  [chooser env x y]
+  collection) of coordinates of all foodspots within perceptual radii.
+  choose-foodspot decides which foodspot to list first.  It is passed (a)
+  the coordinates of the foodspot that the forager is precisely on (after
+  coordinate rounding), if it is precisely on foodspot, or nil; and (b) a
+  sequence of coordinates of foodspots that within perceptual radius, but
+  not precisely on, or nil."
+  [choose-foodspot env x y]
   (let [x-int (math/round x) ; mget accepts floats but floors them
         y-int (math/round y) ; we want round, not floor
         whats-here (mx/mget env x-int y-int)
-        foodspot-here (default-foodspot-val whats-here)
-        foodspots-near (seq (sets/select vector? whats-here))] ; seq nilifies empty set
-    (if foodspot-here
-      (cons [x-int y-int] foodspots-near)
-      foodspots-near)))
+        foodspot-here (if (default-foodspot-val whats-here) [x-int y-int] nil)
+        foodspots-near (sets/select vector? whats-here)] ; seq nilifies empty set
+    (choose-foodspot foodspot-here foodspots-near)))
+
+(defn make-foodspot-sampler
+  "Creates a function that can sample from found coordinates.  Use this
+  function to create a choose-foodspot function to be passed to perc-foodspot.
+  (This strategy avoids repeatedly creating a PRNG inside the choose-foodspot
+  function time perc-foodspots is called.)
+  Example:
+    (def rand-chooser (make-foodspot-sampler (r/make-well199937)))
+    (perc-foodspot rand-chooser my-env 42.3 77.98)"
+  [rng]
+  (fn [coll]
+    (if (= 1 (count coll)) ; don't bother sampling if only one
+      (seq coll)
+      (r/sample-from-coll rng 1 coll))))
+
+
+;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
+;; only chooses randomly if there are mulitple equally close foodspots.
 
 (defn OBSOLETE-perc-foodspot
   "Examines location [x y] in env. Returns a falsey value if no foodspot is
@@ -441,21 +474,3 @@
   coordinates of all foodspots perceptible from that location."
   [env x y]
   (OBSOLETE-perc-foodspot first env x y))
-
-(defn make-foodspot-sampler
-  "Creates a function that can sample from found coordinates.  Use this
-  function to create a chooser function to be passed to perc-foodspot.
-  (This strategy avoids repeatedly creating a PRNG inside the chooser
-  function inside the perc-foodspot function every time it's called.)
-  Example:
-    (def rand-chooser (make-foodspot-sampler (r/make-well199937)))
-    (perc-foodspot rand-chooser my-env 42.3 77.98)"
-  [rng]
-  (fn [coll]
-    (if (= 1 (count coll)) ; don't bother sampling if only one
-      (first coll)
-      (r/sample-from-coll rng 1 coll))))
-
-
-;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
-;; only chooses randomly if there are mulitple equally close foodspots.
