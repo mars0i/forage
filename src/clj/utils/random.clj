@@ -18,6 +18,7 @@
            [org.apache.commons.rng.sampling ListSampler] ; 1.4
            [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler SamplerBase] ; 1.4
            ;[org.apache.commons.statistics.distribution ParetoDistribution] ; 1.4, I think, but not Mavenized yet
+           [org.apache.commons.rng.sampling PermutationSampler]
            [java.io
             ByteArrayOutputStream ObjectOutputStream FileOutputStream
             ByteArrayInputStream  ObjectInputStream  FileInputStream])
@@ -390,3 +391,11 @@
   (def rng (make-well19937 42))
   (sample-from-coll rng (range 50) 5)
 )
+
+(defn shuffle-coll
+  [^UniformRandomProvider rng xs]
+  (let [idxs (PermutationSampler/shuffle rng (range (count xs)))
+        xs' (seq xs)]
+    ;; now use indexes to rearrange sequence:
+    xs ; FIXME
+  ))
