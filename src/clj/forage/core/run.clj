@@ -28,6 +28,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; THE IMPORTANT STUFF ...
 
+;; TODO Maybe add a parameter to allow selecting other than the first foodspot.
 ;; This can be passed as the value of init-loc-fn in order to cause
 ;; each foodwalk to start where the previous one ended.
 (defn end-of-walk
@@ -50,6 +51,7 @@
       (last (second fw))) ; could also use third
     default-loc))
 
+;; TODO Maybe add a parameter to allow selecting other than the first foodspot.
 ;; This can be passed as the value of init-loc-fn in order to cause
 ;; each foodwalk to start where the previous one ended.
 (defn end-of-walk-if-found
@@ -71,7 +73,7 @@
     default-loc))
 
 ;; This can be passed as the value of init-loc-fn in order to cause
-;; each foodwalk to at a random foodspot in env
+;; each foodwalk to at start a random foodspot in env
 (defn rand-foodspot-coord-pair
   "Returns the coordinates of a random foodspot in env.  The last argument, which
   would normally be a foodwalk from the previous run, will be ignored."
