@@ -392,10 +392,26 @@
   (sample-from-coll rng (range 50) 5)
 )
 
+;; FIXME
+;; See also https://commons.apache.org/proper/commons-rng/commons-rng-sampling/apidocs/org/apache/commons/rng/sampling/ListSampler.html
+;; (class (java.util.ArrayList. (range 5)))
+;; (ListSampler/shuffle rng (java.util.ArrayList. (range 5)))
+;; I'm getting nil (i.e. Null) from that and from
+;; PermutationSampler/shuffle, even on literal java int lists created
+;; using PermutationSampler/natural.
+;;
+;; There's also clojure.core/shuffle, which converts the arg into a
+;; java.util.ArrayList, then shuffles with java.util.Collections/shuffle,
+;; then converts to a Clojure vector.  It's not clear what it uses.
+;;
+;; Fun fact: (cons 'a nil) produces a PersistentList, while (cons 'a ())
+;; produces a Cons.  Clojure The Essential Reference says that these are
+;; kind of the same, but PersistentLists can be more efficient e.g. with
+;; 'count' and 'reduce'.
 (defn shuffle-coll
   [^UniformRandomProvider rng xs]
   (let [idxs (PermutationSampler/shuffle rng (range (count xs)))
-        xs' (seq xs)]
+        xs-vec (into-array xs)]
     ;; now use indexes to rearrange sequence:
-    xs ; FIXME
-  ))
+    (reduce (fn [acc i] (cons (xs-vec i) acc))
+            nil idxs))) ; re nil see fun fact above
