@@ -2,10 +2,10 @@
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         org.clojure/math.numeric-tower {:mvn/version "0.0.5"}
         org.apache.commons/commons-math3 {:mvn/version "3.6.1"}    ; NOTE USING DIFFERENT INCOMPATIBLE
-        org.apache.commons/commons-rng-core {:mvn/version "1.4"}   ; VERSIONS OF Apache Commons math
-        org.apache.commons/commons-rng-simple {:mvn/version "1.4"} ; libs because of nonoverlapping features
-        org.apache.commons/commons-rng-client-api {:mvn/version "1.4"}
-        org.apache.commons/commons-rng-sampling {:mvn/version "1.4"}
+        org.apache.commons/commons-rng-core {:mvn/version "1.5"}   ; VERSIONS OF Apache Commons math
+        org.apache.commons/commons-rng-simple {:mvn/version "1.5"} ; libs because of nonoverlapping features
+        org.apache.commons/commons-rng-client-api {:mvn/version "1.5"}
+        org.apache.commons/commons-rng-sampling {:mvn/version "1.5"}
         ;generateme/fastmath {:mvn/version "2.1.8"}
         ;generateme/fastmath {:mvn/version "2.1.9-SNAPSHOT"} ; needed for stats/wmean
         generateme/fastmath {:mvn/version "2.2.2-SNAPSHOT"} ; adds rint with scale arg
