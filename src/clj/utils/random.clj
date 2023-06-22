@@ -21,7 +21,8 @@
            [org.apache.commons.rng.sampling PermutationSampler]
            [java.io
             ByteArrayOutputStream ObjectOutputStream FileOutputStream
-            ByteArrayInputStream  ObjectInputStream  FileInputStream])
+            ByteArrayInputStream  ObjectInputStream  FileInputStream]
+           [java.util ArrayList])
   (:require ;[clojure.math.numeric-tower :as nt] ; now using clojure.math/pow instead of nt/expt see https://clojureverse.org/t/article-blog-post-etc-about-clojure-math-vs-numeric-tower/9805/6?u=mars0i
             [clojure.math :as math]
             [clojure.java.io :as io]))
@@ -382,14 +383,54 @@
 
 ;; There are other sampling functions in random-utils
 (defn sample-from-coll
-  "Returns num-samples elements randomly selected without replacement 
-  from collection xs."
+  "Returns num-samples elements randomly selected without replacement from
+  collection xs.  NOTE creates a Java ArrayList, which might possibly add
+  overhead if this is done often on small collections."
   [rng num-samples xs]
-  (ListSampler/sample rng xs num-samples))
+  (ListSampler/sample rng (ArrayList. xs) num-samples))
 
 (comment
   (def rng (make-well19937 42))
-  (sample-from-coll rng (range 50) 5)
+  (def al (ArrayList. (range 10)))
+  (ListSampler/sample rng (range 42) 4)
+  (def asample (sample-from-coll rng 4 (range 100)))
+  (class asample)
+  (nth asample 2)
+)
+
+;; cf. clojure.core.shuffle, which uses a similar idea:
+;; https://github.com/clojure/clojure/blob/clojure-1.10.1/src/clj/clojure/core.clj#L7274
+;; but doesn't allow specifying an RNG.  However, the java.util.Collections/shuffle
+;; method does allow specifying an RNG.  However, it's a java.util.Random,
+;; which is different from the Apache RNGs.
+(defn shuffle
+  "Given a random number generator rng and a collection xs, returns a
+  collection (a java.util.ArrayList) in which the' elements have been
+  randomly shuffled."
+  [^UniformRandomProvider rng xs]
+  (let [al (ArrayList. xs)] ; new java.util.ArrayList will be shuffled in place
+    (ListSampler/shuffle rng al) ; returns nil, but al is now shuffled
+    al)) ; a java.util.ArrayList can be passed to nth, seq, etc.
+
+(comment
+  (def rng (make-well19937 42))
+  ;; boxed ints, I think (what ListSampler/shuffle wants):
+  (def al (java.util.ArrayList. (range 10)))
+  (class al)
+  al
+  (aset al 4 42) ; fails
+  (.set al 4 42) ; works
+  al
+  (ListSampler/shuffle rng al)
+  (shuffle rng (range 10))
+  (shuffle rng (into #{} (range 10)))
+  (shuffle rng (vec (range 10)))
+  ;; unboxed, ints, I think:
+  (def ra (into-array Integer/TYPE (range 10)))
+  (class ra)
+  ra
+  (aset ra 4 42)
+  ra
 )
 
 ;; FIXME
@@ -408,7 +449,7 @@
 ;; produces a Cons.  Clojure The Essential Reference says that these are
 ;; kind of the same, but PersistentLists can be more efficient e.g. with
 ;; 'count' and 'reduce'.
-(defn shuffle-coll
+(defn shuffle-EH
   [^UniformRandomProvider rng xs]
   (let [idxs (PermutationSampler/shuffle rng (range (count xs)))
         xs-vec (into-array xs)]
