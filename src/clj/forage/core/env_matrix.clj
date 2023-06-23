@@ -409,25 +409,34 @@
   foodspot-here is non-falsey, this function selects it as the foodspot to
   be used by consing it onto foodspots-near (so that foodspot-here is
   first). Otherwise, this function simply returns foodspots-near in
-  whatever ordering seq gives it."
+  whatever ordering seq gives it.  This is appropriate if it's unlikely
+  that multiple foodspots will be found at the same time"
   [foodspot-here foodspots-near]
   (if foodspot-here
     (cons foodspot-here foodspots-near)
     (seq foodspots-near)))
 
 (defn make-choose-foodspot-here-or-random
-  "Creates a function that can sample from found coordinates.  Use this
-  function to create a choose-foodspot function to be passed to perc-foodspot.
-  (This strategy avoids repeatedly creating a PRNG inside the choose-foodspot
-  function time perc-foodspots is called.)
-  Example:
-    (def rand-chooser (make-foodspot-sampler (r/make-well199937)))
-    (perc-foodspot rand-chooser my-env 42.3 77.98)"
+  "Creates a function that expects a coordinate pair indicating that the
+  forager is precisely on a foodspot (after rounding), or nil; and a
+  collection of coordinate pairs representing foodspots found within
+  perceptual radii, or nil.  The resulting function can be passed as
+  choose-foodspot to perc-foodspots, and will return a sequence containing
+  all of the found foodspots. If the forager is not precisely on a
+  foodspot, but is within perceptual radii of multiple foodspots, the order
+  of foodspots in the returned sequence will be random. (Returning a
+  function that does this rather than definining such a function once and
+  for all avoids repeatedly creating a PRNG inside the defined function.
+  This way the returned function will capture the PRNG in a closure so that
+  it can be used repeatedly.  We don't want to have to pass a PRNG to every
+  call, either, because the interface to this function should be the same
+  as similar functions such as choose-foodspot-here-or-whatever."
   [rng]
   (fn [foodspot-here foodspots-near]
-    (cond foodspot-here (cons foodspot-here foodspots-near) ; note we don't randomize the tail
+    (cond foodspot-here (cons foodspot-here foodspots-near) ; if on foodspot, don't randomize
           (= 1 (count foodspots-near)) (seq foodspots-near) ; don't shuffle if only 1
-          :else (r/shuffle-coll rng foodspots-near))))
+          ;; possibly use some simpler algorithm for small colls if shuffle overhead too much
+          :else (r/shuffle rng foodspots-near))))
 
 (defn perc-foodspots
   "Examines location [x y] in env. Returns a falsey value if no foodspot is
@@ -445,49 +454,6 @@
         foodspot-here (if (default-foodspot-val whats-here) [x-int y-int] nil)
         foodspots-near (sets/select vector? whats-here)] ; seq nilifies empty set
     (choose-foodspot foodspot-here foodspots-near)))
-
-
-;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
-;; only chooses randomly if there are mulitple equally close foodspots.
-
-(defn OBSOLETE-perc-foodspot
-  "Examines location [x y] in env. Returns a falsey value if no foodspot is
-  within the perceptual radius of that position, or the coordinates of a
-  foodspot chosen by function chooser from the collection of all
-  coordinates of all foodspots perceptible from that location."
-  [chooser env x y]
-  (let [x-int (math/round x) ; mget accepts floats but floors them
-        y-int (math/round y) ; we want round, not floor
-        whats-here (mx/mget env x-int y-int)]
-    (if (default-foodspot-val whats-here)
-      [x-int y-int] ; we're on a foodspot (after rounding)
-      (if-let [found-coords (seq whats-here)] ; collection of coordinates is not empty
-        (chooser found-coords) ; chooser can assume found-coords is non-empty
-        nil))))
-
-(defn perc-first-foodspot 
-  "Examines location [x y] in env. Returns a falsey value if no foodspot is
-  within the perceptual radius of that position, or the coordinates of a
-  foodspot that's perceptible that location.  These coordinates will be
-  [(round x) (round y)] if there's a foodspot on that very location.
-  Otherwise this returns the first foodspot from the collection of all
-  coordinates of all foodspots perceptible from that location."
-  [env x y]
-  (OBSOLETE-perc-foodspot first env x y))
-
-(defn OBSOLETE-make-foodspot-sampler
-  "Creates a function that can sample from found coordinates.  Use this
-  function to create a chooser function to be passed to perc-foodspot.
-  (This strategy avoids repeatedly creating a PRNG inside the chooser
-  function inside the perc-foodspot function every time it's called.)
-  Example:
-    (def rand-chooser (make-foodspot-sampler (r/make-well199937)))
-    (perc-foodspot rand-chooser my-env 42.3 77.98)"
-  [rng]
-  (fn [coll]
-    (if (= 1 (count coll)) ; don't bother sampling if only one
-      (first coll)
-      (r/sample-from-coll rng 1 coll))))
 
 
 ;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
