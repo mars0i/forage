@@ -20,14 +20,6 @@
 ;; TODO Experiment using fastmath to speed this up.
 
 
-;; FIXME BUG: For all of the foodspot adders, I think:
-;; It ought to be possible to specific non-integer coordinates
-;; for foodspots, and have them translated into internal integer
-;; coordinates (after rounding).  However, this just slaps the provided
-;; coordinates into the cells as is, and in addition, ends up sticking
-;; a coordinate pair in with the foodspot itself.
-;; Also make sure that non-integer perc-radii work.
-
 (mx/set-current-implementation :ndarray) 
 ;; don't use this: (mx/set-current-implementation :persistent-vector)
 
@@ -282,12 +274,12 @@
 
 (defn raw-env-locs-getxy
   "Returns whatever is at (external) coordinates x, y in locations matrix
-  locs. Non-integer coordinates will be run through clojure.math/round.
-  Coordinates must be legal for locs."
+  locs. Non-integer coordinates will NOT be run through clojure.math/round.
+  Coordinates must be legal for locs. They should be rounded first.
+  (Non-rounded coords will succeed, but will be floored by core.matrix.
+  Rounding is better.)"
   [locs x y]
-  (let [x' (math/round x)  ; mget would automatically floor
-        y' (math/round y)] ; or use fastmath/rint, i.e. java Math/rint? Nah.
-    (mx/mget locs y' x'))) ; Note x, y reversed since core.matrix uses trad matrix indexing
+  (mx/mget locs y x)) ; Note x, y reversed since core.matrix uses trad matrix indexing
 
 ; Notes: Possibly avoid in inner loops; instead use env-mat-getxy.
 (defn raw-env-getxy
@@ -392,69 +384,42 @@
 )
 
 
-
-;; NOTE Although a forager who moves continuously and always looks for
-;; food can never reach a foodspot without first hitting the perceptual
-;; radius exactly, the following functions allow for the possibility that
-;; the forager has suddenly parachuted into the middle of the region
-;; within the perc-radius.  This accomodates:
-;;   (a) Random initial states.
-;;   (b) Foragers who don't look while in motion.
-;;   (c) Possible models of e.g. raptors who don't move across the ground.
-
-(defn choose-foodspot-here-or-whatever
-  "foodspot-here is falsey, or is an integer coordinate pair representing
-  the location of a foodspot the forager is precisely on after rounding.
-  foodspots-near is a set of other foodspots within perceptual radius. If
-  foodspot-here is non-falsey, this function selects it as the foodspot to
-  be used by consing it onto foodspots-near (so that foodspot-here is
-  first). Otherwise, this function simply returns foodspots-near in
-  whatever ordering seq gives it.  This is appropriate if it's unlikely
-  that multiple foodspots will be found at the same time"
-  [foodspot-here foodspots-near]
-  (if foodspot-here
-    (cons foodspot-here foodspots-near)
-    (seq foodspots-near)))
-
-(defn make-choose-foodspot-here-or-random
-  "Creates a function that expects a coordinate pair indicating that the
-  forager is precisely on a foodspot (after rounding), or nil; and a
-  collection of coordinate pairs representing foodspots found within
-  perceptual radii, or nil.  The resulting function can be passed as
-  choose-foodspot to perc-foodspots, and will return a sequence containing
-  all of the found foodspots. If the forager is not precisely on a
-  foodspot, but is within perceptual radii of multiple foodspots, the order
-  of foodspots in the returned sequence will be random. (Returning a
-  function that does this rather than definining such a function once and
-  for all avoids repeatedly creating a PRNG inside the defined function.
-  This way the returned function will capture the PRNG in a closure so that
-  it can be used repeatedly.  We don't want to have to pass a PRNG to every
-  call, either, because the interface to this function should be the same
-  as similar functions such as choose-foodspot-here-or-whatever."
-  [rng]
-  (fn [foodspot-here foodspots-near]
-    (cond foodspot-here (cons foodspot-here foodspots-near) ; if on foodspot, don't randomize
-          (= 1 (count foodspots-near)) (seq foodspots-near) ; don't shuffle if only 1
-          ;; possibly use some simpler algorithm for small colls if shuffle overhead too much
-          :else (r/shuffle rng foodspots-near))))
-
 (defn perc-foodspots
-  "Examines location [x y] in env. Returns a falsey value if no foodspot is
-  within the perceptual radius of that position, or a sequence (not merely
-  collection) of coordinates of all foodspots within perceptual radii.
-  choose-foodspot decides which foodspot to list first.  It is passed (a)
-  the coordinates of the foodspot that the forager is precisely on (after
-  coordinate rounding), if it is precisely on foodspot, or nil; and (b) a
-  sequence of coordinates of foodspots that within perceptual radius, but
-  not precisely on, or nil."
-  [choose-foodspot env x y]
+  "Examines location [(round x) (round y)] in env. Returns a falsey value
+  if no foodspot is within the perceptual radius of that position, or a
+  sequence (not merely collection) of coordinates of all foodspots within
+  perceptual radii. The function env-getxy should be a function such as
+  trimmed-env-getxy (which returns the contents of a location or false if
+  It's outside the env), or toroidal-env-getxy (which wraps locations). the
+  function order-found (probably from forage.run) decides which foodspot to
+  list first.  It is passed (a) the coordinates of the foodspot that the
+  forager is precisely on (after coordinate rounding), if it is precisely
+  on foodspot, or nil; and (b) a sequence of coordinates of foodspots that
+  within perceptual radius, but not precisely on, or nil."
+  [env-getxy order-found env x y]
   (let [x-int (math/round x) ; mget accepts floats but floors them
         y-int (math/round y) ; we want round, not floor
-        whats-here (mx/mget env x-int y-int)
+        whats-here (env-getxy env x-int y-int)
         foodspot-here (if (default-foodspot-val whats-here) [x-int y-int] nil)
         foodspots-near (sets/select vector? whats-here)] ; seq nilifies empty set
-    (choose-foodspot foodspot-here foodspots-near)))
+    (order-found foodspot-here foodspots-near)))
 
+;; Partial has a perf hit only (maybe) when more than four args are
+;; partialed up into the new function.  In fact it's better than
+;; (fn [...] ...) since the partialed args are baked in.
+(def perc-foodspots-trimmed
+  "([order-found env x y])
+  Runs perc-foodspots ignoring coordinates that fall outside the
+  boundaries of env.  See perc-foodspots for further information about
+  parameters."
+  (partial perc-foodspots trimmed-env-getxy))
+
+(def perc-foodspots-toroidally
+  "([order-found env x y])
+  Runs perc-foodspots with toroidal wrapping of coordinates that fall
+  outside the boundaries of env.  See perc-foodspots for further
+  information about parameters."
+  (partial perc-foodspots toroidal-env-getxy))
 
 ;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
 ;; only chooses randomly if there are mulitple equally close foodspots.
