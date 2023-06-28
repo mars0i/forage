@@ -346,9 +346,6 @@
   [env]
   (locs-foodspot-coords (:locs env)))
 
-
-
-
 (comment
   (use 'clojure.repl) ; for pst
 
@@ -384,7 +381,7 @@
 )
 
 
-(defn perc-foodspots
+(defn matrix-perc-foodspots
   "Examines location [(round x) (round y)] in env. Returns a falsey value
   if no foodspot is within the perceptual radius of that position, or a
   sequence (not merely collection) of coordinates of all foodspots within
@@ -412,14 +409,14 @@
   Runs perc-foodspots ignoring coordinates that fall outside the
   boundaries of env.  See perc-foodspots for further information about
   parameters."
-  (partial perc-foodspots trimmed-env-getxy))
+  (partial matrix-perc-foodspots trimmed-env-getxy))
 
 (def perc-foodspots-toroidally
   "([order-found env x y])
   Runs perc-foodspots with toroidal wrapping of coordinates that fall
   outside the boundaries of env.  See perc-foodspots for further
   information about parameters."
-  (partial perc-foodspots toroidal-env-getxy))
+  (partial matrix-perc-foodspots toroidal-env-getxy))
 
 ;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
 ;; only chooses randomly if there are mulitple equally close foodspots.
