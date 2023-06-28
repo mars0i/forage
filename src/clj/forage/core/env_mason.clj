@@ -135,3 +135,27 @@
   (if found-foodspot-seq
     (foodspot-coords (first found-foodspot-seq))
     nil))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; New general foodspot finding methods with
+;; same names and interfaces as those in env-matrix
+
+
+;; Note that while matrix-perc-foodspots has env-getxy as first
+;; parameter, this has perc-radius instead.  These two parameters
+;; perform different functions.  In env-matrix, env-getxy implements
+;; toroidal vs trim.  Here we handle that differently, but need to
+;; pass perc-radius, which is implemented in the environment in
+;; env-matrix
+(defn mason-perc-foodspots
+  [toroidal? perc-radius order-found ^Continuous2D env x y]
+  (let [location (Double2D. x y)
+        foodspot-here (first (.getObjectsAtLocation env location)) ; assume only one
+        foodspots-here-and-near (.getNeighborsExactlyWithinDistance env
+                                                                    location
+                                                                    perc-radius
+                                                                    toroidal?)
+        foodspots-near (remove (identical? foodspot-here) foodspots-here-and-near)
+        coords-here (foodspot-coords foodspot-here)
+        coords-near (map foodspot-coords foodspots-near)]
+    (order-found coords-here coords-near)))
