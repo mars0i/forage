@@ -13,6 +13,15 @@
 ;; NOTE DON'T USE .getNeighborsWithinDistance .
 ;; It can return foodspots that are too far away.
 
+
+;; NOTE ENV-MASON treats perceptual radius as a property of the
+;; forager, so it's not represented in the env.  To get the perceptual
+;; radius into the look-fn, it has to be supplied from an independent
+;; source from the env.
+;; By contrast, ENV-MATRIX treats perceptual radii as properties of
+;; foodspots, so they are specified in the env, and look-fns have
+;; to get them from the env (in effect).
+
 (deftype Foodspot [x y nutrition])
 
 (defn make-foodspot
@@ -145,8 +154,8 @@
 ;; parameter, this has perc-radius instead.  These two parameters
 ;; perform different functions.  In env-matrix, env-getxy implements
 ;; toroidal vs trim.  Here we handle that differently, but need to
-;; pass perc-radius, which is implemented in the environment in
-;; env-matrix
+;; pass perc-radius, which isn't needed here for in env-matrix since
+;; it handles perceptual radii.
 (defn mason-perc-foodspots
   [toroidal? perc-radius order-found ^Continuous2D env x y]
   (let [location (Double2D. x y)

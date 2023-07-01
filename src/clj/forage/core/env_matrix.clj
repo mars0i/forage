@@ -7,6 +7,15 @@
 	    [utils.random :as r]
             [utils.misc :as um]))
 
+;; NOTE ENV-MASON treats perceptual radius as a property of the
+;; forager, so it's not represented in the env.  To get the perceptual
+;; radius into the look-fn, it has to be supplied from an independent
+;; source from the env.
+;; By contrast, ENV-MATRIX treats perceptual radii as properties of
+;; foodspots, so they are specified in the env, and look-fns have
+;; to get them from the env (in effect).
+
+
 ;; NOTE When this was env_indexed.clj, the goal was to provide a (kind of)
 ;; drop-in replacement for env_mason.clj.  That meant converting between
 ;; external coordinates corresponding to the ones used by env-mason, and
