@@ -31,6 +31,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fns that order found foospots when several are found
+;; These are normally incorporated into a look-fn, but are
+;; here so they can be used by look-fns for different sorts
+;; of environments (env-matrix, env-mason).
 
 ;; NOTE Although a forager who moves continuously and always looks for
 ;; food can never reach a foodspot without first hitting the perceptual
