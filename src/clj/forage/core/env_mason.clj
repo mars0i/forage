@@ -168,3 +168,17 @@
         coords-here (foodspot-coords foodspot-here)
         coords-near (map foodspot-coords foodspots-near)]
     (order-found coords-here coords-near)))
+
+(defn radius-perc-foodspots-trimmed
+  "Runs mason-perc-foodspots with perc-radius, ignoring coordinates that
+  fall outside the boundaries of env.  See mason-perc-foodspots for further
+  information about parameters."
+  [perc-radius order-found env x y]
+  (mason-perc-foodspots false perc-radius order-found env x y))
+
+(defn radius-perc-foodspots-toroidally
+  "Runs mason-perc-foodspots perc-radius, with toroidal wrapping of
+  coordinates that fall outside the boundaries of env.  See
+  mason-perc-foodspots for further information about parameters."
+  [perc-radius order-found env x y]
+  (mason-perc-foodspots true perc-radius order-found env x y))
