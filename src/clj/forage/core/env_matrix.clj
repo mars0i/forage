@@ -415,16 +415,16 @@
 ;; (fn [...] ...) since the partialed args are baked in.
 (def perc-foodspots-trimmed
   "([order-found env x y])
-  Runs perc-foodspots ignoring coordinates that fall outside the
-  boundaries of env.  See perc-foodspots for further information about
-  parameters."
+  Runs matrix-perc-foodspots ignoring coordinates that fall outside the
+  boundaries of env.  See matrix-perc-foodspots for further information
+  about parameters."
   (partial matrix-perc-foodspots trimmed-env-getxy))
 
 (def perc-foodspots-toroidally
   "([order-found env x y])
-  Runs perc-foodspots with toroidal wrapping of coordinates that fall
-  outside the boundaries of env.  See perc-foodspots for further
-  information about parameters."
+  Runs matrix-perc-foodspots with toroidal wrapping of coordinates that
+  fall outside the boundaries of env.  See matrix-perc-foodspots for
+  further information about parameters."
   (partial matrix-perc-foodspots toroidal-env-getxy))
 
 ;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
