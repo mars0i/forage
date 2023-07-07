@@ -157,6 +157,16 @@
 ;; pass perc-radius, which isn't needed here for in env-matrix since
 ;; it handles perceptual radii.
 (defn mason-perc-foodspots
+  "Examines location [x y] in env (a MASON Continuous2D). Returns a falsey
+  value if no foodspot is within the perceptual radius of that position, or
+  a sequence (not merely a collection) of coordinates of all foodspots
+  within perceptual radii.  toroidal? is a boolean indicating whether
+  lookup should be toroidal, and perc-radius is the perceptual radius to
+  use. The function order-found (probably from forage.run) decides which
+  foodspot to list first. order-found is passed (a) the coordinates of the
+  foodspot that the forager is precisely on (after coordinate rounding), if
+  it is precisely on foodspot, or nil; and (b) a sequence of coordinates of
+  other foodspots that are within perceptual radius, or nil."
   [toroidal? perc-radius order-found ^Continuous2D env x y]
   (let [location (Double2D. x y)
         foodspot-here (first (.getObjectsAtLocation env location)) ; assume only one
