@@ -416,8 +416,9 @@
   (mx/pm (:locs e))
   (add-toroidal-foodspot! e 4 2 3)
   (add-toroidal-foodspot! e 4.5 2.75 3.3)
-  (add-toroidal-foodspot! e 2 6 4)
-  (add-toroidal-foodspot! e 2 44.17 29.8)
+  (add-toroidal-foodspot! e 5 6 5)
+  (add-toroidal-foodspot! e 10 44.17 29.8)
+  (add-toroidal-foodspot! e 9 17.6 18.4)
   (toroidal-env-getxy e 2 3)
   (toroidal-env-getxy e 2.75 3.3)
   (toroidal-env-getxy e 3 3)
@@ -426,15 +427,31 @@
   (locs-foodspot-coords (:locs e))
   (env-foodspot-coords e)
   (filter-coords (:locs e) seq)
+
   (require '[forage.viz.hanami :as h])
+  (require '[aerial.hanami.common :as hc])
+  (require '[aerial.hanami.templates :as ht])
   (require '[oz.core :as oz])
   (oz/start-server!)
-  (def in-radii (h/vega-food-plot
-                  (h/add-point-labels "food" 
-                                      (map reverse ; because matrix coords
-                                           (filter-coords (:locs e) seq)))
-                  (env-size e)
-                  400
-                  0.75))
+
+  ; 'map reverse' below because matrix coords are down, right, i.e. y, x
+  ;; TODO: Abstract/generalize and add to viz/hanami:
+  (def in-radii 
+    (hc/xform
+      ht/layer-chart
+        :LAYER (list
+                 (h/vega-food-plot
+                   (h/add-point-labels
+                     "radius" (map reverse (filter-coords (:locs e) seq)))
+                   (env-size e)
+                   400
+                   0.75)
+                 (h/vega-food-plot
+                   (h/add-point-labels
+                     "food" (map reverse (filter-coords (:locs e) default-foodspot-val)))
+                   (env-size e)
+                   400
+                   0.75))))
+
   (oz/view! in-radii)
 )
