@@ -172,13 +172,16 @@
 (defn radius-perc-foodspots-trimmed
   "Runs mason-perc-foodspots with perc-radius, ignoring coordinates that
   fall outside the boundaries of env.  See mason-perc-foodspots for further
-  information about parameters."
+  information about parameters.  (Recommended usage might be to partial
+  perc-radius into a standalone experiment-specific function.)"
   [perc-radius order-found env x y]
   (mason-perc-foodspots false perc-radius order-found env x y))
 
 (defn radius-perc-foodspots-toroidally
   "Runs mason-perc-foodspots perc-radius, with toroidal wrapping of
   coordinates that fall outside the boundaries of env.  See
-  mason-perc-foodspots for further information about parameters."
+  mason-perc-foodspots for further information about parameters.
+  (Recommended usage might be to partial perc-radius into a standalone
+  experiment-specific function.)"
   [perc-radius order-found env x y]
   (mason-perc-foodspots true perc-radius order-found env x y))
