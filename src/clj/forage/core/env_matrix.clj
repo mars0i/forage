@@ -1,4 +1,4 @@
-;; Replacement for env-mason.
+;; Environments encoded as core.matrix matrices. Replacement for env-mason.
 (ns forage.core.env-matrix
   (:require [clojure.math :as math]
             [clojure.set :as sets]
@@ -42,6 +42,19 @@
   [mat rows-down columns-right value]
   (mx/mset! mat rows-down columns-right
             (conj (mx/mget mat rows-down columns-right) value)))
+
+(comment
+  (class (vec (range 3)))
+  (def m (mx/matrix [(vec (range 3)) (vec (range 3 6)) (vec (range 6 9))]))
+  (def m (mx/matrix [[#{} #{} #{}]
+                     [#{} #{} #{}]
+                     [#{} #{} #{}]]))
+  (mx/pm m)
+  (mset-conj! m 0 1 [1 2])
+  (mset-conj! m 0 1 default-foodspot-val)
+  (mset-conj! m 1 1 default-foodspot-val)
+  (mset-conj! m 2 2 default-foodspot-val)
+)
 
 ;; TODO should order of results be swapped?
 (defn filter-coords
@@ -243,7 +256,7 @@
      ;; representation uses traditional matrix indexing:
      (doseq [[x* y*] (make-toroidal-donut env perc-radius x y)] ; donut, i.e. leave out center
        (mset-conj! locs y* x* [round-x round-y])) ; i.e. we set each cell to pair that points to the center
-     (mset-conj! locs y x foodspot-val)))) ; center gets special value
+     (mset-conj! locs round-y round-x foodspot-val)))) ; center gets special value
 
 (defn add-toroidal-foodspots!
   "Add multiple foodspots at coordinate pairs in locs, to env with
@@ -280,7 +293,6 @@
   (doseq [[x y] locs]
     (add-trimmed-foodspot! env perc-radius x y)))
 
-
 (defn raw-env-locs-getxy
   "Returns whatever is at (external) coordinates x, y in locations matrix
   locs. Non-integer coordinates will NOT be run through clojure.math/round.
@@ -288,7 +300,7 @@
   (Non-rounded coords will succeed, but will be floored by core.matrix.
   Rounding is better.)"
   [locs x y]
-  (mx/mget locs y x)) ; Note x, y reversed since core.matrix uses trad matrix indexing
+  (mx/mget locs (math/round y) (math/round x))) ; Note x, y reversed since core.matrix uses trad matrix indexing
 
 ; Notes: Possibly avoid in inner loops; instead use env-mat-getxy.
 (defn raw-env-getxy
@@ -355,53 +367,18 @@
   [env]
   (locs-foodspot-coords (:locs env)))
 
-(comment
-  (use 'clojure.repl) ; for pst
-
-  (def size 50)
-  (mx/shape (:locs e))
-  (mx/pm (:locs e))
-  (def e (make-env size))
-  (add-toroidal-foodspot! e 4 2 3)
-  (add-toroidal-foodspot! e 4.5 2.75 3.3)
-  (add-toroidal-foodspot! e 2 6 4)
-  (add-toroidal-foodspot! e 2 44.17 29.8)
-  (rawenv-getxy e 6 4) ; doesn't use matrix indexing
-  (raw-env-getxy e 2 4) ; doesn't use matrix indexing
-
-  (locs-foodspot-coords (:locs e))
-  (env-foodspot-coords e)
-  (filter-coords (:locs e) seq)
-
-  (require '[forage.viz.hanami :as h])
-  (require '[oz.core :as oz])
-  (oz/start-server!)
-
-  (def foodspots (h/vega-env-plot e 400 0.75))
-  (oz/view! foodspots)
-  (def in-radii (h/vega-food-plot
-                  (h/add-point-labels "food" 
-                                      (map reverse ; because matrix coords
-                                           (filter-coords (:locs e) seq)))
-                  (env-size e)
-                  400
-                  0.75))
-  (oz/view! in-radii)
-)
-
-
 (defn matrix-perc-foodspots
   "Examines location [(round x) (round y)] in env. Returns a falsey value
   if no foodspot is within the perceptual radius of that position, or a
   sequence (not merely a collection) of coordinates of all foodspots within
   perceptual radii. The function env-getxy should be a function such as
   trimmed-env-getxy (which returns the contents of a location or false if
-  It's outside the env), or toroidal-env-getxy (which wraps locations). the
+  It's outside the env), or toroidal-env-getxy (which wraps locations). The
   function order-found (probably from forage.run) decides which foodspot to
-  list first.  It is passed (a) the coordinates of the foodspot that the
-  forager is precisely on (after coordinate rounding), if it is precisely
-  on foodspot, or nil; and (b) a sequence of coordinates of foodspots that
-  within perceptual radius, but not precisely on, or nil."
+  list first. order-found is passed (a) the coordinates of the foodspot
+  that the forager is precisely on (after coordinate rounding), if it is
+  precisely on foodspot, or nil; and (b) a sequence of coordinates of other
+  foodspots that are within perceptual radius, or nil."
   [env-getxy order-found env x y]
   (let [x-int (math/round x) ; mget accepts floats but floors them
         y-int (math/round y) ; we want round, not floor
@@ -429,3 +406,35 @@
 
 ;; TODO: Maybe add version of perc-foodspot that chooses the closest one, and
 ;; only chooses randomly if there are mulitple equally close foodspots.
+
+
+(comment
+  (use 'clojure.repl) ; for pst
+  (def size 50)
+  (def e (make-env size))
+  (mx/shape (:locs e))
+  (mx/pm (:locs e))
+  (add-toroidal-foodspot! e 4 2 3)
+  (add-toroidal-foodspot! e 4.5 2.75 3.3)
+  (add-toroidal-foodspot! e 2 6 4)
+  (add-toroidal-foodspot! e 2 44.17 29.8)
+  (toroidal-env-getxy e 2 3)
+  (toroidal-env-getxy e 2.75 3.3)
+  (toroidal-env-getxy e 3 3)
+  (raw-env-getxy e 6 4) ; doesn't use matrix indexing
+  (raw-env-getxy e 2 4) ; doesn't use matrix indexing
+  (locs-foodspot-coords (:locs e))
+  (env-foodspot-coords e)
+  (filter-coords (:locs e) seq)
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+  (def in-radii (h/vega-food-plot
+                  (h/add-point-labels "food" 
+                                      (map reverse ; because matrix coords
+                                           (filter-coords (:locs e) seq)))
+                  (env-size e)
+                  400
+                  0.75))
+  (oz/view! in-radii)
+)
