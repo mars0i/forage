@@ -4,7 +4,7 @@
             [forage.core.run :as fr]
             [forage.core.food :as f]
             [forage.core.walks :as w]
-            [forage.env-mason :as em]
+            [forage.core.env-mason :as em]
             [utils.random :as r]
             [utils.spiral :as sp]))
 
