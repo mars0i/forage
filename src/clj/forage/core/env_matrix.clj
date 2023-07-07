@@ -393,7 +393,7 @@
 (defn matrix-perc-foodspots
   "Examines location [(round x) (round y)] in env. Returns a falsey value
   if no foodspot is within the perceptual radius of that position, or a
-  sequence (not merely collection) of coordinates of all foodspots within
+  sequence (not merely a collection) of coordinates of all foodspots within
   perceptual radii. The function env-getxy should be a function such as
   trimmed-env-getxy (which returns the contents of a location or false if
   It's outside the env), or toroidal-env-getxy (which wraps locations). the
