@@ -9,7 +9,7 @@
             [forage.core.run :as fr]
             [forage.core.food :as f]
             [forage.core.walks :as w]
-            [forage.core.env-mason :as em]
+            [forage.core.env-mason :as emas]
             [utils.random :as r]
             [utils.spiral :as sp]))
 
@@ -53,7 +53,7 @@
   and the right edge along the equator."
   [denom nomin]
   (let [half-size (/ (params :env-size) 2)] ; probably already defined as var, but should get from params
-    (em/make-env (params :env-discretization)
+    (emas/make-env (params :env-discretization)
                  (params :env-size)
                  [[(long (+ half-size (* (/ nomin denom) half-size))) ; coerce to long: avoid probs later with Ratio, BigInt
                    half-size]])))
@@ -69,13 +69,13 @@
 
 (defn make-toroidal-look-fn
   [env]
-  (partial em/perc-foodspots-exactly-toroidal env (params :perc-radius)))
+  (partial emas/perc-foodspots-exactly-toroidal env (params :perc-radius)))
 
 (defn make-unbounded-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
-  (partial em/perc-foodspots-exactly env (params :perc-radius)))
+  (partial emas/perc-foodspots-exactly env (params :perc-radius)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
