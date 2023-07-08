@@ -116,7 +116,6 @@
   (mx/pm (:locs e))
   (mx/shape (:locs e))
   (mx/mget (:locs e) 4 4)
-
 )
 
 (defn toroidize-coord
@@ -207,12 +206,12 @@
     (remove (partial = [round-x round-y]) ; circle-range will have rounded.
             (make-toroidal-circle-range env radius x y)))) ; use raw x, y for radius calculation
 
-(defn make-trimmed-circle-range 
+(defn make-trimmed-circle-range
   "Returns a sequence of coordinates representing a filled circle, around
   [x y], of external size perc-radius, trimmed to the dimensions of env if
   necessary: points not falling within the environment are not included."
   [env radius x y]
-  (trim-outside-pairs (:size env) (circle-range env radius x y)))
+  (trim-outside-pairs (:size env) (circle-range radius x y)))
 
 (defn make-trimmed-donut
   "Does the same thing as make-trimmed-circle-range, but removes the
