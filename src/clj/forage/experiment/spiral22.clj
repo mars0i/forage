@@ -1,3 +1,8 @@
+;; Uses env-mason.
+;;
+;; Experiments that use walks that are composites of:
+;;    - Spiral walks
+;;    - Levy walks with various mu values (including ballistic and Brownian)
 (ns forage.experiment.spiral22
   (:require ;[criterium.core :as crit]
             ;[clj-async-profiler.core :as prof]
