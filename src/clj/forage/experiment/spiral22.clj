@@ -213,19 +213,19 @@
   (def env (envs 2))
 
   (def walk1s (time (w/walk-stops [half-size half-size] (composite-mu1-spiral-vecs (params :maxpathlen)))))
-  (def vwalk1s (time (h/vega-envwalk-plot env 600 0.75 200 walk1s)))
+  (def vwalk1s (time (h/vega-envwalk-plot env 600 0.75 200 walk1s :foodspots-on-top? true)))
   (time (oz/view! vwalk1s))
 
   (def walk15s (time (w/walk-stops [half-size half-size] (composite-mu15-spiral-vecs (params :maxpathlen)))))
-  (def vwalk15s (time (h/vega-envwalk-plot env 600 0.75 200 walk15)))
+  (def vwalk15s (time (h/vega-envwalk-plot env 600 0.75 200 walk15 :foodspots-on-top? true)))
   (time (oz/view! vwalk15))
 
   (def walk13 (time (w/walk-stops [half-size half-size] (composite-mu1-mu3-vecs (params :maxpathlen)))))
-  (def vwalk13 (time (h/vega-envwalk-plot env 600 0.75 200 walk13)))
+  (def vwalk13 (time (h/vega-envwalk-plot env 600 0.75 200 walk13 :foodspots-on-top? true)))
   (time (oz/view! vwalk13))
 
   (def walk153 (time (w/walk-stops [half-size half-size] (composite-mu15-mu3-vecs (params :maxpathlen)))))
-  (def vwalk153 (time (h/vega-envwalk-plot env 600 0.75 200 walk153)))
+  (def vwalk153 (time (h/vega-envwalk-plot env 600 0.75 200 walk153 :foodspots-on-top? true)))
   (time (oz/view! vwalk153))
 
   ;; Try this instead:
