@@ -23,7 +23,8 @@
 
 (def default-dirname "../../data.foraging/forage/spiral22mat/")
 
-(def half-size  10000) ; half the full width of the env
+(def half-size  10000) ; same as spiral22.clj
+(def half-size 1000) (println "\nUSING SMALL ENV SIZE FOR TESTING.\n")
 (def maxpathlen (* 100 half-size)) ; max length of an entire continuous search path
 (def explore-segment-len (/ maxpathlen 400.0)) ; max length of walk segments that go far
 (def examine-segment-len (/ maxpathlen 50.0))  ; max length of walk segments that stay local (not exploit, but rather "look closely", examine)
@@ -62,18 +63,19 @@
   (def t (make-target 5 2))
 )
 
-(defn make-toroidal-env
-  [denom nomin]
-  (let [targets (make-target denom nomin)
-        env (emat/make-env (params :env-size))]
-    (emat/add-toroidal-foodspots! env (params :perc-radius) targets)
-    env))
-
 (defn make-trimmed-env
   [denom nomin]
   (let [targets (make-target denom nomin)
         env (emat/make-env (params :env-size))]
     (emat/add-trimmed-foodspots! env (params :perc-radius) targets)
+    env))
+
+;; UNUSED AT PRESENT, but CHECK BELOW.
+(defn make-toroidal-env
+  [denom nomin]
+  (let [targets (make-target denom nomin)
+        env (emat/make-env (params :env-size))]
+    (emat/add-toroidal-foodspots! env (params :perc-radius) targets)
     env))
 
 (comment
@@ -82,24 +84,27 @@
   (:size trimenv)
   (class (:locs trimenv))
   (mx/shape (:locs trimenv))
+  (emat/env-foodspot-coords trimenv)
 
-  ;; Don't do this: (mx/pm (:locs trimenv))
-  ;; There are many millions of cells, and you'll wait a long time.
+  ;; Don't do this unjudiciously: (mx/pm (:locs trimenv))
+  ;; There may be many millions of cells, and you'll wait a long time.
 
   (def torenv (make-toroidal-env 5 2))
   (class torenv)
   (:size torenv)
-  (mx/shape (:locs tore))
+  (mx/shape (:locs torenv))
+  (emat/env-foodspot-coords torenv)
 )
 
 
+(def trimmed-envs (mapv (partial make-trimmed-env 5)
+                        (range 1 6))) ; five targets at 1/5, 2/4, 3/4, 4/5, 5/5 of distance to border
+
+;; UNUSED AT PRESENT, but CHECK BELOW.
 ;; Make envs each with a single target but at several different distances
 ;; from center as proportion of size of env:
 (def toroidal-envs (mapv (partial make-toroidal-env 5)
                          (range 1 6))) ; five targets at 1/5, 2/4, 3/4, 4/5, 5/5 of distance to border
-
-(def trimmed-envs (mapv (partial make-trimmed-env 5)
-                        (range 1 6))) ; five targets at 1/5, 2/4, 3/4, 4/5, 5/5 of distance to border
 
 (comment
   (count toroidal-envs)
@@ -112,6 +117,7 @@
   [trimmed-env]
   (partial emat/perc-foodspots-trimmed trimmed-env (params :perc-radius)))
 
+;; UNUSED AT PRESENT, but CHECK BELOW.
 (defn make-toroidal-look-fn
   [toroidal-env]
   (partial emat/perc-foodspots-toroidal toroidal-env (params :perc-radius)))
@@ -127,7 +133,7 @@
 ;; MAKE THE EXPERIMENTS
 
 (def seed (r/make-seed))
-;(def seed -7370724773351240133)
+(def seed 103758742532356121)
 (println "Using seed" seed)
 (def rng (r/make-well19937 seed))
 
@@ -187,56 +193,56 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Maps whose values are functions that run composite and non-composite 
-;; walks in each of the different environments defined above.
+;; walks in each of the different TRIMMED environments defined above.
 
 ;; composite mu=1.1 and mu=3
 (def mu1-mu3-walk-fns
-  {"composite-mu1-mu3-env0" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
-   "composite-mu1-mu3-env1" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
-   "composite-mu1-mu3-env2" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
-   "composite-mu1-mu3-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))})
+  {"composite-mu1-mu3-env0" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
+   "composite-mu1-mu3-env1" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
+   "composite-mu1-mu3-env2" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
+   "composite-mu1-mu3-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))})
 
 ;; composite mu=1.5 and mu=3
 (def mu15-mu3-walk-fns
-  {"composite-mu15-mu3-env0" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
-   "composite-mu15-mu3-env1" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
-   "composite-mu15-mu3-env2" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
-   "composite-mu15-mu3-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))})
+  {"composite-mu15-mu3-env0" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
+   "composite-mu15-mu3-env1" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
+   "composite-mu15-mu3-env2" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
+   "composite-mu15-mu3-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))})
 
 ;; composite mu=1.1 and spiral
 (def mu1-spiral-walk-fns
-  {"composite-mu1-spiral-env0" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
-   "composite-mu1-spiral-env1" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
-   "composite-mu1-spiral-env2" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
-   "composite-mu1-spiral-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))})
+  {"composite-mu1-spiral-env0" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
+   "composite-mu1-spiral-env1" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
+   "composite-mu1-spiral-env2" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
+   "composite-mu1-spiral-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))})
 
 ;; composite mu=1.5 and spiral
 (def mu15-spiral-walk-fns
-  {"composite-mu15-spiral-env0" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
-   "composite-mu15-spiral-env1" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
-   "composite-mu15-spiral-env2" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
-   "composite-mu15-spiral-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))})
+  {"composite-mu15-spiral-env0" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
+   "composite-mu15-spiral-env1" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
+   "composite-mu15-spiral-env2" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
+   "composite-mu15-spiral-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (trimmed-envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))})
 
 ;; pure mu=2 walks (using my older interface)
 (def mu15-walk-fns
-  {"mu15-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 1.5)
-   "mu15-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 1.5)
-   "mu15-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 1.5)
-   "mu15-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 1.5)})
+  {"mu15-env0" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 0)) nil params 1.5)
+   "mu15-env1" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 1)) nil params 1.5)
+   "mu15-env2" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 2)) nil params 1.5)
+   "mu15-env3" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 3)) nil params 1.5)})
 
 ;; pure mu=2 walks (using my older interface)
 (def mu2-walk-fns
-  {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
-   "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
-   "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
-   "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)})
+  {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 0)) nil params 2.0)
+   "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 1)) nil params 2.0)
+   "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 2)) nil params 2.0)
+   "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 3)) nil params 2.0)})
 
 ;; pure mu=2.5 walks (using my older interface)
 (def mu25-walk-fns
-  {"mu25-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.5)
-   "mu25-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.5)
-   "mu25-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.5)
-   "mu25-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.5)})
+  {"mu25-env0" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 0)) nil params 2.5)
+   "mu25-env1" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 1)) nil params 2.5)
+   "mu25-env2" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 2)) nil params 2.5)
+   "mu25-env3" (partial fr/levy-run rng (make-unbounded-look-fn (trimmed-envs 3)) nil params 2.5)})
 
 
    ;; TO ADD: Lévy searchers or ballistic searches with perceptual
@@ -244,33 +250,36 @@
 
    ;; AND MAYBE ADD: Full spiral of length equal to maxpathlen
    
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; TODO repeat the above using TOROIDAL ENVS.
 
 (comment
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; EXAMINE, CONFIGURE:
+
+  (clojure.repl/pst)
 
   ;; WHAT DO THESE WALKS LOOK LIKE?
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  (def env (envs 2))
+  (def env (trimmed-envs 2))
 
   (def walk1s (time (w/walk-stops [half-size half-size] (composite-mu1-spiral-vecs (params :maxpathlen)))))
-  (def vwalk1s (time (h/vega-envwalk-plot env 600 0.75 200 walk1s)))
+  (def vwalk1s (time (h/vega-envwalk-plot env 600 0.5 15 walk1s :foodspots-on-top? true)))
   (time (oz/view! vwalk1s))
 
   (def walk15s (time (w/walk-stops [half-size half-size] (composite-mu15-spiral-vecs (params :maxpathlen)))))
-  (def vwalk15s (time (h/vega-envwalk-plot env 600 0.75 200 walk15)))
-  (time (oz/view! vwalk15))
+  (def vwalk15s (time (h/vega-envwalk-plot env 600 0.5 15 walk15s :foodspots-on-top? true)))
+  (time (oz/view! vwalk15s))
 
   (def walk13 (time (w/walk-stops [half-size half-size] (composite-mu1-mu3-vecs (params :maxpathlen)))))
-  (def vwalk13 (time (h/vega-envwalk-plot env 600 0.75 200 walk13)))
+  (def vwalk13 (time (h/vega-envwalk-plot env 600 0.5 15 walk13 :foodspots-on-top? true)))
   (time (oz/view! vwalk13))
 
   (def walk153 (time (w/walk-stops [half-size half-size] (composite-mu15-mu3-vecs (params :maxpathlen)))))
-  (def vwalk153 (time (h/vega-envwalk-plot env 600 0.75 200 walk153)))
+  (def vwalk153 (time (h/vega-envwalk-plot env 600 0.5 15 walk153 :foodspots-on-top? true)))
   (time (oz/view! vwalk153))
 
   ;; Try this instead:
@@ -302,3 +311,4 @@
   (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns 2000 seed)))
 
 )
+
