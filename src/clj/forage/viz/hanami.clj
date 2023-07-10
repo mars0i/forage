@@ -17,6 +17,8 @@
 ;; in env.clj via the alias below.  (This allows legacy functions to
 ;; refer to env-mason, but to allow other functions to use whichever
 ;; environment implementation is currently selected.)
+
+(ns-unalias *ns* 'env) ; allow redefining without restarting Clojure
 (alias 'env forage.core.env/env)
 
 ;; Note field names have to be strings, not keywords, in order
@@ -278,21 +280,26 @@
 ;; TODO add a nice header
 (defn vega-envwalk-plot
   "Simple plot that plots whatever foodspots are in env and then plots
-  foodwalks and their hypothetical extensions. plot-dim is the
-  Vega-Lite dimension.  stroke-width is the Vega-Lite thickness of the
-  foraging path.  display-radius is the Vega-Lite size for foodspots
-  in perc-radius units: a display-radius of 1 is the perc-radius of a
-  forager. walk-stops is a sequence of 2D coordinates representing the
-  foraging path.  (Note that stroke-width uses Vega-Lite units, whereas
+  foodwalks and their hypothetical extensions. plot-dim is the Vega-Lite
+  dimension.  stroke-width is the Vega-Lite thickness of the foraging path.
+  display-radius is the Vega-Lite size for foodspots in perc-radius units:
+  a display-radius of 1 is the perc-radius of a forager. walk-stops is a
+  sequence of 2D coordinates representing the foraging path.  If
+  ':foodspots-on-top? truthy-val' is added, foodspots will be plotted on
+  top of the walk paths; otherwise walk paths will be appear on top of
+  foodspots. (Note that stroke-width uses Vega-Lite units, whereas
   display-radius uses units based on simulation values.)"
-  [env plot-dim stroke-width display-radius walk-stops]
+  [env plot-dim stroke-width display-radius walk-stops & {:keys [foodspots-on-top?]}]
   (let [env-plot (vega-env-plot env plot-dim display-radius)
         data-dim (env/env-size env)
         toroidal-walk (tor/toroidal-to-vega-lite "piece" (tor/wrap-path 0 data-dim walk-stops))
-        walk-plot (vega-walk-plot plot-dim data-dim stroke-width toroidal-walk)]
+        walk-plot (vega-walk-plot plot-dim data-dim stroke-width toroidal-walk)
+        plots (if foodspots-on-top?
+                (list walk-plot env-plot)
+                (list env-plot walk-plot))]
     (hc/xform
       ht/layer-chart
-      :LAYER (list env-plot walk-plot))))
+      :LAYER plots)))
 
 (defn did-couldve-walk-plot
   "Given a single foodwalk consisting of a sequence of found foodspots,
