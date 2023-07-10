@@ -396,7 +396,7 @@
   about parameters."
   (partial matrix-perc-foodspots trimmed-env-getxy))
 
-(def perc-foodspots-toroidally
+(def perc-foodspots-toroidal
   "([order-found env x y])
   Runs matrix-perc-foodspots with toroidal wrapping of coordinates that
   fall outside the boundaries of env.  See matrix-perc-foodspots for

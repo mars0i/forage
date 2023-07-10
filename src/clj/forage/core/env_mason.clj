@@ -187,7 +187,7 @@
   [perc-radius order-found env x y]
   (mason-perc-foodspots false perc-radius order-found env x y))
 
-(defn radius-perc-foodspots-toroidally
+(defn radius-perc-foodspots-toroidal
   "Runs mason-perc-foodspots perc-radius, with toroidal wrapping of
   coordinates that fall outside the boundaries of env.  See
   mason-perc-foodspots for further information about parameters.
