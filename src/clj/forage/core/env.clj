@@ -6,8 +6,9 @@
 ;; (This will affect functions that make use of an alias that is set to 
 ;; whatever is referenced here. Functions can neverthless refer to a 
 ;; specific implementation using other aliases.)
-(def env 'forage.core.env-mason)
-;(def env 'forage.core.env-matrix)
+(ns-unalias *ns* 'env) ; allow redefining without restarting Clojure
+;(def env 'forage.core.env-mason)
+(def env 'forage.core.env-matrix)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
