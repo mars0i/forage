@@ -3,7 +3,7 @@
 ;; Experiments that use walks that are composites of:
 ;;    - Spiral walks
 ;;    - Levy walks with various mu values (including ballistic and Brownian)
-(ns forage.experiment.spiral22mat
+(ns forage.matruns.spiral22mat
   (:require ;[criterium.core :as crit]
             ;[clj-async-profiler.core :as prof]
 	    [clojure.core.matrix :as mx]
@@ -23,9 +23,18 @@
 
 (def default-dirname "../../data.foraging/forage/spiral22mat/")
 
+;; Amount to increase sizes so that perceptual radii can be represented as
+;; an approximately circular set of cells in the environment matrix.
+;; See note in env_matrix.clj for discussion.
+(def env-scale 100)
+
 (def half-size  10000) ; same as spiral22.clj
+(def scaled-half-size (* env-scale half-size))
+
 (def half-size 1000) (println "\nUSING SMALL ENV SIZE FOR TESTING.\n")
-(def maxpathlen (* 100 half-size)) ; max length of an entire continuous search path
+(def scaled-half-size (* 50 half-size))
+
+(def maxpathlen (* 100 scaled-half-size)) ; max length of an entire continuous search path
 (def explore-segment-len (/ maxpathlen 400.0)) ; max length of walk segments that go far
 (def examine-segment-len (/ maxpathlen 50.0))  ; max length of walk segments that stay local (not exploit, but rather "look closely", examine)
 (def trunclen explore-segment-len)
@@ -38,14 +47,14 @@
              :food-distance       food-distance 
              :perc-radius         1  ; distance that an animal can "see" in searching for food
              :powerlaw-min        1
-             :env-size            (* 2 half-size)
+             :env-size            (* 2 scaled-half-size)
              :env-discretization  5 ; for Continuous2D; see foodspot.clj
-             :init-loc-fn         (constantly [half-size half-size])
+             :init-loc-fn         (constantly [scaled-half-size scaled-half-size])
              :init-pad            nil ; if truthy, initial loc offset by this in rand dir
              :maxpathlen          maxpathlen
              :trunclen            trunclen
              :look-eps            0.2    ; TODO WILL THIS WORK WITH SHORTER SPIRAL SEGMENTS?
-             :basename            (str default-dirname "spiral22_")
+             :basename            (str default-dirname "spiral22mat_")
              ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

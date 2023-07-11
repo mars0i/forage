@@ -21,10 +21,16 @@
 ;; external coordinates corresponding to the ones used by env-mason, and
 ;; internal coordinates in matrices that gave a more fined-grained resolution.
 ;; I decided that keeping track of the conversion between these two scales
-;; was more trouble than it was worth.  So I'm instead going to just change
-;; the scale in new experiments that use this namespace.  Those experiments
+;; was more trouble than it was worth.  So I'm instead going to just CHANGE
+;; THE SCALE in new experiments that use this namespace.  Those experiments
 ;; will be in forage/matruns rather than forage/experiment, to distinguish
 ;; them.
+
+;; NOTE FOR EXAMPLE to program an env-matrix analog of an env-mason
+;; simulation with env dimensions 10K x 10K, and perc-radius = 1, an
+;; env-matrix version should be at least 100X that, i.e. an env with size
+;; 1M x 1M and perc-radius = 100.
+
 
 ;; TODO Experiment using fastmath to speed this up.
 
