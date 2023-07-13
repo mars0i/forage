@@ -27,12 +27,14 @@
 ;; an approximately circular set of cells in the environment matrix.
 ;; See note in env_matrix.clj for discussion.
 (def env-scale 100)
-
 (def half-size  10000) ; same as spiral22.clj
 (def scaled-half-size (* env-scale half-size))
 
-(def half-size 1000) (println "\nUSING SMALL ENV SIZE FOR TESTING.\n")
-(def scaled-half-size (* 50 half-size))
+;; TESTING VERSIONS:
+(println "\nUSING SMALL ENV SIZE FOR TESTING.\n")
+(def env-scale 50)
+(def half-size 1000)
+(def scaled-half-size (* env-scale half-size))
 
 (def maxpathlen (* 100 scaled-half-size)) ; max length of an entire continuous search path
 (def explore-segment-len (/ maxpathlen 400.0)) ; max length of walk segments that go far
@@ -82,8 +84,10 @@
 ;; UNUSED AT PRESENT, but CHECK BELOW.
 (defn make-toroidal-env
   [denom nomin]
+  (println "In make-toroidal-env") ; DEBUG
   (let [targets (make-target denom nomin)
         env (emat/make-env (params :env-size))]
+    (println "In make-toroidal-env; made env") ; DEBUG
     (emat/add-toroidal-foodspots! env (params :perc-radius) targets)
     env))
 
@@ -106,14 +110,14 @@
 )
 
 
-(def trimmed-envs (mapv (partial make-trimmed-env 5)
+(def trimmed-envs (mapv (fn [numator] (println "numerator=" numator) (partial make-trimmed-env 5))
                         (range 1 6))) ; five targets at 1/5, 2/4, 3/4, 4/5, 5/5 of distance to border
 
 ;; UNUSED AT PRESENT, but CHECK BELOW.
 ;; Make envs each with a single target but at several different distances
 ;; from center as proportion of size of env:
 (def toroidal-envs (mapv (partial make-toroidal-env 5)
-                         (range 1 6))) ; five targets at 1/5, 2/4, 3/4, 4/5, 5/5 of distance to border
+                         (range 1 6))) ; five targets at 1/5, 2/5, 3/5, 4/5, 5/5 of distance to border
 
 (comment
   (count toroidal-envs)
