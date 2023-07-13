@@ -96,6 +96,7 @@
   (class me2)
 )
 
+
 ;; By default mx/new-matrix initializes with zero doubles.  I don't want that 
 ;; because it could be confusing.  Instead initialize with empty sets,
 ;; which can be conj'ed onto later.  (Don't use nil or [] for this purpose: It can 
@@ -106,10 +107,13 @@
   that coordinates in env range from [0,0] to [size-1,size-1].  All of the
   cells of the matrix will be initialized with env-loc-initializer."
   [size]
+  (println "In make-env with size=" size) ; DEBUG
   (let [locations (mx/new-matrix :ndarray size size)] ;; Use ndarray internally so mset! works
+    (println "Made matrix, with dimensions" (mx/shape locations)) ; DEBUG
     (doseq [row (range size)  ; note zero-based
             col (range size)]
-      (mx/mset! locations row col env-loc-initializer)) ; this default is assumed by other functions here.
+      (mx/mset! locations col row env-loc-initializer)) ; this default is assumed by other functions here.
+    (println "Initialized all cells") ; DEBUG
     (->MatEnv size locations)))
 
 (defn env-size
@@ -415,6 +419,8 @@
 
 (comment
   (use 'clojure.repl) ; for pst
+  (clojure.repl/pst)
+
   (def size 50)
   (def e (make-env size))
   (mx/shape (:locs e))
