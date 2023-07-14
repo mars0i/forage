@@ -2,16 +2,22 @@
   (:require [clojure.core.matrix :as mx]))
 
 (defn make-mat
-  [size]
-  (println "In make-mat with size=" size)
-  (let [m (mx/new-matrix :ndarray size size)]
+  [mattype size]
+  (println "In make-mat with size =" size)
+  (let [m (mx/new-matrix mattype size size)]
     (println "Made matrix, with dimensions" (mx/shape m))
     (doseq [row (range size)
             col (range size)]
-      (mx/mset! m col row 1))
+      (mx/mget m col row)
+      ;(mx/mset! m col row 1)
+      )
     (println "Done initializing matrix")
     m))
 
-(def m (make-env 100000))
+(def size 100000)
 
-(clojure.repl/pst)
+(comment
+  (def ndmat (make-mat :ndarray size))
+  (clojure.repl/pst)
+  (def psmat (make-mat :persistent-vector size))
+)
