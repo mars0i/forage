@@ -7,6 +7,69 @@
 	    [utils.random :as r]
             [utils.misc :as um]))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(println "NOTE this namespace is DEPRECATED.
+         See comments immediately in file for explanation.")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; WHY IS THIS DEPRECATED?
+;; 
+;; This namespace, env-matrix, was intended as a replacement for env-mason,
+;; which uses MASON's Continuous2D class to represent environments.
+;; I was finding that locating foodspots in Continuous2D was slow for certain
+;; purposes, and I wondered whether using matrices would be more efficient.
+;; 
+;; The idea of env-matrix was that matrices should be represented by
+;; locations in a matrix, with perceptual radii represented in the matrix
+;; itself by contents of cells.  Specifically, cells could contain the
+;; coordinates of a target.  The presence of those coordinates meant that
+;; the location was inside the perceptual radius.  So a matrix to represent
+;; a 5000x5000 environment would need to be larger by at least 100x, to
+;; represent circles around targets roughly smoothly.  (Originally I wanted
+;; the external interactions to use the "outer" 5000x5000 coordinates,
+;; translated into the "internal"  5000000x5000000 coordinates, but that
+;; was too much of a headache, so the version below requires that
+;; user-level functions perform the translation inside of a look-fn.
+;; 
+;; Note that since what I want to encode in matrix locations is non-numeric,
+;; I have three options:
+;; 
+;;   1. core.matrix ndarray, which is easy to work with since it allows
+;;   assignment of arbitrary Clojure values into a location.  This makes it
+;;   easy to initialize an environment, and easy to modify during runs
+;;   (e.g. for destructive searcher).
+;; 
+;;   2. core.matrix persistent-vector, which is purely functional (since
+;;   it's just Clojure vectors of Clojure vectors).  This means that
+;;   initialization is more complicated, and modification has to be done as
+;;   a functional update, which again, could be a little more difficult. In
+;;   addition, would worry that indexing might be slow, but maybe that's
+;;   incorrecvt.
+;; 
+;;   3. Encoding non-numeric information as numbers in some other kind of
+;;   matrix.  Ugh.
+;; 
+;; The problem is that ndarray has a bug that doesn't seem to allow using
+;; matrices as large as the ones I need (see
+;; CoreMatrixErrorSpiral22mat.txt, and the issue I submitted
+;; https://github.com/mikera/core.matrix/issues/362).
+;; 
+;; So I would have to rewrite env-matrix using persistent-vector, which I
+;; don't relish.
+;; 
+;; In addition, it looks like the matrices I need are very large, and very
+;; memory intensive.  That's true with ndarray, and it's likely to be at
+;; least as bad with persistent-vector.
+;; 
+;; Finally, the original motivation was that I wanted to do runs with a
+;; single target.  This meant that failure was common, so to get reasonable
+;; statistics, lots and lots of runs were needed.  Hence the need for
+;; speed.  However, I've now figured out that I can get equivalent results
+;; using multiple targets.  So I don't need speed as much.
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; NOTE ENV-MASON treats perceptual radius as a property of the
 ;; forager, so it's not represented in the env.  To get the perceptual
 ;; radius into the look-fn, it has to be supplied from an independent

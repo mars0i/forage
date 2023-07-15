@@ -3,7 +3,7 @@
 ;; Experiments that use walks that are composites of:
 ;;    - Spiral walks
 ;;    - Levy walks with various mu values (including ballistic and Brownian)
-(ns forage.matruns.spiral22mat
+(ns forage.experiment.spiral22mat
   (:require ;[criterium.core :as crit]
             ;[clj-async-profiler.core :as prof]
 	    [clojure.core.matrix :as mx]
@@ -15,10 +15,11 @@
             [utils.random :as r]
             [utils.spiral :as sp]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(println "NOTE this experiment file uses the DEPRECATED
+         and non-functional env-matrix namespace.")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;(def $ "THIS FUNCTION, $, IS AN ABBREVIATION FOR partial." partial)
-;; partial is a lot slower than (fn [...] ...) with four or more args 
-;; passed to the fn, but only would matter in an inner loop.
 
 
 (def default-dirname "../../data.foraging/forage/spiral22mat/")
