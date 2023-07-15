@@ -9,15 +9,16 @@
             [forage.viz.hanami :as h]
             [forage.core.walks :as w]
             [forage.core.food :as f]
-            [forage.core.env-mason :as masonenv]
-            [forage.core.env-matrix :as matrixenv]
-            [forage.core.env]))
+            [forage.core.env-mason :as env]
+            ;[forage.core.env-matrix :as matrixenv]
+            ;[forage.core.env]
+            ))
 ;; Code below can explicitly refer either to env-mason or env-matrix
 ;; using the alias above, or to whichever one is globally selected
 ;; in env.clj via the alias below.  (This allows legacy functions to
 ;; refer to env-mason, but to allow other functions to use whichever
 ;; environment implementation is currently selected.)
-(alias 'env forage.core.env/env)
+;(alias 'env forage.core.env/env)
 
 (def default-dirname "../../data.foraging/forage/")
 (def default-file-prefix default-dirname) ; for backward compatibility
@@ -203,7 +204,7 @@
         (recur (dec n)
                fw
                (+ n-segments (w/count-segments-until-found fw))
-               (conj found (masonenv/foodspot-coords-if-found (first fw)))
+               (conj found (env/foodspot-coords-if-found (first fw)))
                (conj lengths (w/path-until-found-length fw)))))))
 
 
@@ -345,7 +346,7 @@
        - :rng; value is PRNG object with state as it was at end of runs."
   ([dirname env params exponents walks-per-combo seed]
    (levy-experiments dirname env params exponents walks-per-combo seed 
-                     (partial masonenv/perc-foodspots-exactly env (params :perc-radius))))
+                     (partial env/perc-foodspots-exactly env (params :perc-radius))))
   ([dirname env params exponents walks-per-combo seed look-fn]
    (levy-experiments dirname env params exponents walks-per-combo seed 
                      look-fn (r/make-well19937 seed)))
@@ -444,7 +445,7 @@
         dir-increment (/ (* m/pi (params :max-frac)) num-dirs)
         init-dirs (mapv (partial * dir-increment)
                         (range (inc num-dirs))) ; inc to include range max
-        look-fn (partial masonenv/perc-foodspots-exactly env (params :perc-radius))
+        look-fn (partial env/perc-foodspots-exactly env (params :perc-radius))
         id (r/make-seed)
         sorted-params (into (sorted-map) params) ; for writing param file
         param-filename (str file-prefix "straight_param" id ".csv")

@@ -9,17 +9,18 @@
             [utils.math :as m]
             [forage.core.food :as f]
             [forage.core.walks :as w]
-            [forage.core.env-mason :as masonenv]
-            [forage.core.env-matrix :as matrixenv]
-            [forage.core.env]))
+            [forage.core.env-mason :as env]
+            ;[forage.core.env-matrix :as matrixenv]
+            ;[forage.core.env]
+            ))
 ;; Code below can explicitly refer either to env-mason or env-matrix
 ;; using the alias above, or to whichever one is globally selected
 ;; in env.clj via the alias below.  (This allows legacy functions to
 ;; refer to env-mason, but to allow other functions to use whichever
 ;; environment implementation is currently selected.)
 
-(ns-unalias *ns* 'env) ; allow redefining without restarting Clojure
-(alias 'env forage.core.env/env)
+;(ns-unalias *ns* 'env) ; allow redefining without restarting Clojure
+;(alias 'env forage.core.env/env)
 
 ;; Note field names have to be strings, not keywords, in order
 ;; for vega-lite to make full use of them.
