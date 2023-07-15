@@ -8,10 +8,12 @@
 (ns forage.experiment.spiral23
   (:require ;[criterium.core :as crit]
             ;[clj-async-profiler.core :as prof]
+            ;[clojure.math :as cmath]
+            [utils.math :as um]
             [forage.core.run :as fr]
             [forage.core.food :as f]
             [forage.core.walks :as w]
-            [forage.core.env-mason :as emas]
+            [forage.core.env-mason :as env]
             [utils.random :as r]
             [utils.spiral :as sp]))
 
@@ -21,7 +23,7 @@
 ;; passed to the fn, but only would matter in an inner loop.
 
 
-(def default-dirname "../../data.foraging/forage/spiral22/")
+(def default-dirname "../../data.foraging/forage/spiral23/")
 
 (def half-size  10000) ; half the full width of the env
 (def maxpathlen (* 100 half-size)) ; max length of an entire continuous search path
@@ -50,27 +52,32 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SETUP
 
+um/rotate
+
+;; FIXME experiments/spiral23badTargets.png shows that this is not working correctly.
+;; The targets are not in the correct locations and some seem to be missing.
+;; [Made with (oz/view! vwalk13) below.]
 (defn make-multiple-target-env
-  "Make an env with a multiple foodspots at the same distance--the proportion
-  denom/nomin of half-size from center of env."
-  [denom nomin]
-  (let [half-size (/ (params :env-size) 2) ; probably already defined as var, but should get from params
-        distance (long (+ half-size (* (/ nomin denom) half-size)))]
-    (emas/make-env (params :env-discretization)
-                 (params :env-size)
-                 ;; coerce to longs to avoid probs later with Ratio, BigInt:
-                 [
-                  ;; TODO add diagonals, or use an arbitrary rotation angle.
-                  [distance half-size] ; east
-                  [(- distance) half-size] ; west
-                  [half-size distance] ; north
-                  [half-size (- distance)] ; south
-                  ]
-                 )))
+  "Make an env with a num-targets multiple foodspots at the same
+  distance--the proportion denom/nomin of half-size from center of env,
+  equally spaced in radians."
+  [num-targets denom nomin]
+  ;; coerce to doubles to avoid probs later with Ratio, BigInt:
+  (let [half-size (double (/ (params :env-size) 2)) ; probably already defined as var, but should get from params
+        distance-from-zero (double (+ half-size (* (/ nomin denom) half-size)))
+        first-tgt [distance-from-zero half-size] ; east from center
+        directions (map (fn [n] (/ um/pi2 n)) (rest (range num-targets))) ; don't divide by zero
+        _ (prn directions) ; DEBUG
+        targets (cons first-tgt (map (fn [dir] (um/rotate dir first-tgt)) directions))
+        _ (prn targets) ; DEBUG
+        ]
+    (env/make-env (params :env-discretization)
+                   (params :env-size)
+                   targets)))
 
 ;; Make envs each with a single target but at several different distances
 ;; from center as proportion of size of env:
-(def envs (mapv (partial make-single-target-env 5)
+(def envs (mapv (partial make-multiple-target-env 8 5)
                 (range 1 6))) ; five targets at 1/5, 2/4, 3/4, 4/5, 5/5 of distance to border
 
 (comment
@@ -79,13 +86,13 @@
 
 (defn make-toroidal-look-fn
   [env]
-  (partial emas/perc-foodspots-exactly-toroidal env (params :perc-radius)))
+  (partial env/perc-foodspots-exactly-toroidal env (params :perc-radius)))
 
 (defn make-unbounded-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
-  (partial emas/perc-foodspots-exactly env (params :perc-radius)))
+  (partial env/perc-foodspots-exactly env (params :perc-radius)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -221,6 +228,7 @@
   (oz/start-server!)
 
   (def env (envs 2))
+  (env/env-size env)
 
   (def walk1s (time (w/walk-stops [half-size half-size] (composite-mu1-spiral-vecs (params :maxpathlen)))))
   (def vwalk1s (time (h/vega-envwalk-plot env 600 0.75 200 walk1s :foodspots-on-top? true)))
