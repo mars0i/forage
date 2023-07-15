@@ -20,6 +20,7 @@
          (st/split (str x) #"\.")))
   
 (def pi math/PI) ; I just like it lowercase
+(def pi2 (* 2 math/PI)) ; 360
 ;(defn cos [theta] (Math/cos theta)) ; now using clojure.math wrappers
 ;(defn sin [theta] (Math/sin theta))
 ;(defn tan [theta] (Math/tan theta))
@@ -49,8 +50,8 @@
 
 
 (defn rotate
-  "Given an angle theta and a pair of coordinates [x y], returns a
-  new pair of coordinates that is the rotation of [x y] by theta."
+  "Given an angle theta in radians and a pair of coordinates [x y], returns
+  a new pair of coordinates that is the rotation of [x y] by theta."
   [theta [x y]]
   [(- (* x (cos theta))
       (* y (sin theta))) ,
