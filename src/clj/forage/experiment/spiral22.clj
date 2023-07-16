@@ -13,6 +13,8 @@
             [utils.random :as r]
             [utils.spiral :as sp]))
 
+;; SEE notes/forage/models/spiralplan[23].md for discussion of why 
+;; use only one foodspot, and why one might want to use more.
 
 ;(def $ "THIS FUNCTION, $, IS AN ABBREVIATION FOR partial." partial)
 ;; partial is a lot slower than (fn [...] ...) with four or more args 

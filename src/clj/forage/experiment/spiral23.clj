@@ -18,9 +18,8 @@
             [utils.spiral :as sp]))
 
 
-;(def $ "THIS FUNCTION, $, IS AN ABBREVIATION FOR partial." partial)
-;; partial is a lot slower than (fn [...] ...) with four or more args 
-;; passed to the fn, but only would matter in an inner loop.
+;; SEE notes/forage/models/spiralplan[23].md for discussion of why 
+;; use only one foodspot, and why one might want to use more.
 
 
 (def default-dirname "../../data.foraging/forage/spiral23/")
