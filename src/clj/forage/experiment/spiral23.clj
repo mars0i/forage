@@ -19,7 +19,26 @@
 
 
 ;; SEE notes/forage/models/spiralplan[23].md for discussion of why 
-;; use only one foodspot, and why one might want to use more.
+;; one might want to use only one foodspot, and why it can be OK to use
+;; more (as this file does) for the sake of efficiency.
+
+(def targets-per-env 4)
+;; Four targets rather than eight or six is conservative, but might be more
+;; appropriate when the distance from start to target is smaller (1/5 of
+;; distance to edge of env, below), which puts targets closer together.
+;; It's relevant that with four targets, each target is farther from the
+;; other than it is from the start point of the walks.  (It's sqrt2 times
+;; the distance from the start point.)
+;; 
+;; With eight targets, each target is closer to its nearest neighbor than
+;; to the start point--which is undesirable.
+;;
+;; With six targets, each target is the same distance to its nearest
+;; neighbor as to the starting point (because a hexagon is composed of six
+;; equilateral triangles), so that might be OK, but again, four targets is
+;; more conservative.
+;;
+;; See notes/forage/models/spiralplan23.md .
 
 
 (def default-dirname "../../data.foraging/forage/spiral23/")
@@ -51,7 +70,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SETUP
 
-um/rotate
+(defn shift-point
+  "Shifts the point [x y] to the right by inc-x and up by inc-y (where
+  these last two values may be negative)."
+  [inc-x inc-y [x y]]
+  [(+ x inc-x) (+ y inc-y)])
 
 ;; FIXME experiments/spiral23badTargets.png shows that this is not working correctly.
 ;; The targets are not in the correct locations and some seem to be missing.
@@ -63,24 +86,35 @@ um/rotate
   [num-targets denom nomin]
   ;; coerce to doubles to avoid probs later with Ratio, BigInt:
   (let [half-size (double (/ (params :env-size) 2)) ; probably already defined as var, but should get from params
-        distance-from-zero (double (+ half-size (* (/ nomin denom) half-size)))
-        first-tgt [distance-from-zero half-size] ; east from center
-        directions (map (fn [n] (/ um/pi2 n)) (rest (range num-targets))) ; don't divide by zero
-        _ (prn directions) ; DEBUG
-        targets (cons first-tgt (map (fn [dir] (um/rotate dir first-tgt)) directions))
-        _ (prn targets) ; DEBUG
-        ]
+        distance-from-zero (* (/ nomin denom) half-size)
+        first-zero-tgt [distance-from-zero 0] ; east from origin--will be shifted later
+        directions (map (fn [n] (* um/pi2 (/ n num-targets)))
+                        (rest (range num-targets))) ; don't divide by zero
+        zero-targets (cons first-zero-tgt
+                           (map (fn [dir] (um/rotate dir first-zero-tgt))
+                                directions))
+        targets (map (partial shift-point half-size half-size)
+                     zero-targets)]
+    ;(println (count directions) "directions:" directions) ; DEBUG
+    ;(println "zero-targets:" zero-targets) ; DEBUG
+    ;(println "targets:" targets) ; DEBUG
     (env/make-env (params :env-discretization)
-                   (params :env-size)
-                   targets)))
+                  (params :env-size)
+                  targets)))
 
 ;; Make envs each with a single target but at several different distances
 ;; from center as proportion of size of env:
-(def envs (mapv (partial make-multiple-target-env 8 5)
-                (range 1 6))) ; five targets at 1/5, 2/4, 3/4, 4/5, 5/5 of distance to border
+(def envs (mapv (partial make-multiple-target-env targets-per-env 5)
+                (range 1 6))) ; five targets at 1/5, 2/5, 3/5, 4/5, 5/5 of distance to border
+
+;; DEBUG/TESTING:
+;(def envs (mapv (partial make-multiple-target-env 4 5)
+;                (range 1 2))) 
 
 (comment
   (count envs)
+  um/pi2
+  (* um/pi2 3/4)
 )
 
 (defn make-toroidal-look-fn
@@ -226,23 +260,24 @@ um/rotate
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  (def env (envs 2))
+  (count envs)
+  (def env (envs 0))
   (env/env-size env)
 
   (def walk1s (time (w/walk-stops [half-size half-size] (composite-mu1-spiral-vecs (params :maxpathlen)))))
-  (def vwalk1s (time (h/vega-envwalk-plot env 600 0.75 200 walk1s :foodspots-on-top? true)))
+  (def vwalk1s (time (h/vega-envwalk-plot env 600 0.75 150 walk1s :foodspots-on-top? true)))
   (time (oz/view! vwalk1s))
 
   (def walk15s (time (w/walk-stops [half-size half-size] (composite-mu15-spiral-vecs (params :maxpathlen)))))
-  (def vwalk15s (time (h/vega-envwalk-plot env 600 0.75 200 walk15 :foodspots-on-top? true)))
-  (time (oz/view! vwalk15))
+  (def vwalk15s (time (h/vega-envwalk-plot env 600 0.75 150 walk15s :foodspots-on-top? true)))
+  (time (oz/view! vwalk15s))
 
   (def walk13 (time (w/walk-stops [half-size half-size] (composite-mu1-mu3-vecs (params :maxpathlen)))))
-  (def vwalk13 (time (h/vega-envwalk-plot env 600 0.75 200 walk13 :foodspots-on-top? true)))
+  (def vwalk13 (time (h/vega-envwalk-plot env 600 0.75 150 walk13 :foodspots-on-top? true)))
   (time (oz/view! vwalk13))
 
   (def walk153 (time (w/walk-stops [half-size half-size] (composite-mu15-mu3-vecs (params :maxpathlen)))))
-  (def vwalk153 (time (h/vega-envwalk-plot env 600 0.75 200 walk153 :foodspots-on-top? true)))
+  (def vwalk153 (time (h/vega-envwalk-plot env 600 0.75 150 walk153 :foodspots-on-top? true)))
   (time (oz/view! vwalk153))
 
   ;; Try this instead:
@@ -274,4 +309,3 @@ um/rotate
   (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns 2000 seed)))
 
 )
-
