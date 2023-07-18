@@ -67,7 +67,7 @@
              :maxpathlen          maxpathlen
              :trunclen            trunclen
              :look-eps            0.2    ; TODO WILL THIS WORK WITH SHORTER SPIRAL SEGMENTS?
-             :basename            (str default-dirname "spiral22_")
+             :basename            (str default-dirname "spiral23_")
              ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -109,6 +109,7 @@
 ;; from center as proportion of size of env:
 (def envs (mapv (partial make-multiple-target-env targets-per-env 5)
                 (range 1 6))) ; five targets at 1/5, 2/5, 3/5, 4/5, 5/5 of distance to border
+;; NOTE The fifth env may be unused below.
 
 ;; DEBUG/TESTING:
 ;(def envs (mapv (partial make-multiple-target-env 4 5)
@@ -120,6 +121,7 @@
   (* um/pi2 3/4)
 )
 
+;; UNUSED BELOW
 (defn make-toroidal-look-fn
   [env]
   (partial env/perc-foodspots-exactly-toroidal env (params :perc-radius)))
@@ -196,6 +198,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Maps whose values are functions that run composite and non-composite 
 ;; walks in each of the different environments defined above.
+
+;; NOTE Only using the first four envs (i.e. the first four target distances).
 
 ;; composite mu=1.1 and mu=3
 (def mu1-mu3-walk-fns
@@ -289,26 +293,42 @@
   ;            "compositeBrownianWalkExampleSpiral21commit_02cbde0_seed-7370724773351240133.png")
 
   ;(time (h/write-foodwalk-plots "compositemu1m3" :svg seed (envs 0) 600 1 1 1.0 0 "1.25,3" params [walk13]))
+)
 
+(comment
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
 
-  ;; These took about two hours each:
-  (def mu1-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns 2000 seed)))
-  (def mu1-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns 2000 seed)))
+  (def walks-per-fn 100)
 
-  ;; This took one hour:
-  (def mu2-data-and-rng  (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  2000 seed)))
-  ;; An hour and 45 minutes:
-  (def mu25-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns 2000 seed)))
+  ;; SPIRAL COMPOSITE WALKS:
+  (def mu1-spiral-data-and-rng
+    (do (println "mu=1.1 + spiral composite runs:")
+        (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns walks-per-fn seed))))
 
-  ;; 45-50 minutes:
-  (def mu15-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns 2000 seed)))
+  (def mu15-spiral-data-and-rng 
+    (do (println "mu=1.5 + spiral composite runs:")
+        (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns walks-per-fn seed))))
 
-  ;; two hours and 10 minutes:
-  (def mu15-mu3-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns 2000 seed)))
+  ;; BROWNIAN COMPOSITE WALKS:
+  (def mu1-mu3-data-and-rng 
+    (do (println "mu=1.1 + mu=3 composite runs:")
+        (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns walks-per-fn seed))))
 
-  ;; one hour, 35 minutes:
-  (def mu15-spiral-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns 2000 seed)))
+  (def mu15-mu3-data-and-rng 
+    (do (println "mu=1.5 + mu=3 composite runs:")
+        (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns walks-per-fn seed))))
 
+  ;; NON-COMPOSITE WALKS:
+  (def mu15-data-and-rng
+    (do (println "mu=1.5 homogeneous runs:")
+        (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns walks-per-fn seed))))
+
+  (def mu2-data-and-rng
+    (do (println "mu=2 homogeneous runs:")
+        (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  walks-per-fn seed))))
+
+  (def mu25-data-and-rng
+    (do (println "mu=2.5 homogeneous runs:")
+        (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))
 )
