@@ -22,7 +22,7 @@
 ;; one might want to use only one foodspot, and why it can be OK to use
 ;; more (as this file does) for the sake of efficiency.
 
-(def targets-per-env 4)
+(def targets-per-env 6)
 ;; Four targets rather than eight or six is conservative, but might be more
 ;; appropriate when the distance from start to target is smaller (1/5 of
 ;; distance to edge of env, below), which puts targets closer together.
@@ -35,8 +35,11 @@
 ;;
 ;; With six targets, each target is the same distance to its nearest
 ;; neighbor as to the starting point (because a hexagon is composed of six
-;; equilateral triangles), so that might be OK, but again, four targets is
-;; more conservative.
+;; equilateral triangles), so that might be OK.
+;; 
+;; Also note that the probability of finding a second target is generally
+;; less than theprobability of finding the first, since after finding the
+;; first, there would be a shorter path left to find the next target.
 ;;
 ;; See notes/forage/models/spiralplan23.md .
 
