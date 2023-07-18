@@ -299,7 +299,7 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
 
-  (def walks-per-fn 100)
+  (def walks-per-fn 1000)
   ;; With 100 walks-per-fn, the following each took max of 10 mins, for a
   ;; total about an hour on my MBA.  The MBP should be about twice as fast.
   ;; The max # of targets found with 100 runs was 12 (closest targets, 1.1
@@ -308,7 +308,9 @@
   ;; So 1000 walks-per-fn should take about 10 x 30mins = 5 hours on the MPB.
   ;; And this should give me 10 to 200 or so, max, found tagets.  So more
   ;; would be better.  10K would be nice, but that would run for two whole
-  ;; days.  (Consider using Cheaha.)
+  ;; days.
+  ;; Consider using Cheaha?
+  ;; Or RUN IN PARALLEL (with different PRNGs).
 
 
   ;; SPIRAL COMPOSITE WALKS:
@@ -341,4 +343,5 @@
   (def mu25-data-and-rng
     (do (println "mu=2.5 homogeneous runs:")
         (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))
+
 )
