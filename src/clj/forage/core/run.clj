@@ -237,11 +237,12 @@
   suitable for embedding in filenames. (The str function will be used to
   convert the keys to strings if they are not already strings.) Then for
   each walk-fn runs walks-per-combo food searches using the walk-fn
-  (with look-fn embedded in it) for each direction in init-dirs. A new
-  PRNG is created using seed unless a PRNG is passed in for parameter
-  rng, in which case the seed is just used as an id number. Output
-  filenames (see below) are constructed using seed, values of :basename
-  and :dirname, and in some cases a walk-fns key. Output:
+  (with look-fn embedded in it) for each direction in init-dirs.  seed
+  is used only as an id number, e.g. in filenames.  The PRNG rng is
+  never used, but its state is stored each time through the main loop,
+  prior to each call to run-and-collect.  Output filenames (see below)
+  are constructed using seed, values of :basename and :dirname, and in
+  some cases a walk-fns key. Output:
   * Writes informational messages to stdout.
   * Writes one random number generator state file *.bin per parameter 
     combo (indicated in filename). Allows restart with that combo and
