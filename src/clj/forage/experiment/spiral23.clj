@@ -312,36 +312,40 @@
   ;; Consider using Cheaha?
   ;; Or RUN IN PARALLEL (with different PRNGs).
 
+  (time
+    (do ;; All seven groups of runs
 
-  ;; SPIRAL COMPOSITE WALKS:
-  (def mu1-spiral-data-and-rng
-    (do (println "mu=1.1 + spiral composite runs:")
-        (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns walks-per-fn seed))))
+      ;; SPIRAL COMPOSITE WALKS:
+      (def mu1-spiral-data-and-rng
+        (do (println "mu=1.1 + spiral composite runs:")
+            (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns walks-per-fn seed))))
 
-  (def mu15-spiral-data-and-rng 
-    (do (println "mu=1.5 + spiral composite runs:")
-        (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns walks-per-fn seed))))
+      (def mu15-spiral-data-and-rng 
+        (do (println "mu=1.5 + spiral composite runs:")
+            (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns walks-per-fn seed))))
 
-  ;; BROWNIAN COMPOSITE WALKS:
-  (def mu1-mu3-data-and-rng 
-    (do (println "mu=1.1 + mu=3 composite runs:")
-        (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns walks-per-fn seed))))
+      ;; BROWNIAN COMPOSITE WALKS:
+      (def mu1-mu3-data-and-rng 
+        (do (println "mu=1.1 + mu=3 composite runs:")
+            (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns walks-per-fn seed))))
 
-  (def mu15-mu3-data-and-rng 
-    (do (println "mu=1.5 + mu=3 composite runs:")
-        (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns walks-per-fn seed))))
+      (def mu15-mu3-data-and-rng 
+        (do (println "mu=1.5 + mu=3 composite runs:")
+            (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns walks-per-fn seed))))
 
-  ;; NON-COMPOSITE WALKS:
-  (def mu15-data-and-rng
-    (do (println "mu=1.5 homogeneous runs:")
-        (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns walks-per-fn seed))))
+      ;; NON-COMPOSITE WALKS:
+      (def mu15-data-and-rng
+        (do (println "mu=1.5 homogeneous runs:")
+            (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns walks-per-fn seed))))
 
-  (def mu2-data-and-rng
-    (do (println "mu=2 homogeneous runs:")
-        (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  walks-per-fn seed))))
+      (def mu2-data-and-rng
+        (do (println "mu=2 homogeneous runs:")
+            (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  walks-per-fn seed))))
 
-  (def mu25-data-and-rng
-    (do (println "mu=2.5 homogeneous runs:")
-        (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))
+      (def mu25-data-and-rng
+        (do (println "mu=2.5 homogeneous runs:")
+            (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))
+
+ ))
 
 )
