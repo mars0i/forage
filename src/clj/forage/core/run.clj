@@ -537,6 +537,23 @@
    (with-open [w (apply io/writer filename options)]
      (csv/write-csv w rows)))
 
+(defn slurp-csv
+  "Given a sequence of sequences of data in rows, opens a file and
+  writes to it using write-csv.  options are those that can be passed
+  to clojure.java.io/writer."
+  [filename & options]
+  (with-open [r (apply io/reader filename options)]
+    (doall (csv/read-csv r)))) ; read-csv is lazy, so need to force evaluation before closing the reader
+
+(comment
+  (def filename "yo.csv")
+  (def out-data [["this", "that", 42, 17.05, nil]
+                 ["they", "them", 15, -19.27, true]
+                 ["what", "wait", -99, 103.450, false]])
+  (spit-csv filename out-data)
+  (def in-data (slurp-csv filename))
+)
+
 (defn double-to-dotless
   "Given a number returns a string containing the same digits as its decimal
   floating-point representation, but with the dot removed.  (For positive doubles
