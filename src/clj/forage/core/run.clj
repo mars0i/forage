@@ -1,9 +1,8 @@
 (ns forage.core.run
-  (:require [clojure.data.csv :as csv]
-            [clojure.java.io :as io]
-            [clojure.pprint :refer [cl-format]]
+  (:require [clojure.pprint :refer [cl-format]]
             [aerial.hanami.common :as hc]
             [utils.misc :as misc]
+            [utils.file :as file]
             [utils.math :as m]
             [utils.random :as r]
             [forage.viz.hanami :as h]
@@ -24,7 +23,7 @@
 (def default-file-prefix default-dirname) ; for backward compatibility
 
 ;; small utility functions defined later:
-(declare ignore-food append-row append-labels spit-csv double-to-dotless)
+(declare ignore-food append-row append-labels double-to-dotless)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -289,7 +288,7 @@
          found-coords$ (atom [])
          iter-num$ (atom 0)
          walks-per-fn-digits (m/count-decimal-digits walks-per-fn)] ; passed to cl-format to format found foodspot count
-     (spit-csv param-filename param-data) ; write out fixed parameters
+     (file/spit-csv param-filename param-data) ; write out fixed parameters
      (cl-format true "Performing ~d runs in groups of ~d ...~%" 
                 (* (count walk-fns) walks-per-fn (if num-dirs (inc num-dirs) 1)) ; walk-fns is a map--count is # of MapEntrys
                 walks-per-fn)
@@ -309,7 +308,7 @@
          (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-fn-digits n-found efficiency) ; walks-per-fn digits makes num found same width
          (swap! found-coords$ conj found)
          (swap! data$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))
-     (spit-csv data-filename @data$)
+     (file/spit-csv data-filename @data$)
      (println " done.")
      {:data @data$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
@@ -379,7 +378,7 @@
          found-coords$ (atom [])
          iter-num$ (atom 0)
          walks-per-combo-digits (m/count-decimal-digits walks-per-combo)] ; passed to cl-format to format found foodspot count
-     (spit-csv param-filename param-data) ; write out fixed parameters
+     (file/spit-csv param-filename param-data) ; write out fixed parameters
      (cl-format true "Performing ~d runs in groups of ~d ...~%" 
                 (* (count exponents) walks-per-combo (if num-dirs (inc num-dirs) 1))
                 walks-per-combo)
@@ -396,7 +395,7 @@
          (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-combo-digits n-found efficiency) ; walks-per-combo digits makes num found same width
          (swap! found-coords$ conj found)
          (swap! data$ conj (into [init-dir exponent n-segments n-found efficiency total-length] lengths))))
-     (spit-csv data-filename @data$)
+     (file/spit-csv data-filename @data$)
      (println " done.")
      {:data @data$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
@@ -463,8 +462,8 @@
                                 foodwalks+)
         data-filename  (str file-prefix "straight_data"  id ".csv")
         data (cons ["initial dir" "found" "path length"] dir-found-lengths)]
-    (spit-csv param-filename param-data) ; write out fixed parameters
-    (spit-csv data-filename data)
+    (file/spit-csv param-filename param-data) ; write out fixed parameters
+    (file/spit-csv data-filename data)
     (println "done.")
     data))
 
@@ -493,7 +492,7 @@
                    coords (first found)
                    exponent-string (m/remove-decimal-pt exponent)]
                (println "Writing coords csv for mu =" exponent)
-               (spit-csv (str file-prefix "foundcoords" exponent-string ".csv")
+               (file/spit-csv (str file-prefix "foundcoords" exponent-string ".csv")
                          coords)
                (recur (next exps) (next found)))
              (println "Done."))))))))
@@ -527,32 +526,6 @@
    (append-row (map name param-names)))
   ([prev-rows param-names] 
    (append-row prev-rows (map name param-names))))
-
-;; Note nils are converted to empty cells by write-csv.
-(defn spit-csv
-  "Given a sequence of sequences of data in rows, opens a file and
-  writes to it using write-csv.  options are those that can be passed
-  to clojure.java.io/writer."
-  [filename rows & options]
-   (with-open [w (apply io/writer filename options)]
-     (csv/write-csv w rows)))
-
-(defn slurp-csv
-  "Given a sequence of sequences of data in rows, opens a file and
-  writes to it using write-csv.  options are those that can be passed
-  to clojure.java.io/writer."
-  [filename & options]
-  (with-open [r (apply io/reader filename options)]
-    (doall (csv/read-csv r)))) ; read-csv is lazy, so need to force evaluation before closing the reader
-
-(comment
-  (def filename "yo.csv")
-  (def out-data [["this", "that", 42, 17.05, nil]
-                 ["they", "them", 15, -19.27, true]
-                 ["what", "wait", -99, 103.450, false]])
-  (spit-csv filename out-data)
-  (def in-data (slurp-csv filename))
-)
 
 (defn double-to-dotless
   "Given a number returns a string containing the same digits as its decimal
