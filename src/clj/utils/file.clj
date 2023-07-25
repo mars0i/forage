@@ -19,13 +19,14 @@
   (with-open [r (apply io/reader filename options)]
     (doall (csv/read-csv r)))) ; read-csv is lazy, so need to force evaluation before closing the reader
 
-;; Not right
 (defn concat-rows
-  ([num-initial-cols key-col csvs]
-   (concat-rols 1 num-initial-cols key-col csvs))
-  ([num-header-rows num-initial-cols key-col csvs]
-   (let [rows (drop num-header-rows csvs)
-         data-map (into {}
+  ([num-initial-cols key-col csv-seqs]
+   (concat-rols 1 num-initial-cols key-col csv-seqs))
+  ([num-header-rows num-initial-cols key-col csv-seqs]
+   (let [rows (drop num-header-rows csv-seqs)
+         data-maps (map (fn 
+
+         (into {}
                         (map (fn [row]
                                [(nth row key-col), (drop non-data-cols row)])
                              csvs))
