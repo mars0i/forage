@@ -2,7 +2,7 @@
   (:require [clojure.pprint :refer [cl-format]]
             [aerial.hanami.common :as hc]
             [utils.misc :as misc]
-            [utils.file :as file]
+            [utils.csv :as csv]
             [utils.math :as m]
             [utils.random :as r]
             [forage.viz.hanami :as h]
@@ -288,7 +288,7 @@
          found-coords$ (atom [])
          iter-num$ (atom 0)
          walks-per-fn-digits (m/count-decimal-digits walks-per-fn)] ; passed to cl-format to format found foodspot count
-     (file/spit-csv param-filename param-data) ; write out fixed parameters
+     (csv/spit-csv param-filename param-data) ; write out fixed parameters
      (cl-format true "Performing ~d runs in groups of ~d ...~%" 
                 (* (count walk-fns) walks-per-fn (if num-dirs (inc num-dirs) 1)) ; walk-fns is a map--count is # of MapEntrys
                 walks-per-fn)
@@ -308,7 +308,7 @@
          (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-fn-digits n-found efficiency) ; walks-per-fn digits makes num found same width
          (swap! found-coords$ conj found)
          (swap! data$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))
-     (file/spit-csv data-filename @data$)
+     (csv/spit-csv data-filename @data$)
      (println " done.")
      {:data @data$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
@@ -378,7 +378,7 @@
          found-coords$ (atom [])
          iter-num$ (atom 0)
          walks-per-combo-digits (m/count-decimal-digits walks-per-combo)] ; passed to cl-format to format found foodspot count
-     (file/spit-csv param-filename param-data) ; write out fixed parameters
+     (csv/spit-csv param-filename param-data) ; write out fixed parameters
      (cl-format true "Performing ~d runs in groups of ~d ...~%" 
                 (* (count exponents) walks-per-combo (if num-dirs (inc num-dirs) 1))
                 walks-per-combo)
@@ -395,7 +395,7 @@
          (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-combo-digits n-found efficiency) ; walks-per-combo digits makes num found same width
          (swap! found-coords$ conj found)
          (swap! data$ conj (into [init-dir exponent n-segments n-found efficiency total-length] lengths))))
-     (file/spit-csv data-filename @data$)
+     (csv/spit-csv data-filename @data$)
      (println " done.")
      {:data @data$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
@@ -462,8 +462,8 @@
                                 foodwalks+)
         data-filename  (str file-prefix "straight_data"  id ".csv")
         data (cons ["initial dir" "found" "path length"] dir-found-lengths)]
-    (file/spit-csv param-filename param-data) ; write out fixed parameters
-    (file/spit-csv data-filename data)
+    (csv/spit-csv param-filename param-data) ; write out fixed parameters
+    (csv/spit-csv data-filename data)
     (println "done.")
     data))
 
@@ -492,7 +492,7 @@
                    coords (first found)
                    exponent-string (m/remove-decimal-pt exponent)]
                (println "Writing coords csv for mu =" exponent)
-               (file/spit-csv (str file-prefix "foundcoords" exponent-string ".csv")
+               (csv/spit-csv (str file-prefix "foundcoords" exponent-string ".csv")
                          coords)
                (recur (next exps) (next found)))
              (println "Done."))))))))
