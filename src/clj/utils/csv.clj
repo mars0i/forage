@@ -47,14 +47,19 @@
   "Given a sequence of sequences, uses the element at key-col in each
   sequence as a key in a new map, from keys to the concatenation of
   subsequences (after dropping init-cols columns).  Note that key-col might
-  appear in the dropped columns, or even in the remaining data columns."
-  [init-cols key-col seqs]
-  (reduce (fn [data-map row]
-            (update data-map
-                    (nth row key-col) ; the key
-                    (fn [prev-data] (concat prev-data ; add new data to value
-                                            (drop init-cols row)))))
-          {} seqs))
+  appear in the dropped columns, or even in the remaining data columns. If
+  header-rows is provided, it's the number of rows to drop from the top of
+  the file (default: 1)."
+  ([init-cols key-col seqs]
+   (create-data-map 1 init-cols key-col seqs))
+  ([header-rows init-cols key-col seqs]
+   (let [headless-seqs (mapcat (partial drop header-rows) seqs)]
+     (reduce (fn [data-map row]
+               (update data-map
+                       (nth row key-col) ; the key
+                       (fn [prev-data] (concat prev-data ; add new data to value
+                                               (drop init-cols row)))))
+             {} headless-seqs))))
 
 (defn concat-rows
   "Runs through a sequence (top) of sequences (middle) of sequences
@@ -68,9 +73,8 @@
   ([init-cols key-col seqs]
    (concat-rows 1 init-cols key-col seqs))
   ([header-rows init-cols key-col seqs]
-   (let [headless-seqs (mapcat (partial drop header-rows) seqs)]
-     (map add-key-to-front 
-          (create-data-map init-cols key-col headless-seqs)))))
+   (map add-key-to-front 
+        (create-data-map header-rows init-cols key-col seqs))))
 
 
 (comment

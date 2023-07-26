@@ -15,7 +15,8 @@
             [forage.core.walks :as w]
             [forage.core.env-mason :as env]
             [utils.random :as r]
-            [utils.spiral :as sp]))
+            [utils.spiral :as sp]
+            [utils.csv :as csv]))
 
 
 ;; SEE notes/forage/models/spiralplan[23].md for discussion of why 
@@ -347,5 +348,81 @@
             (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))
 
  ))
+
+)
+
+
+(comment
+
+  ;; Note leaves out the fifth iteration, which was incomplete.  Maybe add that later.
+  (def datafiles
+    ["first1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+      "first1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
+      "first1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
+      "first1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
+      "first1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
+      "first1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
+      "first1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"
+
+      "fourth1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+      "fourth1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
+      "fourth1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
+      "fourth1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
+      "fourth1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
+      "fourth1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
+      "fourth1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"
+
+      "second1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+      "second1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
+      "second1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
+      "second1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
+      "second1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
+      "second1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
+      "second1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"
+
+      "third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+      "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
+      "third1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
+      "third1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
+      "third1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
+      "third1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
+      "third1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"])
+
+
+  (def files-data (doall
+                    (map (fn [relpath]
+                           (csv/slurp-csv (str default-dirname relpath)))
+                         datafiles)))
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Without found counts.
+  ;; This means that I have to infer found counts from significant
+  ;; differences from the max pathlen.
+  ;; It would be better to preserve and sum the counts.
+
+  ;; In separate steps:
+  (def data-map (csv/create-data-map 6 1 files-data))
+  (def data-seqs' (map csv/add-key-to-front data-map))
+
+  ;; All at once, sorted, with header row:
+  (def data-seqs 
+    (cons ["config"] ; header row, with no labels for data columns
+          (sort (map vec (csv/concat-rows 6 1 files-data)))))
+
+  (csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv")
+                data-seqs)
+
+
+  ;; checks
+  (count datafiles)
+  (count files-data)
+  (first files-data)
+  (map count files-data)
+  (map (partial map count) files-data)
+  (class data-map)
+  (count (keys data-map))
+  (map count (vals data-map))
+  (map count data-seqs)
+  (= data-seqs' data-seqs)
 
 )
