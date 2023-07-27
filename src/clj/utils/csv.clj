@@ -42,7 +42,20 @@
   [[k v]]
   (cons k v))
 
-;; Utility function for concat-rows
+(defn create-sum-map
+  [ks key-idx sum-col-idx seqs]
+  (prn key-idx sum-col-idx)
+  (let [sum-map (zipmap ks (repeat 0))
+        headless-rows (mapcat (partial drop header-rows) seqs)]
+    (reduce (fn [smap row]
+              (prn row)
+              (prn smap)
+              (update smap
+                      (nth row key-idx) ; get key from row
+                      (partial + (nth row sum-col-idx)))) ; add in its value
+            sum-map
+            headless-rows)))
+
 (defn create-data-map
   "Given a sequence of sequences, uses the element at key-col in each
   sequence as a key in a new map, from keys to the concatenation of
@@ -53,13 +66,14 @@
   ([init-cols key-col seqs]
    (create-data-map 1 init-cols key-col seqs))
   ([header-rows init-cols key-col seqs]
-   (let [headless-seqs (mapcat (partial drop header-rows) seqs)]
+   (let [headless-rows (mapcat (partial drop header-rows) seqs)]
      (reduce (fn [data-map row]
                (update data-map
                        (nth row key-col) ; the key
                        (fn [prev-data] (concat prev-data ; add new data to value
                                                (drop init-cols row)))))
-             {} headless-seqs))))
+             {} headless-rows))))
+  
 
 (defn concat-rows
   "Runs through a sequence (top) of sequences (middle) of sequences
@@ -90,8 +104,10 @@
   (def header-rows 1)
   (def init-cols 2)
   (def key-col 1)
-  (create-data-map init-cols key-col csv-seqs)
+  (def data-map (create-data-map init-cols key-col csv-seqs))
   (concat-rows header-rows init-cols key-col csv-seqs)
   (concat-rows init-cols key-col csv-seqs)
+
+  (def sum-map (create-sum-map (keys data-map) 1 4 csv-seqs))
 
 )
