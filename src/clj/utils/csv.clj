@@ -60,19 +60,16 @@
   "Given a sequence of sequences, uses the element at key-col in each
   sequence as a key in a new map, from keys to the concatenation of
   subsequences (after dropping init-cols columns).  Note that key-col might
-  appear in the dropped columns, or even in the remaining data columns. If
-  header-rows is provided, it's the number of rows to drop from the top of
-  the file (default: 1)."
-  ([init-cols key-col seqs]
-   (create-data-map 1 init-cols key-col seqs))
-  ([header-rows init-cols key-col seqs]
-   (let [headless-rows (mapcat (partial drop header-rows) seqs)]
-     (reduce (fn [data-map row]
-               (update data-map
-                       (nth row key-col) ; the key
-                       (fn [prev-data] (concat prev-data ; add new data to value
-                                               (drop init-cols row)))))
-             {} headless-rows))))
+  appear in the dropped columns, or even in the remaining data columns."
+  [header-rows init-cols key-col seqs]
+  (let [headless-rows (mapcat (partial drop header-rows) seqs)]
+    (reduce (fn [data-map row]
+              (update data-map
+                      (nth row key-col) ; the key
+                      (fn [prev-data] (concat prev-data ; add new data to value
+                                              (drop init-cols row)))))
+            {} headless-rows)))
+
   
 
 (defn concat-rows
@@ -104,7 +101,7 @@
   (def header-rows 1)
   (def init-cols 2)
   (def key-col 1)
-  (def data-map (create-data-map init-cols key-col csv-seqs))
+  (def data-map (create-data-map 1 init-cols key-col csv-seqs))
   (concat-rows header-rows init-cols key-col csv-seqs)
   (concat-rows init-cols key-col csv-seqs)
 
