@@ -43,18 +43,6 @@
   (cons k v))
 
 ;; since vectors are maps, can I do this with merge-with or something?
-(defn create-sum-map
-  [ks key-idx seqs sum-col-idx]
-  (let [sum-map (zipmap ks (repeat 0))
-        headless-rows (mapcat (partial drop header-rows) seqs)]
-    (reduce (fn [smap row]
-              (update smap
-                      (nth row key-idx) ; get key from row
-                      (partial + (nth row sum-col-idx)))) ; add in its value
-            sum-map
-            headless-rows)))
-
-;; since vectors are maps, can I do this with merge-with or something?
 (defn create-data-map
   "Given a sequence of sequences, uses the element at key-col in each
   sequence as a key in a new map, from keys to the concatenation of
@@ -69,19 +57,32 @@
                                               (drop init-cols row)))))
             {} headless-rows)))
 
+;; since vectors are maps, can I do this with merge-with or something?
+(defn create-sum-map
+  [ks key-col sum-col seqs]
+  (let [sum-map (zipmap ks (repeat 0))
+        headless-rows (mapcat (partial drop header-rows) seqs)]
+    (reduce (fn [smap row]
+              (update smap
+                      (nth row key-col) ; get key from row
+                      (partial + (nth row sum-col)))) ; add in its value
+            sum-map
+            headless-rows)))
+
 (defn create-data-map-with-sums
   [header-rows init-cols key-col sum-cols seqs]
   (let [map-wout-sums (create-data-map header-rows init-cols key-col seqs)
         ks (keys map-wout-sums)
-        sum-maps (map (partial create-sum-map ks key-col seqs)
-                      sum-cols)]
-   ;; Note below we want conj, not cons, because first arg needs to be
-   ;; map-wout-sums, but map-wout-sums vals must be non-vector sequences,
-   ;; because we want the sum columns to be added to the front.
+        reversed-sum-cols (reverse sum-cols) ; We'll conj onto front in order found
+        sum-maps (map (fn [sum-col] (create-sum-map ks key-col sum-col seqs))
+                      reversed-sum-cols)] ; first conj will be last, so conj reversed sum-cols
+    ;; Note below we want conj not cons, because first arg needs to be map-wout-sums.
+    ;; However, note this means that map-wout-sums vals must be non-vector sequences,
+    ;;:because we want the sum columns to be added to the front.
     (apply merge-with 
            conj
            map-wout-sums sum-maps)))
-  
+
 
 (defn concat-rows
   "Runs through a sequence (top) of sequences (middle) of sequences
@@ -114,16 +115,12 @@
   (def key-col 1)
   (def data-map (create-data-map 1 init-cols key-col csv-seqs))
 
-  (def sum-map (create-sum-map (keys data-map) 1 4 csv-seqs))
+  (def sum-map4 (create-sum-map (keys data-map) 1 4 csv-seqs))
+  (def sum-map0 (create-sum-map (keys data-map) 1 0 csv-seqs))
 
   (apply merge-with conj data-map [sum-map sum-map])
 
   (def sum-data-map
     (create-data-map-with-sums header-rows init-cols key-col [4 0] csv-seqs))
-  ;; This is creating the following, which is correct except for the first
-  ;; 10 in the first row.  wtf is that?
-  {"first" (10 4 "one" "a" 1 "two" "b" 1 "six" "f" 2),
-   "second" (7 3 "three" "c" 1 "four" "d" 2),
-   "third" (5 2 "five" "e" 2)}
 
 )
