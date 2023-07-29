@@ -389,40 +389,46 @@
       "third1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"])
 
 
-  (def files-data (doall
-                    (map (fn [relpath]
-                           (csv/slurp-csv (str default-dirname relpath)))
-                         datafiles)))
+  (def files-data-3d (doall
+                       (map (fn [relpath]
+                              (csv/slurp-csv (str default-dirname relpath)))
+                            datafiles)))
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Without found counts.
-  ;; This means that I have to infer found counts from significant
-  ;; differences from the max pathlen.
-  ;; It would be better to preserve and sum the counts.
+  (prn (nth (nth files-data-3d 0) 1))
 
-  ;; In separate steps:
-  (def data-map (csv/create-data-map 6 1 files-data))
-  (def data-seqs' (map csv/add-key-to-front data-map))
 
-  ;; All at once, sorted, with header row:
-  (def data-seqs 
-    (cons ["config"] ; header row, with no labels for data columns
-          (sort (map vec (csv/concat-rows 6 1 files-data)))))
+  (def header-rows 1)
+  (def init-cols 6)
+  (def key-col 1)
+  (def sum-cols [3])
+  (def sum-data-map
+    (csv/create-data-map-with-sums header-rows init-cols key-col sum-cols files-data-3d))
 
   (csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv")
                 data-seqs)
 
-
   ;; checks
   (count datafiles)
-  (count files-data)
-  (first files-data)
-  (map count files-data)
-  (map (partial map count) files-data)
+  (count files-data-3d)
+  (first files-data-3d)
+  (map count files-data-3d)
+  (map (partial map count) files-data-3d)
   (class data-map)
   (count (keys data-map))
   (map count (vals data-map))
   (map count data-seqs)
   (= data-seqs' data-seqs)
+
+
+  ;;;;;;;;;;;;;;;;;;
+  ;; old experiments: 
+  ;; In separate steps:
+  (def data-map (csv/create-data-map 6 1 files-data-3d))
+  (def data-seqs' (map csv/add-key-to-front data-map))
+
+  ;; All at once, sorted, with header row:
+  (def data-seqs 
+    (cons ["config"] ; header row, with no labels for data columns
+          (sort (map vec (csv/concat-rows 6 1 files-data-3d)))))
 
 )

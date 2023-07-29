@@ -44,12 +44,14 @@
 
 ;; since vectors are maps, can I do this with merge-with or something?
 (defn create-data-map
-  "Given a sequence of sequences, uses the element at key-col in each
-  sequence as a key in a new map, from keys to the concatenation of
-  subsequences (after dropping init-cols columns).  Note that key-col might
-  appear in the dropped columns, or even in the remaining data columns."
-  [header-rows init-cols key-col seqs]
-  (let [headless-rows (mapcat (partial drop header-rows) seqs)]
+  "Given a sequence of sequence of sequences, iterates over the contained
+  2d structures, and uses the element at key-col in each inner 1d sequence
+  as a key in a new map, from keys to the concatenation of subsequences
+  from the different 2d structures (after dropping init-cols columns).
+  Note that key-col might appear in the dropped columns, or even in the
+  remaining data columns."
+  [header-rows init-cols key-col seqs3d]
+  (let [headless-rows (mapcat (partial drop header-rows) seqs3d)]
     (reduce (fn [data-map row]
               (update data-map
                       (nth row key-col) ; the key
@@ -59,22 +61,42 @@
 
 ;; since vectors are maps, can I do this with merge-with or something?
 (defn create-sum-map
-  [ks key-col sum-col seqs]
+  "Given a sequence of sequence of sequences, iterates over the contained
+  2d structures, and uses the element at key-col in each inner 1d sequence
+  as a key in a new map, from keys to sums of numeric values at column
+  sum-col in each inner 1d sequence (after dropping init-cols columns).
+  Note that key-col might appear in the dropped columns, or even in the
+  remaining data columns."
+  [ks header-rows key-col sum-col seqs3d]
+  (prn ks) ; DEBUG
+  (prn header-rows key-col sum-col) ; DEBUG
   (let [sum-map (zipmap ks (repeat 0))
-        headless-rows (mapcat (partial drop header-rows) seqs)]
+        headless-rows (mapcat (partial drop header-rows) seqs3d)]
+    (prn sum-map) ; DEBUG
     (reduce (fn [smap row]
               (update smap
+                      (prn (nth row key-col)) ; DEBUG
                       (nth row key-col) ; get key from row
                       (partial + (nth row sum-col)))) ; add in its value
             sum-map
             headless-rows)))
 
+
 (defn create-data-map-with-sums
-  [header-rows init-cols key-col sum-cols seqs]
-  (let [map-wout-sums (create-data-map header-rows init-cols key-col seqs)
+  [header-rows init-cols key-col sum-cols seqs3d]
+  "Given a sequence of sequence of sequences, iterates over the contained
+  2d structures, and uses the element at key-col in each inner 1d sequence
+  as a key in a new map, from keys to sequences of data.  The data
+  sequences contain, first, sums of numeric values from columns sum-cols
+  (in order) in each inner 1d sequence (this is done by iterating
+  create-sum-map), followed by concatenation of data sequences after
+  dropping the first init-cols from each inner 1d sequence (as performed by
+  create-data-map). Note that key-col might appear in the dropped columns,
+  or even in the remaining data columns."
+  (let [map-wout-sums (create-data-map header-rows init-cols key-col seqs3d)
         ks (keys map-wout-sums)
         reversed-sum-cols (reverse sum-cols) ; We'll conj onto front in order found
-        sum-maps (map (fn [sum-col] (create-sum-map ks key-col sum-col seqs))
+        sum-maps (map (fn [sum-col] (create-sum-map ks header-rows key-col sum-col seqs3d))
                       reversed-sum-cols)] ; first conj will be last, so conj reversed sum-cols
     ;; Note below we want conj not cons, because first arg needs to be map-wout-sums.
     ;; However, note this means that map-wout-sums vals must be non-vector sequences,
@@ -101,26 +123,26 @@
 
 
 (comment
-  (def csv-seqs [[["NOTHING", "KEY" "NUMNAME", "LETTER", "INDEX"]
-                  [1, "first", "one", "a", 1]
-                  [2, "first", "two", "b", 1]
-                  [3, "second", "three", "c", 1]]
-                 [["NOTHING", "KEY" "NUMNAME", "LETTER", "INDEX"]
-                  [4, "second", "four", "d", 2]
-                  [5, "third", "five", "e", 2]
-                  [5, "first" "six", "f" 2]]])
+  (def csv-seqs-3d [[["NOTHING", "KEY" "NUMNAME", "LETTER", "INDEX"]
+                     [1, "first", "one", "a", 1]
+                     [2, "first", "two", "b", 1]
+                     [3, "second", "three", "c", 1]]
+                    [["NOTHING", "KEY" "NUMNAME", "LETTER", "INDEX"]
+                     [4, "second", "four", "d", 2]
+                     [5, "third", "five", "e", 2]
+                     [5, "first" "six", "f" 2]]])
 
   (def header-rows 1)
   (def init-cols 2)
   (def key-col 1)
-  (def data-map (create-data-map 1 init-cols key-col csv-seqs))
+  (def data-map (create-data-map 1 init-cols key-col csv-seqs-3d))
 
-  (def sum-map4 (create-sum-map (keys data-map) 1 4 csv-seqs))
-  (def sum-map0 (create-sum-map (keys data-map) 1 0 csv-seqs))
+  (def sum-map4 (create-sum-map header-rows (keys data-map) 1 4 csv-seqs-3d))
+  (def sum-map0 (create-sum-map header-rows (keys data-map) 1 0 csv-seqs-3d))
 
   (apply merge-with conj data-map [sum-map sum-map])
 
   (def sum-data-map
-    (create-data-map-with-sums header-rows init-cols key-col [4 0] csv-seqs))
+    (create-data-map-with-sums header-rows init-cols key-col [4 0] csv-seqs-3d))
 
 )
