@@ -391,7 +391,9 @@
 
   (def files-data-3d (doall
                        (map (fn [relpath]
-                              (csv/slurp-csv (str default-dirname relpath)))
+                              (map (fn [row]
+                                     (map csv/number-or-string row))
+                                   (csv/slurp-csv (str default-dirname relpath))))
                             datafiles)))
 
   (prn (nth (nth files-data-3d 0) 1))

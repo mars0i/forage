@@ -23,6 +23,28 @@
   (with-open [r (apply io/reader filename options)]
     (doall (csv/read-csv r)))) ; read-csv is lazy, so need to force evaluation before closing the reader
 
+(def digit-chars #{\0 \1 \2 \3 \4 \5 \6 \7 \8 \9})
+
+(comment
+  (digit-chars (first "this"))
+  (digit-chars (first "025.24"))
+  (read-string "9.71E+08")
+)
+
+;; Note read-string interprets strings that begin with an alphabetic
+;; character as symbols, and ignores anhything after the first space.
+;; So it can't be used as is for what I want.
+(defn number-or-string
+  "Kludgey method to interpret a string as a number (long or double as
+  needed) or a mere string.  If string s begins with a digit, assumes the
+  string represents a number; otherwise, returns s as is. NOTE uses
+  `read-string`, which should not be used with untrusted data."
+  [s]
+  (let [c0 (first s)]
+    (if (digit-chars c0)
+      (read-string s)
+      s)))
+
 (comment
   (def filename "yo.csv")
   (def out-data [["this", "that", 42, 17.05, nil]
