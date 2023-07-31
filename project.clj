@@ -16,7 +16,7 @@
                  [org.flatland/ordered "1.15.10"] ; for ordered-set
                  [net.mikera/core.matrix "0.63.0"]
                  [aerial.hanami "0.17.0"]
-                 [dk.ative/docjure "1.19.0"]
+                 ; [dk.ative/docjure "1.19.0"] ; Excel file creation functions
                  [techascent/tech.viz "6.00-beta-16-2"]
                  [io.github.nextjournal/clerk "0.5.346"]
                  [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
