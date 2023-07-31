@@ -16,9 +16,9 @@
      (csv/write-csv w rows)))
 
 (defn slurp-csv
-  "Given a sequence of sequences of data in rows, opens a file and writes
-  to it using write-csv.  options are those that can be passed to
-  clojure.java.io/writer. (NOTE assumes 2d data--not 1d, not 3d, etc.)"
+  "Given a sequence of sequences of data in rows, opens a file and reads it
+  using read-csv (which is lazy).  options are those that can be passed to
+  clojure.java.io/reader.  (NOTE assumes 2d data--not 1d, not 3d, etc.)"
   [filename & options]
   (with-open [r (apply io/reader filename options)]
     (doall (csv/read-csv r)))) ; read-csv is lazy, so need to force evaluation before closing the reader
@@ -35,7 +35,8 @@
   `read-string`, which should not be used with untrusted data."
   [s]
   (let [c0 (first s)]
-    (if (digit-chars c0)
+    (if (or (digit-chars c0) ; looks like a positive number
+            (and (= c0 \-) (digit-chars (second s)))) ; looks like a negative number
       (read-string s)
       s)))
 
@@ -45,10 +46,37 @@
   [ss]
   (map number-or-string ss))
 
+
+(defn read-2d-files-to-3d-vector
+  "After prepending dirname to csv filenames in collection datafiles, reads
+  each 2d file using slurp-csv, then converts data to numbers when possible
+  using number-or-string, and returns a 3d vector of 2d vectors of the
+  resulting data.  (This function is eager not lazy.)"
+  [dirname datafiles]
+  (mapv (fn [relpath]  ; note use of mapv's rather than map to thwart laziness
+          (let [rows (slurp-csv (str dirname relpath))]  ; slurp-csv is lazy
+            (mapv numbers-or-strings rows)))
+        datafiles))
+
 (comment
-  (digit-chars (first "this"))
-  (digit-chars (first "025.24"))
-  (read-string "9.71E+08")
+  (number-or-string "that")
+  (number-or-string "true") ; just a string--doesn't handle booleans
+  (number-or-string "nil") ; just a string
+  (number-or-string "25")   ; long
+  (number-or-string "-25")   ; long
+  (number-or-string "25.2") ; double
+  (number-or-string "-25.2") ; double
+  (number-or-string "9.71E+08") ; double
+  (number-or-string "-9.71E+08") ; double
+  (number-or-string "9.71E-03") ; double
+  (number-or-string "011")  ; octal
+  (number-or-string "-011")  ; octal
+  (number-or-string "0x11") ; hex
+  (number-or-string "-0x11") ; hex
+  (number-or-string "2r11") ; binary
+  (number-or-string "-2r11") ; binary
+  (number-or-string "3r11") ; ternary
+  (number-or-string "-3r11") ; ternary
 
   (def filename "yo.csv")
   (def out-data [["this", "that", 42, 17.05, nil]
@@ -57,14 +85,12 @@
   (spit-csv filename out-data)
   (def in-data (slurp-csv filename))
 
-  ;; Doing the same thing with this shows that csv/read-csv only handles 2d data:
-  (def out-data3d [[["this", "that", 42, 17.05, nil]
-                    ["they", "them", 15, -19.27, true]
-                    ["what", "wait", -99, 103.450, false]]
-                   [["this2", "that2", 43, 18.05, ()]
-                    ["they2", "them2", 16, -18.27, false]
-                    ["what2", "wait2", -98, 104.450, true]]])
-
+  (def filename2 "yo2.csv")
+  (def out-data2 [["this2", "that2", 43, 18.05, ()]
+                  ["they2", "them2", 16, -18.27, false]
+                  ["what2", "wait2", -98, 104.450, true]])
+  (spit-csv filename2 out-data2)
+  (def in-data3d (read-2d-files-to-3d-vector "./" ["yo.csv" "yo2.csv"]))
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
