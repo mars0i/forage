@@ -388,14 +388,7 @@
       "third1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
       "third1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"])
 
-  (defn read-2d-files-into-3d-vector
-    [dirname datafiles]
-    (mapv (fn [relpath]  ; note use of mapv's rather than map to thwart laziness
-            (let [rows (csv/slurp-csv (str dirname relpath))]  ; slurp-csv is lazy
-              (mapv csv/numbers-or-strings rows)))
-          datafiles))
-
-  (def yo3d (read-2d-files-into-3d-vector
+  (def yo3d (csv/read-2d-files-into-3d-vector
               default-dirname
               ["third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
                "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"]))
@@ -427,6 +420,7 @@
              "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"])))
 
 
+  ;; TODO REPLACE WITH CALL TO csv/read-2d-files-into-3d-vector
   (def files-data-3d (doall
                        (map (fn [relpath]
                               (map (fn [row]
