@@ -16,20 +16,14 @@
      (csv/write-csv w rows)))
 
 (defn slurp-csv
-  "Given a sequence of sequences of data in rows, opens a file and
-  writes to it using write-csv.  options are those that can be passed
-  to clojure.java.io/writer."
+  "Given a sequence of sequences of data in rows, opens a file and writes
+  to it using write-csv.  options are those that can be passed to
+  clojure.java.io/writer. (NOTE assumes 2d data--not 1d, not 3d, etc.)"
   [filename & options]
   (with-open [r (apply io/reader filename options)]
     (doall (csv/read-csv r)))) ; read-csv is lazy, so need to force evaluation before closing the reader
 
 (def digit-chars #{\0 \1 \2 \3 \4 \5 \6 \7 \8 \9})
-
-(comment
-  (digit-chars (first "this"))
-  (digit-chars (first "025.24"))
-  (read-string "9.71E+08")
-)
 
 ;; Note read-string interprets strings that begin with an alphabetic
 ;; character as symbols, and ignores anhything after the first space.
@@ -37,7 +31,7 @@
 (defn number-or-string
   "Kludgey method to interpret a string as a number (long or double as
   needed) or a mere string.  If string s begins with a digit, assumes the
-  string represents a number; otherwise, returns s as is. NOTE uses
+  string represents a number; otherwise, returns s as is.  NOTE uses
   `read-string`, which should not be used with untrusted data."
   [s]
   (let [c0 (first s)]
@@ -45,17 +39,41 @@
       (read-string s)
       s)))
 
+(defn numbers-or-strings
+  "Convenience abstraction that maps number-or-string over a sequence of
+  strings ss."
+  [ss]
+  (map number-or-string ss))
+
 (comment
+  (digit-chars (first "this"))
+  (digit-chars (first "025.24"))
+  (read-string "9.71E+08")
+
   (def filename "yo.csv")
   (def out-data [["this", "that", 42, 17.05, nil]
                  ["they", "them", 15, -19.27, true]
                  ["what", "wait", -99, 103.450, false]])
   (spit-csv filename out-data)
   (def in-data (slurp-csv filename))
+
+  ;; Doing the same thing with this shows that csv/read-csv only handles 2d data:
+  (def out-data3d [[["this", "that", 42, 17.05, nil]
+                    ["they", "them", 15, -19.27, true]
+                    ["what", "wait", -99, 103.450, false]]
+                   [["this2", "that2", 43, 18.05, ()]
+                    ["they2", "them2", 16, -18.27, false]
+                    ["what2", "wait2", -98, 104.450, true]]])
+
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Functions for concatenating data from different rows
+
+;; Consider also/instead using dk.ative/docjure.  This allows creating
+;; multilayer Excel files.
+
+;; Consider using the dataframe stuff in the scicloj project.
 
 ;; Utility function for concat-rows
 (defn add-key-to-front

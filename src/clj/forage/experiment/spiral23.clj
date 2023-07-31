@@ -388,6 +388,44 @@
       "third1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
       "third1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"])
 
+  (defn read-2d-files-into-3d-vector
+    [dirname datafiles]
+    (mapv (fn [relpath]  ; note use of mapv's rather than map to thwart laziness
+            (let [rows (csv/slurp-csv (str dirname relpath))]  ; slurp-csv is lazy
+              (mapv csv/numbers-or-strings rows)))
+          datafiles))
+
+  (def yo3d (read-2d-files-into-3d-vector
+              default-dirname
+              ["third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+               "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"]))
+
+  (map (partial map count) yo3d)
+  (map (partial map (partial map class)) yo3d)
+  (first (first yo3d))
+
+  (def yomap
+    (time
+      (map (fn [relpath]
+             (csv/slurp-csv (str default-dirname relpath)))
+           ["third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+            "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"])))
+
+  (def yodoall
+    (time
+      (doall
+        (map (fn [relpath]
+               (csv/slurp-csv (str default-dirname relpath)))
+             ["third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+              "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"]))))
+
+  (def yomapv
+    (time
+      (mapv (fn [relpath]
+              (csv/slurp-csv (str default-dirname relpath)))
+            ["third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+             "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"])))
+
 
   (def files-data-3d (doall
                        (map (fn [relpath]
