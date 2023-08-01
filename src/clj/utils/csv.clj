@@ -3,6 +3,11 @@
   (:require [clojure.data.csv :as csv]
             [clojure.java.io :as io]))
 
+;; Consider using instead/in addition the dataframe stuff in the scicloj project.
+
+;; Also note dk.ative/docjure, which allows creating multilayer Excel files.
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; File I/O functions
 
@@ -14,6 +19,13 @@
   [filename rows & options]
    (with-open [w (apply io/writer filename options)]
      (csv/write-csv w rows)))
+
+;(defn spit-3d-csv
+;  [filename seq-seqs-of-rows & options]
+;  (with-open [w (apply io/writer filename options)]
+;    (doseq [rows seq-seqs-of-rows]
+;      (csv/write-csv w rows))))
+
 
 (defn slurp-csv
   "Given a sequence of sequences of data in rows, opens a file and reads it
@@ -44,7 +56,7 @@
   "Convenience abstraction that maps number-or-string over a sequence of
   strings ss."
   [ss]
-  (map number-or-string ss))
+  (mapv number-or-string ss))
 
 
 (defn read-2d-files-to-3d-vector
@@ -54,7 +66,7 @@
   resulting data.  (This function is eager not lazy.)"
   [dirname datafiles]
   (mapv (fn [relpath]  ; note use of mapv's rather than map to thwart laziness
-          (let [rows (slurp-csv (str dirname relpath))]  ; slurp-csv is lazy
+          (let [rows (slurp-csv (str dirname relpath))]
             (mapv numbers-or-strings rows)))
         datafiles))
 
@@ -90,6 +102,8 @@
                   ["they2", "them2", 16, -18.27, false]
                   ["what2", "wait2", -98, 104.450, true]])
   (spit-csv filename2 out-data2)
+  (def in-data2 (slurp-csv filename2))
+
   (def in-data3d (read-2d-files-to-3d-vector "./" ["yo.csv" "yo2.csv"]))
 )
 
@@ -172,7 +186,7 @@
            map-wout-sums sum-maps)))
 
 
-(defn concat-rows
+(defn concat-data-rows
   "Runs through a sequence (top) of sequences (middle) of sequences
   (bottom). Drops the first header-rows (default 1) from each middle
   sequence.  Then creates a new sequence of sequences. The first element of
@@ -181,11 +195,9 @@
   in bottom sequences that shared the same element at key-col. In other
   words, that element becomes an identifying name for the data in the rest
   of each row."
-  ([init-cols key-col seqs]
-   (concat-rows 1 init-cols key-col seqs))
-  ([header-rows init-cols key-col seqs]
-   (map add-key-to-front 
-        (create-data-map header-rows init-cols key-col seqs))))
+  [header-rows init-cols key-col sum-cols seqs]
+  (map add-key-to-front 
+       (create-data-map-with-sums header-rows init-cols key-col sum-cols seqs)))
 
 
 (comment
@@ -211,4 +223,5 @@
   (def sum-data-map
     (create-data-map-with-sums header-rows init-cols key-col [4 0] csv-seqs-3d))
 
+  (csv/spit-csv (str "./" "yo.csv") test-data-3d)
 )
