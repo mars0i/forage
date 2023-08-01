@@ -388,58 +388,31 @@
       "third1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
       "third1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"])
 
-  (def yo3d (csv/read-2d-files-into-3d-vector
-              default-dirname
-              ["third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
-               "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"]))
+  (def test-files ["third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+                   "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"])
 
-  (map (partial map count) yo3d)
-  (map (partial map (partial map class)) yo3d)
-  (first (first yo3d))
-
-  (def yomap
-    (time
-      (map (fn [relpath]
-             (csv/slurp-csv (str default-dirname relpath)))
-           ["third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
-            "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"])))
-
-  (def yodoall
-    (time
-      (doall
-        (map (fn [relpath]
-               (csv/slurp-csv (str default-dirname relpath)))
-             ["third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
-              "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"]))))
-
-  (def yomapv
-    (time
-      (mapv (fn [relpath]
-              (csv/slurp-csv (str default-dirname relpath)))
-            ["third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
-             "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"])))
-
-
-  ;; TODO REPLACE WITH CALL TO csv/read-2d-files-into-3d-vector
-  (def files-data-3d (doall
-                       (map (fn [relpath]
-                              (map (fn [row]
-                                     (map csv/number-or-string row))
-                                   (csv/slurp-csv (str default-dirname relpath))))
-                            datafiles)))
-
-  (prn (nth (nth files-data-3d 0) 1))
-
-
+  (def test-data-3d (csv/read-2d-files-to-3d-vector default-dirname test-files))
   (def header-rows 1)
   (def init-cols 6)
   (def key-col 1)
   (def sum-cols [3])
+  ;; NOT WORKING.  Need to break out parts of this function and see where
+  ;; the error is:
+  (def test-concat-data (csv/concat-data-rows 
+                          header-rows init-cols key-col sum-cols
+                          test-data-3d))
+  (csv/spit-csv (str "./" "yo.csv") test-concat-data)
+
+
+  (prn (nth (nth test-data-3d 0) 1))
+
+  (def data-3d (csv/read-2d-files-to-3d-vector default-dirname datafiles))
+  (csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv") data-3d)
+
+
   (def sum-data-map
     (csv/create-data-map-with-sums header-rows init-cols key-col sum-cols files-data-3d))
 
-  (csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv")
-                data-seqs)
 
   ;; checks
   (count datafiles)
