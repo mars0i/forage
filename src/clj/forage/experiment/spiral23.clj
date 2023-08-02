@@ -354,7 +354,31 @@
 
 (comment
 
-  ;; Note leaves out the fifth iteration, which was incomplete.  Maybe add that later.
+  ;;;;;;;;;;;;;;;;;
+  ;; SETUP
+  ;; Needed below both for testing and final versions
+  (def header-rows 1)
+  (def init-cols 6)
+  (def key-col 1)
+  (def sum-cols [3])
+
+
+  ;;;;;;;;;;;;;;;;;
+  ;; TESTS
+
+  (def test-files ["second1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+                   "third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+                   "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"])
+  (def test-data-3d (csv/read-2d-files-to-3d-vector default-dirname test-files))
+  (def test-concat-data (csv/concat-data-rows 
+                          header-rows init-cols key-col sum-cols
+                          test-data-3d))
+  (csv/spit-csv (str "./" "yo.csv") test-concat-data)
+
+  ;;;;;;;;;;;;;;;;;;;;
+  ;; PROCESSING DATA
+
+  ;; Note this leaves out the fifth iteration, which was incomplete.  Maybe add that later.
   (def datafiles
     ["first1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
       "first1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
@@ -388,30 +412,15 @@
       "third1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
       "third1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"])
 
-  (def test-files ["third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
-                   "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"])
-
-  (def test-data-3d (csv/read-2d-files-to-3d-vector default-dirname test-files))
-  (def header-rows 1)
-  (def init-cols 6)
-  (def key-col 1)
-  (def sum-cols [3])
-  ;; NOT WORKING.  Need to break out parts of this function and see where
-  ;; the error is:
-  (def test-concat-data (csv/concat-data-rows 
-                          header-rows init-cols key-col sum-cols
-                          test-data-3d))
-  (csv/spit-csv (str "./" "yo.csv") test-concat-data)
-
-
-  (prn (nth (nth test-data-3d 0) 1))
-
   (def data-3d (csv/read-2d-files-to-3d-vector default-dirname datafiles))
+  (def concat-data (csv/concat-data-rows 
+                          header-rows init-cols key-col sum-cols
+                          data-3d))
+  ;; FIXME The output file produced by the next line is a mess.  
+  ;; Yet the test above seems to follow the same process, and seems to be right.  (wth?)
   (csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv") data-3d)
 
-
-  (def sum-data-map
-    (csv/create-data-map-with-sums header-rows init-cols key-col sum-cols files-data-3d))
+  ; TODO: Add header row
 
 
   ;; checks

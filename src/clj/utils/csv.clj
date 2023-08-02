@@ -148,14 +148,10 @@
   Note that key-col might appear in the dropped columns, or even in the
   remaining data columns."
   [ks header-rows key-col sum-col seqs3d]
-  (prn ks) ; DEBUG
-  (prn header-rows key-col sum-col) ; DEBUG
   (let [sum-map (zipmap ks (repeat 0))
         headless-rows (mapcat (partial drop header-rows) seqs3d)]
-    (prn sum-map) ; DEBUG
     (reduce (fn [smap row]
               (update smap
-                      (prn (nth row key-col)) ; DEBUG
                       (nth row key-col) ; get key from row
                       (partial + (nth row sum-col)))) ; add in its value
             sum-map
