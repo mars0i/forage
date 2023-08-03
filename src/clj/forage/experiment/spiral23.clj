@@ -379,46 +379,43 @@
   ;; PROCESSING DATA
 
   ;; Note this leaves out the fifth iteration, which was incomplete.  Maybe add that later.
-  (def datafiles
-    ["first1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
-      "first1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
-      "first1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
-      "first1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
-      "first1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
-      "first1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
-      "first1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"
+  (def datafiles ["first1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+                  "first1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
+                  "first1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
+                  "first1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
+                  "first1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
+                  "first1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
+                  "first1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"
 
-      "fourth1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
-      "fourth1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
-      "fourth1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
-      "fourth1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
-      "fourth1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
-      "fourth1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
-      "fourth1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"
+                  "fourth1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+                  "fourth1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
+                  "fourth1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
+                  "fourth1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
+                  "fourth1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
+                  "fourth1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
+                  "fourth1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"
 
-      "second1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
-      "second1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
-      "second1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
-      "second1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
-      "second1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
-      "second1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
-      "second1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"
+                  "second1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+                  "second1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
+                  "second1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
+                  "second1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
+                  "second1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
+                  "second1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
+                  "second1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"
 
-      "third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
-      "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
-      "third1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
-      "third1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
-      "third1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
-      "third1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
-      "third1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"])
+                  "third1000-5719626285395248365/spiral23_mu1-mu3-5719626285395248365data.csv"
+                  "third1000-5719626285395248365/spiral23_mu1-spiral-5719626285395248365data.csv"
+                  "third1000-5719626285395248365/spiral23_mu15-5719626285395248365data.csv"
+                  "third1000-5719626285395248365/spiral23_mu15-mu3-5719626285395248365data.csv"
+                  "third1000-5719626285395248365/spiral23_mu15-spiral-5719626285395248365data.csv"
+                  "third1000-5719626285395248365/spiral23_mu2-5719626285395248365data.csv"
+                  "third1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"])
 
   (def data-3d (csv/read-2d-files-to-3d-vector default-dirname datafiles))
   (def concat-data (csv/concat-data-rows 
-                          header-rows init-cols key-col sum-cols
-                          data-3d))
-  ;; FIXME The output file produced by the next line is a mess.  
-  ;; Yet the test above seems to follow the same process, and seems to be right.  (wth?)
-  (csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv") data-3d)
+                     header-rows init-cols key-col sum-cols
+                     data-3d))
+  (csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv") concat-data)
 
   ; TODO: Add header row
 
