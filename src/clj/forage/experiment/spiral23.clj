@@ -360,7 +360,7 @@
   (def header-rows 1)
   (def init-cols 6)
   (def key-col 1)
-  (def sum-cols [3])
+  (def sum-cols [2 3]) ; 2: segments, 3: found
 
 
   ;;;;;;;;;;;;;;;;;
@@ -412,9 +412,11 @@
                   "third1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"])
 
   (def data-3d (csv/read-2d-files-to-3d-vector default-dirname datafiles))
-  (def concat-data (csv/concat-data-rows 
-                     header-rows init-cols key-col sum-cols
-                     data-3d))
+  (def concat-data 
+    (cons ["walk-fn", "segments", "found", "path lengths:"] ; header row
+          (csv/concat-data-rows 
+            header-rows init-cols key-col sum-cols
+            data-3d)))
   (csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv") concat-data)
 
   ; TODO: Add header row
