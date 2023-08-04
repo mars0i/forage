@@ -307,6 +307,8 @@
              efficiency (/ n-found total-length)] ; lengths start as doubles and remain so--this is double div
          (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-fn-digits n-found efficiency) ; walks-per-fn digits makes num found same width
          (swap! found-coords$ conj found)
+         ;; TODO: THIS IS WHERE I LEAVE BEHIND RELATION BETWEEN FOUND FOODSPOTS AND WALK LENGTHS.
+         ;; NOTE that data is returned within Clojure, but it's not written to the CSV.
          (swap! data$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))
      (csv/spit-csv data-filename @data$)
      (println " done.")
