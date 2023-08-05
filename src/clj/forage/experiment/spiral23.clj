@@ -352,6 +352,33 @@
 )
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; FNS FOR ADDITIONAL PROCESSING
+
+(defn add-found-row
+  "Helper for add-found-rows.  Generates one row containing 0's or 1's
+  after init-cols.  The element is 1 if the number in column j is within
+  eps of maxlen, otherwise it's 0."
+  [init-cols eps maxlen row]
+  (doall
+    (concat 
+      (repeat init-cols "") ; add blanks the non-path-length columns
+      (map (fn [pathlen] (if (> (- maxlen pathlen) eps) 1 0))
+           (drop init-cols row)))))
+
+(defn add-found-rows
+  "Kludge to add a 1 or 0 under each path length that is not within epsilon
+  of the maximum length maxlen.  i.e. this is a test for whether a foodspot was
+  found.  It should be replaced in the future by a revision to run/walk-experiments
+  or additional processing of output of walk-experiments.  This test is performed
+  only to columns after init-cols."
+  [init-cols eps maxlen rows]
+  (doall
+    (interleave
+      rows
+      (map (partial add-found-row init-cols eps maxlen) rows))))
+
+
 (comment
 
   ;;;;;;;;;;;;;;;;;
@@ -373,7 +400,12 @@
   (def test-concat-data (csv/concat-data-rows 
                           header-rows init-cols key-col sum-cols
                           test-data-3d))
-  (csv/spit-csv (str "./" "yo.csv") test-concat-data)
+
+  (def test-data-with-founds
+    (add-found-rows 3 1.0E-7 (params :maxpathlen) test-concat-data)) ; test-concat-data only has three cols before the pathlengths
+
+  (csv/spit-csv (str "./" "yo.csv") test-data-with-founds)
+
 
   ;;;;;;;;;;;;;;;;;;;;
   ;; PROCESSING DATA
@@ -412,12 +444,16 @@
                   "third1000-5719626285395248365/spiral23_mu25-5719626285395248365data.csv"])
 
   (def data-3d (csv/read-2d-files-to-3d-vector default-dirname datafiles))
-  (def concat-data 
-    (cons ["walk-fn", "segments", "found", "path lengths:"] ; header row
-          (csv/concat-data-rows 
-            header-rows init-cols key-col sum-cols
-            data-3d)))
-  (csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv") concat-data)
+
+  (def concat-data (csv/concat-data-rows 
+                     header-rows init-cols key-col sum-cols
+                     data-3d))
+
+  (def data-with-founds (add-found-rows 3 1.0E-7 (params :maxpathlen) concat-data)) ; concat-data only has three cols before the pathlengths
+
+(csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv") 
+              (cons ["walk-fn", "segments", "found", "path lengths:"] ; header row
+                    data-with-founds))
 
   ; TODO: Add header row
 
