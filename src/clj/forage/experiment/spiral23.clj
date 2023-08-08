@@ -378,8 +378,27 @@
       rows
       (map (partial add-found-row init-cols eps maxlen) rows))))
 
+(defn add-config-cols
+  "Given a data row in which the first element is the name of a walk-fn,
+  extracts the part after the last dash--the environment name--and the part
+  before the last dash--the walk-fn path algorithm--and inserts them into
+  the row after the walk-fn name and before the rest of the row."
+  [row]
+  (let [walk-fn-name (first row)
+        rest-of-row (rest row)
+        walk-name (clojure.string/replace walk-fn-name #"(.*)-.*" "$1")
+        env (clojure.string/replace walk-fn-name #".*-" "")]
+    (concat [walk-fn-name walk-name env] rest-of-row)))
+
 
 (comment
+
+  (add-config-cols ["this-is-a-test" 2 3])
+
+  (sort (fn [x y]
+          (cond (= (second x) (second y)) (>= (first x) (first y))
+                :else (> (second x) (second y))))
+        [[1 2 3 4 5] [222 -2 15 14 3] [5 0 7 9 8] [15 -2 17 80 99] [-1 -2 14 15 17] [1 15 25 2 3]])
 
   ;;;;;;;;;;;;;;;;;
   ;; SETUP
@@ -403,6 +422,9 @@
 
   (def test-data-with-founds
     (add-found-rows 3 1.0E-7 (params :maxpathlen) test-concat-data)) ; test-concat-data only has three cols before the pathlengths
+
+  (def test-data-with-config-cols (mapv add-config-cols test-data-with-founds))
+
 
   (csv/spit-csv (str "./" "yo.csv") test-data-with-founds)
 
@@ -451,9 +473,21 @@
 
   (def data-with-founds (add-found-rows 3 1.0E-7 (params :maxpathlen) concat-data)) ; concat-data only has three cols before the pathlengths
 
-(csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv") 
-              (cons ["walk-fn", "segments", "found", "path lengths:"] ; header row
-                    data-with-founds))
+  (def data-with-config-cols (mapv add-config-cols data-with-founds))
+
+  ;; NOT RIGHT S/B EARLIER BEFORE ADDITION OF FOUNDS
+  (def sorted-data (sort (fn [row1 row2]
+                           (let [walk1 (nth row1 1)
+                                 walk2 (nth row2 1)
+                                 env1 (nth row1 2)
+                                 env2 (nth row2 2)]
+                             (cond (= 0 (compare env1 env2)) (compare walk1 walk2)
+                                   :else (compare env1 env2))))
+                         data-with-config-cols))
+
+  (csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv") 
+                (cons ["walk-fn", "walk", "env", "segments", "found", "path lengths:"] ; header row
+                      data-with-config-cols))
 
   ; TODO: Add header row
 
