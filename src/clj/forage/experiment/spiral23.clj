@@ -393,8 +393,10 @@
 
 (comment
 
+  ;; experiment
   (add-config-cols ["this-is-a-test" 2 3])
 
+  ;; experiment
   (sort (fn [x y]
           (cond (= (second x) (second y)) (>= (first x) (first y))
                 :else (> (second x) (second y))))
@@ -420,11 +422,22 @@
                           header-rows init-cols key-col sum-cols
                           test-data-3d))
 
-  (def test-data-with-founds
-    (add-found-rows 3 1.0E-7 (params :maxpathlen) test-concat-data)) ; test-concat-data only has three cols before the pathlengths
+  ;(def test-data-with-founds
+  ;  (add-found-rows 3 1.0E-7 (params :maxpathlen) test-concat-data)) ; test-concat-data only has three cols before the pathlengths
+  ;(def test-data-with-config-cols (mapv add-config-cols test-data-with-founds))
 
-  (def test-data-with-config-cols (mapv add-config-cols test-data-with-founds))
+  (def test-data-with-config-cols (mapv add-config-cols test-concat-data))
 
+  (def test-sorted-data (sort (fn [row1 row2]
+                                (let [walk1 (nth row1 1)
+                                      walk2 (nth row2 1)
+                                      env1 (nth row1 2)
+                                      env2 (nth row2 2)]
+                                  (cond (= 0 (compare env1 env2)) (compare walk1 walk2)
+                                        :else (compare env1 env2))))
+                              test-data-with-config-cols))
+
+  (def test-data-with-founds (add-found-rows 5 1.0E-7 (params :maxpathlen) test-sorted-data)) ; concat-data only has three cols before the pathlengths
 
   (csv/spit-csv (str "./" "yo.csv") test-data-with-founds)
 
@@ -471,11 +484,8 @@
                      header-rows init-cols key-col sum-cols
                      data-3d))
 
-  (def data-with-founds (add-found-rows 3 1.0E-7 (params :maxpathlen) concat-data)) ; concat-data only has three cols before the pathlengths
+  (def data-with-config-cols (mapv add-config-cols concat-data))
 
-  (def data-with-config-cols (mapv add-config-cols data-with-founds))
-
-  ;; NOT RIGHT S/B EARLIER BEFORE ADDITION OF FOUNDS
   (def sorted-data (sort (fn [row1 row2]
                            (let [walk1 (nth row1 1)
                                  walk2 (nth row2 1)
@@ -485,11 +495,11 @@
                                    :else (compare env1 env2))))
                          data-with-config-cols))
 
+  (def data-with-founds (add-found-rows 5 1.0E-7 (params :maxpathlen) sorted-data)) ; concat-data only has three cols before the pathlengths
+
   (csv/spit-csv (str default-dirname "spiral23configs28runs4Kdata.csv") 
                 (cons ["walk-fn", "walk", "env", "segments", "found", "path lengths:"] ; header row
-                      data-with-config-cols))
-
-  ; TODO: Add header row
+                      data-with-founds))
 
 
   ;; checks
