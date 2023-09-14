@@ -355,6 +355,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FNS FOR ADDITIONAL PROCESSING
 
+;; This is a hack because I didn't record whether each run actually found
+;; a foodspot. The idea is that if a run went its full length, it didn't
+;; find a foodspot.
+
 (defn add-found-row
   "Helper for add-found-rows.  Generates one row containing 0's or 1's
   after init-cols.  The element is 1 if the number in column j is within

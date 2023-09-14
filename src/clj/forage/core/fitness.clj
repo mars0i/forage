@@ -5,7 +5,7 @@
             [utils.math :as um :refer [variance sample-variance]]))
 
 ;; Note that currently, efficiency as a fitness measure is defined in
-;; run.clj.  Should maybe be moved here.
+;; run.clj.  Should maybe be moved here?  Eh.  But maybe added here.
 
 (defn food-and-distance-fitness
   "Returns a fitness value that is the benefit of foodspots found minus the
@@ -25,7 +25,7 @@
 ;; functions will calculate them as well.  However, as long as I'm not
 ;; passing in lists, this shouldn't have an impact on speed.
 (defn gillespie-dev-stoch-fitness
-  "Calculate Gillespie 1977's \"developmental stochasticity\"
+  "Calculate (Gillespie 1977)'s \"developmental stochasticity\"
   fitness estimate mean - variance/N for an entire theoretical
   population--i.e. uses regular population variance, not the
   sample variance."
@@ -37,7 +37,7 @@
         
 
 (defn sample-gillespie-dev-stoch-fitness
-  "Calculate Gillespie 1977's \"developmental stochasticity\"
+  "Calculate (Gillespie 1977)'s \"developmental stochasticity\"
   fitness estimate mean - variance/N using the sample variance."
   [indiv-fitnesses]
   (let [pop-size (count indiv-fitnesses)
