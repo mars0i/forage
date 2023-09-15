@@ -7,18 +7,21 @@
 ;; Note that currently, efficiency as a fitness measure is defined in
 ;; run.clj.  Should maybe be moved here?  Eh.  But maybe added here.
 
-(defn food-and-distance-fitness
-  "Returns a fitness value that is the benefit of foodspots found minus the
-  cost of distance traveled while finding them: benefit-per-foodspot *
-  num-foodspots - cost-per-distance * distance. If a constant base-fitness
-  is passed in, it's added to the result of the above calculation.  This
-  can be used as an individual (token organism ) fitness measure, but could
-  also be applied to global population statistics."
-  ([benefit-per-foodspot cost-per-distance num-foodspots distance]
-   (food-and-distance-fitness 0 benefit-per-foodspot cost-per-distance num-foodspots distance))
-  ([base-fitness benefit-per-foodspot cost-per-distance num-foodspots distance]
-   (+ base-fitness (- (* benefit-per-foodspot num-foodspots)
-                      (* cost-per-distance distance)))))
+(defn cost-benefit-fitness
+  "Returns a fitness value that is the benefit-per of foodspots
+  found minus the cost-per of cost-units:
+  benefit-per * benefit-units - cost-per * cost-units.
+  Example:
+  benefit-units = targets found, cost-units = distance traveled.
+  If a constant base-fitness is passed in, it will be added to the
+  result of the above calculation.  This function can be used to 
+  calculate an individual (token organism ) fitness measure, but 
+  could also be applied to global population statistics."
+  ([benefit-per cost-per benefit-units cost-units]
+   (- (* benefit-per benefit-units) (* cost-per cost-units)))
+  ([base-fitness benefit-per cost-per benefit-units cost-units]
+   (+ base-fitness 
+      (food-and-cost-units-fitness benefit-per cost-per benefit-units cost-units))))
 
 
 ;; There is some redundancy in that I need pop-size, but the mean and var
