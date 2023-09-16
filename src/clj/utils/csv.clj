@@ -29,8 +29,9 @@
 
 (defn slurp-csv
   "Given a sequence of sequences of data in rows, opens a file and reads it
-  using read-csv (which is lazy).  options are those that can be passed to
-  clojure.java.io/reader.  (NOTE assumes 2d data--not 1d, not 3d, etc.)"
+  using read-csv.  (Although read-csv is lazy, this function is not.) 
+  options are those that can be passed to clojure.java.io/reader.  
+  (NOTE assumes 2D data--not 1D, not 3D, etc.)"
   [filename & options]
   (with-open [r (apply io/reader filename options)]
     (doall (csv/read-csv r)))) ; read-csv is lazy, so need to force evaluation before closing the reader
