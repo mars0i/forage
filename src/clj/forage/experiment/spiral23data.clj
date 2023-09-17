@@ -16,43 +16,91 @@
 
 (comment
 
-  (def rawcsv (csv/slurp-csv filepath))
-  ;; PROBLEM: Numbers are treated as strings
+  (def rawcsv (csv/slurp-csv filepath)) ;; numbers are treated as strings
+  ;; this is kludgey.  Might be better to use Java Long and Double classes:
+  (def csv (map #(map csv/number-or-string %) rawcsv))
   (count rawcsv)
   (count (first rawcsv))
-  (take 14 (first rawcsv))
-  (take 14 (second rawcsv))
 
-  (def csv (map #(map csv/number-or-string %) rawcsv))
+  (defn convert-one-config
+    [two-rows]
+    (if (not= (count two-rows) 2)
+      (println "More or fewer than two rows in argument to convert-one-confg:" (count two-rows))
+      (let [data-columns (map (partial drop 5) two-rows) ; remove config tags, leave data columns
+            runs (count (nth data-columns 0)) ; how many runs in these two rows?
+            length-row (nth data-columns 0) ; lengths and found counts are in
+            found-row  (nth data-columns 1) ; alternating rows
+            walk (nth (nth two-rows 0) 1)   ; walk structure config name
+            env  (nth (nth two-rows 0) 2)]   ; environment name
+        (println "convert-one-config:" walk env runs)
+        (ds/->dataset {:walk (repeat runs walk)
+                       :env  (repeat runs env)
+                       :length length-row
+                       :found  found-row}))))
 
-  (map #(take 14 %) (take 2 csv))
+  ;; threading version
+  (defn convert-to-ds-thread
+    [csv]
+    (->> csv
+         (next) ; strip header row
+         (partition 2) ; split into a collection of double-rows, each with a length and found row
+         (map convert-one-config) ; convert each double row into a single-config dataset
+         (apply merge-with into))) ; combine the single-config datasets into one dataset
 
-  (def headless (next csv))
-  (def data-columns (map (partial drop 5) headless))
 
-  (def runs-per-config (count (nth data-columns 0)))
+  ;; traditional vresion
+  (defn convert-to-ds
+    [csv]
+    (let [headless (next csv) ; strip header row
+         two-rows-coll (partition 2 headless) ; split into a collection of double-rows, each with a length and found row
+         datasets (map convert-one-config two-rows-coll)] ; convert each double row into a single-config dataset
+      ;; I DON'T THINK THIS NEXT LINE IS WORKING RIGHT.  I'm missing all but the first config strings.
+      (apply merge-with into datasets))) ; combine the single-config datasets into one dataset
+
+  (def spiral23-ds (convert-to-ds csv))
+  (def spiral23-ds2 (convert-to-ds-thread csv))
+  (= spiral23-ds spiral23-ds2)
+  (class spiral23-ds)
+
+  (ds/descriptive-stats spiral23-ds)
+  (distinct (:env spiral23-ds))
+  (distinct (:walk spiral23-ds))
+
+)
+
+
+(comment ;; OLD TESTS/EXPERIMENTS
+
+  (def headless (next csv)) ; throw out the header row
+  (count headless)
+  (def data-columns (map (partial drop 5) headless)) ; remove config tags, leave data columns
+  (def runs-per-config (count (nth data-columns 0))) ; how many runs in first row?
+
+  (map #(nth % 2) headless)
 
   ;; first experiment:
-  (def length-row (nth data-columns 0))
-  (def found-row  (nth data-columns 1))
-  (def walk (nth (nth headless 0) 1))
-  (def env (nth (nth headless 0) 2))
-  (def config0-ds (ds/->dataset {:length length-row
-                                 :found  found-row
-                                 :walk (repeat num-runs walk)
-                                 :env (repeat num-runs env)}))
+  (def length-row (nth data-columns 0)) ; lengths and found counts are in
+  (def found-row  (nth data-columns 1)) ; alternating rows
+  (def walk (nth (nth headless 0) 1))   ; walk structure config name
+  (def env  (nth (nth headless 0) 2))   ; environment name
+
+  (def config0-ds (ds/->dataset {:walk (repeat runs-per-config walk)
+                                 :env  (repeat runs-per-config env)
+                                 :length length-row
+                                 :found  found-row}))
 
   (class config0-ds)
-
+  (count config0-ds)
+  (vals config0-ds)
   (ds/descriptive-stats config0-ds 
                         {:stat-names [:col-name :datatype :min :mean :max :standard-deviation]})
-  ;; _unnamed: descriptive-stats [4 6]:
-  ;; 
-  ;; | :col-name | :datatype |        :min |           :mean |      :max | :standard-deviation |
-  ;; |-----------|-----------|------------:|----------------:|----------:|--------------------:|
-  ;; |   :length |  :float64 | 2143.930733 | 969266.06787012 | 1000000.0 |     155112.05966146 |
-  ;; |    :found |    :int64 |    0.000000 |      0.04375000 |       1.0 |          0.20456392 |
-  ;; |     :walk |   :string |             |                 |           |                     |
-  ;; |      :env |   :string |             |                 |           |                     |
 
+  (def test-ds1 (convert-one-config (take 2 (next headless))))
+  (def test-ds2 (convert-one-config (take 2 (drop 2 (next headless)))))
+  (def test-ds3 (convert-one-config (take 2 (drop 4 (next headless)))))
+  (class test-ds3)
+  (map #(ds/descriptive-stats %) [test-ds1 test-ds2 test-ds3])
+
+  (def test-ds (merge-with into test-ds1 test-ds2 test-ds3))
+  (ds/descriptive-stats test-ds)
 )
