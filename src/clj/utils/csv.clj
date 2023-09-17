@@ -50,7 +50,7 @@
   (let [c0 (first s)]
     (if (or (digit-chars c0) ; looks like a positive number
             (and (= c0 \-) (digit-chars (second s)))) ; looks like a negative number
-      (read-string s)
+      (read-string s) ; if you know it's an int or a float, better to use (Long. ) or (Double. ) or e.g. (Long/parseLong )
       s)))
 
 (defn numbers-or-strings
