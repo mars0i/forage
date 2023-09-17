@@ -19,8 +19,7 @@
   (def rawcsv (csv/slurp-csv filepath)) ;; numbers are treated as strings
   ;; this is kludgey.  Might be better to use Java Long and Double classes:
   (def csv (map #(map csv/number-or-string %) rawcsv))
-  (count rawcsv)
-  (count (first rawcsv))
+  (count csv)
 
   (defn convert-one-config
     [two-rows]
@@ -32,30 +31,29 @@
             found-row  (nth data-columns 1) ; alternating rows
             walk (nth (nth two-rows 0) 1)   ; walk structure config name
             env  (nth (nth two-rows 0) 2)]   ; environment name
-        (println "convert-one-config:" walk env runs)
         (ds/->dataset {:walk (repeat runs walk)
                        :env  (repeat runs env)
                        :length length-row
                        :found  found-row}))))
+
 
   ;; threading version
   (defn convert-to-ds-thread
     [csv]
     (->> csv
          (next) ; strip header row
-         (partition 2) ; split into a collection of double-rows, each with a length and found row
-         (map convert-one-config) ; convert each double row into a single-config dataset
-         (apply merge-with into))) ; combine the single-config datasets into one dataset
+         (partition 2) ; split into a collection of double-rows, each with length row and found row
+         (map convert-one-config) ; convert each double row into a dataset for a single configuration
+         (apply ds/concat-copying))) ; combine the single-config datasets into one dataset
 
-
-  ;; traditional vresion
+  ;; traditional version
   (defn convert-to-ds
     [csv]
     (let [headless (next csv) ; strip header row
-         two-rows-coll (partition 2 headless) ; split into a collection of double-rows, each with a length and found row
-         datasets (map convert-one-config two-rows-coll)] ; convert each double row into a single-config dataset
-      ;; I DON'T THINK THIS NEXT LINE IS WORKING RIGHT.  I'm missing all but the first config strings.
-      (apply merge-with into datasets))) ; combine the single-config datasets into one dataset
+         two-rows-coll (partition 2 headless) ; split into a collection of double-rows, each with length row and found row
+         datasets (map convert-one-config two-rows-coll)] ; convert each double row into a dataset for a single configuration
+      (apply ds/concat-copying datasets))) ; combine the single-config datasets into one dataset
+      ;; tip: clojure.core/merge-with won't work here.
 
   (def spiral23-ds (convert-to-ds csv))
   (def spiral23-ds2 (convert-to-ds-thread csv))
@@ -66,10 +64,22 @@
   (distinct (:env spiral23-ds))
   (distinct (:walk spiral23-ds))
 
+  (ds/write! spiral23-ds "yo.csv")
+
 )
 
 
 (comment ;; OLD TESTS/EXPERIMENTS
+
+  (def ds1 (ds/->dataset {:a [1 2 3] :b ["w" "x" "y"]}))
+  (def ds2 (ds/->dataset {:a [4 5 6] :b ["a" "b" "c"]}))
+  ;; Seems like it should work but doesn't:
+  (def dsbad1 (merge-with concat ds1 ds2))
+  ;; Not this:
+  (def dsbad2 (ds/->>dataset [ds1 ds2]))
+  ;; This concats as intended:
+  (def ds (ds/concat-copying ds1 ds2))
+  ;; There's also concat-inplace
 
   (def headless (next csv)) ; throw out the header row
   (count headless)
