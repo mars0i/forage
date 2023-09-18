@@ -16,6 +16,7 @@
         techascent/tech.ml.dataset {:mvn/version "7.007"}
         techascent/tech.viz {:mvn/version "6.00-beta-16-2"}
         scicloj/tablecloth {:mvn/version "7.007"}
+        org.scicloj/clay {:mvn/version "2-alpha35"}
         io.github.nextjournal/clerk {:mvn/version "0.5.346"}
         ;com.taoensso/nippy {:mvn/version "3.1.1"} ; for preventing a problem with clerk's use of nippy
         metasoarous/oz {:mvn/version "2.0.0-alpha5"}

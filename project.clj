@@ -20,6 +20,7 @@
                  [techascent/tech.ml.dataset "7.007"]
                  [techascent/tech.viz "6.00-beta-16-2"]
                  [scicloj/tablecloth "7.007"]
+                 [org.scicloj/clay "2-alpha35"]
                  [io.github.nextjournal/clerk "0.5.346"]
                  [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
                  ;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
