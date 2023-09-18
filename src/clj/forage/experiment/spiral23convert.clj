@@ -150,6 +150,7 @@
   ;; as keys.  Which makes sense, since writing to a csv file
   ;; requires turning things into strings or numbers, whereas
   ;; nippy is a general Clojure serialization format.
+  ;; BUT SEE the :key-fn option to ->dataset.
 
   (def fromcsvmap (into {} fromcsv))
   (class fromcsvmap)
