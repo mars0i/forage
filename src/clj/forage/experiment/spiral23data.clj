@@ -11,8 +11,10 @@
 
 (def home (System/getenv "HOME"))
 (def fileloc "/docs/src/data.foraging/forage/spiral23/")
-(def filename "spiral23configs28runs4KdataFreshFromClojure.csv")
-(def filepath (str home fileloc filename))
+(def infilename "spiral23configs28runs4KdataFreshFromClojure.csv")
+(def infilepath (str home fileloc infilename))
+(def outfilename "spiral23configs28runs4Kdataset.nippy")
+(def outfilepath (str home fileloc outfilename))
 
 (defn convert-one-config
   "Converts a pair of rows into a TMD dataset for a single pair of
@@ -61,43 +63,26 @@
 
 (comment
 
-  (def rawinput (csv/slurp-csv filepath)) ;; numbers are treated as strings
+  (def rawinput (csv/slurp-csv infilepath)) ;; numbers are treated as strings
   ;; this is kludgey.  Might be better to use Java Long and Double classes:
   (def input (map #(map csv/number-or-string %) rawinput))
-  (count input)
 
   (def spiral23-ds (convert-to-ds input))
 
-  (distinct (:env spiral23-ds))  ; sanity check: should be env0, env1, env2, env3
-  (distinct (:walk spiral23-ds)) ; sanity check: there should be seven strings
+  ;; sanity checks:
+  (count input)
+  (distinct (:env spiral23-ds))  ; Should be env0, env1, env2, env3
+  (distinct (:walk spiral23-ds)) ; There should be seven strings
   (ds/descriptive-stats spiral23-ds)
 
-  (ds/write! spiral23-ds "yo.csv")
-  (ds/write! spiral23-ds "yo.csv.gz")
-  (ds/write! spiral23-ds "yo.csv.zip")
-  (ds/write! spiral23-ds "yo.nippy") ; https://github.com/taoensso/nippy
-
-  (def fromcsv (time (ds/->dataset "yo.csv")))
-  (def fromcsvgz (time (ds/->dataset "yo.csv.gz")))
-  (def fromcsvzip (time (ds/->dataset "yo.csv.zip")))
-  (def fromnippy (time (ds/->dataset "yo.nippy")))
-  (= spiral23-ds fromcsv) ; this is false, but 
-  (ds/descriptive-stats fromcsv) ; this output looks the same
-  (= spiral23-ds fromcsvgz) ; false
-  (ds/descriptive-stats fromcsvgz)
-  (= spiral23-ds fromcsvzip) ; false
-  (ds/descriptive-stats fromcsvzip)
-  (= spiral23-ds fromnippy) ; false
-  (ds/descriptive-stats fromnippy)
-
-  (= fromcsv fromcsvgz) ; true
-  (= fromcsv fromcsvzip) ; true
-  (= fromcsv fromnippy) ; false
+  ;; Save the dataset as a nippy file:
+  (ds/write! spiral23-ds outfilepath)
 
 )
 
-
-(comment ;; OLD TESTS/EXPERIMENTS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; OLD TESTS/EXPERIMENTS
+(comment 
 
   (def ds1 (ds/->dataset {:a [1 2 3] :b ["w" "x" "y"]}))
   (def ds2 (ds/->dataset {:a [4 5 6] :b ["a" "b" "c"]}))
@@ -141,4 +126,52 @@
 
   (def test-ds (merge-with into test-ds1 test-ds2 test-ds3))
   (ds/descriptive-stats test-ds)
+
+
+  (ds/write! spiral23-ds "yo.csv")
+  (ds/write! spiral23-ds "yo.csv.gz")
+  (ds/write! spiral23-ds "yo.csv.zip")
+  (ds/write! spiral23-ds "yo.nippy") ; https://github.com/taoensso/nippy
+
+  (def fromcsv (time (ds/->dataset "yo.csv")))
+  (def fromcsvgz (time (ds/->dataset "yo.csv.gz")))
+  (def fromcsvzip (time (ds/->dataset "yo.csv.zip")))
+  (def fromnippy (time (ds/->dataset "yo.nippy")))
+  (= spiral23-ds fromcsv) ; this is false, but 
+  (ds/descriptive-stats fromcsv) ; this output looks the same
+  (= spiral23-ds fromcsvgz) ; false
+  (ds/descriptive-stats fromcsvgz)
+  (= spiral23-ds fromcsvzip) ; false
+  (ds/descriptive-stats fromcsvzip)
+  (= spiral23-ds fromnippy) ; false? true?
+  (ds/descriptive-stats fromnippy)
+
+  (= fromcsv fromcsvgz) ; true, which makes sense
+  (= fromcsv fromcsvzip) ; true, which makes sense
+  (= fromcsv fromnippy) ; false
+  ;; If you display the datasets in the log window, fromcsv
+  ;; uses strings as keys, while fromnippy uses keywords
+  ;; as keys.  Which makes sense, since writing to a csv file
+  ;; requires turning things into strings or numbers, whereas
+  ;; nippy is a general Clojure serialization format.
+
+  (def fromcsvmap (into {} fromcsv))
+  (class fromcsvmap)
+  (= fromcsvmap fromcsv) ; true!
+
+  (def fromnippymap (into {} fromnippy))
+  (class fromnippymap)
+  (= fromnippymap fromnippy) ; true!
+
+  (= fromcsvmap fromnippymap) ; false
+  ;; If you display the maps in the log window, fromcsvmap
+  ;; uses strings as keys, while fromnippymap uses keywords
+  ;; as keys.  Which makes sense, since writing to a csv file
+  ;; requires turning things into strings or numbers, whereas
+  ;; nippy is a general Clojure serialization format.
+
+  ;; replace string keys with keyword keys:
+  (def keyfixcsvmap (zipmap (map keyword (keys fromcsvmap)) (vals fromcsvmap)))
+  (= keyfixcsvmap fromnippymap) ; true: these are equal
+
 )
