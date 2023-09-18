@@ -21,7 +21,7 @@
    (- (* benefit-per benefit-units) (* cost-per cost-units)))
   ([base-fitness benefit-per cost-per benefit-units cost-units]
    (+ base-fitness 
-      (food-and-cost-units-fitness benefit-per cost-per benefit-units cost-units))))
+      (cost-benefit-fitness benefit-per cost-per benefit-units cost-units))))
 
 
 ;; There is some redundancy in that I need pop-size, but the mean and var
