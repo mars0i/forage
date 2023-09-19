@@ -20,10 +20,16 @@
 
 ;; MAKE TEST DATASET with fewer rows per config
 ;; This works but I end up with a lot of rows with failed searches:
-(def test23 (-> spiral23
-                (tc/group-by [:env :walk]) ; temporarily make it a grouped dataset of sub-datasets
-                (tc/process-group-data (fn [ds] (tc/select-rows ds (range 100)))) ; a few rows from each
-                (tc/ungroup)))
+(comment
+  (def test23raw (-> spiral23
+                     (tc/group-by [:env :walk]) ; temporarily make it a grouped dataset of sub-datasets
+                     (tc/process-group-data (fn [ds] (tc/select-rows ds (range 10)))) ; a few rows from each
+                     (tc/ungroup)))
+
+  (ds/write! test23raw (str home fileloc "test23raw.csv"))
+)
+
+(defonce test23 (ds/->dataset (str home fileloc "test23.csv") {:key-fn keyword}))
 
 (comment 
   (tc/print-dataset test23 {:print-index-range 10000}) ; a number large than num rows to print 'em all
