@@ -23,6 +23,8 @@
 
 (comment 
 
+  ;; tc/aggregate
+
   ;; doesn't work
   (def spiral23fityo
     (ds/row-map spiral23
