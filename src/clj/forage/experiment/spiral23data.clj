@@ -1,5 +1,6 @@
 (ns forage.experiment.spiral23data
   (:require [tech.v3.dataset :as ds]
+            [tech.v3.dataset.print :as dsp]
             ;[tech.v3.datatype.functional :as dsf]
             [tablecloth.api :as tc]
             [scicloj.clay.v2.api :as clay]
@@ -17,42 +18,31 @@
 (defonce spiral23 (ds/->dataset spiral23filepath))
 (comment (ds/descriptive-stats spiral23) )
 
+;; MAKE TEST DATASET with fewer rows per config
+;; This works but I end up with a lot of rows with failed searches:
+(def test23 (-> spiral23
+                (tc/group-by [:env :walk]) ; temporarily make it a grouped dataset of sub-datasets
+                (tc/process-group-data (fn [ds] (tc/select-rows ds (range 100)))) ; a few rows from each
+                (tc/ungroup)))
+
+(comment 
+  (tc/print-dataset test23 {:print-index-range 10000}) ; a number large than num rows to print 'em all
+  (ds/descriptive-stats test23)
+)
+
 
 (comment 
 
   ;; ADDING AN INDIV FITNESS COLUMN:
 
-  ;; works, but there has to be a better way
+  ;; Here is the better way--it just adds the new column to the existing ones.
+  ;; I didn't need to reproduce the old columns
   (def spiral23-ifit
-    (ds/row-map spiral23
-                (fn [row] 
-                  {:env (row :env)
-                   :walk (row :walk)
-                   :length (row :length)
-                   :found (row :found)
-                   :ifit (fit/cost-benefit-fitness 100 1 0.0001 (row :found) (row :length))})))
-
-
-  ;; this is a little better, but there still must be a better way
-  (def spiral23-ifit
-    (ds/row-map spiral23
-                (fn [{:keys [env walk length found]}]
-                  {:env env
-                   :walk walk
-                   :length length
-                   :found found
-                   :ifit (fit/cost-benefit-fitness 100 1 0.0001 found length)})))
-
-  ;; Tablecloth attempt.  Doesn't work. Also, even if it runs, it's not
-  ;; what I want, because with add-column, "When function is used, argument
-  ;; is whole dataset and the result should be column, sequence or single value"
-  (def spiral23-ifit
-    (tc/add-column spiral23
-                   :ifit
-                   (fn [{:keys [found length]}]
-                     (fit/cost-benefit-fitness 100 1 0.0001 found length))))
+    (ds/row-map spiral23 (fn [{:keys [length found]}]
+                           {:ifit (fit/cost-benefit-fitness 100 1 0.0001 found length)})))
 
   (ds/descriptive-stats spiral23-ifit)
+
 
 
   ;; CALCULATE PER-CONFIG TRAIT FITNESS ESTIMATES:
@@ -77,6 +67,7 @@
   (ds/descriptive-stats spiral23-tfit)
 
 
+
   ;; CLAY EXPERIMENTS
 
   (clojure.repl/dir clay)
@@ -86,6 +77,7 @@
 
   (clay/handle-value! (ds/descriptive-stats spiral23))
   (clay/handle-value! spiral23)
+  (clay/handle-value! test23)
 
   ;; show-doc! is obsolete
   (clay/show-namespace! "src/clj/forage/experiment/spiral23data.clj") 
@@ -107,5 +99,53 @@
              :code-block-background true
              :embed-resources true
              :execute {:freeze true}})
+)
+
+
+(comment
+  ;; OLD STUFF
+
+  ;; works, but there has to be a better way
+  (def spiral23-ifit
+    (ds/row-map spiral23
+                (fn [row] 
+                  {:env (row :env)
+                   :walk (row :walk)
+                   :length (row :length)
+                   :found (row :found)
+                   :ifit (fit/cost-benefit-fitness 100 1 0.0001 (row :found) (row :length))})))
+
+
+  ;; this is a little better, but there still must be a better way
+  (def spiral23-ifit
+    (ds/row-map spiral23
+                (fn [{:keys [env walk length found]}]
+                  {:env env
+                   :walk walk
+                   :length length
+                   :found found
+                   :ifit (fit/cost-benefit-fitness 100 1 0.0001 found length)})))
+
+  ;; Tablecloth attempt.  Doesn't work. Also, even if it ran, it's not
+  ;; what I want, because with add-column, "When function is used, argument
+  ;; is whole dataset and the result should be column, sequence or single value"
+  (def spiral23-ifit
+    (tc/add-column spiral23
+                   :ifit
+                   (fn [{:keys [found length]}]
+                     (fit/cost-benefit-fitness 100 1 0.0001 found length))))
+
+
+
+  (def yogrouped (tc/group-by spiral23-ifit [:env :walk]))
+  (keys yogrouped)
+  (count (:name yogrouped))
+  (count (:group-id yogrouped))
+  (count (:data yogrouped))
+  (map class (:data yogrouped))
+  (first (:data yogrouped))
+  (= (first (:data yogrouped)) ((:data yogrouped) 0)) ;=> true
+
+
 )
 
