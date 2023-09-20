@@ -31,18 +31,28 @@
   ;; TESTING
   (def test23-ifit
     (ds/row-map test23 (fn [{:keys [length found]}]
-                           {:ifit (fit/cost-benefit-fitness 1000 1 0.0001 found length)})))
+                           {:indiv-fit (fit/cost-benefit-fitness 1000 1 0.0001 found length)})))
+  (ds/print-all test23-ifit)
   (ds/descriptive-stats test23-ifit)
-  (tc/print-dataset test23-ifit {:print-index-range 10000}) ; a number large than num rows to print 'em all
 
   (def test23-tfit
     (-> test23-ifit
         (tc/group-by [:env :walk])
         (tc/aggregate ; ungroups by default
-          {:trait-fit (fn [{:keys [ifit]}] ; could also calc on the fly from found, length
-                        (fit/sample-gillespie-dev-stoch-fitness ifit))})))
+          {:trait-fit (fn [{:keys [indiv-fit]}] ; could also calc on the fly from found, length
+                        (fit/sample-gillespie-dev-stoch-fitness indiv-fit))})))
+  (ds/print-all test23-tfit)
   (ds/descriptive-stats test23-tfit)
-  (tc/print-dataset test23-tfit {:print-index-range 10000}) ; a number large than num rows to print 'em all
+
+  (def test23-tfit-sorted
+    (tc/order-by test23-tfit [:env :trait-fit] [:asc :desc]))
+  (ds/print-all test23-tfit-sorted) ; a number large than num rows to print 'em all
+  (ds/descriptive-stats test23-tfit-sorted)
+
+    ;; See also:
+    ;; ds/sort-by-column
+    ;; ds/sort-by
+
 
   ;; ADDING AN INDIV FITNESS COLUMN:
 
@@ -50,9 +60,9 @@
   ;; I didn't need to reproduce the old columns
   (def spiral23-ifit
     (ds/row-map spiral23 (fn [{:keys [length found]}]
-                           {:ifit (fit/cost-benefit-fitness 100 1 0.0001 found length)})))
-
+                           {:indiv-fit (fit/cost-benefit-fitness 100 1 0.0001 found length)})))
   (ds/descriptive-stats spiral23-ifit)
+  (ds/print-all spiral23-ifit)
 
 
 
@@ -71,10 +81,11 @@
   (def spiral23-tfit
     (-> spiral23-ifit
         (tc/group-by [:env :walk])
-        (tc/aggregate 
-          {:trait-fit (fn [{:keys [ifit]}] ; could also calc on the fly from found, length
-                        (fit/sample-gillespie-dev-stoch-fitness ifit))})))
+        (tc/aggregate {:trait-fit (fn [{:keys [indiv-fit]}] ; could also calc on the fly from found, length
+                                    (fit/sample-gillespie-dev-stoch-fitness indiv-fit))})
+        (tc/order-by [:env :trait-fit] [:desc :desc]))) ; sort by fitness within env
 
+  (ds/print-all spiral23-tfit)
   (ds/descriptive-stats spiral23-tfit)
 
 
