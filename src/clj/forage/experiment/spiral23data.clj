@@ -25,8 +25,25 @@
   (ds/descriptive-stats test23)
 )
 
+(defn add-indiv-cbfit-col
+  "Given a dataset walk-ds of foraging data with a column :found for number
+  of foospots found, and :walk for total length of the walk, returns a
+  dataset with an added column representing the cost-benefit individual
+  fitness per walk.  See forage.core.fitness/cost-benefit-fitness for the
+  other parameters."
+  [walk-ds base-fitness benefit-per cost-per]
+  (ds/row-map walk-ds (fn [{:keys [length found]}]
+                        {:indiv-fit (fit/cost-benefit-fitness base-fitness
+                                                              benefit-per cost-per
+                                                              found length)})))
+(defn dev-stoch-fitness-table
+  [walk-ds base-fitness benefit-per cost-per]
+  )
+
 
 (comment 
+
+  
 
   ;; TESTING
   (def test23-ifit
@@ -48,10 +65,26 @@
     (tc/order-by test23-tfit [:env :trait-fit] [:asc :desc]))
   (ds/print-all test23-tfit-sorted) ; a number large than num rows to print 'em all
   (ds/descriptive-stats test23-tfit-sorted)
-
     ;; See also:
     ;; ds/sort-by-column
     ;; ds/sort-by
+
+  ;; PLAYING WITH GROUP-BY:
+
+  ;; group-by into a map with sub-datasets as values, then extract
+  ;; one value.  Note that the key is a map:
+  ((tc/group-by test23-tfit-sorted [:env] {:result-type :as-map})
+   {:env "env3"})
+
+  ;; Same thing (with a different source dataset), using a more complex grouping:
+  ((tc/group-by test23-ifit [:env :walk] {:result-type :as-map})
+   {:walk "mu15" :env "env2"})
+
+  ;; Convert grouping to seq, then index into it:
+  (nth (tc/group-by test23-tfit-sorted [:env] {:result-type :as-seq}) 3)
+
+  ;; Same thing with more complex grouping (from a different datast):
+  (nth (tc/group-by test23-ifit [:env :walk] {:result-type :as-seq}) 27)
 
 
   ;; ADDING AN INDIV FITNESS COLUMN:
