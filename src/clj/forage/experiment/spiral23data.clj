@@ -36,9 +36,21 @@
                         {:indiv-fit (fit/cost-benefit-fitness base-fitness
                                                               benefit-per cost-per
                                                               found length)})))
-(defn dev-stoch-fitness-table
+
+(defn devstoch-fit-from-indiv-fit-ds
+  [indiv-fit-ds]
+  (-> indiv-fit-ds
+      (tc/group-by [:env :walk])
+      (tc/aggregate {:trait-fit (fn [{:keys [indiv-fit]}] ; could also calc on the fly from found, length
+                                  (fit/sample-gillespie-dev-stoch-fitness indiv-fit))})
+      (tc/order-by [:env :trait-fit] [:desc :desc]))) ; sort by fitness within env
+
+
+(defn devstoch-fit-ds
   [walk-ds base-fitness benefit-per cost-per]
-  )
+  (devstoch-fit-from-indiv-fit-ds
+    (add-indiv-cbfit-col walk-ds base-fitness benefit-per cost-per)))
+
 
 
 (comment 
