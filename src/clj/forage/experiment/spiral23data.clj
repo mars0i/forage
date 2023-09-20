@@ -18,18 +18,7 @@
 (defonce spiral23 (ds/->dataset spiral23filepath))
 (comment (ds/descriptive-stats spiral23) )
 
-;; MAKE TEST DATASET with fewer rows per config
-;; This works but I end up with a lot of rows with failed searches:
-(comment
-  (def test23raw (-> spiral23
-                     (tc/group-by [:env :walk]) ; temporarily make it a grouped dataset of sub-datasets
-                     (tc/process-group-data (fn [ds] (tc/select-rows ds (range 10)))) ; a few rows from each
-                     (tc/ungroup)))
-
-  (ds/write! test23raw (str home fileloc "test23raw.csv"))
-)
-
-(defonce test23 (ds/->dataset (str home fileloc "test23.csv") {:key-fn keyword}))
+(defonce test23 (ds/->dataset (str home fileloc "test23.nippy")))
 
 (comment 
   (tc/print-dataset test23 {:print-index-range 10000}) ; a number large than num rows to print 'em all
@@ -38,6 +27,22 @@
 
 
 (comment 
+
+  ;; TESTING
+  (def test23-ifit
+    (ds/row-map test23 (fn [{:keys [length found]}]
+                           {:ifit (fit/cost-benefit-fitness 1000 1 0.0001 found length)})))
+  (ds/descriptive-stats test23-ifit)
+  (tc/print-dataset test23-ifit {:print-index-range 10000}) ; a number large than num rows to print 'em all
+
+  (def test23-tfit
+    (-> test23-ifit
+        (tc/group-by [:env :walk])
+        (tc/aggregate ; ungroups by default
+          {:trait-fit (fn [{:keys [ifit]}] ; could also calc on the fly from found, length
+                        (fit/sample-gillespie-dev-stoch-fitness ifit))})))
+  (ds/descriptive-stats test23-tfit)
+  (tc/print-dataset test23-tfit {:print-index-range 10000}) ; a number large than num rows to print 'em all
 
   ;; ADDING AN INDIV FITNESS COLUMN:
 
@@ -153,5 +158,17 @@
   (= (first (:data yogrouped)) ((:data yogrouped) 0)) ;=> true
 
 
+)
+
+(comment
+  (def test23raw (-> spiral23
+                     (tc/group-by [:env :walk]) ; temporarily make it a grouped dataset of sub-datasets
+                     (tc/process-group-data (fn [ds] (tc/select-rows ds (range 10)))) ; a few rows from each
+                     (tc/ungroup)))
+
+  (ds/write! test23raw (str home fileloc "test23raw.csv"))
+
+  (def test23 (ds/->dataset (str home fileloc "test23.csv") {:key-fn keyword}))
+  (ds/write! test23 (str home fileloc "test23.nippy"))
 )
 
