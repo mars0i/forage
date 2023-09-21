@@ -55,7 +55,29 @@
 
 (comment 
 
+  ;; HAND-CHECKING RESULTS:
+
+  (ds/print-all test23-tfit-sorted)
   
+  ;; from test23-ifit: env0, composite-mu1-spiral
+  (fit/sample-gillespie-dev-stoch-fitness [900
+                                           1000.42187859
+                                           942.49526028
+                                           959.62338180])
+
+  ;; from test23-ifit: env3, mu25
+  (fit/sample-gillespie-dev-stoch-fitness [991.50000000
+                                           901.00000000
+                                           991.50000000
+                                           906.00000000])
+
+  ;; env0 composite-mu15-mu3 indiv fitnesses
+  (fit/sample-gillespie-dev-stoch-fitness
+    ;; What is the better way to extract the vals in this subcolumn?:
+    (first 
+      (vals
+        (into {} (tc/select test23-ifit [:indiv-fit] (range 4 8))))))
+
 
   ;; TESTING
   (def test23-ifit
