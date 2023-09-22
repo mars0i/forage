@@ -25,7 +25,7 @@
   (ds/descriptive-stats test23)
 )
 
-(defn add-indiv-cbfit-col
+(defn add-column-cbfit
   "Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
   dataset with an added column representing the cost-benefit individual
@@ -37,7 +37,11 @@
                                                               benefit-per cost-per
                                                               found length)})))
 
-(defn devstoch-fit-from-indiv-fit-ds
+
+(defn devstochfit-ds-from-indivfit-ds
+  "Given a dataset with an :indiv-fit column, returns a dataset that
+  summarizes this data by providing a Gillespie \"developmental
+  stochasticity\" fitness value for each environment and walk type."
   [indiv-fit-ds]
   (-> indiv-fit-ds
       (tc/group-by [:env :walk])
@@ -46,7 +50,12 @@
       (tc/order-by [:env :trait-fit] [:desc :desc]))) ; sort by fitness within env
 
 
-(defn devstoch-fit-ds
+(defn devstoch-cbfit-ds-from-foundlen-ds
+  "Given a dataset walk-ds of foraging data with a column :found for number
+  of foospots found, and :walk for total length of the walk, returns a
+  dataset that summarizes this data by providing a Gillespie
+  \"developmental stochasticity\" fitness value for each environment and
+  walk type."
   [walk-ds base-fitness benefit-per cost-per]
   (devstoch-fit-from-indiv-fit-ds
     (add-indiv-cbfit-col walk-ds base-fitness benefit-per cost-per)))
@@ -74,9 +83,8 @@
   ;; env0 composite-mu15-mu3 indiv fitnesses
   (fit/sample-gillespie-dev-stoch-fitness
     ;; What is the better way to extract the vals in this subcolumn?:
-    (first 
-      (vals
-        (into {} (tc/select test23-ifit [:indiv-fit] (range 4 8))))))
+    (:indiv-fit
+      (into {} (tc/select test23-ifit [:indiv-fit] (range 4 8)))))
 
 
   ;; TESTING
