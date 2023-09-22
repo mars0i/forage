@@ -9,6 +9,15 @@
             ;[utils.math :as um]
             [forage.core.fitness :as fit]))
 
+(defn prall
+  "Convenience function for returning one or more tech.ml.dataset datasets
+  in a nice format for reading in stdout.  Will be wrapped in a sequence,
+  but that's not distracting."
+  [& dss]
+  (map (fn [ds] (dsp/print-range ds :all))
+       dss))
+
+
 (def home (System/getenv "HOME"))
 (def fileloc "/docs/src/data.foraging/forage/spiral23data/")
 (def spiral23filename "spiral23configs28runs4Kdataset.nippy")
@@ -25,23 +34,33 @@
   (ds/descriptive-stats test23)
 )
 
-(defn add-column-cbfit
+(defn add-column-cb-fit
   "Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
-  dataset with an added column representing the cost-benefit individual
-  fitness per walk.  See forage.core.fitness/cost-benefit-fitness for the
-  other parameters."
+  dataset that is the same but has an added column :indiv-fit representing
+  the cost-benefit individual fitness per walk.  See
+  forage.core.fitness/cost-benefit-fitness for the other parameters."
   [walk-ds base-fitness benefit-per cost-per]
   (ds/row-map walk-ds (fn [{:keys [length found]}]  ; or tc/map-rows
                         {:indiv-fit (fit/cost-benefit-fitness base-fitness
                                                               benefit-per cost-per
                                                               found length)})))
 
+(defn make-trait-fit-ds-name
+  "Generate a string to be used as a trait-fitness dataset name,
+  incorporating fitness parameters into the name."
+  [basename base-fitness benefit-per cost-per]
+  (str basename
+       ":benefit=" benefit-per
+       ",cost=" cost-per
+       ",base=" base-fitness))
 
-(defn devstochfit-ds-from-indivfit-ds
+
+(defn indiv-fit-to-devstoch-fit-ds
   "Given a dataset with an :indiv-fit column, returns a dataset that
   summarizes this data by providing a Gillespie \"developmental
-  stochasticity\" fitness value for each environment and walk type."
+  stochasticity\" fitness value (column :trait-fit) for each environment
+  (column :env) and walk type (column :walk)."
   [indiv-fit-ds]
   (-> indiv-fit-ds
       (tc/group-by [:env :walk])
@@ -50,19 +69,58 @@
       (tc/order-by [:env :trait-fit] [:desc :desc]))) ; sort by fitness within env
 
 
-(defn devstoch-cbfit-ds-from-foundlen-ds
+(defn walk-data-to-devstoch-fit-ds
   "Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
   dataset that summarizes this data by providing a Gillespie
-  \"developmental stochasticity\" fitness value for each environment and
-  walk type."
+  \"developmental stochasticity\" fitness value (column :trait-fit) for
+  each environment (column :env) and walk type (column :walk). "
   [walk-ds base-fitness benefit-per cost-per]
-  (devstoch-fit-from-indiv-fit-ds
-    (add-indiv-cbfit-col walk-ds base-fitness benefit-per cost-per)))
+  (-> walk-ds 
+    (add-column-cb-fit base-fitness benefit-per cost-per)
+    (indiv-fit-to-devstoch-fit-ds)
+    (ds/->dataset {:dataset-name
+                   (make-trait-fit-ds-name "spiral23" base-fitness benefit-per cost-per)})))
 
+
+(comment
+  ;; Data experiments
+
+  (prall (walk-data-to-devstoch-fit-ds spiral23 0 200 0.000001))
+
+)
 
 
 (comment 
+  ;; TESTING
+
+  (def test23-ifit
+    (ds/row-map test23 (fn [{:keys [length found]}]
+                           {:indiv-fit (fit/cost-benefit-fitness 1000 1 0.0001 found length)})))
+  (ds/print-all test23-ifit)
+  (ds/descriptive-stats test23-ifit)
+
+  (def test23-tfit
+    (-> test23-ifit
+        (tc/group-by [:env :walk])
+        (tc/aggregate ; ungroups by default
+          {:trait-fit (fn [{:keys [indiv-fit]}] ; could also calc on the fly from found, length
+                        (fit/sample-gillespie-dev-stoch-fitness indiv-fit))})))
+  (ds/print-all test23-tfit)
+  (ds/descriptive-stats test23-tfit)
+
+  (def test23-tfit-sorted
+    (tc/order-by test23-tfit [:env :trait-fit] [:desc :desc]))
+  (ds/print-all test23-tfit-sorted) ; a number large than num rows to print 'em all
+  (ds/descriptive-stats test23-tfit-sorted)
+    ;; See also:
+    ;; ds/sort-by-column
+    ;; ds/sort-by
+
+    ;; All at once:
+    (def test23-allatonce (walk-data-to-devstoch-fit-ds test23 1000 1 0.0001))
+    (= test23-allatonce test23-tfit-sorted)
+    (prall test23-allatonce test23-tfit-sorted)
 
   ;; HAND-CHECKING RESULTS:
 
@@ -86,30 +144,46 @@
     (:indiv-fit
       (into {} (tc/select test23-ifit [:indiv-fit] (range 4 8)))))
 
+)
 
-  ;; TESTING
-  (def test23-ifit
-    (ds/row-map test23 (fn [{:keys [length found]}]
-                           {:indiv-fit (fit/cost-benefit-fitness 1000 1 0.0001 found length)})))
-  (ds/print-all test23-ifit)
-  (ds/descriptive-stats test23-ifit)
 
-  (def test23-tfit
-    (-> test23-ifit
-        (tc/group-by [:env :walk])
-        (tc/aggregate ; ungroups by default
-          {:trait-fit (fn [{:keys [indiv-fit]}] ; could also calc on the fly from found, length
-                        (fit/sample-gillespie-dev-stoch-fitness indiv-fit))})))
-  (ds/print-all test23-tfit)
-  (ds/descriptive-stats test23-tfit)
+(comment
+  ;; CLAY EXPERIMENTS
 
-  (def test23-tfit-sorted
-    (tc/order-by test23-tfit [:env :trait-fit] [:asc :desc]))
-  (ds/print-all test23-tfit-sorted) ; a number large than num rows to print 'em all
-  (ds/descriptive-stats test23-tfit-sorted)
-    ;; See also:
-    ;; ds/sort-by-column
-    ;; ds/sort-by
+  (clojure.repl/dir clay)
+
+  (clay/start!)
+  (clay/browse!)
+
+  (clay/handle-value! (ds/descriptive-stats spiral23))
+  (clay/handle-value! spiral23)
+  (clay/handle-value! test23)
+
+  ;; show-doc! is obsolete
+  (clay/show-namespace! "src/clj/forage/experiment/spiral23data.clj") 
+
+  ;; send result to browser window
+  (clay/handle-form!  (+ 11 33)) ; => 44
+  (clay/handle-value! (+ 11 33)) ; => 44
+  (clay/handle-form!  '(+ 11 33)) ; => 44
+  (clay/handle-value! '(+ 11 33)) ; => (+ 11 33)
+
+  (clay/swap-options!
+    assoc
+    :remote-repo {:git-url "https://github.com/scicloj/clay"
+                  :branch "main"}
+    :quarto {:format {:html {:toc true
+                             :theme :spacelab
+                             :embed-resources true}}
+             :highlight-style :solarized
+             :code-block-background true
+             :embed-resources true
+             :execute {:freeze true}})
+)
+
+
+(comment
+  ;; OLD STUFF
 
   ;; PLAYING WITH GROUP-BY:
 
@@ -163,44 +237,6 @@
   (ds/print-all spiral23-tfit)
   (ds/descriptive-stats spiral23-tfit)
 
-
-
-  ;; CLAY EXPERIMENTS
-
-  (clojure.repl/dir clay)
-
-  (clay/start!)
-  (clay/browse!)
-
-  (clay/handle-value! (ds/descriptive-stats spiral23))
-  (clay/handle-value! spiral23)
-  (clay/handle-value! test23)
-
-  ;; show-doc! is obsolete
-  (clay/show-namespace! "src/clj/forage/experiment/spiral23data.clj") 
-
-  ;; send result to browser window
-  (clay/handle-form!  (+ 11 33)) ; => 44
-  (clay/handle-value! (+ 11 33)) ; => 44
-  (clay/handle-form!  '(+ 11 33)) ; => 44
-  (clay/handle-value! '(+ 11 33)) ; => (+ 11 33)
-
-  (clay/swap-options!
-    assoc
-    :remote-repo {:git-url "https://github.com/scicloj/clay"
-                  :branch "main"}
-    :quarto {:format {:html {:toc true
-                             :theme :spacelab
-                             :embed-resources true}}
-             :highlight-style :solarized
-             :code-block-background true
-             :embed-resources true
-             :execute {:freeze true}})
-)
-
-
-(comment
-  ;; OLD STUFF
 
   ;; works, but there has to be a better way
   (def spiral23-ifit
