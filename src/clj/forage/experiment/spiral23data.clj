@@ -32,7 +32,7 @@
   fitness per walk.  See forage.core.fitness/cost-benefit-fitness for the
   other parameters."
   [walk-ds base-fitness benefit-per cost-per]
-  (ds/row-map walk-ds (fn [{:keys [length found]}]
+  (ds/row-map walk-ds (fn [{:keys [length found]}]  ; or tc/map-rows
                         {:indiv-fit (fit/cost-benefit-fitness base-fitness
                                                               benefit-per cost-per
                                                               found length)})))
