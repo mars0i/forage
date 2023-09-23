@@ -11,8 +11,8 @@
 
 (defn prall
   "Convenience function for returning one or more tech.ml.dataset datasets
-  in a nice format for reading in stdout.  Will be wrapped in a sequence,
-  but that's not distracting."
+  in a nice format for reading in stdout.  The output is wrapped in a
+  sequence, but that's not too distracting."
   [& dss]
   (map (fn [ds] (dsp/print-range ds :all))
        dss))
@@ -30,7 +30,7 @@
 (defonce test23 (ds/->dataset (str home fileloc "test23.nippy")))
 
 (comment 
-  (tc/print-dataset test23 {:print-index-range 10000}) ; a number large than num rows to print 'em all
+  (prall test23 {:print-index-range 10000}) ; a number large than num rows to print 'em all
   (ds/descriptive-stats test23)
 )
 
@@ -86,7 +86,27 @@
 (comment
   ;; Data experiments
 
-  (prall (walk-data-to-devstoch-fit-ds spiral23 0 200 0.000001))
+  ;; Note that if I set base-fitness to (max-walk-len * cost), then the
+  ;; runs that don't find food will have zero indiv fitness.  And then I
+  ;; can adjust the base fitness above or below that as desired.
+
+  ;; Example: (* 1000000.0 0.000001) = 1, so for cost = 0.000001, set base
+  ;; fitness to 1.0.
+
+  (* 1000000.0 0.01)
+ ;; Why is 10000 100 0.01 yielding negative trait fitnesses?
+ ;; Because of dividing by N?
+
+  (prall 
+    (-> 
+      (walk-data-to-devstoch-fit-ds spiral23 10000 1 0.01)
+      (tc/select-rows (fn [{:keys [env]}] (= env "env3"))))
+  )
+
+  (prall 
+    (-> spiral23
+        (add-column-cb-fit 10000 1 0.01)
+        (tc/select-rows (fn [{:keys [env]}] (= env "env3")))))
 
 )
 
