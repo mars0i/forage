@@ -11,12 +11,17 @@
 
 (defn prall
   "Convenience function for returning one or more tech.ml.dataset datasets
-  in a nice format for reading in stdout.  The output is wrapped in a
-  sequence, but that's not too distracting."
-  [& dss]
-  (map (fn [ds] (dsp/print-range ds :all))
-       dss))
+  in a nice format for reading in stdout.  If there is only one arg, it's
+  displayed using print-range :all.  With multiple arguments, the same thing
+  happens, but the output is wrapped in a sequence (a kludge)."
+  ([ds] (ds/print-all ds))
+  ([ds & dss] (map ds/print-all (cons ds dss)))) ; sort of a kludge
 
+(comment
+  ([ds] (dsp/print-range ds :all))
+  ([ds & dss] (map (fn [ds] (dsp/print-range ds :all)) ; kludge
+                   (cons ds dss)))
+)
 
 (def home (System/getenv "HOME"))
 (def fileloc "/docs/src/data.foraging/forage/spiral23data/")
@@ -140,11 +145,12 @@
     ;; All at once:
     (def test23-allatonce (walk-data-to-devstoch-fit-ds test23 1000 1 0.0001))
     (= test23-allatonce test23-tfit-sorted)
-    (prall test23-allatonce test23-tfit-sorted)
+    ;(prall test23-allatonce test23-tfit-sorted)
 
   ;; HAND-CHECKING RESULTS:
 
-  (ds/print-all test23-tfit-sorted)
+  (prall test23-tfit-sorted)
+  (prall test23)
   
   ;; from test23-ifit: env0, composite-mu1-spiral
   (fit/sample-gillespie-dev-stoch-fitness [900
@@ -173,11 +179,13 @@
   (clojure.repl/dir clay)
 
   (clay/start!)
+  (clay/restart! nil)
   (clay/browse!)
 
   (clay/handle-value! (ds/descriptive-stats spiral23))
-  (clay/handle-value! spiral23)
-  (clay/handle-value! test23)
+  (clay/handle-value! (prall spiral23))
+  (clay/handle-value! (prall test23))
+  (clay/handle-value! (dsp/print-range test23 :all))
 
   ;; show-doc! is obsolete
   (clay/show-namespace! "src/clj/forage/experiment/spiral23data.clj") 
