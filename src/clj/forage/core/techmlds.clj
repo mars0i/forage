@@ -3,6 +3,7 @@
 (ns forage.core.techmlds
   (:require [tech.v3.dataset :as ds]
             [tablecloth.api :as tc]
+            [clojure.string :as cstr :refer [split]]
             [forage.core.fitness :as fit]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -70,11 +71,10 @@
                        (make-trait-fit-ds-name ds-name base-fitness benefit-per cost-per)}))))
 
 (defn walk-data-to-efficiency-ds
-  "FIXME FIXME Given a dataset walk-ds of foraging data with a column :found for number
+  "Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
-  dataset that summarizes this data by providing a Gillespie
-  \"developmental stochasticity\" fitness value (column :trait-fit) for
-  each environment (column :env) and walk type (column :walk). "
+  dataset that summarizes this data by providing the efficiency for each
+  environment (column :env) and walk type (column :walk)."
   [walk-ds]
   (let [ds-name (ds/dataset-name walk-ds)] ; maybe parse this to remove path and file extension
     (-> walk-ds 
@@ -82,6 +82,36 @@
         (tc/aggregate {:efficiency (fn [{:keys [found length]}] ; could also calc on the fly from found, length
                                      (fit/aggregate-efficiency found length))})
         (ds/->dataset {:dataset-name (str ds-name "+eff")}))))
+
+
+(defn walk-data-to-fitness-ds
+  "Given a dataset walk-ds of foraging data with a column :found for number
+  of foospots found, and :walk for total length of the walk, returns a
+  dataset that summarizes this data by providing several fitness-related
+  quantities for each environment (column :env) and walk type (column
+  :walk): efficiency, Gillespie developmental stochasticity fitness, total
+  found, and total length."
+  [walk-ds base-fitness benefit-per cost-per]
+  (let [old-full-name (ds/dataset-name walk-ds)  ; old dataset name
+        no-path-name (last (cstr/split old-full-name #"/"))
+        basename (first (cstr/split no-path-name #"\."))]
+    (-> walk-ds 
+        (add-column-cb-fit base-fitness benefit-per cost-per)
+        (tc/group-by [:env :walk])
+        (tc/aggregate {:gds-fit (fn [{:keys [indiv-fit]}]
+                                  (fit/sample-gillespie-dev-stoch-fitness indiv-fit))
+                       :tot-found (fn [{:keys [found]}] (reduce + found))
+                       :tot-length (fn [{:keys [length]}] (reduce + length))
+                       :efficiency (fn [{:keys [found length]}] ; could also calc on the fly from found, length
+                                     (fit/aggregate-efficiency found length))}
+        (ds/->dataset {:dataset-name
+                       (make-trait-fit-ds-name (str basename "Fitnesses")
+                                               base-fitness benefit-per cost-per)})))))
+
+;; doesn't work
+(defn sort-in-env
+  [ds column]
+  (tc/order-by ds [:env column] [:desc :desc])) ; sort by column within env
 
 
 (comment
@@ -105,4 +135,12 @@
 
   (def test23-tfit-eff (walk-data-to-efficiency-ds test23))
   (prall test23-tfit-eff)
+
+  (def test23-fits (walk-data-to-fitness-ds test23 1000 1 0.0001))
+  (prall test23-fits)
+
+  (prall (sort-in-env test23-fits :gds-fit))
+  (prall (sort-in-env test23-fits :efficiency))
+  (prall (sort-in-env test23-fits :tot-found))
+
 )
