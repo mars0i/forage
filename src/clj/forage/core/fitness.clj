@@ -4,15 +4,32 @@
             ;[clojure.math :as math :refer [cos sin tan atan2 sqrt round]]
             [utils.math :as um :refer [variance sample-variance]]))
 
-;; Note that currently, efficiency as a fitness measure is defined in
-;; run.clj.  Should maybe be moved here?  Eh.  But maybe added here.
+;; The efficiency functions are very trivial functions. I define them for
+;; the sake of clarity.
+(defn efficiency
+  "Returns the \"efficiency\" (Viswanathan et al. 1999) fitness, i.e. the
+  number of targets found divided by the total distance traveled to find
+  them.  This function can be used to calculate an individual (token
+  organism ) fitness measure, but could also be applied to global
+  population statistics."
+  [n-found length]
+  (/ n-found length))
+
+(defn aggregate-efficiency
+  "Returns the \"efficiency\" (Viswanathan et al. 1999) fitness, i.e. the
+  number of targets found divided by the total distance traveled to find
+  them, first summing the found-counts [often 0 or 1] and the lengths.
+  This function can be used to calculate an individual (token organism )
+  fitness measure, but could also be applied to global population
+  statistics."
+  [found-counts lengths]
+  (efficiency (reduce + found-counts) (reduce + lengths)))
 
 (defn cost-benefit-fitness
   "Returns a fitness value that is the benefit-per of foodspots
   found minus the cost-per of cost-units:
   benefit-per * benefit-units - cost-per * cost-units.
-  Example:
-  benefit-units = targets found, cost-units = distance traveled.
+  Example: benefit-units = targets found, cost-units = distance traveled.
   If a constant base-fitness is passed in, it will be added to the
   result of the above calculation.  This function can be used to 
   calculate an individual (token organism ) fitness measure, but 
