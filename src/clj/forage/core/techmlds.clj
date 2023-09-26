@@ -18,7 +18,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; FITNESS CALCULATIONS FOR DATASETS
+;; FITNESS CALCULATIONS FOR tech.ml.DATASETS
 
 (defn add-column-cb-fit
   "Given a dataset walk-ds of foraging data with a column :found for number
@@ -69,7 +69,6 @@
         (ds/->dataset {:dataset-name
                        (make-trait-fit-ds-name ds-name base-fitness benefit-per cost-per)}))))
 
-;; FIXME not right
 (defn walk-data-to-efficiency-ds
   "FIXME FIXME Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
@@ -82,8 +81,7 @@
         (tc/group-by [:env :walk])
         (tc/aggregate {:efficiency (fn [{:keys [found length]}] ; could also calc on the fly from found, length
                                      (fit/aggregate-efficiency found length))})
-        (ds/->dataset {:dataset-name
-                       (make-trait-fit-ds-name (str ds-name "+eff"))}))))
+        (ds/->dataset {:dataset-name (str ds-name "+eff")}))))
 
 
 (comment
@@ -102,9 +100,9 @@
 
   ;; Define trait fitnesses from from original dataset, without an
   ;; intermediate indiv fitness dataset:
-  (def test23-tfit' (walk-data-to-devstoch-fit-ds test23 1000 1 0.0001))
+  (def test23-tfit (walk-data-to-devstoch-fit-ds test23 1000 1 0.0001))
   (= test23-tfit test23-tfit')
 
-  (def test23-tfit-eff (walk-data-to-efficiency-ds test23-tfit))
+  (def test23-tfit-eff (walk-data-to-efficiency-ds test23))
   (prall test23-tfit-eff)
 )
