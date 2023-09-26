@@ -7,21 +7,8 @@
             [scicloj.kindly.v4.api :as kindly]
             [scicloj.kindly.v4.kind :as kind]
             ;[utils.math :as um]
+            [forage.core.techmlds :as ftd]
             [forage.core.fitness :as fit]))
-
-(defn prall
-  "Convenience function for returning one or more tech.ml.dataset datasets
-  in a nice format for reading in stdout.  If there is only one arg, it's
-  displayed using print-range :all.  With multiple arguments, the same thing
-  happens, but the output is wrapped in a sequence (a kludge)."
-  ([ds] (ds/print-all ds))
-  ([ds & dss] (map ds/print-all (cons ds dss)))) ; sort of a kludge
-
-(comment
-  ([ds] (dsp/print-range ds :all))
-  ([ds & dss] (map (fn [ds] (dsp/print-range ds :all)) ; kludge
-                   (cons ds dss)))
-)
 
 (def home (System/getenv "HOME"))
 (def fileloc "/docs/src/data.foraging/forage/spiral23data/")
@@ -38,153 +25,6 @@
 (comment (ds/descriptive-stats spiral23) )
 (comment (ds/write! spiral23 (str home fileloc "spiral23.csv")))
 
-(defonce test23 (ds/->dataset (str home fileloc "test23.nippy")))
-
-(comment 
-  (prall test23 {:print-index-range 10000}) ; a number large than num rows to print 'em all
-  (ds/descriptive-stats test23)
-)
-
-(defn add-column-cb-fit
-  "Given a dataset walk-ds of foraging data with a column :found for number
-  of foospots found, and :walk for total length of the walk, returns a
-  dataset that is the same but has an added column :indiv-fit representing
-  the cost-benefit individual fitness per walk.  See
-  forage.core.fitness/cost-benefit-fitness for the other parameters."
-  [walk-ds base-fitness benefit-per cost-per]
-  (ds/row-map walk-ds (fn [{:keys [length found]}]  ; or tc/map-rows
-                        {:indiv-fit (fit/cost-benefit-fitness base-fitness
-                                                              benefit-per cost-per
-                                                              found length)})))
-
-(defn make-trait-fit-ds-name
-  "Generate a string to be used as a trait-fitness dataset name,
-  incorporating fitness parameters into the name."
-  [basename base-fitness benefit-per cost-per]
-  (str basename
-       ":benefit=" benefit-per
-       ",cost=" cost-per
-       ",base=" base-fitness))
-
-
-(defn indiv-fit-to-devstoch-fit-ds
-  "Given a dataset with an :indiv-fit column, returns a dataset that
-  summarizes this data by providing a Gillespie \"developmental
-  stochasticity\" fitness value (column :trait-fit) for each environment
-  (column :env) and walk type (column :walk)."
-  [indiv-fit-ds]
-  (-> indiv-fit-ds
-      (tc/group-by [:env :walk])
-      (tc/aggregate {:trait-fit (fn [{:keys [indiv-fit]}] ; could also calc on the fly from found, length
-                                  (fit/sample-gillespie-dev-stoch-fitness indiv-fit))})
-      (tc/order-by [:env :trait-fit] [:desc :desc]))) ; sort by fitness within env
-
-
-(defn walk-data-to-devstoch-fit-ds
-  "Given a dataset walk-ds of foraging data with a column :found for number
-  of foospots found, and :walk for total length of the walk, returns a
-  dataset that summarizes this data by providing a Gillespie
-  \"developmental stochasticity\" fitness value (column :trait-fit) for
-  each environment (column :env) and walk type (column :walk). "
-  [walk-ds base-fitness benefit-per cost-per]
-  (-> walk-ds 
-    (add-column-cb-fit base-fitness benefit-per cost-per)
-    (indiv-fit-to-devstoch-fit-ds)
-    (ds/->dataset {:dataset-name
-                   (make-trait-fit-ds-name "spiral23" base-fitness benefit-per cost-per)})))
-
-(comment
-  ;; Data experiments
-
-  ;; Note that if I set base-fitness to (max-walk-len * cost), then the
-  ;; runs that don't find food will have zero indiv fitness.  And then I
-  ;; can adjust the base fitness above or below that as desired.
-
-  ;; Example: (* 1000000.0 0.000001) = 1, so for cost = 0.000001, set base
-  ;; fitness to 1.0.
-
-  (* 1000000.0 0.01)
- ;; Why is 10000 100 0.01 yielding negative trait fitnesses?
- ;; Because of dividing by N?
-
-  (prall 
-    (-> 
-      (walk-data-to-devstoch-fit-ds spiral23 10000 1 0.01)
-      (tc/select-rows (fn [{:keys [env]}] (= env "env3"))))
-  )
-
-  (prall 
-    (-> spiral23
-        (add-column-cb-fit 10000 1 0.01)
-        (tc/select-rows (fn [{:keys [env]}] (= env "env3")))))
-
-  (-> spiral23
-      (add-column-cb-fit 10000 1 0.01)
-      (ds/write! (add-path "spiral23b1c01base10K.csv")))
-
-  (prall
-    (-> spiral23
-        (walk-data-to-devstoch-fit-ds 1000 1 0.0000001)))
-
-)
-
-
-(comment 
-  ;; TESTING
-
-  (def test23-ifit
-    (ds/row-map test23 (fn [{:keys [length found]}]
-                           {:indiv-fit (fit/cost-benefit-fitness 1000 1 0.0001 found length)})))
-  (ds/print-all test23-ifit)
-  (ds/descriptive-stats test23-ifit)
-
-  (def test23-tfit
-    (-> test23-ifit
-        (tc/group-by [:env :walk])
-        (tc/aggregate ; ungroups by default
-          {:trait-fit (fn [{:keys [indiv-fit]}] ; could also calc on the fly from found, length
-                        (fit/sample-gillespie-dev-stoch-fitness indiv-fit))})))
-  (ds/print-all test23-tfit)
-  (ds/descriptive-stats test23-tfit)
-
-  (def test23-tfit-sorted
-    (tc/order-by test23-tfit [:env :trait-fit] [:desc :desc]))
-  (ds/print-all test23-tfit-sorted) ; a number large than num rows to print 'em all
-  (ds/descriptive-stats test23-tfit-sorted)
-    ;; See also:
-    ;; ds/sort-by-column
-    ;; ds/sort-by
-
-    ;; All at once:
-    (def test23-allatonce (walk-data-to-devstoch-fit-ds test23 1000 1 0.0001))
-    (= test23-allatonce test23-tfit-sorted)
-    ;(prall test23-allatonce test23-tfit-sorted)
-
-  ;; HAND-CHECKING RESULTS:
-
-  (prall test23-tfit-sorted)
-  (prall test23)
-  
-  ;; from test23-ifit: env0, composite-mu1-spiral
-  (fit/sample-gillespie-dev-stoch-fitness [900
-                                           1000.42187859
-                                           942.49526028
-                                           959.62338180])
-
-  ;; from test23-ifit: env3, mu25
-  (fit/sample-gillespie-dev-stoch-fitness [991.50000000
-                                           901.00000000
-                                           991.50000000
-                                           906.00000000])
-
-  ;; env0 composite-mu15-mu3 indiv fitnesses
-  (fit/sample-gillespie-dev-stoch-fitness
-    ;; What is the better way to extract the vals in this subcolumn?:
-    (:indiv-fit
-      (into {} (tc/select test23-ifit [:indiv-fit] (range 4 8)))))
-
-)
-
 
 (comment
   ;; CLAY EXPERIMENTS
@@ -196,8 +36,8 @@
   (clay/browse!)
 
   (clay/handle-value! (ds/descriptive-stats spiral23))
-  (clay/handle-value! (prall spiral23))
-  (clay/handle-value! (prall test23))
+  (clay/handle-value! (ftd/prall spiral23))
+  (clay/handle-value! (ftd/prall test23))
   (clay/handle-value! (dsp/print-range test23 :all))
 
   ;; show-doc! is obsolete
@@ -335,5 +175,61 @@
 
   (def test23 (ds/->dataset (str home fileloc "test23.csv") {:key-fn keyword}))
   (ds/write! test23 (str home fileloc "test23.nippy"))
+)
+
+(comment 
+  ;; OLD TESTING
+
+  (def test23-ifit
+    (ds/row-map test23 (fn [{:keys [length found]}]
+                           {:indiv-fit (fit/cost-benefit-fitness 1000 1 0.0001 found length)})))
+  (ds/print-all test23-ifit)
+  (ds/descriptive-stats test23-ifit)
+
+  (def test23-tfit
+    (-> test23-ifit
+        (tc/group-by [:env :walk])
+        (tc/aggregate ; ungroups by default
+          {:trait-fit (fn [{:keys [indiv-fit]}] ; could also calc on the fly from found, length
+                        (fit/sample-gillespie-dev-stoch-fitness indiv-fit))})))
+  (ds/print-all test23-tfit)
+  (ds/descriptive-stats test23-tfit)
+
+  (def test23-tfit-sorted
+    (tc/order-by test23-tfit [:env :trait-fit] [:desc :desc]))
+  (ds/print-all test23-tfit-sorted) ; a number large than num rows to print 'em all
+  (ds/descriptive-stats test23-tfit-sorted)
+    ;; See also:
+    ;; ds/sort-by-column
+    ;; ds/sort-by
+
+    ;; All at once:
+    (def test23-allatonce (walk-data-to-devstoch-fit-ds test23 1000 1 0.0001))
+    (= test23-allatonce test23-tfit-sorted)
+    ;(ftd/prall test23-allatonce test23-tfit-sorted)
+
+  ;; HAND-CHECKING RESULTS:
+
+  (ftd/prall test23-tfit-sorted)
+  (ftd/prall test23)
+  
+  ;; from test23-ifit: env0, composite-mu1-spiral
+  (fit/sample-gillespie-dev-stoch-fitness [900
+                                           1000.42187859
+                                           942.49526028
+                                           959.62338180])
+
+  ;; from test23-ifit: env3, mu25
+  (fit/sample-gillespie-dev-stoch-fitness [991.50000000
+                                           901.00000000
+                                           991.50000000
+                                           906.00000000])
+
+  ;; env0 composite-mu15-mu3 indiv fitnesses
+  (fit/sample-gillespie-dev-stoch-fitness
+    ;; What is the better way to extract the vals in this subcolumn?:
+    (:indiv-fit
+      (into {} (tc/select test23-ifit [:indiv-fit] (range 4 8)))))
+
 )
 
