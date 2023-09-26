@@ -25,12 +25,18 @@
 
 (def home (System/getenv "HOME"))
 (def fileloc "/docs/src/data.foraging/forage/spiral23data/")
-(def spiral23filename "spiral23configs28runs4Kdataset.nippy")
-(def spiral23filepath (str home fileloc spiral23filename))
+
+(defn add-path
+  [filename]
+  (str home fileloc filename))
+
+(def spiral23nippy "spiral23configs28runs4Kdataset.nippy")
+(def spiral23filepath (add-path spiral23nippy))
 
 ;; Load base data for further use
 (defonce spiral23 (ds/->dataset spiral23filepath))
 (comment (ds/descriptive-stats spiral23) )
+(comment (ds/write! spiral23 (str home fileloc "spiral23.csv")))
 
 (defonce test23 (ds/->dataset (str home fileloc "test23.nippy")))
 
@@ -87,7 +93,6 @@
     (ds/->dataset {:dataset-name
                    (make-trait-fit-ds-name "spiral23" base-fitness benefit-per cost-per)})))
 
-
 (comment
   ;; Data experiments
 
@@ -112,6 +117,14 @@
     (-> spiral23
         (add-column-cb-fit 10000 1 0.01)
         (tc/select-rows (fn [{:keys [env]}] (= env "env3")))))
+
+  (-> spiral23
+      (add-column-cb-fit 10000 1 0.01)
+      (ds/write! (add-path "spiral23b1c01base10K.csv")))
+
+  (prall
+    (-> spiral23
+        (walk-data-to-devstoch-fit-ds 1000 1 0.0000001)))
 
 )
 
@@ -240,6 +253,8 @@
                            {:indiv-fit (fit/cost-benefit-fitness 100 1 0.0001 found length)})))
   (ds/descriptive-stats spiral23-ifit)
   (ds/print-all spiral23-ifit)
+  (comment
+  )
 
 
 
