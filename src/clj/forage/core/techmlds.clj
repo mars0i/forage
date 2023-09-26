@@ -108,8 +108,8 @@
                        (make-trait-fit-ds-name (str basename "Fitnesses")
                                                base-fitness benefit-per cost-per)})))))
 
-;; doesn't work
 (defn sort-in-env
+  "Sort dataset ds by column within :env."
   [ds column]
   (tc/order-by ds [:env column] [:desc :desc])) ; sort by column within env
 
