@@ -2,6 +2,8 @@
 ;; functions with tech.ml.dataset functions.
 (ns forage.core.techmlds
   (:require [tech.v3.dataset :as ds]
+            ;[tech.v3.datatype.functional :as dtf] ; not in main TMD docs; see dtype docs https://cnuernber.github.io/dtype-next/tech.v3.datatype.functional.html
+            [tech.v3.datatype.statistics :as dts] ; not in main TMD docs; see dtype docs https://cnuernber.github.io/dtype-next/tech.v3.datatype.statistics.html
             [tablecloth.api :as tc]
             [clojure.string :as cstr :refer [split]]
             [forage.core.fitness :as fit]))
@@ -98,12 +100,17 @@
     (-> walk-ds 
         (add-column-cb-fit base-fitness benefit-per cost-per)
         (tc/group-by [:env :walk])
-        (tc/aggregate {:gds-fit (fn [{:keys [indiv-fit]}]
-                                  (fit/sample-gillespie-dev-stoch-fitness indiv-fit))
+        (tc/aggregate {:efficiency (fn [{:keys [found length]}]
+                                     (fit/aggregate-efficiency found length))
+                       :weighted-efficiency #(println "FIXME")
+                       :avg-cbfit #(dts/mean (% :indiv-fit))
+                       :gds-cbfit #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-fit))
+                       ;; old version:
+                       ;:gds-cbfit (fn [{:keys [indiv-fit]}]
+                       ;           (fit/sample-gillespie-dev-stoch-fitness indiv-fit))
                        :tot-found (fn [{:keys [found]}] (reduce + found))
                        :tot-length (fn [{:keys [length]}] (reduce + length))
-                       :efficiency (fn [{:keys [found length]}] ; could also calc on the fly from found, length
-                                     (fit/aggregate-efficiency found length))}
+                      }
         (ds/->dataset {:dataset-name
                        (make-trait-fit-ds-name (str basename "Fitnesses")
                                                base-fitness benefit-per cost-per)})))))
