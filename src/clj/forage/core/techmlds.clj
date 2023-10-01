@@ -100,16 +100,12 @@
     (-> walk-ds 
         (add-column-cb-fit base-fitness benefit-per cost-per)
         (tc/group-by [:env :walk])
-        (tc/aggregate {:efficiency (fn [{:keys [found length]}]
-                                     (fit/aggregate-efficiency found length))
-                       :weighted-efficiency #(println "FIXME")
+        (tc/aggregate {:efficiency #(fit/aggregate-efficiency (% :found) (% :length))
+                       :weighted-efficiency (fn [_] (println "FIXME"))
                        :avg-cbfit #(dts/mean (% :indiv-fit))
                        :gds-cbfit #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-fit))
-                       ;; old version:
-                       ;:gds-cbfit (fn [{:keys [indiv-fit]}]
-                       ;           (fit/sample-gillespie-dev-stoch-fitness indiv-fit))
-                       :tot-found (fn [{:keys [found]}] (reduce + found))
-                       :tot-length (fn [{:keys [length]}] (reduce + length))
+                       :tot-found #(reduce + (% :found))
+                       :tot-length #(reduce + (% :length))
                       }
         (ds/->dataset {:dataset-name
                        (make-trait-fit-ds-name (str basename "Fitnesses")
