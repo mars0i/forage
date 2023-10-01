@@ -18,12 +18,16 @@
 (defn aggregate-efficiency
   "Returns the \"efficiency\" (Viswanathan et al. 1999) fitness, i.e. the
   number of targets found divided by the total distance traveled to find
-  them, first summing the found-counts [often 0 or 1] and the lengths.
-  This function can be used to calculate an individual (token organism )
-  fitness measure, but could also be applied to global population
-  statistics."
-  [found-counts lengths]
-  (efficiency (reduce + found-counts) (reduce + lengths)))
+  them, first summing the found-counts [often 0 or 1] and the lengths. This
+  function can be used to calculate an individual (token organism ) fitness
+  measure, but could also be applied to global population statistics.  If
+  benefit-per and cost-per are provided, each the found sum is multiplied
+  by benefit-per, and the length sum is multiplied by cost-per."
+  ([found-counts lengths benefit-per cost-per]
+   (efficiency (* benefit-per (reduce + found-counts))
+               (* cost-per (reduce + lengths))))
+  ([found-counts lengths]
+   (aggregate-efficiency found-counts lengths 1 1)))
 
 (defn cost-benefit-fitness
   "Returns a fitness value that is the benefit-per of foodspots

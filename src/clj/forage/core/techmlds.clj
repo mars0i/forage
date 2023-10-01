@@ -85,7 +85,6 @@
                                      (fit/aggregate-efficiency found length))})
         (ds/->dataset {:dataset-name (str ds-name "+eff")}))))
 
-
 (defn walk-data-to-fitness-ds
   "Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
@@ -101,7 +100,8 @@
         (add-column-cb-fit base-fitness benefit-per cost-per)
         (tc/group-by [:env :walk])
         (tc/aggregate {:efficiency #(fit/aggregate-efficiency (% :found) (% :length))
-                       :weighted-efficiency (fn [_] (println "FIXME"))
+                       :weighted-efficiency #(fit/aggregate-efficiency (% :found) (% :length)
+                                                                       benefit-per cost-per)
                        :avg-cbfit #(dts/mean (% :indiv-fit))
                        :gds-cbfit #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-fit))
                        :tot-found #(reduce + (% :found))
