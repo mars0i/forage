@@ -85,6 +85,20 @@
                                      (fit/aggregate-efficiency found length))})
         (ds/->dataset {:dataset-name (str ds-name "+eff")}))))
 
+(def column-order 
+  "Specifies the default column order for summary fitness datasets."
+  [:base-fitness
+   :benefit-per 
+   :cost-per
+   :env
+   :walk
+   :efficiency
+   :weighted-efficiency
+   :avg-cbfit
+   :gds-cbfit 
+   :tot-found 
+   :tot-length])
+
 (defn walk-data-to-fitness-ds
   "Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
@@ -108,11 +122,12 @@
                        :avg-cbfit #(dts/mean (% :indiv-fit))
                        :gds-cbfit #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-fit))
                        :tot-found #(reduce + (% :found))
-                       :tot-length #(reduce + (% :length))
-                      }
+                       :tot-length #(reduce + (% :length))})
+        (tc/reorder-columns column-order)
+        ;; Not really doing what I want?:
         (ds/->dataset {:dataset-name
                        (make-trait-fit-ds-name (str basename "Fitnesses")
-                                               base-fitness benefit-per cost-per)})))))
+                                               base-fitness benefit-per cost-per)}))))
 
 ;; By making the second argument a sequence of triples, one has the freedom
 ;; to choose specific sequences e.g. by mapping across three sequences of
@@ -124,18 +139,24 @@
   The values in the triples represent base-fitness, benefit-per, and
   cost-per."
   [walk-ds fitness-triples]
-  (apply ds/concat-copying
-         (map (fn [[base-fitness benefit-per cost-per]]
-                (walk-data-to-fitness-ds walk-ds base-fitness benefit-per cost-per))
-              fitness-triples)))
+  (-> (apply ds/concat-copying
+             (map (fn [[base-fitness benefit-per cost-per]]
+                    (walk-data-to-fitness-ds walk-ds base-fitness benefit-per cost-per))
+                  fitness-triples))
+      (tc/reorder-columns column-order)))
 
 (defn sort-in-env
-  "Sort dataset ds by column within :env."
+  "Sorts dataset ds by column within env for each fitness parameter
+  combination."
   [ds column]
-  (tc/order-by ds [:env column] [:desc :desc])) ; sort by column within env
+  (tc/order-by ds
+               [:base-fitness :benefit-per :cost-per :env]
+               (repeat 4 :desc)))
 
 
 (comment
+  ;; TESTING SUMMARY FITNESS DATASET CREATION
+
   (def home (System/getenv "HOME"))
   (def fileloc "/docs/src/data.foraging/forage/spiral23data/")
   (defn add-path
@@ -147,26 +168,22 @@
   (defonce spiral23 (ds/->dataset spiral23filepath))
 
   (def spiral23-fits-1-0001 (walk-data-to-fitness-ds spiral23 1000 1 0.0001))
-  (ftd/prall spiral23-fits-1-0001)
   (def spiral23-fits-10-001 (walk-data-to-fitness-ds spiral23 1000 10 0.001))
-  (ftd/prall spiral23-fits-10-001)
   (def spiral23-fits-100-01 (walk-data-to-fitness-ds spiral23 1000 100 0.01))
-  (ftd/prall spiral23-fits-100-01)
 
-  (def spiral23-combo-yo (ds/concat-copying spiral23-fits-1-0001 spiral23-fits-10-001 spiral23-fits-100-01))
-  (ftd/prall spiral23-combo-yo)
-  (def spiral23-combo-yo' (walk-data-to-fitness-dses spiral23 (map vector (repeat 1000) [1 10 100] [0.0001 0.001 0.01])))
-  (= spiral23-combo-yo spiral23-combo-yo') ; should be true
+  (def spiral23-combo' (ds/concat-copying spiral23-fits-1-0001 spiral23-fits-10-001 spiral23-fits-100-01))
+  (def spiral23-combo (walk-data-to-fitness-dses spiral23 (map vector (repeat 1000) [1 10 100] [0.0001 0.001 0.01])))
+  (= spiral23-combo spiral23-combo-yo') ; should be true
+  (prall spiral23-combo)
 
-
-  (ftd/prall (ftd/sort-in-env spiral23-fits :gds-fit))
-  (ftd/prall (ftd/sort-in-env spiral23-fits :efficiency))
-  (ftd/prall (ftd/sort-in-env spiral23-fits :tot-found))
-
-
+  ;; Sort by GDS fitness within env for each parameter combination:
+  (prall (sort-in-env spiral23-combo :gds-fit))
 )
 
 (comment
+  ;; TESTING NON-SUMMARY FITNESS DATASET CREATION
+  ;; i.e. one fitness value for each run.
+
   (def test23 (ds/->dataset "resources/test23.nippy"))
   (ds/dataset-name test23)
   (prall test23)
@@ -191,7 +208,6 @@
   (def test23-fits (walk-data-to-fitness-ds test23 1000 1 0.0001))
   (prall test23-fits)
 
-  (prall (sort-in-env test23-fits :gds-fit))
   (prall (sort-in-env test23-fits :efficiency))
   (prall (sort-in-env test23-fits :tot-found))
 
