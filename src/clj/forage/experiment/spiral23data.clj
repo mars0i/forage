@@ -44,8 +44,16 @@
   (def spiral23-tfit-eff (ftd/walk-data-to-efficiency-ds spiral23))
   (ftd/prall spiral23-tfit-eff)
 
-  (def spiral23-fits (ftd/walk-data-to-fitness-ds spiral23 1000 1 0.0001))
-  (ftd/prall spiral23-fits)
+  (def spiral23-fits-1-0001 (ftd/walk-data-to-fitness-ds spiral23 1000 1 0.0001))
+  (ftd/prall spiral23-fits-1-0001)
+  (def spiral23-fits-10-001 (ftd/walk-data-to-fitness-ds spiral23 1000 10 0.001))
+  (ftd/prall spiral23-fits-10-001)
+  (def spiral23-fits-100-01 (ftd/walk-data-to-fitness-ds spiral23 1000 100 0.01))
+  (ftd/prall spiral23-fits-100-01)
+  (def spiral23-combo-yo (ds/concat-copying spiral23-fits-1-0001 spiral23-fits-10-001 spiral23-fits-100-01))
+  (ftd/prall spiral23-combo-yo)
+  (def spiral23-combo-yo' (ftd/walk-data-to-fitness-dses spiral23 (repeat 1000) [1 10 100] [0.0001 0.001 0.01]))
+  (= spiral23-combo-yo spiral23-combo-yo')
 
   (ftd/prall (ftd/sort-in-env spiral23-fits :gds-fit))
   (ftd/prall (ftd/sort-in-env spiral23-fits :efficiency))
