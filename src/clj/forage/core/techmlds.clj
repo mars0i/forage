@@ -114,16 +114,20 @@
                        (make-trait-fit-ds-name (str basename "Fitnesses")
                                                base-fitness benefit-per cost-per)})))))
 
+;; By making the second argument a sequence of triples, one has the freedom
+;; to choose specific sequences e.g. by mapping across three sequences of
+;; parameters, or to sweep through a cross-product of parameters by
+;; combining them using for.
 (defn walk-data-to-fitness-dses
   "Runs walk-data-to-fitness-ds multiple times and concats the results into
-  a combined dataset, by sweeping the parameters in the sequences base-fitnesses,
-  benefits-per, and costs-per.  (Note parameters are combined in sequence, using
-  map; they aren'tt combined in a cross product using for."
-  [walk-ds base-fitnesses benefits-per costs-per]
+  a combined dataset.  Runs it once for each triple in fitness-triples.
+  The values in the triples represent base-fitness, benefit-per, and
+  cost-per."
+  [walk-ds fitness-triples]
   (apply ds/concat-copying
-         (map (partial walk-data-to-fitness-ds walk-ds) 
-              base-fitnesses benefits-per costs-per)))
-
+         (map (fn [[base-fitness benefit-per cost-per]]
+                (walk-data-to-fitness-ds walk-ds base-fitness benefit-per cost-per))
+              fitness-triples)))
 
 (defn sort-in-env
   "Sort dataset ds by column within :env."
@@ -132,22 +136,28 @@
 
 
 (comment
+  (def home (System/getenv "HOME"))
+  (def fileloc "/docs/src/data.foraging/forage/spiral23data/")
+  (defn add-path
+    [filename]
+    (str home fileloc filename))
 
   (def spiral23nippy "spiral23configs28runs4Kdataset.nippy")
   (def spiral23filepath (add-path spiral23nippy))
   (defonce spiral23 (ds/->dataset spiral23filepath))
 
-  (def spiral23-fits-1-0001 (ftd/walk-data-to-fitness-ds spiral23 1000 1 0.0001))
+  (def spiral23-fits-1-0001 (walk-data-to-fitness-ds spiral23 1000 1 0.0001))
   (ftd/prall spiral23-fits-1-0001)
-  (def spiral23-fits-10-001 (ftd/walk-data-to-fitness-ds spiral23 1000 10 0.001))
+  (def spiral23-fits-10-001 (walk-data-to-fitness-ds spiral23 1000 10 0.001))
   (ftd/prall spiral23-fits-10-001)
-  (def spiral23-fits-100-01 (ftd/walk-data-to-fitness-ds spiral23 1000 100 0.01))
+  (def spiral23-fits-100-01 (walk-data-to-fitness-ds spiral23 1000 100 0.01))
   (ftd/prall spiral23-fits-100-01)
 
   (def spiral23-combo-yo (ds/concat-copying spiral23-fits-1-0001 spiral23-fits-10-001 spiral23-fits-100-01))
   (ftd/prall spiral23-combo-yo)
-  (def spiral23-combo-yo' (ftd/walk-data-to-fitness-dses spiral23 (repeat 1000) [1 10 100] [0.0001 0.001 0.01]))
+  (def spiral23-combo-yo' (walk-data-to-fitness-dses spiral23 (map vector (repeat 1000) [1 10 100] [0.0001 0.001 0.01])))
   (= spiral23-combo-yo spiral23-combo-yo') ; should be true
+
 
   (ftd/prall (ftd/sort-in-env spiral23-fits :gds-fit))
   (ftd/prall (ftd/sort-in-env spiral23-fits :efficiency))
