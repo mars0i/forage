@@ -28,6 +28,25 @@
 
 
 (comment
+
+  (def fitness-params (for [base [10000]
+                            benefit [1 10 100 1000]
+                            cost [0.1 0.01 0.001 0.0001 0.00001 0.000001 0.0000001]]
+                        [base benefit cost]))
+
+  (def bunchofitness (ftd/walk-data-to-fitness-dses spiral23 fitness-params))
+  (ftd/prall bunchofitness)
+
+  (ftd/prall
+    (-> bunchofitness
+        (tc/select-rows (fn [row] (= "env3" (:env row))))
+        (ftd/sort-in-env :gds-fit)))
+
+)
+
+(comment
+  ;; OLD
+
   ;; Add indiv cost-benefit fitnesses:
   (def spiral23-ifit (ftd/add-column-cb-fit spiral23 1000 1 0.0001))
   (ftd/prall spiral23-ifit)
