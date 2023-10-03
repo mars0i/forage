@@ -7,7 +7,7 @@
             [scicloj.kindly.v4.api :as kindly]
             [scicloj.kindly.v4.kind :as kind]
             ;[utils.math :as um]
-            [forage.core.techmlds :as ftd]
+            [forage.core.techmlds :as ft]
             [forage.core.fitness :as fit]))
 
 (def home (System/getenv "HOME"))
@@ -34,13 +34,29 @@
                             cost [0.1 0.01 0.001 0.0001 0.00001 0.000001 0.0000001]]
                         [base benefit cost]))
 
-  (def bunchofitness (ftd/walk-data-to-fitness-dses spiral23 fitness-params))
-  (ftd/prall bunchofitness)
+  (def bunchofitness (ft/walk-data-to-fitness-dses spiral23 fitness-params))
+  (ft/prall bunchofitness)
 
-  (ftd/prall
+  (ft/prall
     (-> bunchofitness
         (tc/select-rows (fn [row] (= "env3" (:env row))))
-        (ftd/sort-in-env :gds-fit)))
+        (ft/sort-in-env :gds-fit)))
+
+  (def bunchoenv3 
+    (-> bunchofitness
+        (tc/select-rows (fn [row] (= "env3" (:env row))))
+        (ft/sort-in-env :gds-cbfit)
+        (tc/group-by [:base-fitness :benefit-per :cost-per])))
+
+  ;; For some reason this is the way to display a grouped dataset and see
+  ;; its contents:
+  (tc/columns bunchoenv3 :as-map)
+
+  ;; Here's the whole dataset grouped by treatment and env:
+  (-> bunchofitness
+      (ft/sort-in-env :gds-cbfit)
+      (tc/group-by [:base-fitness :benefit-per :cost-per :env])
+      (tc/columns :as-map))
 
 )
 
@@ -48,35 +64,35 @@
   ;; OLD
 
   ;; Add indiv cost-benefit fitnesses:
-  (def spiral23-ifit (ftd/add-column-cb-fit spiral23 1000 1 0.0001))
-  (ftd/prall spiral23-ifit)
+  (def spiral23-ifit (ft/add-column-cb-fit spiral23 1000 1 0.0001))
+  (ft/prall spiral23-ifit)
 
   ;; Incrementally define trait fitnesses from individual fitnesses:
-  (def spiral23-tfit' (ftd/indiv-fit-to-devstoch-fit-ds spiral23-ifit))
-  (ftd/prall spiral23-tfit)
+  (def spiral23-tfit' (ft/indiv-fit-to-devstoch-fit-ds spiral23-ifit))
+  (ft/prall spiral23-tfit)
 
   ;; Define trait fitnesses from from original dataset, without an
   ;; intermediate indiv fitness dataset:
-  (def spiral23-tfit (ftd/walk-data-to-devstoch-fit-ds spiral23 1000 1 0.0001))
+  (def spiral23-tfit (ft/walk-data-to-devstoch-fit-ds spiral23 1000 1 0.0001))
   (= spiral23-tfit spiral23-tfit')
 
-  (def spiral23-tfit-eff (ftd/walk-data-to-efficiency-ds spiral23))
-  (ftd/prall spiral23-tfit-eff)
+  (def spiral23-tfit-eff (ft/walk-data-to-efficiency-ds spiral23))
+  (ft/prall spiral23-tfit-eff)
 
-  (def spiral23-fits-1-0001 (ftd/walk-data-to-fitness-ds spiral23 1000 1 0.0001))
-  (ftd/prall spiral23-fits-1-0001)
-  (def spiral23-fits-10-001 (ftd/walk-data-to-fitness-ds spiral23 1000 10 0.001))
-  (ftd/prall spiral23-fits-10-001)
-  (def spiral23-fits-100-01 (ftd/walk-data-to-fitness-ds spiral23 1000 100 0.01))
-  (ftd/prall spiral23-fits-100-01)
+  (def spiral23-fits-1-0001 (ft/walk-data-to-fitness-ds spiral23 1000 1 0.0001))
+  (ft/prall spiral23-fits-1-0001)
+  (def spiral23-fits-10-001 (ft/walk-data-to-fitness-ds spiral23 1000 10 0.001))
+  (ft/prall spiral23-fits-10-001)
+  (def spiral23-fits-100-01 (ft/walk-data-to-fitness-ds spiral23 1000 100 0.01))
+  (ft/prall spiral23-fits-100-01)
   (def spiral23-combo-yo (ds/concat-copying spiral23-fits-1-0001 spiral23-fits-10-001 spiral23-fits-100-01))
-  (ftd/prall spiral23-combo-yo)
-  (def spiral23-combo-yo' (ftd/walk-data-to-fitness-dses spiral23 (repeat 1000) [1 10 100] [0.0001 0.001 0.01]))
+  (ft/prall spiral23-combo-yo)
+  (def spiral23-combo-yo' (ft/walk-data-to-fitness-dses spiral23 (repeat 1000) [1 10 100] [0.0001 0.001 0.01]))
   (= spiral23-combo-yo spiral23-combo-yo')
 
-  (ftd/prall (ftd/sort-in-env spiral23-fits :gds-fit))
-  (ftd/prall (ftd/sort-in-env spiral23-fits :efficiency))
-  (ftd/prall (ftd/sort-in-env spiral23-fits :tot-found))
+  (ft/prall (ft/sort-in-env spiral23-fits :gds-fit))
+  (ft/prall (ft/sort-in-env spiral23-fits :efficiency))
+  (ft/prall (ft/sort-in-env spiral23-fits :tot-found))
 
 )
 
@@ -90,8 +106,8 @@
   (clay/browse!)
 
   (clay/handle-value! (ds/descriptive-stats spiral23))
-  (clay/handle-value! (ftd/prall spiral23))
-  (clay/handle-value! (ftd/prall test23))
+  (clay/handle-value! (ft/prall spiral23))
+  (clay/handle-value! (ft/prall test23))
   (clay/handle-value! (dsp/print-range test23 :all))
 
   ;; show-doc! is obsolete
