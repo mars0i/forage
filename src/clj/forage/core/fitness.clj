@@ -29,6 +29,8 @@
   ([found-counts lengths]
    (aggregate-efficiency found-counts lengths 1 1)))
 
+;; Note that adding a base fitness generally won't affect the ranking of
+;; trait fitnesses.  cf. whatisfitness3.md in my notes.
 (defn cost-benefit-fitness
   "Returns a fitness value that is the benefit-per of foodspots
   found minus the cost-per of cost-units:
