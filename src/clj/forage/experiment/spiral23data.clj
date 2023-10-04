@@ -40,23 +40,54 @@
   (ft/prall
     (-> bunchofitness
         (tc/select-rows (fn [row] (= "env3" (:env row))))
-        (ft/sort-in-env :gds-fit)))
+        (ft/sort-in-env :gds-cbfit)))
 
-  (def bunchoenv3 
+  ;; Here's the whole dataset grouped by treatment and env:
+  ;; Note use of tech.ml.dataset's group by rather than tablecloth's:
+  (def grouped-bunchoffitness
+    (-> bunchofitness
+        (ft/sort-in-env :gds-cbfit)
+        (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; This ds group format is nicer than the tc version, because it's
+  ;; printable by default.  However, you have to use juxt rather
+  ;; than a seq of column labels.
+  (def bunchoenv3-ds
+    (-> bunchofitness
+        (tc/select-rows (fn [row] (= "env3" (:env row))))
+        (ft/sort-in-env :gds-cbfit)
+        (ds/group-by (juxt :base-fitness :benefit-per :cost-per))))
+
+  ;; To display a tc grouped ds, you have to use
+  ;;    (tc/columns bunchoenv3-tc :as-map)
+  ;; which is ... why?
+  (def bunchoenv3-tc
     (-> bunchofitness
         (tc/select-rows (fn [row] (= "env3" (:env row))))
         (ft/sort-in-env :gds-cbfit)
         (tc/group-by [:base-fitness :benefit-per :cost-per])))
 
+  ;; These are supposed to be more like the ds version, I'd think, but
+  ;; they're not.
+  (def bunchoenv3-tc-map 
+    (-> bunchofitness
+        (tc/select-rows (fn [row] (= "env3" (:env row))))
+        (ft/sort-in-env :gds-cbfit)
+        (tc/group-by [:base-fitness :benefit-per :cost-per] :as-map)))
+
+  ;; These are supposed to be more like the ds version, I'd think, but
+  ;; they're not.
+  (def bunchoenv3-tc-seq 
+    (-> bunchofitness
+        (tc/select-rows (fn [row] (= "env3" (:env row))))
+        (ft/sort-in-env :gds-cbfit)
+        (tc/group-by [:base-fitness :benefit-per :cost-per] :as-seq)))
+
   ;; For some reason this is the way to display a grouped dataset and see
   ;; its contents:
   (tc/columns bunchoenv3 :as-map)
-
-  ;; Here's the whole dataset grouped by treatment and env:
-  (-> bunchofitness
-      (ft/sort-in-env :gds-cbfit)
-      (tc/group-by [:base-fitness :benefit-per :cost-per :env])
-      (tc/columns :as-map))
 
 )
 
