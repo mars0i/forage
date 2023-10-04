@@ -29,25 +29,25 @@
 
 (comment
 
-  (def fitness-params (for [base [10000]
+  (def fitness-params (for [base    [230000] ; Why 230,000? It [just barely] makes all of the gds-cbfit values all positive.
                             benefit [1 10 100 1000]
-                            cost [0.1 0.01 0.001 0.0001 0.00001 0.000001 0.0000001]]
+                            cost    [0.1 0.01 0.001 0.0001 0.00001 0.000001 0.0000001]]
                         [base benefit cost]))
 
   (def bunchofitness (ft/walk-data-to-fitness-dses spiral23 fitness-params))
-  (ft/prall bunchofitness)
 
-  (ft/prall
-    (-> bunchofitness
-        (tc/select-rows (fn [row] (= "env3" (:env row))))
-        (ft/sort-in-env :gds-cbfit)))
-
-  ;; Here's the whole dataset grouped by treatment and env:
-  ;; Note use of tech.ml.dataset's group by rather than tablecloth's:
+  ;; Here's the whole dataset grouped by treatment and env; note use of tech.ml.dataset's group by rather than tablecloth's.
   (def grouped-bunchoffitness
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
         (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
+
+  ;; Interestingly, there are cases (.e.g benefit 1000, cost 0.1, env0)
+  ;; where the gds-cbfit ordering is exactly opposite from total found, efficiency,
+  ;; and weighted-efficiency.  (So it's a meaningful distinction.)
+
+
+  (keys grouped-bunchoffitness)
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -56,7 +56,7 @@
   ;; than a seq of column labels.
   (def bunchoenv3-ds
     (-> bunchofitness
-        (tc/select-rows (fn [row] (= "env3" (:env row))))
+        (tc/select-rows #(= (:env %) "env3"))
         (ft/sort-in-env :gds-cbfit)
         (ds/group-by (juxt :base-fitness :benefit-per :cost-per))))
 
@@ -71,11 +71,11 @@
 
   ;; These are supposed to be more like the ds version, I'd think, but
   ;; they're not.
-  (def bunchoenv3-tc-map 
+  (def bunchoenv3-tc-map
     (-> bunchofitness
         (tc/select-rows (fn [row] (= "env3" (:env row))))
         (ft/sort-in-env :gds-cbfit)
-        (tc/group-by [:base-fitness :benefit-per :cost-per] :as-map)))
+        (tc/group-by [:base-fitness :benefit-per :cost-per] {:result-type :as-map})))
 
   ;; These are supposed to be more like the ds version, I'd think, but
   ;; they're not.
@@ -83,11 +83,17 @@
     (-> bunchofitness
         (tc/select-rows (fn [row] (= "env3" (:env row))))
         (ft/sort-in-env :gds-cbfit)
-        (tc/group-by [:base-fitness :benefit-per :cost-per] :as-seq)))
+        (tc/group-by [:base-fitness :benefit-per :cost-per] {:result-type :as-seq})))
 
   ;; For some reason this is the way to display a grouped dataset and see
   ;; its contents:
-  (tc/columns bunchoenv3 :as-map)
+  (tc/columns bunchoenv3-tc :as-map)
+  (tc/columns bunchoenv3-tc :as-seq)
+  (class (tc/columns bunchoenv3-tc :as-map))
+  (:data bunchoenv3-tc)
+  (class (:data bunchoenv3-tc))
+
+  (vals bunchoenv3-tc-map)
 
 )
 
