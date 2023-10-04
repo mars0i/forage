@@ -150,7 +150,7 @@
   combination."
   [ds column]
   (tc/order-by ds
-               (conj [:base-fitness :benefit-per :cost-per :env]
+               (conj [:env :base-fitness :benefit-per :cost-per]
                      column)
                (repeat 4 :desc)))
 
