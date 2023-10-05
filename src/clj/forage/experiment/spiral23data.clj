@@ -50,29 +50,44 @@
         (ft/sort-in-env :gds-cbfit)
         (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
 
+  ;; Select top three gds-cbfit from each configuration (IS IT WORKING?)
+  (def grouped-bunchoffitness-top3
+    (-> bunchofitness
+        (ft/sort-in-env :gds-cbfit)
+        (tc/group-by ;; note switch to tablecloth's group-by
+          (juxt :base-fitness :benefit-per :cost-per :env)) ; a seq of keys would work, too
+        (tc/select-rows [0 1 2]))) ;; select-rows applies to each sub-ds (using tablecloth group-by)
+
+  (:data grouped-bunchoffitness-top3) ; but now we need to extract the data from the grouped ds
+
   ;; Interestingly, there are cases (.e.g benefit 1000, cost 0.1, env0)
   ;; where the gds-cbfit ordering is exactly opposite from total found, efficiency,
   ;; and weighted-efficiency.  (So it's a meaningful distinction.)
 
-  ;; Preliminary perusal: 
-  ;; It appears that when movement is cheap, with gds-cbfit, 
-  ;; two spiral strategies are best, and mu=2 or mu=2.5 is the third best.
-  ;; So those random strategies are good random approximations of a
-  ;; mixed spiral strategy.
-  ;; In these cases, the other fitness measures are ordered, i.e.
-  ;; high gds-cbfit corresponds to high efficiency, etc.
-  ;; (This makes sense since movement is cheap, and therefore
-  ;; its cost doesn't subtract much from the fitness.)
+  ;; Notes from preliminary perusal: 
+
+  ;; It appears that when movement is cheap, with gds-cbfit, the two
+  ;; spiral strategies are best, and mu=2 or mu=2.5 is the third
+  ;; best.  So those random strategies are good 
+  ;; approximations of a mixed spiral strategy, when movement is
+  ;; cheap.  In these cases, the other fitness measures are ordered
+  ;; the same way. e.g. the high gds-cbfit ordering is the same as
+  ;; the ordering by high efficiency, etc.  That makes sense since
+  ;; movement is cheap, and therefore its cost doesn't subtract much
+  ;; from the fitness.  Note that in this case, what variance there is in
+  ;; gds-cbfit is coming mostly from the variance in finding targets
+  ;; especially when the benefit for found targets is large.
 
   ;; When movement is expensive, other strategies are best wrt gds-cbfit,
   ;; sometimes mu=2.5, but sometimes one of the composite random strategies.
   ;; In these cases, the other fitness measures are often ordered in the
-  ;; opposite order from gds-cbfit, suggesting that high-mean success
-  ;; strategies have high variance, and therefore low gds-cbfit.
+  ;; opposite order from gds-cbfit, suggesting that the high-mean success
+  ;; strategies may have high variance, and therefore low gds-cbfit.
 
 )
 
-( ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(comment
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; trying out different methods
 
   ;; This ds group format is nicer than the tc version, because it's
