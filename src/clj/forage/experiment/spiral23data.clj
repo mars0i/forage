@@ -37,8 +37,16 @@
   (def bunchofitness (ft/walk-data-to-fitness-dses spiral23 fitness-params))
 
   ;; Here's the whole dataset grouped by treatment and env; note use of tech.ml.dataset's group by rather than tablecloth's.
+  ;; All configurations:
   (def grouped-bunchoffitness
     (-> bunchofitness
+        (ft/sort-in-env :gds-cbfit)
+        (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
+
+  ;; High-cost configurations only:
+  (def grouped-bunchoffitness-costly-move
+    (-> bunchofitness
+        (tc/select-rows #(>= (:cost-per %) 0.01))
         (ft/sort-in-env :gds-cbfit)
         (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
 
@@ -46,8 +54,21 @@
   ;; where the gds-cbfit ordering is exactly opposite from total found, efficiency,
   ;; and weighted-efficiency.  (So it's a meaningful distinction.)
 
+  ;; Preliminary perusal: 
+  ;; It appears that when movement is cheap, with gds-cbfit, 
+  ;; two spiral strategies are best, and mu=2 or mu=2.5 is the third best.
+  ;; So those random strategies are good random approximations of a
+  ;; mixed spiral strategy.
+  ;; In these cases, the other fitness measures are ordered, i.e.
+  ;; high gds-cbfit corresponds to high efficiency, etc.
+  ;; (This makes sense since movement is cheap, and therefore
+  ;; its cost doesn't subtract much from the fitness.)
 
-  (keys grouped-bunchoffitness)
+  ;; When movement is expensive, other strategies are best wrt gds-cbfit,
+  ;; sometimes mu=2.5, but sometimes one of the composite random strategies.
+  ;; In these cases, the other fitness measures are often ordered in the
+  ;; opposite order from gds-cbfit, suggesting that high-mean success
+  ;; strategies have high variance, and therefore low gds-cbfit.
 
 )
 
