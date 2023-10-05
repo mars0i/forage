@@ -56,9 +56,25 @@
         (ft/sort-in-env :gds-cbfit)
         (tc/group-by ;; note switch to tablecloth's group-by
           (juxt :base-fitness :benefit-per :cost-per :env)) ; a seq of keys would work, too
-        (tc/select-rows [0 1 2]))) ;; select-rows applies to each sub-ds (using tablecloth group-by)
+        (tc/select-rows (range 3)))) ;; select-rows applies to each sub-ds (using tablecloth group-by)
 
-  (:data grouped-bunchoffitness-top3) ; but now we need to extract the data from the grouped ds
+  (ft/prall (:data grouped-bunchoffitness-top3)) ; but now we need to extract the data from the grouped ds
+  ;; no this isn't printing the whole dataset
+
+  (:data (-> grouped-bunchoffitness-top3 (tc/select-rows #(= (:env %) "env3")))) ; works
+  (:data (-> grouped-bunchoffitness-top3 (tc/select-rows #(= (:env %) "env2")))) ; doesn't work
+  (:data (-> grouped-bunchoffitness-top3 (tc/select-rows #(= (:env %) "env1")))) ; doesn't work
+  (:data (-> grouped-bunchoffitness-top3 (tc/select-rows #(= (:env %) "env0")))) ; doesn't work
+
+
+  ;; env3 only, no groups
+  (def bunchoffitness-env3-top3
+    (-> bunchofitness
+        (tc/select-rows #(= (:env %) "env3"))
+        (ft/sort-in-env :gds-cbfit)))
+
+  (ft/prall bunchoffitness-env3-top3)
+
 
   ;; Interestingly, there are cases (.e.g benefit 1000, cost 0.1, env0)
   ;; where the gds-cbfit ordering is exactly opposite from total found, efficiency,
