@@ -49,7 +49,10 @@
 
   (keys grouped-bunchoffitness)
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+)
+
+( ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; trying out different methods
 
   ;; This ds group format is nicer than the tc version, because it's
   ;; printable by default.  However, you have to use juxt rather
