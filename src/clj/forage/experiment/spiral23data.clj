@@ -6,6 +6,7 @@
             [scicloj.clay.v2.api :as clay]
             [scicloj.kindly.v4.api :as kindly]
             [scicloj.kindly.v4.kind :as kind]
+            [clojure.math :as math :refer [pow]]
             ;[utils.math :as um]
             [forage.core.techmlds :as ft]
             [forage.core.fitness :as fit]))
@@ -29,9 +30,9 @@
 
 (comment
 
-  (def fitness-params (for [base    [230000] ; Why 230,000? It [just barely] makes all of the gds-cbfit values all positive.
-                            benefit [1 10 100 1000]
-                            cost    [0.1 0.01 0.001 0.0001 0.00001 0.000001 0.0000001]]
+  (def fitness-params (for [base [230000] ; Why 230,000? It [just barely] makes all of the gds-cbfit values all positive.
+                            benefit (map #(math/pow 10 %) (range 4)) ; 1, ..., 1000
+                            cost (map #(math/pow 10 (- %)) (range 0 8))] ; 0.1, 0.01, etc.
                         [base benefit cost]))
 
   (def bunchofitness (ft/walk-data-to-fitness-dses spiral23 fitness-params))
@@ -46,23 +47,14 @@
 
   (count grouped-bunchoffitness)
 
-  ;; High-cost configurations only:
-  ;; This displays automatically because it uses TMD's group-by
-  (def grouped-bunchoffitness-costly-move
-    (-> bunchofitness
-        (tc/select-rows #(>= (:cost-per %) 0.01))
-        (ft/sort-in-env :gds-cbfit)
-        (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
-
   ;; Select top three gds-cbfit from each configuration (IS IT WORKING?)
   ;; This uses TC's group-by so that select-rows will descend into the
   ;; individual groups.
   (def grouped-bunchoffitness-top3
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
-        (tc/group-by ;; note switch to tablecloth's group-by
-          (juxt :base-fitness :benefit-per :cost-per :env) ; a seq of keys would work, too
-        (tc/select-rows (range 3)))) ;; select-rows applies to each sub-ds (using tablecloth group-by)
+        (tc/group-by (juxt :base-fitness :benefit-per :cost-per :env)) ; note switch to tablecloth's group-by
+        (tc/select-rows (range 3)))) ;; now select-rows applies to each sub-ds (using tablecloth group-by)
 
   ;; These print all of the groups:
   (tc/groups->seq grouped-bunchoffitness-top3)
@@ -74,14 +66,28 @@
   (tc/column-names grouped-bunchoffitness-top3)
   (ds/print-all (:data (tc/as-regular-dataset grouped-bunchoffitness-top3)))
 
-  ;; env3 only, no groups
-  (def bunchoffitness-env3-top3
+  ;; High-cost configurations only:
+  ;; This displays automatically because it uses TMD's group-by
+  (def grouped-bunchoffitness-costly-move
     (-> bunchofitness
-        (tc/select-rows #(= (:env %) "env3"))
-        (ft/sort-in-env :gds-cbfit)))
+        (tc/select-rows #(>= (:cost-per %) 0.01))
+        (ft/sort-in-env :gds-cbfit)
+        (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
 
-  (ft/prall bunchoffitness-env3-top3)
+  ;; env3 only, no groups
+  (def grouped-bunchoffitness-env3-top3
+    (-> bunchofitness
+        (ft/sort-in-env :gds-cbfit)
+        (tc/select-rows #(= (:env %) "env3")) ; this applies to entire dataset
+        (tc/group-by (juxt :base-fitness :benefit-per :cost-per :env)) ; note switch to tablecloth's group-by
+        (tc/select-rows (range 3)))) ;; now select-rows applies to each sub-ds (using tablecloth group-by)
 
+  (tc/groups->seq grouped-bunchoffitness-env3-top3)
+
+  ;; Note that if animals used this method to forage for multiple targets,
+  ;; they presumably would have lower realized fitness variance.
+  ;; I should frame it as search for a special nest site or mate, or maybe
+  ;; a special material needed for reproduction.
 
   ;; Interestingly, there are cases (.e.g benefit 1000, cost 0.1, env0)
   ;; where the gds-cbfit ordering is exactly opposite from total found, efficiency,
