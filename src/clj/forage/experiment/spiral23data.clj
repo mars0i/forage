@@ -38,12 +38,16 @@
 
   ;; Here's the whole dataset grouped by treatment and env; note use of tech.ml.dataset's group by rather than tablecloth's.
   ;; All configurations:
+  ;; This displays automatically because it uses TMD's group-by
   (def grouped-bunchoffitness
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
         (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
 
+  (count grouped-bunchoffitness)
+
   ;; High-cost configurations only:
+  ;; This displays automatically because it uses TMD's group-by
   (def grouped-bunchoffitness-costly-move
     (-> bunchofitness
         (tc/select-rows #(>= (:cost-per %) 0.01))
@@ -51,21 +55,24 @@
         (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
 
   ;; Select top three gds-cbfit from each configuration (IS IT WORKING?)
+  ;; This uses TC's group-by so that select-rows will descend into the
+  ;; individual groups.
   (def grouped-bunchoffitness-top3
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
         (tc/group-by ;; note switch to tablecloth's group-by
-          (juxt :base-fitness :benefit-per :cost-per :env)) ; a seq of keys would work, too
+          (juxt :base-fitness :benefit-per :cost-per :env) ; a seq of keys would work, too
         (tc/select-rows (range 3)))) ;; select-rows applies to each sub-ds (using tablecloth group-by)
 
-  (ft/prall (:data grouped-bunchoffitness-top3)) ; but now we need to extract the data from the grouped ds
-  ;; no this isn't printing the whole dataset
-
-  (:data (-> grouped-bunchoffitness-top3 (tc/select-rows #(= (:env %) "env3")))) ; works
-  (:data (-> grouped-bunchoffitness-top3 (tc/select-rows #(= (:env %) "env2")))) ; doesn't work
-  (:data (-> grouped-bunchoffitness-top3 (tc/select-rows #(= (:env %) "env1")))) ; doesn't work
-  (:data (-> grouped-bunchoffitness-top3 (tc/select-rows #(= (:env %) "env0")))) ; doesn't work
-
+  ;; These print all of the groups:
+  (tc/groups->seq grouped-bunchoffitness-top3)
+  (tc/groups->map grouped-bunchoffitness-top3)
+  ;; These don't print all of the groups:
+  (:vals (tc/as-map (:data grouped-bunchoffitness-top3))) ; but now we need to extract the data from the grouped ds
+  (:data (tc/as-regular-dataset grouped-bunchoffitness-top3)) ; but now we need to extract the data from the grouped ds
+  (ds/print-all (tc/columns grouped-bunchoffitness-top3 :as-map))
+  (tc/column-names grouped-bunchoffitness-top3)
+  (ds/print-all (:data (tc/as-regular-dataset grouped-bunchoffitness-top3)))
 
   ;; env3 only, no groups
   (def bunchoffitness-env3-top3
