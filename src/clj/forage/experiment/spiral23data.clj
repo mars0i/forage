@@ -45,20 +45,29 @@
         (ft/sort-in-env :gds-cbfit)
         (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
 
-  (count grouped-bunchoffitness)
+  (def yo
+    (-> bunchofitness
+        (ft/sort-in-env :gds-cbfit)
+        (ds/group-by-column :env)))
 
-  ;; Select top three gds-cbfit from each configuration (IS IT WORKING?)
+  ;; Select top four gds-cbfit from each configuration
   ;; This uses TC's group-by so that select-rows will descend into the
   ;; individual groups.
-  (def grouped-bunchoffitness-top3
+  (def grouped-bunchoffitness-top4
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
         (tc/group-by (juxt :base-fitness :benefit-per :cost-per :env)) ; note switch to tablecloth's group-by
+        (tc/select-rows (range 4)))) ;; now select-rows applies to each sub-ds (using tablecloth group-by)
+
+  ;; Just the first 3 gds-cbfit values:
+  (def grouped-bunchoffitness-top3
+    (-> grouped-bunchoffitness-top4
         (tc/select-rows (range 3)))) ;; now select-rows applies to each sub-ds (using tablecloth group-by)
 
   ;; These print all of the groups:
-  (tc/groups->seq grouped-bunchoffitness-top3)
+  (tc/groups->seq grouped-bunchoffitness-top4)
   (tc/groups->map grouped-bunchoffitness-top3)
+
   ;; These don't print all of the groups:
   (:vals (tc/as-map (:data grouped-bunchoffitness-top3))) ; but now we need to extract the data from the grouped ds
   (:data (tc/as-regular-dataset grouped-bunchoffitness-top3)) ; but now we need to extract the data from the grouped ds
@@ -75,12 +84,12 @@
         (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
 
   ;; env3 only, no groups
-  (def grouped-bunchoffitness-env3-top3
+  (def grouped-bunchoffitness-env3-top4
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
         (tc/select-rows #(= (:env %) "env3")) ; this applies to entire dataset
         (tc/group-by (juxt :base-fitness :benefit-per :cost-per :env)) ; note switch to tablecloth's group-by
-        (tc/select-rows (range 3)))) ;; now select-rows applies to each sub-ds (using tablecloth group-by)
+        (tc/select-rows (range 4)))) ;; now select-rows applies to each sub-ds (using tablecloth group-by)
 
   (tc/groups->seq grouped-bunchoffitness-env3-top3)
 
