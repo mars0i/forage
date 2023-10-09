@@ -30,6 +30,10 @@
 
 (comment
 
+  ;; Tip: for Tablecloth grouped datasets, these print all of the groups:
+  ; (tc/groups->seq grouped-DS)
+  ; (tc/groups->map grouped-DS)
+
   (def fitness-params (for [base [230000] ; Why 230,000? It [just barely] makes all of the gds-cbfit values all positive.
                             benefit (map #(math/pow 10 %) (range 4)) ; 1, ..., 1000
                             cost (map #(math/pow 10 (- %)) (range 0 8))] ; 0.1, 0.01, etc.
@@ -37,18 +41,24 @@
 
   (def bunchofitness (ft/walk-data-to-fitness-dses spiral23 fitness-params))
 
-  ;; Here's the whole dataset grouped by treatment and env; note use of tech.ml.dataset's group by rather than tablecloth's.
-  ;; All configurations:
-  ;; This displays automatically because it uses TMD's group-by
   (def grouped-bunchoffitness
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
-        (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
+        (tc/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
 
-  (def yo
-    (-> bunchofitness
-        (ft/sort-in-env :gds-cbfit)
-        (ds/group-by-column :env)))
+  (tc/groups->seq grouped-bunchoffitness)
+
+  ;; Check whether fitness measures other than gds-cbfit are in the same or
+  ;; opposite order.
+  (def grouped-bunchoffitness-orders
+    (-> grouped-bunchoffitness
+        (tc/aggregate-columns [:efficiency :weighted-efficiency :avg-cbfit :tot-found :tot-length :gds-cbfit]
+                              #(cond (um/monotonically-increasing? %) :inc
+                                     (um/monotonically-decreasing? %) :dec
+                                     :else :neither))))
+                              ;{:ungroup? false}
+
+  (ft/prall grouped-bunchoffitness-orders)
 
   ;; Select top four gds-cbfit from each configuration
   ;; This uses TC's group-by so that select-rows will descend into the
@@ -69,7 +79,7 @@
   (tc/groups->seq grouped-bunchoffitness-top4)
   (tc/groups->map grouped-bunchoffitness-top3)
 
-  ;; High-cost configurations only:
+  ;; Get high-cost configurations only:
   ;; This displays automatically because it uses TMD's group-by
   (def grouped-bunchoffitness-costly-move
     (-> bunchofitness
