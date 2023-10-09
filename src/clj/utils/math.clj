@@ -198,6 +198,52 @@
   [n]
   (count (str (round n))))
 
+(defn strictly-increasing?
+  "Returns true iff the numbers in xs are strictly increasing."
+  [xs]
+  (every? identity (map < xs (rest xs))))
+
+(defn strictly-decreasing?
+  [xs]
+  "Returns true iff the numbers in xs are strictly descreasing."
+  (every? identity (map > xs (rest xs))))
+
+(defn monotonically-increasing?
+  [xs]
+  "Returns true iff the numbers in xs are monotonically increasing, i.e. if
+  every value is greater than or equal to the one before it."
+  (every? identity (map <= xs (rest xs))))
+
+(defn monotonically-decreasing?
+  [xs]
+  "Returns true iff the numbers in xs are monotonically decreasing, i.e. if
+  every value is less than or equal to the one before it."
+  (every? identity (map >= xs (rest xs))))
+
+(comment
+  (monotonically-decreasing? [2 2 2 2 3 3 4 5])
+  (monotonically-increasing? [2 2 2 2 3 3 4 5])
+  (monotonically-increasing? [2 3 4 5])
+  (strictly-decreasing? [2 3 4 5])
+  (strictly-increasing? [2 3 4 5])
+  (strictly-increasing? [2 2 2 2 3 3 4 5])
+
+  (monotonically-decreasing? [5 4 3 2])
+  (strictly-decreasing? [5 4 3 2])
+  (monotonically-increasing? [5 4 3 2])
+  (strictly-increasing? [5 4 3 2])
+
+  (monotonically-decreasing? [2 1 4 5])
+  (strictly-decreasing? [2 1 4 5])
+  (monotonically-increasing? [2 1 4 5])
+  (strictly-increasing? [2 1 4 5])
+
+  (monotonically-decreasing? [5 3 3 2 1 1])
+  (strictly-decreasing? [5 3 3 2 1 1])
+  (monotonically-increasing? [5 3 3 2 1 1])
+  (strictly-increasing? [5 3 3 2 1 1])
+)
+
 ;;;;;;;;;;;;;;;;;;;;;;;
 
 (comment
