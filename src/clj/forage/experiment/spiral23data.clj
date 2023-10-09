@@ -7,7 +7,7 @@
             [scicloj.kindly.v4.api :as kindly]
             [scicloj.kindly.v4.kind :as kind]
             [clojure.math :as math :refer [pow]]
-            ;[utils.math :as um]
+            [utils.math :as um]
             [forage.core.techmlds :as ft]
             [forage.core.fitness :as fit]))
 
@@ -68,13 +68,6 @@
   ;; These print all of the groups:
   (tc/groups->seq grouped-bunchoffitness-top4)
   (tc/groups->map grouped-bunchoffitness-top3)
-
-  ;; These don't print all of the groups:
-  (:vals (tc/as-map (:data grouped-bunchoffitness-top3))) ; but now we need to extract the data from the grouped ds
-  (:data (tc/as-regular-dataset grouped-bunchoffitness-top3)) ; but now we need to extract the data from the grouped ds
-  (ds/print-all (tc/columns grouped-bunchoffitness-top3 :as-map))
-  (tc/column-names grouped-bunchoffitness-top3)
-  (ds/print-all (:data (tc/as-regular-dataset grouped-bunchoffitness-top3)))
 
   ;; High-cost configurations only:
   ;; This displays automatically because it uses TMD's group-by

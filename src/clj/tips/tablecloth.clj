@@ -30,5 +30,14 @@
  (def grouped5s (tc/select-rows grouped5 (range 2)))
   (tc/groups->map grouped5s)
 
+;; These print all of the groups:
+  (tc/groups->seq grouped5s)
+  (tc/groups->map grouped5s)
 
+  ;; These don't print all of the groups:
+  (:vals (tc/as-map (:data grouped5s))) ; but now we need to extract the data from the grouped ds
+  (:data (tc/as-regular-dataset grouped5s)) ; but now we need to extract the data from the grouped ds
+  (ds/print-all (tc/columns grouped5s :as-map))
+  (tc/column-names grouped5s)
+  (ds/print-all (:data (tc/as-regular-dataset grouped5s)))
 )
