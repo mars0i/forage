@@ -313,6 +313,9 @@
   ;; Consider using Cheaha?
   ;; Or RUN IN PARALLEL (with different PRNGs).
 
+
+  ;; Then go find the flamegraph file in /tmp/clj-async-profiler/results
+  ;(prof/profile
   (time
     (do ;; All seven groups of runs
 
@@ -348,6 +351,7 @@
             (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))
 
  ))
+ ;) ; profile
 
 )
 
