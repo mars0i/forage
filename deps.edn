@@ -35,8 +35,8 @@
                                         "-Xss1g" ; max per-thread stack size (s/b smaller?)
                                         "-XX:TieredStopAtLevel=4"]} ; 3X improvement
            :profiling {:extra-deps {criterium/criterium {:mvn/version "0.4.6"}
-                                    ;com.clojure-goes-fast/clj-async-profiler {:mvn-version "0.5.1"}  ; I'm getting an error
-                                    }
+                                    com.clojure-goes-fast/clj-async-profiler {:mvn-version "1.0.5"}  ; I'm getting an error
+                                   }
                        :jvm-opts ["-Djdk.attach.allowAttachSelf"   ; for clj-async-profile: needed for JDK9+
                                   "-XX:+UnlockDiagnosticVMOptions" ; for clj-async-profiler
                                   "-XX:+DebugNonSafepoints"]}     ; for clj-async-profiler
