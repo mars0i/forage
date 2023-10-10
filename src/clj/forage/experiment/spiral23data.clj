@@ -28,6 +28,18 @@
 (comment (ds/write! spiral23 (str home fileloc "spiral23.csv")))
 
 
+(defn seq-is-inc-or-dec
+  "If sequence s is monotonically increasing, return :inc, if monotonically
+  decreasing, return :dec, and otherwise return :neither."
+  [s]
+  (cond (um/monotonically-increasing? s) :inc
+        (um/monotonically-decreasing? s) :dec
+        :else :neither))
+
+(defn inc-or-dec
+  [colname rowmap]
+  (seq-is-inc-or-dec (rowmap colname)))
+
 (comment
 
   ;; Tip: for Tablecloth grouped datasets, these print all of the groups:
@@ -48,48 +60,32 @@
 
   (tc/groups->seq grouped-bunchoffitness)
 
-  (defn inc-dec-flag
-    "Determine whether walks as ordered by gds-cbfit within a config have
-    the same order in other columns."
-    [col]
-    (cond (apply = col) (first col)    ; for the config cols--same per group--we just return one instance as is
-          (um/monotonically-increasing? col) :inc
-          (um/monotonically-decreasing? col) :dec
-          :else :neither))
-
-  ;; Check whether fitness measures other than gds-cbfit are in the same or
-  ;; opposite order.
-  ;; HOW TO GET RID OF FAKE COLS?
+  ;; Easier to do this with aggregate vs aggregate-columns, since I want
+  ;; data from constant columns too.
   (def grouped-bunchoffitness-orders
-    (-> grouped-bunchoffitness
-        (tc/aggregate-columns [:benefit-per :cost-per :env   ; not :walk--that's what is being reordered
-                               :efficiency :avg-cbfit 
-                               :weighted-efficiency :tot-found :tot-length
-                               :gds-cbfit]
-                              inc-dec-flag)))
-  ;{:ungroup? false}
-
-  (ft/prall grouped-bunchoffitness-orders)
-
-  ;; Works, but still has fake columns
-  (def grouped-bunchoffitness-orders2
     (-> grouped-bunchoffitness
         (tc/aggregate {:benefit-per #(first (% :benefit-per)) ; not :walk--that's what is being reordered
                        :cost-per #(first (% :cost-per))
                        :env #(first (% :env))
-                       :efficiency #(inc-dec-flag (% :efficiency))
-                       :avg-cbfit #(inc-dec-flag (% :avg-cbfit))
-                       :weighted-efficiency #(inc-dec-flag (% :weighted-efficiency))
-                       :tot-found #(inc-dec-flag (% :tot-found))
-                       :tot-length #(inc-dec-flag (% :tot-length))
-                       :gds-cbfit #(inc-dec-flag (% :gds-cbfit))})
+                       :efficiency  (partial inc-or-dec :efficiency )
+                       :avg-cbfit (partial inc-or-dec :avg-cbfit)
+                       :weighted-efficiency (partial inc-or-dec :weighted-efficiency)
+                       :tot-found (partial inc-or-dec :tot-found)
+                       :tot-length (partial inc-or-dec :tot-length)
+                       :gds-cbfit  (partial inc-or-dec :gds-cbfit )
+                       })
         (tc/select-columns [:env :benefit-per :cost-per ; also orders columns, as reorder-columns would do without filtering
-                            :gds-cbfit :efficiency :avg-cbfit 
-                            :weighted-efficiency :tot-found :tot-length])
-        (tc/order-by [:env :cost-per :benefit-per])
-      )) ;{:ungroup? false}
+                            :efficiency :avg-cbfit :weighted-efficiency
+                            :tot-found :tot-length :gds-cbfit]))) ;{:ungroup? false}
 
-  (ft/prall grouped-bunchoffitness-orders2)
+  (ft/prall grouped-bunchoffitness-orders)
+  (ft/prall (-> grouped-bunchoffitness-orders 
+                (tc/order-by [:env :benefit-per :cost-per] [:desc :asc :asc])))
+  (ft/prall (-> grouped-bunchoffitness-orders 
+                (tc/order-by [:env :cost-per :benefit-per] [:desc :asc :asc])))
+  (ft/prall (-> grouped-bunchoffitness-orders 
+                (tc/select-rows #(= (:env %) "env3"))
+                (tc/order-by [:env :cost-per :benefit-per] [:desc :asc :asc])))
 
   ;; Select top four gds-cbfit from each configuration
   ;; This uses TC's group-by so that select-rows will descend into the
