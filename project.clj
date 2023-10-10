@@ -17,8 +17,8 @@
                  [net.mikera/core.matrix "0.63.0"]
                  [aerial.hanami "0.17.0"]
                  ; [dk.ative/docjure "1.19.0"] ; Excel file creation functions
-                 [techascent/tech.ml.dataset "7.011"]
-                 [scicloj/tablecloth "7.007"]
+                 [techascent/tech.ml.dataset "7.012"]
+                 [scicloj/tablecloth "7.012"]
                  [techascent/tech.viz "6.00-beta-16-2"]
                  [org.scicloj/clay "2-alpha35"]
                  [io.github.nextjournal/clerk "0.5.346"]
