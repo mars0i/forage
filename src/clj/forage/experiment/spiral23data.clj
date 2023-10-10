@@ -74,7 +74,7 @@
   ;; Works, but still has fake columns
   (def grouped-bunchoffitness-orders2
     (-> grouped-bunchoffitness
-        (tc/aggregate {:benefit-per #(first (% :benefit-per))
+        (tc/aggregate {:benefit-per #(first (% :benefit-per)) ; not :walk--that's what is being reordered
                        :cost-per #(first (% :cost-per))
                        :env #(first (% :env))
                        :efficiency #(inc-dec-flag (% :efficiency))
@@ -82,8 +82,12 @@
                        :weighted-efficiency #(inc-dec-flag (% :weighted-efficiency))
                        :tot-found #(inc-dec-flag (% :tot-found))
                        :tot-length #(inc-dec-flag (% :tot-length))
-                       :gds-cbfit #(inc-dec-flag (% :gds-cbfit))})))
-  ;{:ungroup? false}
+                       :gds-cbfit #(inc-dec-flag (% :gds-cbfit))})
+        (tc/select-columns [:env :benefit-per :cost-per ; also orders columns, as reorder-columns would do without filtering
+                            :gds-cbfit :efficiency :avg-cbfit 
+                            :weighted-efficiency :tot-found :tot-length])
+        (tc/order-by [:env :cost-per :benefit-per])
+      )) ;{:ungroup? false}
 
   (ft/prall grouped-bunchoffitness-orders2)
 
