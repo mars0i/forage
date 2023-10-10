@@ -48,17 +48,44 @@
 
   (tc/groups->seq grouped-bunchoffitness)
 
+  (defn inc-dec-flag
+    "Determine whether walks as ordered by gds-cbfit within a config have
+    the same order in other columns."
+    [col]
+    (cond (apply = col) (first col)    ; for the config cols--same per group--we just return one instance as is
+          (um/monotonically-increasing? col) :inc
+          (um/monotonically-decreasing? col) :dec
+          :else :neither))
+
   ;; Check whether fitness measures other than gds-cbfit are in the same or
   ;; opposite order.
+  ;; HOW TO GET RID OF FAKE COLS?
   (def grouped-bunchoffitness-orders
     (-> grouped-bunchoffitness
-        (tc/aggregate-columns [:efficiency :weighted-efficiency :avg-cbfit :tot-found :tot-length :gds-cbfit]
-                              #(cond (um/monotonically-increasing? %) :inc
-                                     (um/monotonically-decreasing? %) :dec
-                                     :else :neither))))
-                              ;{:ungroup? false}
+        (tc/aggregate-columns [:benefit-per :cost-per :env   ; not :walk--that's what is being reordered
+                               :efficiency :avg-cbfit 
+                               :weighted-efficiency :tot-found :tot-length
+                               :gds-cbfit]
+                              inc-dec-flag)))
+  ;{:ungroup? false}
 
   (ft/prall grouped-bunchoffitness-orders)
+
+  ;; Works, but still has fake columns
+  (def grouped-bunchoffitness-orders2
+    (-> grouped-bunchoffitness
+        (tc/aggregate {:benefit-per #(first (% :benefit-per))
+                       :cost-per #(first (% :cost-per))
+                       :env #(first (% :env))
+                       :efficiency #(inc-dec-flag (% :efficiency))
+                       :avg-cbfit #(inc-dec-flag (% :avg-cbfit))
+                       :weighted-efficiency #(inc-dec-flag (% :weighted-efficiency))
+                       :tot-found #(inc-dec-flag (% :tot-found))
+                       :tot-length #(inc-dec-flag (% :tot-length))
+                       :gds-cbfit #(inc-dec-flag (% :gds-cbfit))})))
+  ;{:ungroup? false}
+
+  (ft/prall grouped-bunchoffitness-orders2)
 
   ;; Select top four gds-cbfit from each configuration
   ;; This uses TC's group-by so that select-rows will descend into the
