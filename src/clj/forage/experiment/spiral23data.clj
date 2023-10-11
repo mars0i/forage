@@ -40,23 +40,34 @@
   [colname rowmap]
   (seq-is-inc-or-dec (rowmap colname)))
 
+(def fitness-params (for [base [230000] ; Why 230,000? It [just barely] makes all of the gds-cbfit values all positive.
+                          benefit (map #(math/pow 10 %) (range 4)) ; 1, ..., 1000
+                          cost (map #(math/pow 10 (- %)) (range 0 8))] ; 0.1, 0.01, etc.
+                      [base benefit cost]))
+
 (comment
 
   ;; Tip: for Tablecloth grouped datasets, these print all of the groups:
   ; (tc/groups->seq grouped-DS)
   ; (tc/groups->map grouped-DS)
 
-  (def fitness-params (for [base [230000] ; Why 230,000? It [just barely] makes all of the gds-cbfit values all positive.
-                            benefit (map #(math/pow 10 %) (range 4)) ; 1, ..., 1000
-                            cost (map #(math/pow 10 (- %)) (range 0 8))] ; 0.1, 0.01, etc.
-                        [base benefit cost]))
-
   (def bunchofitness (ft/walk-data-to-fitness-dses spiral23 fitness-params))
 
   (def grouped-bunchofitness
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
-        (tc/group-by [:base-fitness :benefit-per :cost-per :env])))
+        (tc/reorder-columns [:base-fitness :benefit-per :cost-per :env   ; these will be at front anyway
+                             :walk
+                             :aggregate-eff
+                             :avg-eff
+                             :gds-eff
+                             :avg-cbfit
+                             :gds-cbfit
+                             :tot-found
+                             :tot-length
+                             :weighted-agg-eff])
+        (tc/group-by [:base-fitness :benefit-per :cost-per :env])
+        ))
   ; Note if I use (juxt :base-fitness :benefit-per :cost-per :env) instead,
   ; then when I aggregrate it, I get extra columns with arbitrary names.
 
@@ -67,20 +78,30 @@
 
   ;; Easier to do this with aggregate vs aggregate-columns, since I want
   ;; data from constant columns too.
+  
   (def bunchofitness-orders
     (-> grouped-bunchofitness
         (tc/aggregate {:benefit-per #(first (% :benefit-per)) ; first three here have same value at all rows in a group, so choose any one
                        :cost-per #(first (% :cost-per))
                        :env #(first (% :env)) ; not :walk--that's what is being reordered
-                       :efficiency  (partial inc-or-dec :efficiency )
+                       :aggregate-eff  (partial inc-or-dec :aggregate-eff )
                        :avg-cbfit (partial inc-or-dec :avg-cbfit)
-                       :weighted-efficiency (partial inc-or-dec :weighted-efficiency)
+                       :weighted-eff (partial inc-or-dec :weighted-eff)
                        :tot-found (partial inc-or-dec :tot-found)
                        :tot-length (partial inc-or-dec :tot-length)
                        :gds-cbfit  (partial inc-or-dec :gds-cbfit )})
-        (tc/reorder-columns [:env :benefit-per :cost-per ; get rid of the columns added by aggregate; also orders columns, as reorder-columns would do without filtering
-                            :efficiency :tot-found :tot-length :avg-cbfit :weighted-efficiency
-                            :gds-cbfit])))
+        (tc/reorder-columns [:env ; not :walk--that's what's agg'ed over
+                             :benefit-per
+                             :cost-per
+                             :aggregate-eff
+                             :avg-eff
+                             :gds-eff
+                             :avg-cbfit
+                             :gds-cbfit
+                             :tot-found
+                             :tot-length
+                             :weighted-agg-eff
+                             :base-fitness])))
 
   (ft/prall bunchofitness-orders)
   (ft/prall (-> bunchofitness-orders 

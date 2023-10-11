@@ -36,12 +36,12 @@
                                                               benefit-per cost-per
                                                               found length)})))
 
-;; NOTE: indiv-efficiency, calculated by this function, is of questionable 
+;; NOTE: Indivdual effiency, calculated by this function, is of questionable 
 ;; meaningfullness. Because in this model, each individual either finds a single
 ;; target or none. If a target is found, the efficiency is 1/total-length.
 ;; If no target is found, the efficiency is zero, no matter what the max
 ;; path length is.  (Maybe a base fitness should be added??)
-(defn add-column-indiv-efficiency
+(defn add-column-indiv-eff
   "Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
   dataset that is the same but has an added column :indiv-cbfit representing
@@ -49,7 +49,7 @@
   forage.core.fitness/cost-benefit-fitness for the other parameters."
   [walk-ds]
   (ds/row-map walk-ds (fn [{:keys [found length]}]  ; or tc/map-rows
-                        {:indiv-efficiency (/ found length)})))
+                        {:indiv-eff (/ found length)})))
 
 (defn make-trait-fit-ds-name
   "Generate a string to be used as a trait-fitness dataset name,
@@ -61,19 +61,20 @@
        ",base=" base-fitness))
 
 
+;; Currently unused--same thing is done inside walk-data-to-fitness-ds.
 (defn indiv-fit-to-devstoch-fit-ds
   "Given a dataset with an :indiv-cbfit column, returns a dataset that
   summarizes this data by providing a Gillespie \"developmental
   stochasticity\" fitness value (column :trait-fit) for each environment
   (column :env) and walk type (column :walk)."
-  [indiv-fit-ds]
+  [indiv-fit-ds indiv-fit-colname gds-fit-colname]
   (-> indiv-fit-ds
       (tc/group-by [:env :walk])
-      (tc/aggregate {:gds-fit (fn [{:keys [indiv-fit]}] ; could also calc on the fly from found, length
-                                  (fit/sample-gillespie-dev-stoch-fitness indiv-fit))})
-      (tc/order-by [:env :trait-fit] [:desc :desc]))) ; sort by fitness within env
+      (tc/aggregate {gds-fit-colname
+                     #(fit/sample-gillespie-dev-stoch-fitness (% indiv-fit-colname))})))
 
 
+;; Currently unused--same thing is done inside walk-data-to-fitness-ds.
 (defn walk-data-to-devstoch-fit-ds
   "Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
@@ -84,12 +85,14 @@
   (let [ds-name (ds/dataset-name walk-ds)] ; maybe parse this to remove path and file extension
     (-> walk-ds 
         (add-column-indiv-cbfit base-fitness benefit-per cost-per)
-        (add-column-indiv-efficiency base-fitness benefit-per cost-per)
-        (indiv-fit-to-devstoch-fit-ds)
+        (add-column-indiv-eff)
+        (indiv-fit-to-devstoch-fit-ds :indiv-cbfit :gds-cbfit)
+        (indiv-fit-to-devstoch-fit-ds :indiv-eff :gds-eff)
         (ds/->dataset {:dataset-name
                        (make-trait-fit-ds-name ds-name base-fitness benefit-per cost-per)}))))
 
-(defn walk-data-to-efficiency-ds
+;; Currently unused--same thing is done inside walk-data-to-fitness-ds.
+(defn walk-data-to-eff-ds
   "Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
   dataset that summarizes this data by providing the efficiency for each
@@ -98,7 +101,7 @@
   (let [ds-name (ds/dataset-name walk-ds)] ; maybe parse this to remove path and file extension
     (-> walk-ds 
         (tc/group-by [:env :walk])
-        (tc/aggregate {:efficiency (fn [{:keys [found length]}] ; could also calc on the fly from found, length
+        (tc/aggregate {:aggregate-eff (fn [{:keys [found length]}] ; could also calc on the fly from found, length
                                      (fit/aggregate-efficiency found length))}) ; note this is not based on indiv efficiency, which erases max path lengths
         (ds/->dataset {:dataset-name (str ds-name "+eff")}))))
 
@@ -109,8 +112,9 @@
    :cost-per
    :env
    :walk
-   :efficiency
-   :weighted-efficiency
+   :aggregate-eff
+   :gds-eff
+   :weighted-eff
    :avg-cbfit
    :gds-cbfit 
    :tot-found 
@@ -129,17 +133,19 @@
         basename (first (cstr/split no-path-name #"\."))]
     (-> walk-ds 
         (add-column-indiv-cbfit base-fitness benefit-per cost-per)
+        (add-column-indiv-eff)
         (tc/group-by [:env :walk])
         (tc/aggregate {:base-fitness (constantly base-fitness)
                        :benefit-per (constantly benefit-per)
                        :cost-per (constantly cost-per)
-                       :efficiency #(fit/aggregate-efficiency (% :found) (% :length))
-                       :gds-effiency #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-efficiency)) ; note not directly related to :efficiency
-                       :weighted-efficiency #(fit/aggregate-efficiency (% :found) (% :length) benefit-per cost-per)
-                       :gds-cbfit #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-cbfit))
+                       :aggregate-eff #(fit/aggregate-efficiency (% :found) (% :length))
+                       :avg-eff #(dts/mean (% :indiv-eff))
+                       :gds-eff #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-eff)) ; note not directly related to :aggregate-eff
                        :avg-cbfit #(dts/mean (% :indiv-cbfit))
+                       :gds-cbfit #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-cbfit))
                        :tot-found #(reduce + (% :found))
-                       :tot-length #(reduce + (% :length))})
+                       :tot-length #(reduce + (% :length))
+                       :weighted-agg-eff #(fit/aggregate-efficiency (% :found) (% :length) benefit-per cost-per) })
         (tc/reorder-columns column-order)
         ;; Not really doing what I want?:
         (ds/->dataset {:dataset-name
@@ -220,13 +226,13 @@
   (def test23-tfit (walk-data-to-devstoch-fit-ds test23 1000 1 0.0001))
   (= test23-tfit test23-tfit')
 
-  (def test23-tfit-eff (walk-data-to-efficiency-ds test23))
+  (def test23-tfit-eff (walk-data-to-eff-ds test23))
   (prall test23-tfit-eff)
 
   (def test23-fits (walk-data-to-fitness-ds test23 1000 1 0.0001))
   (prall test23-fits)
 
-  (prall (sort-in-env test23-fits :efficiency))
+  (prall (sort-in-env test23-fits :aggregate-eff))
   (prall (sort-in-env test23-fits :tot-found))
 
 )
