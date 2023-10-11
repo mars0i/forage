@@ -53,44 +53,56 @@
 
   (def bunchofitness (ft/walk-data-to-fitness-dses spiral23 fitness-params))
 
-  (def grouped-bunchoffitness
+  (def grouped-bunchofitness
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
-        (tc/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
+        (tc/group-by [:base-fitness :benefit-per :cost-per :env])))
+  ; Note if I use (juxt :base-fitness :benefit-per :cost-per :env) instead,
+  ; then when I aggregrate it, I get extra columns with arbitrary names.
 
-  (tc/groups->seq grouped-bunchoffitness)
+  (tc/groups->seq grouped-bunchofitness)
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Check whether ordering of walk strategies is like the order for gds-cbfit
 
   ;; Easier to do this with aggregate vs aggregate-columns, since I want
   ;; data from constant columns too.
-  (def grouped-bunchoffitness-orders
-    (-> grouped-bunchoffitness
-        (tc/aggregate {:benefit-per #(first (% :benefit-per)) ; not :walk--that's what is being reordered
+  (def bunchofitness-orders
+    (-> grouped-bunchofitness
+        (tc/aggregate {:benefit-per #(first (% :benefit-per)) ; first three here have same value at all rows in a group, so choose any one
                        :cost-per #(first (% :cost-per))
-                       :env #(first (% :env))
+                       :env #(first (% :env)) ; not :walk--that's what is being reordered
                        :efficiency  (partial inc-or-dec :efficiency )
                        :avg-cbfit (partial inc-or-dec :avg-cbfit)
                        :weighted-efficiency (partial inc-or-dec :weighted-efficiency)
                        :tot-found (partial inc-or-dec :tot-found)
                        :tot-length (partial inc-or-dec :tot-length)
-                       :gds-cbfit  (partial inc-or-dec :gds-cbfit )
-                       })
-        (tc/select-columns [:env :benefit-per :cost-per ; also orders columns, as reorder-columns would do without filtering
-                            :efficiency :avg-cbfit :weighted-efficiency
-                            :tot-found :tot-length :gds-cbfit]))) ;{:ungroup? false}
+                       :gds-cbfit  (partial inc-or-dec :gds-cbfit )})
+        (tc/reorder-columns [:env :benefit-per :cost-per ; get rid of the columns added by aggregate; also orders columns, as reorder-columns would do without filtering
+                            :efficiency :tot-found :tot-length :avg-cbfit :weighted-efficiency
+                            :gds-cbfit])))
 
-  (ft/prall grouped-bunchoffitness-orders)
-  (ft/prall (-> grouped-bunchoffitness-orders 
+  (ft/prall bunchofitness-orders)
+  (ft/prall (-> bunchofitness-orders 
                 (tc/order-by [:env :benefit-per :cost-per] [:desc :asc :asc])))
-  (ft/prall (-> grouped-bunchoffitness-orders 
+  (ft/prall (-> bunchofitness-orders 
                 (tc/order-by [:env :cost-per :benefit-per] [:desc :asc :asc])))
-  (ft/prall (-> grouped-bunchoffitness-orders 
-                (tc/select-rows #(= (:env %) "env3"))
-                (tc/order-by [:env :cost-per :benefit-per] [:desc :asc :asc])))
+  ;; This is  convenient representation;
+  (tc/groups->seq (-> bunchofitness-orders 
+                      (tc/order-by [:env :cost-per :benefit-per] [:desc :asc :asc])
+                      (tc/group-by [:env :cost-per])))
+  ;; Note that in all cases, the ordering of efficiency is identical to the
+  ;; ordering of tot-found.  Also note that it's usually the case that the
+  ;; ordering of efficiency is the same as gds-cbfit when cost is low (as
+  ;; you'd guess), *except in env2*--what's the deal with that?
+  ;; (Also anomalous: env3, benefit=1.0, cost=0.00001.)
 
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Select top four gds-cbfit from each configuration
   ;; This uses TC's group-by so that select-rows will descend into the
   ;; individual groups.
-  (def grouped-bunchoffitness-top4
+  (def grouped-bunchofitness-top4
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
         (tc/group-by (juxt :base-fitness :benefit-per :cost-per :env)) ; note switch to tablecloth's group-by
@@ -98,31 +110,31 @@
 
 
   ;; Just the first 3 gds-cbfit values:
-  (def grouped-bunchoffitness-top3
-    (-> grouped-bunchoffitness-top4
+  (def grouped-bunchofitness-top3
+    (-> grouped-bunchofitness-top4
         (tc/select-rows (range 3)))) ;; now select-rows applies to each sub-ds (using tablecloth group-by)
 
   ;; These print all of the groups:
-  (tc/groups->seq grouped-bunchoffitness-top4)
-  (tc/groups->map grouped-bunchoffitness-top3)
+  (tc/groups->seq grouped-bunchofitness-top4)
+  (tc/groups->map grouped-bunchofitness-top3)
 
   ;; Get high-cost configurations only:
   ;; This displays automatically because it uses TMD's group-by
-  (def grouped-bunchoffitness-costly-move
+  (def grouped-bunchofitness-costly-move
     (-> bunchofitness
         (tc/select-rows #(>= (:cost-per %) 0.01))
         (ft/sort-in-env :gds-cbfit)
         (ds/group-by (juxt :base-fitness :benefit-per :cost-per :env))))
 
   ;; env3 only, no groups
-  (def grouped-bunchoffitness-env3-top4
+  (def grouped-bunchofitness-env3-top4
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
         (tc/select-rows #(= (:env %) "env3")) ; this applies to entire dataset
         (tc/group-by (juxt :base-fitness :benefit-per :cost-per :env)) ; note switch to tablecloth's group-by
         (tc/select-rows (range 4)))) ;; now select-rows applies to each sub-ds (using tablecloth group-by)
 
-  (tc/groups->seq grouped-bunchoffitness-env3-top3)
+  (tc/groups->seq grouped-bunchofitness-env3-top3)
 
   ;; Note that if animals used this method to forage for multiple targets,
   ;; they presumably would have lower realized fitness variance.
