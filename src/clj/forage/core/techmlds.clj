@@ -26,12 +26,12 @@
 (defn add-column-cb-fit
   "Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
-  dataset that is the same but has an added column :indiv-fit representing
+  dataset that is the same but has an added column :indiv-cbfit representing
   the cost-benefit individual fitness per walk.  See
   forage.core.fitness/cost-benefit-fitness for the other parameters."
   [walk-ds base-fitness benefit-per cost-per]
   (ds/row-map walk-ds (fn [{:keys [length found]}]  ; or tc/map-rows
-                        {:indiv-fit (fit/cost-benefit-fitness base-fitness
+                        {:indiv-cbfit (fit/cost-benefit-fitness base-fitness
                                                               benefit-per cost-per
                                                               found length)})))
 
@@ -46,7 +46,7 @@
 
 
 (defn indiv-fit-to-devstoch-fit-ds
-  "Given a dataset with an :indiv-fit column, returns a dataset that
+  "Given a dataset with an :indiv-cbfit column, returns a dataset that
   summarizes this data by providing a Gillespie \"developmental
   stochasticity\" fitness value (column :trait-fit) for each environment
   (column :env) and walk type (column :walk)."
@@ -117,10 +117,10 @@
                        :benefit-per (constantly benefit-per)
                        :cost-per (constantly cost-per)
                        :efficiency #(fit/aggregate-efficiency (% :found) (% :length))
+                       :gds-cbfit #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-cbfit))
                        :weighted-efficiency #(fit/aggregate-efficiency (% :found) (% :length)
                                                                        benefit-per cost-per)
-                       :avg-cbfit #(dts/mean (% :indiv-fit))
-                       :gds-cbfit #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-fit))
+                       :avg-cbfit #(dts/mean (% :indiv-cbfit))
                        :tot-found #(reduce + (% :found))
                        :tot-length #(reduce + (% :length))})
         (tc/reorder-columns column-order)
