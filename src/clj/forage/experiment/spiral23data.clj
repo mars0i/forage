@@ -221,7 +221,7 @@
   ;; OLD
 
   ;; Add indiv cost-benefit fitnesses:
-  (def spiral23-ifit (ft/add-column-cb-fit spiral23 1000 1 0.0001))
+  (def spiral23-ifit (ft/add-column-cb-fit spiral23 1000 1 0.0001)) ; NEED TO ADD indiv-fit-key
   (ft/prall spiral23-ifit)
 
   ;; Incrementally define trait fitnesses from individual fitnesses:

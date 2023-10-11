@@ -23,17 +23,33 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FITNESS CALCULATIONS FOR tech.ml.DATASETS
 
-(defn add-column-cb-fit
+(defn add-column-indiv-cbfit
   "Given a dataset walk-ds of foraging data with a column :found for number
   of foospots found, and :walk for total length of the walk, returns a
   dataset that is the same but has an added column :indiv-cbfit representing
   the cost-benefit individual fitness per walk.  See
   forage.core.fitness/cost-benefit-fitness for the other parameters."
   [walk-ds base-fitness benefit-per cost-per]
+  [walk-ds base-fitness benefit-per cost-per]
   (ds/row-map walk-ds (fn [{:keys [length found]}]  ; or tc/map-rows
                         {:indiv-cbfit (fit/cost-benefit-fitness base-fitness
                                                               benefit-per cost-per
                                                               found length)})))
+
+;; NOTE: indiv-efficiency, calculated by this function, is of questionable 
+;; meaningfullness. Because in this model, each individual either finds a single
+;; target or none. If a target is found, the efficiency is 1/total-length.
+;; If no target is found, the efficiency is zero, no matter what the max
+;; path length is.  (Maybe a base fitness should be added??)
+(defn add-column-indiv-efficiency
+  "Given a dataset walk-ds of foraging data with a column :found for number
+  of foospots found, and :walk for total length of the walk, returns a
+  dataset that is the same but has an added column :indiv-cbfit representing
+  the cost-benefit individual fitness per walk.  See
+  forage.core.fitness/cost-benefit-fitness for the other parameters."
+  [walk-ds]
+  (ds/row-map walk-ds (fn [{:keys [found length]}]  ; or tc/map-rows
+                        {:indiv-efficiency (/ found length)})))
 
 (defn make-trait-fit-ds-name
   "Generate a string to be used as a trait-fitness dataset name,
@@ -67,7 +83,8 @@
   [walk-ds base-fitness benefit-per cost-per]
   (let [ds-name (ds/dataset-name walk-ds)] ; maybe parse this to remove path and file extension
     (-> walk-ds 
-        (add-column-cb-fit base-fitness benefit-per cost-per)
+        (add-column-indiv-cbfit base-fitness benefit-per cost-per)
+        (add-column-indiv-efficiency base-fitness benefit-per cost-per)
         (indiv-fit-to-devstoch-fit-ds)
         (ds/->dataset {:dataset-name
                        (make-trait-fit-ds-name ds-name base-fitness benefit-per cost-per)}))))
@@ -82,7 +99,7 @@
     (-> walk-ds 
         (tc/group-by [:env :walk])
         (tc/aggregate {:efficiency (fn [{:keys [found length]}] ; could also calc on the fly from found, length
-                                     (fit/aggregate-efficiency found length))})
+                                     (fit/aggregate-efficiency found length))}) ; note this is not based on indiv efficiency, which erases max path lengths
         (ds/->dataset {:dataset-name (str ds-name "+eff")}))))
 
 (def column-order 
@@ -111,15 +128,15 @@
         no-path-name (last (cstr/split old-full-name #"/"))
         basename (first (cstr/split no-path-name #"\."))]
     (-> walk-ds 
-        (add-column-cb-fit base-fitness benefit-per cost-per)
+        (add-column-indiv-cbfit base-fitness benefit-per cost-per)
         (tc/group-by [:env :walk])
         (tc/aggregate {:base-fitness (constantly base-fitness)
                        :benefit-per (constantly benefit-per)
                        :cost-per (constantly cost-per)
                        :efficiency #(fit/aggregate-efficiency (% :found) (% :length))
+                       :gds-effiency #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-efficiency)) ; note not directly related to :efficiency
+                       :weighted-efficiency #(fit/aggregate-efficiency (% :found) (% :length) benefit-per cost-per)
                        :gds-cbfit #(fit/sample-gillespie-dev-stoch-fitness (% :indiv-cbfit))
-                       :weighted-efficiency #(fit/aggregate-efficiency (% :found) (% :length)
-                                                                       benefit-per cost-per)
                        :avg-cbfit #(dts/mean (% :indiv-cbfit))
                        :tot-found #(reduce + (% :found))
                        :tot-length #(reduce + (% :length))})
@@ -190,7 +207,7 @@
   (prall test23)
 
   ;; Add indiv cost-benefit fitnesses:
-  (def test23-ifit (add-column-cb-fit test23 1000 1 0.0001))
+  (def test23-ifit (add-column-indiv-cbfit test23 1000 1 0.0001))
   (prall test23-ifit)
 
   ;; Incrementally define trait fitnesses from individual fitnesses:
