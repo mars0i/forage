@@ -26,6 +26,13 @@
                                  "C" [2 5 8]}))
   (tc/groups->map grouped5)
 
+  ;; Why doesn't this work?
+  (tc/groups->seq (-> DS
+                      (tc/group-by [:V4])
+                      (tc/aggregate {:yo #(reduce + (% :V2))})))
+  (clojure.repl/pst)
+
+
  ; grouped dataset with two rows from each
  (def grouped5s (tc/select-rows grouped5 (range 2)))
   (tc/groups->map grouped5s)
