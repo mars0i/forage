@@ -51,7 +51,6 @@
   (def bunchofitness (ft/walk-data-to-fitness-dses spiral23 fitness-params))
 
   (tc/groups->seq grouped-bunchofitness)
-
   (def grouped-bunchofitness
     (-> bunchofitness
         (ft/sort-in-env :gds-cbfit)
@@ -65,10 +64,13 @@
                              :tot-found
                              :tot-length
                              :weighted-agg-eff])
-        (tc/group-by [:base-fitness :benefit-per :cost-per :env])
-        ))
+        ;; Better to filter on env before group-by:
+        ;(tc/select-rows #(or (= (:env %) "env2")
+        ;                     (= (:env %) "env3")))
+        (tc/group-by [:base-fitness :benefit-per :cost-per :env])))
   ; Note if I use (juxt :base-fitness :benefit-per :cost-per :env) instead,
   ; then when I aggregrate it, I get extra columns with arbitrary names.
+
 
   ;; Tip: for Tablecloth grouped datasets, these print all of the groups:
   ; (tc/groups->seq grouped-DS)
@@ -88,7 +90,7 @@
                        :env #(first (% :env)) ; not :walk--that's what is being reordered
                        :aggregate-eff  (partial inc-or-dec :aggregate-eff )
                        :avg-cbfit (partial inc-or-dec :avg-cbfit)
-                       :weighted-eff (partial inc-or-dec :weighted-eff)
+                       :weighted-agg-eff (partial inc-or-dec :weighted-agg-eff)
                        :tot-found (partial inc-or-dec :tot-found)
                        :tot-length (partial inc-or-dec :tot-length)
                        :gds-cbfit  (partial inc-or-dec :gds-cbfit )})
@@ -102,8 +104,7 @@
                              :gds-cbfit
                              :tot-found
                              :tot-length
-                             :weighted-agg-eff
-                             :base-fitness])))
+                             :weighted-agg-eff])))
 
   (ft/prall bunchofitness-orders)
   (ft/prall (-> bunchofitness-orders 
@@ -166,7 +167,7 @@
 
   ;; Interestingly, there are cases (.e.g benefit 1000, cost 0.1, env0)
   ;; where the gds-cbfit ordering is exactly opposite from total found, efficiency,
-  ;; and weighted-efficiency.  (So it's a meaningful distinction.)
+  ;; and weighted-agg-efficiency.  (So it's a meaningful distinction.)
 
   ;; Notes from preliminary perusal: 
 
@@ -187,6 +188,18 @@
   ;; In these cases, the other fitness measures are often ordered in the
   ;; opposite order from gds-cbfit, suggesting that the high-mean success
   ;; strategies may have high variance, and therefore low gds-cbfit.
+
+  ;; NEED TO EXAMINE FULL SPIRAL of the same length.  (It will either
+  ;; always succeed or always fail, but I need to say when.)
+
+
+  ;; In the sparsest env (env3), spiral loses on gds-cbt to e.g. mu=2.5 when
+  ;; cost is high.  Next are the composite mu3 strategies.  (But with low
+  ;; benefit, sometimes there's a transition cost regime where mu=1.5 and
+  ;; mu=2 are top, followed by the spiral composites.
+
+  ;; In env2, the high-cost gds-cbt winner is composite-mu15-mu3, followed
+  ;; by mu=2.5, and then composite-mu1-mu3.
 
 )
 
