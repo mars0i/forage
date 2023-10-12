@@ -40,8 +40,8 @@
   [colname rowmap]
   (seq-is-inc-or-dec (rowmap colname)))
 
-                              ; 2500000
-(def fitness-params (for [base [2350000] ; Why this number? It [just barely] makes all of the gds-cbfit values all positive.
+                               
+(def fitness-params (for [base [14500000] ; Why this number? It [just barely] makes all of the gds-cbfit values all positive.
                           benefit (map #(math/pow 10 %) (range 4)) ; 1, ..., 1000
                           cost (map #(math/pow 10 (- %)) (range 0 8))] ; 0.1, 0.01, etc.
                       [base benefit cost]))
