@@ -114,7 +114,7 @@
    :walk
    :aggregate-eff
    :gds-eff
-   :weighted-eff
+   :weighted-agg-eff
    :avg-cbfit
    :gds-cbfit 
    :tot-found 
