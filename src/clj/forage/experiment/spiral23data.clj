@@ -40,18 +40,17 @@
   [colname rowmap]
   (seq-is-inc-or-dec (rowmap colname)))
 
-(def fitness-params (for [base [230000] ; Why 230,000? It [just barely] makes all of the gds-cbfit values all positive.
+                              ; 2500000
+(def fitness-params (for [base [2350000] ; Why this number? It [just barely] makes all of the gds-cbfit values all positive.
                           benefit (map #(math/pow 10 %) (range 4)) ; 1, ..., 1000
                           cost (map #(math/pow 10 (- %)) (range 0 8))] ; 0.1, 0.01, etc.
                       [base benefit cost]))
 
 (comment
 
-  ;; Tip: for Tablecloth grouped datasets, these print all of the groups:
-  ; (tc/groups->seq grouped-DS)
-  ; (tc/groups->map grouped-DS)
-
   (def bunchofitness (ft/walk-data-to-fitness-dses spiral23 fitness-params))
+
+  (tc/groups->seq grouped-bunchofitness)
 
   (def grouped-bunchofitness
     (-> bunchofitness
@@ -71,7 +70,10 @@
   ; Note if I use (juxt :base-fitness :benefit-per :cost-per :env) instead,
   ; then when I aggregrate it, I get extra columns with arbitrary names.
 
-  (tc/groups->seq grouped-bunchofitness)
+  ;; Tip: for Tablecloth grouped datasets, these print all of the groups:
+  ; (tc/groups->seq grouped-DS)
+  ; (tc/groups->map grouped-DS)
+
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Check whether ordering of walk strategies is like the order for gds-cbfit
