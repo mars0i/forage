@@ -1,3 +1,7 @@
+;; COPY OF spiral23.clj WITH SMALL MODS IN COMMENT BLOCK
+;; FOR GENERATING clj-async-profiler FLAMEGRAPHS.
+
+
 ;; Uses env-mason.
 ;;
 ;; Experiments that use walks that are composites of:
@@ -5,9 +9,9 @@
 ;;    - Levy walks with various mu values (including ballistic and Brownian)
 ;; THIS VERSION has multiple targets at the same distance from origin.
 ;;
-(ns forage.experiment.spiral23
+(ns forage.experiment.spiral23profiling
   (:require ;[criterium.core :as crit]
-            ;[clj-async-profiler.core :as prof]
+            [clj-async-profiler.core :as prof]
             ;[clojure.math :as cmath]
             [utils.math :as um]
             [forage.core.run :as fr]
@@ -298,57 +302,50 @@
 
 (comment
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; RUN THE EXPERIMENTS
+  ;; RUN THE EXPERIMENTS WITH PROFILING USING clj-async-profile
 
   (def walks-per-fn 1000)
-  ;; With 100 walks-per-fn, the following each took max of 10 mins, for a
-  ;; total about an hour on my MBA.  The MBP should be about twice as fast.
-  ;; The max # of targets found with 100 runs was 12 (closest targets, 1.1
-  ;; + spiral).  The min was 1.
-  ;; 
-  ;; So 1000 walks-per-fn should take about 10 x 30mins = 5 hours on the MPB.
-  ;; And this should give me 10 to 200 or so, max, found tagets.  So more
-  ;; would be better.  10K would be nice, but that would run for two whole
-  ;; days.
-  ;; Consider using Cheaha?
-  ;; Or RUN IN PARALLEL (with different PRNGs).
 
+  ;; THEN GO FIND THE FLAMEGRAPH FILE(s) IN /tmp/clj-async-profiler/results
 
-  (time
-    (do ;; All seven groups of runs
+  ;; SPIRAL COMPOSITE WALKS:
+  (time (prof/profile
+          (def mu1-spiral-data-and-rng
+            (do (println "mu=1.1 + spiral composite runs:")
+                (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns walks-per-fn seed))))))
 
-      ;; SPIRAL COMPOSITE WALKS:
-      (def mu1-spiral-data-and-rng
-        (do (println "mu=1.1 + spiral composite runs:")
-            (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns walks-per-fn seed))))
+  (time (prof/profile
+          (def mu15-spiral-data-and-rng 
+            (do (println "mu=1.5 + spiral composite runs:")
+                (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns walks-per-fn seed))))))
 
-      (def mu15-spiral-data-and-rng 
-        (do (println "mu=1.5 + spiral composite runs:")
-            (time (fr/walk-experiments (update params :basename #(str % "mu15-spiral")) mu15-spiral-walk-fns walks-per-fn seed))))
+  ;; BROWNIAN COMPOSITE WALKS:
+  (time (prof/profile
+          (def mu1-mu3-data-and-rng 
+            (do (println "mu=1.1 + mu=3 composite runs:")
+                (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns walks-per-fn seed))))))
 
-      ;; BROWNIAN COMPOSITE WALKS:
-      (def mu1-mu3-data-and-rng 
-        (do (println "mu=1.1 + mu=3 composite runs:")
-            (time (fr/walk-experiments (update params :basename #(str % "mu1-mu3")) mu1-mu3-walk-fns walks-per-fn seed))))
+  (time (prof/profile
+          (def mu15-mu3-data-and-rng 
+            (do (println "mu=1.5 + mu=3 composite runs:")
+                (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns walks-per-fn seed))))))
 
-      (def mu15-mu3-data-and-rng 
-        (do (println "mu=1.5 + mu=3 composite runs:")
-            (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns walks-per-fn seed))))
+  ;; NON-COMPOSITE WALKS:
+  (time (prof/profile
+          (def mu15-data-and-rng
+            (do (println "mu=1.5 homogeneous runs:")
+                (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns walks-per-fn seed))))))
 
-      ;; NON-COMPOSITE WALKS:
-      (def mu15-data-and-rng
-        (do (println "mu=1.5 homogeneous runs:")
-            (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns walks-per-fn seed))))
+  (time (prof/profile
+          (def mu2-data-and-rng
+            (do (println "mu=2 homogeneous runs:")
+                (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  walks-per-fn seed))))))
 
-      (def mu2-data-and-rng
-        (do (println "mu=2 homogeneous runs:")
-            (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  walks-per-fn seed))))
+  (time (prof/profile
+          (def mu25-data-and-rng
+            (do (println "mu=2.5 homogeneous runs:")
+                (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))))
 
-      (def mu25-data-and-rng
-        (do (println "mu=2.5 homogeneous runs:")
-            (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))
-
- ))
 
 )
 
