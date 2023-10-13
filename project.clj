@@ -65,14 +65,14 @@
                                      "-XX:TieredStopAtLevel=4"]} ; 3X improvement
 
              ;; For use with my MBA:
-             ;; Usage tip: lein with-profile +smallproduction
+             ;; Usage tip: lein with-profile +smallproduction repl
              :smallproduction {;:dependencies [[generateme/fastmath "2.1.8"]
                                :jvm-opts ["-Xms4g" ; initial heap
                                           "-Xmx8g" ; max heap
                                           "-Xss1g" ; max per-thread stack size (s/b smaller?)
                                           "-XX:TieredStopAtLevel=4"]} ; 3X improvement
 
-             ;; Usage tip: lein with-profile +production,profiling
+             ;; Usage tip: lein with-profile +[small]production,+profiling repl
              :profiling  {:dependencies [;[generateme/fastmath "2.1.8"]
                                          [criterium "0.4.6"]
                                          ;[com.clojure-goes-fast/jvm-hiccup-meter "0.1.1"]

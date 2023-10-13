@@ -6,8 +6,6 @@
         org.apache.commons/commons-rng-simple {:mvn/version "1.5"} ; libs because of nonoverlapping features
         org.apache.commons/commons-rng-client-api {:mvn/version "1.5"}
         org.apache.commons/commons-rng-sampling {:mvn/version "1.5"}
-        ;generateme/fastmath {:mvn/version "2.1.8"}
-        ;generateme/fastmath {:mvn/version "2.1.9-SNAPSHOT"} ; needed for stats/wmean
         generateme/fastmath {:mvn/version "2.2.2-SNAPSHOT"} ; adds rint with scale arg
         org.flatland/ordered {:mvn/version "1.15.10"} ; for ordered-set
         net.mikera/core.matrix {:mvn/version "0.63.0"}
@@ -35,9 +33,9 @@
                                         "-Xss1g" ; max per-thread stack size (s/b smaller?)
                                         "-XX:TieredStopAtLevel=4"]} ; 3X improvement
            :profiling {:extra-deps {criterium/criterium {:mvn/version "0.4.6"}
-                                    com.clojure-goes-fast/clj-async-profiler {:mvn-version "1.0.5"}  ; I'm getting an error
-                                   }
-                       :jvm-opts ["-Djdk.attach.allowAttachSelf"   ; for clj-async-profile: needed for JDK9+
+                                    com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.0.5"}}
+                       ;; Will be merged with jvm-opts from other aliases used on same commandline:
+                       :jvm-opts ["-Djdk.attach.allowAttachSelf"   ; for clj-async-profile: needed for JDK11+
                                   "-XX:+UnlockDiagnosticVMOptions" ; for clj-async-profiler
                                   "-XX:+DebugNonSafepoints"]}     ; for clj-async-profiler
           }
