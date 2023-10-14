@@ -6,10 +6,11 @@
 
 ;; Try this?
 ; [fastmath.core :as fm]
-; (use-primitive-operators)
-; (unuse-primitive-operators)
+; (fm/use-primitive-operators)
+; (fm/unuse-primitive-operators)
 ;; Note find-in-seg passes around the functions <, > .  This
 ;; might not work with fastmath.
+;; So require [clojure.core :as cc] and then use cc/< and cc/> .
 
 
 ;; NOTE Advantages of starting with mathematical vectors (direction,
