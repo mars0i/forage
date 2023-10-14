@@ -2,10 +2,12 @@
 (ns forage.core.walks
     (:require [utils.math :as m]
               [utils.spiral :as spiral]
-              [utils.random :as r]))
+              [utils.random :as r]
+              ;[fastmath.core :as fm]
+              ;[clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
+))
 
 ;; Try this?
-; [fastmath.core :as fm]
 ; (fm/use-primitive-operators)
 ; (fm/unuse-primitive-operators)
 ;; Note find-in-seg passes around the functions <, > .  This
@@ -17,7 +19,7 @@
 ;; length) pairs over coordinates (x, y location pairs) are:
 ;;   - It's easier to calculate overall length, since the second element
 ;;     of every pair is already a length.
-;;   - It's easier to paste talks together to make composite walks.
+;;   - It's easier to paste walks together to make composite walks.
 ;;     If you start with sequences of coordinates, you have to shift
 ;;     them all with the value of the last point in the previous walk
 ;;     in the sequence.  If you start from math-vectors, you can just
@@ -466,8 +468,8 @@
         [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
         y-shift (if y-pos-dir? y-eps (- y-eps))
-        x-comp (if x-pos-dir? > <)   ; and choose tests for when we've 
-        y-comp (if y-pos-dir? > <)]  ;  gone too far
+        x-comp (if x-pos-dir? cc/> cc/<)   ; and choose tests for when we've 
+        y-comp (if y-pos-dir? cc/> cc/<)]  ;  gone too far
     (loop [x x1, y y1]
       (let [food (look-fn x y)]
         (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
