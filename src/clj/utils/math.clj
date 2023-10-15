@@ -4,12 +4,14 @@
     (:require ;[clojure.math.numeric-tower :as nt] ; see https://clojureverse.org/t/article-blog-post-etc-about-clojure-math-vs-numeric-tower/9805/6?u=mars0i
               [clojure.math :as math :refer [cos sin tan atan2 sqrt round]]
               [fastmath.stats :as fstats]
+              [fastmath.core :as fm]
+              [clojure.core :as cc] ; to replace fastmath macros in reduce, map, etc.
               [clojure.string :as st]))
 
-; [fastmath.core :as fm]
-; (use-primitive-operators)
-; (unuse-primitive-operators)
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
 
+(fm/use-primitive-operators)
 
 (defn remove-decimal-pt
   "Given a number, returns a (base-10) string representation of the
@@ -27,13 +29,13 @@
 
 (defn cartesian-to-polar
   "Convert Cartesian coordinates from x, y to [radius, angle]."
-  [[x y]]
+  [[^double x ^double y]]
   [(sqrt (+ (* x x) (* y y))), (atan2 y x)]) ; note args to atan must be backwards
 
 (defn polar-to-cartesian
   "Convert polar coordinates from radius r and angle theta to a
   pair of points [x y]."
-  [[r theta]]
+  [[^double r ^double theta]]
   [(* r (cos theta)) (* r (sin theta))])
 
 (comment
@@ -46,13 +48,13 @@
 )
 
 (def ln math/log) ; alias so I don't have to remember whether log is ln or is arbitrary base
-(defn log-to-base [base x] (/ (ln x) (ln base)))
+(defn log-to-base [base x] (/ (math/log x) (math/log base))) ; don't use ln--confuses compiler optimization
 
 
 (defn rotate
   "Given an angle theta in radians and a pair of coordinates [x y], returns
   a new pair of coordinates that is the rotation of [x y] by theta."
-  [theta [x y]]
+  [^double theta [^double x ^double y]]
   [(- (* x (cos theta))
       (* y (sin theta))) ,
    (+ (* y (cos theta))
@@ -62,7 +64,7 @@
 (defn distance-2D
   "Computes distance between two-dimensional points [x0 y0] and [x1 y1]
   using the Pythagorean theorem."
-  [[x0 y0] [x1 y1]]
+  [[^double x0 ^double y0] [^double x1 ^double y1]]
   (let [xdiff (- x0 x1)
         ydiff (- y0 y1)]
   (sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
@@ -74,7 +76,7 @@
 (defn quadratic-formula
   "Returns the result of the quadratic formula applied to the coefficients in
   ax^2 + bx + c = 0.  plus-or-minus should be one of the two functions: + - ."
-  [plus-or-minus a b c]
+  [plus-or-minus ^double a ^double b ^double c]
   (let [root-part (sqrt (- (* b b) (* 4 a c)))
         negb (- b)
         a2 (* 2 a)]
@@ -110,7 +112,7 @@
   "Given a pair of points on a line, return its slope.  This is also the
   vector direction from the first point to the second.  If the line is
   vertical, returns ##Inf (infinity) to indicate that."
-  [[x1 y1] [x2 y2]]
+  [[^double x1 ^double y1] [^double x2 ^double y2]]
   (if (== x1 x2)
     ##Inf ; infinity is what division below would give for the vertical slope
     (/ (- y2 y1) (- x2 x1))))
@@ -118,9 +120,10 @@
 ;; y = mx + b  so  b = y - mx
 (defn intercept-from-slope
   "Given a slope and a point on a line, return the line's y intercept."
-  [slope [x y]]
+  [^double slope [^double x ^double y]]
   (- y (* slope x)))
 
+;; CONSIDER REPLACING WITH SIMILAR FUNCTIONS IN fastmath
 (defn equalish?
   "True if numbers x and y are == or are within (* n-ulps ulp) of 
   each other, where ulp is the minimum of (Math/ulp x) and (Math/ulp y).
@@ -131,7 +134,7 @@
   numbers and the next one up or down from  it.  (It seem as if multiplying a
   number that's one ulp off produces a number that is some power of 2 ulp's
   away from the correct value.) See java.lang.Math for more."
-  [n-ulps x y]
+  [^double n-ulps ^double x ^double y]
   (or (== x y)
       (let [xd (double x) ; Math/ulp doesn't work on integers
             yd (double y)
@@ -139,14 +142,14 @@
         (<= (abs (- xd yd))
             (* n-ulps ulp)))))
 
-(defn old-mean
-  "Returns the mean value of all numbers in collection xs, or the
-  first n values if n is provided.  If n greater than the length of xs,
-  takes the mean of xs."
-  ([xs]
-   (let [n (count xs)]
-     (/ (reduce + xs) n)))
-  ([n xs] (old-mean (take n xs)))) ; don't divide by n explicitly: xs may be short
+;(defn old-mean
+;  "Returns the mean value of all numbers in collection xs, or the
+;  first n values if n is provided.  If n greater than the length of xs,
+;  takes the mean of xs."
+;  ([xs]
+;   (let [n (count xs)]
+;     (/ (reduce + xs) n)))
+;  ([n xs] (old-mean (take n xs)))) ; don't divide by n explicitly: xs may be short
 
 (defn mean
   "Returns the mean value of all numbers in collection xs, or the
@@ -201,24 +204,24 @@
 (defn strictly-increasing?
   "Returns true iff the numbers in xs are strictly increasing."
   [xs]
-  (every? identity (map < xs (rest xs))))
+  (every? identity (map cc/< xs (rest xs))))
 
 (defn strictly-decreasing?
   [xs]
   "Returns true iff the numbers in xs are strictly descreasing."
-  (every? identity (map > xs (rest xs))))
+  (every? identity (map cc/> xs (rest xs))))
 
 (defn monotonically-increasing?
   [xs]
   "Returns true iff the numbers in xs are monotonically increasing, i.e. if
   every value is greater than or equal to the one before it."
-  (every? identity (map <= xs (rest xs))))
+  (every? identity (map cc/<= xs (rest xs))))
 
 (defn monotonically-decreasing?
   [xs]
   "Returns true iff the numbers in xs are monotonically decreasing, i.e. if
   every value is less than or equal to the one before it."
-  (every? identity (map >= xs (rest xs))))
+  (every? identity (map cc/>= xs (rest xs))))
 
 (comment
   (monotonically-decreasing? [2 2 2 2 3 3 4 5])
@@ -279,3 +282,6 @@
       (let [mu- (dec mu)]
         (* (math/pow x (- mu)) (math/pow r mu-) mu-))))
 )
+
+
+(fm/unuse-primitive-operators)
