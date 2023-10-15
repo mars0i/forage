@@ -9,8 +9,8 @@
               [clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
 ))
 
-(set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
 ;; Note find-in-seg passes around the functions <, > .  This
