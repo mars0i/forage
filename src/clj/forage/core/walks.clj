@@ -13,11 +13,6 @@
 ;(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
-;; Note find-in-seg passes around the functions <, > .  This
-;; might not work with fastmath.
-;; So require [clojure.core :as cc] and then use cc/< and cc/> .
-
-
 ;; NOTE Advantages of starting with mathematical vectors (direction,
 ;; length) pairs over coordinates (x, y location pairs) are:
 ;;   - It's easier to calculate overall length, since the second element
@@ -486,8 +481,8 @@
         slope (if steep (/ slope) slope)
         look-fn (if steep (swap-args-fn look-fn) look-fn)
         [[^double x1 ^double y1] [^double x2 ^double y2]] (if steep
-                            [[y1 x1] [y2 x2]]    ; swap x and y
-                            [[x1 y1] [x2 y2]])   ; make no change
+                                                            [[y1 x1] [y2 x2]]    ; swap x and y
+                                                            [[x1 y1] [x2 y2]])   ; make no change
         x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
         [^double x-eps ^double y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
