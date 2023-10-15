@@ -262,7 +262,7 @@
       out-vecs
       (if (< tot-len desired-total)
         (let [v (first in-vecs)
-              ^double len (second in-vecs)]
+              ^double len (second v)]
           (recur (+ tot-len len)
                  (conj out-vecs v)
                  (rest in-vecs)))
