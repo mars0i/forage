@@ -337,9 +337,11 @@
                 (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns walks-per-fn seed))))))
 
   (do
+    ;; (/ 182055.266155 100 60) = 31 mins
     (time (def mu2-data-and-rng
             (do (println "Tuning JIT for mu=2 homogeneous runs:")
                 (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  walks-per-fn seed)))))
+    ;; (/ 189762.806672 100 60) = 32 mins:
     (time (prof/profile
             (def mu2-data-and-rng
               (do (println "Profiling mu=2 homogeneous runs:")
