@@ -304,7 +304,7 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS WITH PROFILING USING clj-async-profile
 
-  (def walks-per-fn 1000)
+  (def walks-per-fn 100)
 
   ;; THEN GO FIND THE FLAMEGRAPH FILE(s) IN /tmp/clj-async-profiler/results
 
@@ -336,10 +336,15 @@
             (do (println "mu=1.5 homogeneous runs:")
                 (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns walks-per-fn seed))))))
 
-  (time (prof/profile
-          (def mu2-data-and-rng
-            (do (println "mu=2 homogeneous runs:")
-                (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  walks-per-fn seed))))))
+  (do
+    (time (def mu2-data-and-rng
+            (do (println "Tuning JIT for mu=2 homogeneous runs:")
+                (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  walks-per-fn seed)))))
+    (time (prof/profile
+            (def mu2-data-and-rng
+              (do (println "Profiling mu=2 homogeneous runs:")
+                  (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  walks-per-fn seed))))))
+   )
 
   (time (prof/profile
           (def mu25-data-and-rng
