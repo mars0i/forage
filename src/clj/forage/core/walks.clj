@@ -1,19 +1,17 @@
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
+
+
 (ns forage.core.walks
     (:require [utils.math :as m]
               [utils.spiral :as spiral]
               [utils.random :as r]
-              ;[fastmath.core :as fm]
-              ;[clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
+              [fastmath.core :as fm]
+              [clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
 ))
 
-;; Try this?
-; (fm/use-primitive-operators)
-; (fm/unuse-primitive-operators)
-;; Note find-in-seg passes around the functions <, > .  This
-;; might not work with fastmath.
-;; So require [clojure.core :as cc] and then use cc/< and cc/> .
-
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
+(fm/use-primitive-operators)
 
 ;; NOTE Advantages of starting with mathematical vectors (direction,
 ;; length) pairs over coordinates (x, y location pairs) are:
@@ -39,7 +37,7 @@
   so close to vertical that moving through a line segment with this slope
   will be problematic.  It also sidesteps the problem of identifying slopes
   that are actually vertical, but don't appear so because of float slop."
-  1)
+  1.0)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
@@ -154,11 +152,11 @@
 (defn switch-after-n-steps-fn
   "Generates a dist?fn for use with incremental-composite-vecs.  The returned function
   switches the vec-fn after n steps."
-  [n]
-  (fn [_ step-count]
+  [^long n]
+  (fn [_ ^long step-count]
     (let [new-step-count (if step-count
                            (inc step-count)
-                           1)] ; if falsey, initialize count
+                           (long 1))] ; if falsey, initialize count
       (if (>= new-step-count n)
         false
         new-step-count))))
@@ -246,8 +244,30 @@
         newstep    (assoc firststep 0 init-dir)]
     (cons newstep othersteps)))
 
-;; NEW version 3/11/2023 that replaces old confusing (and bug-prone)
-;; reduce/reduced version.
+(defn vecs-upto-len
+  "Given a desired total path length, and a sequence of step vectors,
+  returns a sequence of step vectors (beginning from the front of the
+  sequence) whose lengths sum to desired-total (or less if vecs is too
+  short).  The lengths are made to sum to exactly desired-total by reducing
+  the length in the last step vector.  This function is eager rather than
+  lazy."
+  [^double desired-total vecs]
+  (loop [tot-len 0.0, out-vecs [], in-vecs vecs] ; init with 0.0 to avoid warn-on-reflection error
+    (if (empty? in-vecs)
+      out-vecs
+      (if (< tot-len desired-total)
+        (let [v (first in-vecs)
+              ^double len (second v)]
+          (recur (+ tot-len len)
+                 (conj out-vecs v)
+                 (rest in-vecs)))
+        ;; The length is long enough; now trim any extra length:
+        (let [overshoot (- tot-len desired-total)
+              [old-dir ^double old-len] (last out-vecs)
+              newlast [old-dir (- old-len overshoot)]]
+          (conj (vec (butlast out-vecs)) newlast))))))
+
+(comment ;; OLD VERSION:
 (defn vecs-upto-len
   "Given a desired total path length, and a sequence of step vectors,
   returns a sequence of step vectors (beginning from the front of the
@@ -256,8 +276,8 @@
   in the last step vector.  Add ':trim false' or ':trim nil' to return a
   sequence with the last vector as it was in the input vecs sequence.
   This function is eager rather than lazy."
-  [desired-total vecs & {trim :trim :or {trim true}}]
-  (loop [tot-len 0, out-vecs [], in-vecs vecs]
+  [^double desired-total vecs & {trim :trim :or {trim true}}]
+  (loop [tot-len 0.0, out-vecs [], in-vecs vecs] ; init with 0.0 to avoid warn-on-reflection error
     (if (empty? in-vecs)
       out-vecs
       (if (< tot-len desired-total)
@@ -271,7 +291,7 @@
                 [old-dir old-len] (last out-vecs)
                 newlast [old-dir (- old-len overshoot)]]
             (conj (vec (butlast out-vecs)) newlast)))))))
-
+)
 
 ;; Instead of the following, one could use 
 ;; (count (vecs-upto-len desired-total vecs))
@@ -282,8 +302,8 @@
   "Given a desired total path length, and a sequence of step vectors,
   returns the number of steps needed to sum lengths to at least 
   desired-total."
-  [desired-total vecs]
-  (reduce (fn [[tot-len cnt] [_ len]]
+  [^double desired-total vecs]
+  (reduce (fn [[^double tot-len ^long cnt] [_ ^double len]]
             (if (< tot-len desired-total)
               [(+ tot-len len) (inc cnt)]
               (reduced cnt)))
@@ -297,8 +317,8 @@
   of adding the vector to the point.  (This is the next \"stop\" in a walk.)
   If provided, an optional label is the third element of the returneed 
   Clojure vector."
-  [[prevx prevy] [dir len label]]
-  (let [[vecx vecy] (m/rotate dir [len, 0]) ; rotate vector lying on x-axis
+  [[^double prevx ^double prevy] [dir len label]]
+  (let [[^double vecx ^double vecy] (m/rotate dir [len, 0]) ; rotate vector lying on x-axis
         nextx (+ prevx vecx)  ; add vector to prev point
         nexty (+ prevy vecy)
         newpt [nextx nexty]]
@@ -327,13 +347,13 @@
   "Calculate the length of a path specified by a sequence of vector representations
   in the form of [direction, length] pairs."
   [step-vectors]
-  (reduce + (map second step-vectors)))
+  (reduce cc/+ (map second step-vectors)))
 
 (defn stops-path-len
   "Calculate the length of a path specified by a sequence of stops, i.e. [x y] 
   coordinate pairs representing endpoints of connected line segments."
   [stops]
-  (reduce +
+  (reduce cc/+
           (map m/distance-2D stops (rest stops))))
 
 
@@ -387,7 +407,7 @@
   by its slope and intercept, return a pair [x-eps y-eps] that give
   the shifts in the x and y directions that would produce the desired shift
   (i.e. the vectors along x and y that would sum to the desired shift)."
-  [eps slope]
+  [^double eps ^double slope]
   (if slope ; if not vertical
     (let [a (+ 1 (* slope slope))
           x-eps (/ eps a)
@@ -455,17 +475,17 @@
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
   [look-fn eps [x1 y1] [x2 y2]]
-  (let [slope (m/slope-from-coords [x1 y1] [x2 y2])
+  (let [^double slope (m/slope-from-coords [x1 y1] [x2 y2])
         steep (or (infinite? slope)
-                  (> (abs slope) steep-slope-inf))
+                  (> (abs slope) (double steep-slope-inf)))
         slope (if steep (/ slope) slope)
         look-fn (if steep (swap-args-fn look-fn) look-fn)
-        [[x1 y1] [x2 y2]] (if steep
-                            [[y1 x1] [y2 x2]]    ; swap x and y
-                            [[x1 y1] [x2 y2]])   ; make no change
+        [[^double x1 ^double y1] [^double x2 ^double y2]] (if steep
+                                                            [[y1 x1] [y2 x2]]    ; swap x and y
+                                                            [[x1 y1] [x2 y2]])   ; make no change
         x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
-        [x-eps y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
+        [^double x-eps ^double y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
         x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
         y-shift (if y-pos-dir? y-eps (- y-eps))
         x-comp (if x-pos-dir? cc/> cc/<)   ; and choose tests for when we've 
@@ -686,7 +706,7 @@
 (defn count-successful
   "Returns the number of foodwalks that found any food."
   [foodwalks]
-  (reduce (fn [tot walk]
+  (reduce (fn [^long tot walk]
             (+ tot (if (first walk) 1 0)))
           0 foodwalks))
 
@@ -694,25 +714,25 @@
   "Returns the number of foodspots found by the foodwalks.  If it's
   possible for a foodwalk to find multiple foodspots, they'll be counted."
   [foodwalks]
-  (reduce (fn [tot walk]
+  (reduce (fn [^long tot walk]
             (+ tot (count (first walk))))
           0 foodwalks))
 
 (defn count-segments-until-found
   "Count segments in a foodwalk until food is found."
-  [fw]
+  ^long [fw]
   (dec (count (nth fw 1)))) ; dec since endpoints = segments + 1
 
 (defn count-segments-until-found-in-foodwalks
   "Sums results of count-segments-until-found in multiple foodwalks fws."
   [fws]
-  (reduce (fn [tot fw] (+ tot (count-segments-until-found fw)))
+  (reduce (fn [^long tot fw] (+ tot (count-segments-until-found fw)))
           0 fws))
 
 (defn count-all-segments
   "Count all segments in a foodwalk, including the couldve segments after 
   found foodspots."
-  [fw]
+  ^long [fw]
   (+ (count (nth fw 1))
      (count (nth fw 2))
      -3)) ; -3 since there is one more point than segments in each, and they overlap
@@ -720,7 +740,7 @@
 (defn count-all-segments-in-foodwalks
   "Sums results of count-all-segments in multiple foodwalks fws."
   [fws]
-  (reduce (fn [tot fw] (+ tot (count-all-segments fw)))
+  (reduce (fn [^long tot fw] (+ tot (count-all-segments fw)))
           0 fws))
 
 (defn sort-foodwalks
@@ -732,20 +752,4 @@
 
 nil
 
-;; UNUSED
-;; TODO Should the `lazy-seq` be outside?
-;(defn lazy-walk-stops
-;  "Generates a (possibly infinite) sequence of next points from an 
-;  initial-point and a (possibly infinite) sequence of [direction, length]
-;  vectors, using each in turn, adding it to the previous point.  
-;  (These points are the \"stops\" in a random walk.)  See walk-stops for
-;  more.  
-;  NOTE: Because of chunking, you *cannot* assume that lazy calls to a PRNG
-;  will happen the same way every time.  See
-;  is-lazy-sequence-chunking-deterministic at ask.clojure.org."
-;  [base-pt step-vectors]
-;  (cons base-pt 
-;        (when-let [next-step-vec (first step-vectors)] ; nil if no more step-vecs
-;          (lazy-seq 
-;            (lazy-walk-stops (next-walk-stop base-pt next-step-vec)
-;                             (rest step-vectors))))))
+(fm/unuse-primitive-operators) ; needed when I upgrade to Clojure 1.12
