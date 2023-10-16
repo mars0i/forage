@@ -142,7 +142,7 @@
 ;; MAKE THE EXPERIMENTS
 
 (def seed (r/make-seed))
-;(def seed -7370724773351240133)
+(def seed -7370724773351240133)
 (println "Using seed" seed)
 (def rng (r/make-well19937 seed))
 
@@ -304,7 +304,8 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS WITH PROFILING USING clj-async-profile
 
-  (def walks-per-fn 100)
+  (def walks-per-fn 1000)
+  (def walks-per-fn-jit-warmup (/ walks-per-fn 2))
 
   ;; THEN GO FIND THE FLAMEGRAPH FILE(s) IN /tmp/clj-async-profiler/results
 
@@ -337,15 +338,15 @@
                 (time (fr/walk-experiments (update params :basename #(str % "mu15")) mu15-walk-fns walks-per-fn seed))))))
 
   (do
-    ;; (/ 182055.266155 100 60) = 31 mins
+    ;; Uses walks-per-fn-jit-warmup:
     (time (def mu2-data-and-rng
             (do (println "Tuning JIT for mu=2 homogeneous runs:")
-                (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  walks-per-fn seed)))))
-    ;; (/ 189762.806672 100 60) = 32 mins:
+                (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns walks-per-fn-jit-warmup seed)))))
+    ;; Uses walks-per-fn:
     (time (prof/profile
             (def mu2-data-and-rng
               (do (println "Profiling mu=2 homogeneous runs:")
-                  (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns  walks-per-fn seed))))))
+                  (time (fr/walk-experiments (update params :basename #(str % "mu2"))  mu2-walk-fns walks-per-fn seed))))))
    )
 
   (time (prof/profile
