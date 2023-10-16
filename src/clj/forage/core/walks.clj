@@ -500,23 +500,35 @@
                               (if (y-comp ysh y2) y2 ysh))))))))
 
 (comment
-  (defn constant-failure-look-fn
-    "A look-fn that always fails."
-    [x y]
-    false)
+  ;; Simple test data for find-in-seg.
+  ;; Use with look-fns from the env-null namespace.
 
-  (def look-cnt$ (atom 0))
+  (def seed 1234567890123456)
+  (def rng (r/make-well19937 seed))
+  (def levy-vecs (make-levy-vecs rng (r/make-powerlaw rng 1 2) 1 100)) ; an infinite seq
+  (def maxlen 200)
+  (def walk (walk-stops [0 0] (vecs-upto-len maxlen levy-vecs))) ; seq of points summing to maxlen
+  (count walk) ; should = 56
+  (def walk-1 (rest walk))
 
-  (defn regular-success-look-fn
-    "Use partial to create a look-fn that returns truthy every n
-    calls:  (def look-fn (partial regular-success-look-fn 1000))"
-    [interval x y]
-    (if (= @look-cnt$ interval)
-      (do (reset! look-cnt$ 0)
-          true)
-      (do (swap! look-cnt$ inc)
-          false)))
+  (require '[forage.core.env-null :as env])
+  (require '[criterium.core :as crit])
 
+  ;; Examples:
+
+  (time (def result (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
+                          (map first walk)
+                          (map second walk)
+                          (map first walk-1)
+                          (map second walk-1))))
+
+  (time (def result (mapv (partial find-in-seg
+                                   (env/create-repeated-success-look-fn 25)
+                                   0.2) 
+                          (map first walk)
+                          (map second walk)
+                          (map first walk-1)
+                          (map second walk-1))))
 )
 
 
