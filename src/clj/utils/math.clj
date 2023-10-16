@@ -112,7 +112,7 @@
   "Given a pair of points on a line, return its slope.  This is also the
   vector direction from the first point to the second.  If the line is
   vertical, returns ##Inf (infinity) to indicate that."
-  [[^double x1 ^double y1] [^double x2 ^double y2]]
+  [^double x1 ^double y1 ^double x2 ^double y2]
   (if (== x1 x2)
     ##Inf ; infinity is what division below would give for the vertical slope
     (/ (- y2 y1) (- x2 x1))))

@@ -474,8 +474,8 @@
   returned depends on look-fn, which should reflect the way that this 
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
-  [look-fn eps [x1 y1] [x2 y2]]
-  (let [^double slope (m/slope-from-coords [x1 y1] [x2 y2])
+  [look-fn eps x1 y1 x2 y2]
+  (let [^double slope (m/slope-from-coords x1 y1 x2 y2)
         steep (or (infinite? slope)
                   (> (abs slope) (double steep-slope-inf)))
         slope (if steep (/ slope) slope)
@@ -517,7 +517,9 @@
   (let [stopsv (vec stops)
         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
     (loop [i 0, j 1]
-      (let [from+foodspots (find-in-seg look-fn eps (stopsv i) (stopsv j))]
+      (let [[x1 y1] (stopsv i)
+            [x2 y2] (stopsv j)
+            from+foodspots (find-in-seg look-fn eps x1 y1 x2 y2)]
         (if from+foodspots               ; all done--found food
           [(first from+foodspots)        ; the found food
            (conj (vec (take j stopsv))      ; replace end of stops with point

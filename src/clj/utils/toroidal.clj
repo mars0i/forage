@@ -166,7 +166,7 @@
       ;; Now forward point must exceed bounds in both dims (cf. doc/exceedingboundaries1.pdf):
       (let [x-bound (if (pos? x-dir) bound-max bound-min)
             y-bound (if (pos? y-dir) bound-max bound-min)
-            slope (m/slope-from-coords pt1 pt2)              ; prepare to calculate line
+            slope (m/slope-from-coords x1 y1 x2 y2)
             intercept (m/intercept-from-slope slope [x1 y1]) ;  function along seg
             y-at-x-bound (+ (* slope x-bound) intercept)  ; y coord of line at x-bound
             x-at-y-bound (/ (- y-bound intercept) slope)] ; x coord of line at y-bound
