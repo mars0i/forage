@@ -458,22 +458,22 @@
 ;; for look-fns. If I develop more efficient envs and look-fns, it might be
 ;; worth optimizing some of the code further.
 (defn find-in-seg
-  "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
-  and a small shift length, starts at [x1 y1] and incrementally checks
-  points along the line segment at every shift length locations, checking 
-  to see whether look-fn returns a truthy value representing one or more 
-  foodspots from the perspective of that location, or a falsey value if
-  no foodspots are found.  look-fn should take a single argument, a
-  pair representing the coordinates of a location from which to check
-  whether a foodspot is perceptible.  If foodspots are found, this function 
-  stops searching and returns a pair in which the first element is the 
-  coordinate pair for the location from which the foodspots were perceived,
-  and the second element is the representation of the foodspots found, which
-  may be a collection of foodspot objects, a collection of coordinates of
-  foodspot objects, or some other truthy value.  (The kind of value to be
-  returned depends on look-fn, which should reflect the way that this 
-  function will be used.)  If no foodspots are found by the time [x2 y2]
-  is checked, this function returns nil."
+  "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment, and a
+  small shift length, starts at [x1 y1] and incrementally checks points
+  along the line segment at every shift length locations, checking to see
+  whether look-fn returns a truthy value representing one or more foodspots
+  from the perspective of that location, or a falsey value if no foodspots
+  are found.  look-fn should take two arguments, the x and y coordinates of a
+  location from which to check whether a foodspot is perceptible.  If
+  foodspots are found, this function stops searching and returns a pair in
+  which the first element is the coordinate pair for the location from
+  which the foodspots were perceived, and the second element is the
+  representation of the foodspots found, which may be a collection of
+  foodspot objects, a collection of coordinates of foodspot objects, or
+  some other truthy value.  (The kind of value to be returned depends on
+  look-fn, which should reflect the way that this function will be used.)
+  If no foodspots are found by the time [x2 y2] is checked, this function
+  returns nil."
   [look-fn eps x1 y1 x2 y2]
   (let [^double slope (m/slope-from-coords x1 y1 x2 y2)
         steep (or (infinite? slope)
@@ -498,6 +498,27 @@
                            ysh (+ y y-shift)]
                        (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
                               (if (y-comp ysh y2) y2 ysh))))))))
+
+(comment
+  (defn constant-failure-look-fn
+    "A look-fn that always fails."
+    [x y]
+    false)
+
+  (def look-cnt$ (atom 0))
+
+  (defn regular-success-look-fn
+    "Use partial to create a look-fn that returns truthy every n
+    calls:  (def look-fn (partial regular-success-look-fn 1000))"
+    [interval x y]
+    (if (= @look-cnt$ interval)
+      (do (reset! look-cnt$ 0)
+          true)
+      (do (swap! look-cnt$ inc)
+          false)))
+
+)
+
 
 (defn path-with-food
   "Returns a vector containing first, found foodspots or nil, and second
