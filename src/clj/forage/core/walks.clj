@@ -527,6 +527,16 @@
                              (second mywalk0)))
   )
 
+  (def longer-walk [[0 0] [1 50]])
+  (crit/quick-bench
+    (def result
+      (find-in-seg (env/create-repeated-success-look-fn 20)
+                   0.2
+                   (first longer-walk)
+                   (second longer-walk)))
+   )
+
+
   ;; Test using more realistic (i.e. more like what the simulation uses) data:
   (def seed 1234567890123456)
   (def rng (r/make-well19937 seed))
