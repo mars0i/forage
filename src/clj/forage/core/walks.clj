@@ -566,7 +566,9 @@
   ;; out the coordinates.]
 
   ;; Example using a look-fn that succeeds every n steps, i.e. at n*eps
-  ;; from start or from the last success:
+  ;; from start or from the last success.  When it succeeds, it stops
+  ;; searching, so this will run faster than when using
+  ;; constant-failure-look-fn.
   (crit/quick-bench
     (def result (mapv (partial find-in-seg
                                (env/create-repeated-success-look-fn 50)
