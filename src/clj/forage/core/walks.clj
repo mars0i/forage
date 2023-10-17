@@ -527,13 +527,12 @@
                              (second mywalk0)))
   )
 
-  (def longer-walk [[0 0] [1 50]])
   (crit/quick-bench
     (def result
-      (find-in-seg (env/create-repeated-success-look-fn 20)
+      (find-in-seg (env/create-repeated-success-look-fn 5)
                    0.2
-                   (first longer-walk)
-                   (second longer-walk)))
+                   (first mywalk0)
+                   (second mywalk0)))
    )
 
 
