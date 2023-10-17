@@ -503,32 +503,84 @@
   ;; Simple test data for find-in-seg.
   ;; Use with look-fns from the env-null namespace.
 
+  (require '[criterium.core :as crit])
+
+  ;; find-in-seg walks through a line segment from (x1, y1) to (x2, y2) in
+  ;; steps of size eps.  At each step, it passes the current location to
+  ;; look-fn to see whether there is a "foodspot" sufficiently near.  
+  ;; If so, look-fn returns truthy (typically a foodspot or its coordinates);
+  ;; if not, look-fn returns falsey.  So you can test find-in-seg with a
+  ;; single line segment, i.e. a single pair of points (x1, y1), (x2, y2).
+  ;; Or you can call it repeatedly on subsequent pairs of points [normally,
+  ;; with overlapping end points].
+
+  ;; Test with the artificial data:
+  (require '[forage.core.env-null :as env])
+  (def mywalk0 [[0 0] [1 1]])
+  
+  (crit/quick-bench
+    (def result (find-in-seg env/constant-failure-look-fn
+                             0.2
+                             (first (first mywalk0))
+                             (second (first mywalk0))
+                             (first (second mywalk0))
+                             (second (second mywalk0))))
+  )
+
+  ;; Test using more realistic (i.e. more like what the simulation uses) data:
   (def seed 1234567890123456)
   (def rng (r/make-well19937 seed))
   (def levy-vecs (make-levy-vecs rng (r/make-powerlaw rng 1 2) 1 100)) ; an infinite seq
   (def maxlen 200)
   (def walk (walk-stops [0 0] (vecs-upto-len maxlen levy-vecs))) ; seq of points summing to maxlen
   (count walk) ; should = 56
-  (def walk-1 (rest walk))
+  ;; walk is a sequence of coordinate pairs.
+  ;; 
+  ;; To use it as test data, take at least two pairs and from walk, and
+  ;; then pass the first [i.e. x] and second [i.e. y] elements of the pairs
+  ;; to find-in-seg.  You will also need to pass a value for eps [0.2 is
+  ;; what I've been using in production code], and a value for look-fn.
+  ;; There are some dummy look-fn's in forage.core.env-null.
 
-  (require '[forage.core.env-null :as env])
-  (require '[criterium.core :as crit])
+  ;; Now you can perform the test above on the following:
+  (def mywalk (take 2 walk)) ; => ([0 0] [0.9878431867800612 1.5734173777113207])
 
-  ;; Examples:
+  (crit/quick-bench
+    (def result (find-in-seg env/constant-failure-look-fn
+                             0.2
+                             (first (first mywalk))
+                             (second (first mywalk))
+                             (first (second mywalk))
+                             (second (second mywalk))))
+  )
 
-  (time (def result (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
-                          (map first walk)
-                          (map second walk)
-                          (map first walk-1)
-                          (map second walk-1))))
 
-  (time (def result (mapv (partial find-in-seg
-                                   (env/create-repeated-success-look-fn 25)
-                                   0.2) 
-                          (map first walk)
-                          (map second walk)
-                          (map first walk-1)
-                          (map second walk-1))))
+  ;; Example using all of walk:
+  (def walk-rest (rest walk))
+
+  (crit/quick-bench
+    (def result (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
+                      (map first walk)
+                      (map second walk)
+                      (map first walk-rest)
+                      (map second walk-rest)))
+  ) 
+  ;; [If you use a version of find-in-seg that expects coordinates as pairs,
+  ;; then the pairs from walk and walk-rest can be passed without pulling
+  ;; out the coordinates.]
+
+  ;; Example using a look-fn that succeeds every n steps, i.e. at n*eps
+  ;; from start or from the last success:
+  (crit/quick-bench
+    (def result (mapv (partial find-in-seg
+                               (env/create-repeated-success-look-fn 25)
+                               0.2) 
+                      (map first walk)
+                      (map second walk)
+                      (map first walk-rest)
+                      (map second walk-rest)))
+  )
+
 )
 
 
