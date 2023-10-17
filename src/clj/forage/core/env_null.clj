@@ -23,6 +23,6 @@
 
 (comment
   (def look-fn (create-repeated-success-look-fn 3))
-  (map look-fn (range 18) (range 18)
-  (map constant-failure-look-fn (range 18) (range 18)
+  (map look-fn (range 18) (range 18))
+  (map constant-failure-look-fn (range 18) (range 18))
 )
