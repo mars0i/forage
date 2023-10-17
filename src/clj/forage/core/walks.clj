@@ -534,6 +534,7 @@
   (def maxlen 200)
   (def walk (walk-stops [0 0] (vecs-upto-len maxlen levy-vecs))) ; seq of points summing to maxlen
   (count walk) ; should = 56
+  (def walk-rest (rest walk))
   ;; walk is a sequence of coordinate pairs.
   ;; 
   ;; To use it as test data, take at least two pairs and from walk, and
@@ -554,7 +555,6 @@
 
 
   ;; Example using all of walk:
-  (def walk-rest (rest walk))
 
   (crit/quick-bench
     (def result (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
@@ -569,7 +569,7 @@
   ;; from start or from the last success:
   (crit/quick-bench
     (def result (mapv (partial find-in-seg
-                               (env/create-repeated-success-look-fn 25)
+                               (env/create-repeated-success-look-fn 50)
                                0.2) 
                       walk
                       walk-rest))
