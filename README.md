@@ -12,6 +12,9 @@ can play with the code here, install [Leiningen](https://leiningen.org). Then
 in src/scripts). Leiningen's project.clj file will download and install all 
 of the needed libraries *except* MASON 20 (see below). 
 
+However, this also set up to use CLI and deps.edn.  I've tried to keep
+deps.edn and project.clj in sync.
+
 ---
 
 Currently, this project uses a couple of classes from MASON, a Java library for
