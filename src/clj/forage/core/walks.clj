@@ -521,19 +521,16 @@
   (def mywalk0 [[0 0] [1 1]])
   
   (crit/quick-bench
-    (def result (find-in-seg env/constant-failure-look-fn
-                             0.2
-                             (first mywalk0)
-                             (second mywalk0)))
-  )
+    (find-in-seg env/constant-failure-look-fn
+                 0.2
+                 (first mywalk0)
+                 (second mywalk0)))
 
   (crit/quick-bench
-    (def result
-      (find-in-seg (env/create-repeated-success-look-fn 5)
-                   0.2
-                   (first mywalk0)
-                   (second mywalk0)))
-   )
+    (find-in-seg (env/create-repeated-success-look-fn 5)
+                 0.2
+                 (first mywalk0)
+                 (second mywalk0)))
 
 
   ;; Test using more realistic (i.e. more like what the simulation uses) data:
@@ -556,20 +553,18 @@
   (def mywalk (take 2 walk)) ; => ([0 0] [0.9878431867800612 1.5734173777113207])
 
   (crit/quick-bench
-    (def result (find-in-seg env/constant-failure-look-fn
-                             0.2
-                             (first mywalk)
-                             (second mywalk)))
-  )
+    (find-in-seg env/constant-failure-look-fn
+                 0.2
+                 (first mywalk)
+                 (second mywalk)))
 
 
   ;; Example using all of walk:
 
   (crit/quick-bench
-    (def result (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
-                      walk
-                      walk-rest))
-  ) 
+    result (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
+                 walk
+                 walk-rest))
   ;; [If you use a version of find-in-seg that expects coordinates as pairs,
   ;; then the pairs from walk and walk-rest can be passed without pulling
   ;; out the coordinates.]
@@ -579,12 +574,11 @@
   ;; searching, so this will run faster than when using
   ;; constant-failure-look-fn.
   (crit/quick-bench
-    (def result (mapv (partial find-in-seg
-                               (env/create-repeated-success-look-fn 50)
-                               0.2) 
-                      walk
-                      walk-rest))
-  )
+    (mapv (partial find-in-seg
+                   (env/create-repeated-success-look-fn 50)
+                   0.2) 
+          walk
+          walk-rest))
 
 )
 
