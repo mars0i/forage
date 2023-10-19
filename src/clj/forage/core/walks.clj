@@ -590,7 +590,7 @@
   ;; Example using all of walk:
 
   (crit/quick-bench
-    result (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
+    (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
                  walk
                  walk-rest))
   ;; [If you use a version of find-in-seg that expects coordinates as pairs,
