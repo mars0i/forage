@@ -30,7 +30,7 @@
 ;; slightly to have a higher value, since then the x,y swap operations
 ;; would happen less often.  However, benchmarking shows otherwise.
 ;; See steep-slope-inf-benchmarks.txt.
-(def steep-slope-inf
+(def ^:const +steep-slope-inf+ 
   "If a slope is greater than this value, the x and y coordinates will
   be swapped temporarily and then unswapped later.  This is a way to
   deal with both truly vertical slopes (slope = ##Inf) and slopes that are
@@ -38,6 +38,7 @@
   will be problematic.  It also sidesteps the problem of identifying slopes
   that are actually vertical, but don't appear so because of float slop."
   1.0)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
@@ -422,6 +423,28 @@
   [f]
   (fn [x y] (f y x)))
 
+(comment
+  ;; Optimized for doubles
+  (defn swap-args-fn
+    "Given a function that accepts two double arguments, wraps it in a function
+    that reverses the arguments and passes them to the original function."
+    [^clojure.lang.Ifn$DDO f]
+    (fn [x y] (f y x)))
+)
+
+(defn rev-vec-pair
+  [v]
+  [(v 1) (v 0)])
+
+(defn lt
+  "Type-hinted double wrapper for fastmath <."
+  [^double x ^double y]
+  (< x y))
+
+(defn gt
+  "Type-hinted double wrapper for fastmath >."
+  [^double x ^double y]
+  (> x y))
 
 ;; See doc/xyshifts.md for notes about this function and xy-shifts.
 ;; Possibly store slope and/or intercept earlier; they were available
@@ -457,6 +480,8 @@
 ;; matter as long as look-fn is expensive, which is the case when using MASON
 ;; for look-fns. If I develop more efficient envs and look-fns, it might be
 ;; worth optimizing some of the code further.
+;;
+;; INCORPORATES optimizations from joinr's opt branch.
 (defn find-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
@@ -474,22 +499,25 @@
   returned depends on look-fn, which should reflect the way that this 
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
-  [look-fn eps [x1 y1] [x2 y2]]
-  (let [^double slope (m/slope-from-coords [x1 y1] [x2 y2])
+  [look-fn eps seg-start seg-end]
+  (let [^double slope (m/slope-from-coords seg-start seg-end)
         steep (or (infinite? slope)
-                  (> (abs slope) (double steep-slope-inf)))
+                  (> (abs slope) (double +steep-slope-inf+)))
         slope (if steep (/ slope) slope)
         look-fn (if steep (swap-args-fn look-fn) look-fn)
-        [[^double x1 ^double y1] [^double x2 ^double y2]] (if steep
-                                                            [[y1 x1] [y2 x2]]    ; swap x and y
-                                                            [[x1 y1] [x2 y2]])   ; make no change
+        p1 (if steep (rev-vec-pair seg-start) seg-start)
+        p2 (if steep (rev-vec-pair seg-end) seg-end)
+        ^double x1 (p1 0)
+        ^double y1 (p1 1)
+        ^double x2 (p2 0)
+        ^double y2 (p2 1)
         x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
-        [^double x-eps ^double y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
-        x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
-        y-shift (if y-pos-dir? y-eps (- y-eps))
-        x-comp (if x-pos-dir? cc/> cc/<)   ; and choose tests for when we've 
-        y-comp (if y-pos-dir? cc/> cc/<)]  ;  gone too far
+        shifts (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
+        ^double x-shift (if x-pos-dir? (shifts 0) (- ^double (shifts 0))) ; correct their directions
+        ^double y-shift (if y-pos-dir? (shifts 1) (- ^double (shifts 1)))
+        x-comp (if x-pos-dir? gt lt)   ; and choose tests for when we've 
+        y-comp (if y-pos-dir? gt lt)]  ;  gone too far
     (loop [x x1, y y1]
       (let [food (look-fn x y)]
         (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
