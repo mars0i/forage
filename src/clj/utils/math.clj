@@ -8,10 +8,10 @@
               [clojure.core :as cc] ; to replace fastmath macros in reduce, map, etc.
               [clojure.string :as st]))
 
-;(set! *warn-on-reflection* true)
-;(set! *unchecked-math* :warn-on-boxed)
-
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
+
 
 (defn remove-decimal-pt
   "Given a number, returns a (base-10) string representation of the
