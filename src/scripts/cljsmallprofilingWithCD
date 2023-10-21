@@ -1,4 +1,0 @@
-#!/bin/sh
-set -x
-cd ~/cloj/forage
-clojure -M:nrepl-server:smallproduction:profiling "$@"
