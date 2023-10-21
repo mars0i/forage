@@ -1,0 +1,20 @@
+#!/bin/bash
+# Opens a new iTerm2 tab in the same window and then runs
+# any arguments passed to this script.  Example:
+#    itermNewTab 'cd forage' 'ls -l'
+osascript - "$@" <<EOF
+on run argv
+tell application "iTerm"
+  tell current window
+    set new_tab to (create tab with default profile)
+    tell new_tab
+      tell the current session
+        repeat with arg in argv
+           write text arg
+          end repeat
+      end tell
+    end tell
+  end tell
+end tell
+end run
+EOF

@@ -1,3 +1,0 @@
-#!/bin/sh
-# opens repl in forage dir in another iterm tab
-open -a iTerm src/scripts/replWithCD

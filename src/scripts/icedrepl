@@ -1,5 +1,0 @@
-#!/bin/sh
-# For use with iced-vim.  If you don't use iced-vim, use one of the
-# scripts whose name does not start with "i".
-set -x
-exec iced repl "$@"
