@@ -1,16 +1,14 @@
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
-
-
 (ns forage.core.walks
     (:require [utils.math :as m]
               [utils.spiral :as spiral]
               [utils.random :as r]
               [fastmath.core :as fm]
               [clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
-))
+              ))
 
-;(set! *warn-on-reflection* true)
-;(set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
 ;; NOTE Advantages of starting with mathematical vectors (direction,
@@ -30,7 +28,7 @@
 ;; slightly to have a higher value, since then the x,y swap operations
 ;; would happen less often.  However, benchmarking shows otherwise.
 ;; See steep-slope-inf-benchmarks.txt.
-(def ^:const +steep-slope-inf+ 
+(def steep-slope-inf
   "If a slope is greater than this value, the x and y coordinates will
   be swapped temporarily and then unswapped later.  This is a way to
   deal with both truly vertical slopes (slope = ##Inf) and slopes that are
@@ -39,6 +37,7 @@
   that are actually vertical, but don't appear so because of float slop."
   1.0)
 
+(def ^:const +steep-slope-inf+ 1.0)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
@@ -420,31 +419,17 @@
 (defn swap-args-fn
   "Given a function that accepts two arguments, wraps it in a function
   that reverses the arguments and passes them to the original function."
-  [f]
-  (fn [x y] (f y x)))
+  [^clojure.lang.IFn$DDO f]
+  (fn [^double x ^double y] (.invokePrim f y x)))
 
-(comment
-  ;; Optimized for doubles
-  (defn swap-args-fn
-    "Given a function that accepts two double arguments, wraps it in a function
-    that reverses the arguments and passes them to the original function."
-    [^clojure.lang.Ifn$DDO f]
-    (fn [x y] (f y x)))
-)
+;;primitive variant if we know we're passing double coords....
+#_
+(defn swap-args-fn
+  "Given a function that accepts two arguments, wraps it in a function
+  that reverses the arguments and passes them to the original function."
+  [^clojure.lang.IFn$DDO f]
+  (fn [^double x ^double y] (.invokePrim f y x)))
 
-(defn rev-vec-pair
-  [v]
-  [(v 1) (v 0)])
-
-(defn lt
-  "Type-hinted double wrapper for fastmath <."
-  [^double x ^double y]
-  (< x y))
-
-(defn gt
-  "Type-hinted double wrapper for fastmath >."
-  [^double x ^double y]
-  (> x y))
 
 ;; See doc/xyshifts.md for notes about this function and xy-shifts.
 ;; Possibly store slope and/or intercept earlier; they were available
@@ -480,8 +465,15 @@
 ;; matter as long as look-fn is expensive, which is the case when using MASON
 ;; for look-fns. If I develop more efficient envs and look-fns, it might be
 ;; worth optimizing some of the code further.
-;;
-;; INCORPORATES optimizations from joinr's opt branch.
+(defn vrev [v]
+  [(v 1) (v 0)])
+
+;;substantially faster than clojure.numbers...
+(defn lt [^double l ^double r]
+  (< l r))
+(defn gt [^double l ^double r]
+  (> l r))
+
 (defn find-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
@@ -499,25 +491,32 @@
   returned depends on look-fn, which should reflect the way that this 
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
-  [look-fn eps seg-start seg-end]
-  (let [^double slope (m/slope-from-coords seg-start seg-end)
+  [look-fn eps p1 p2]
+  (let [slope (m/slope-from-coords p1 p2)
         steep (or (infinite? slope)
-                  (> (abs slope) (double +steep-slope-inf+)))
+                  (> (abs slope) +steep-slope-inf+))
         slope (if steep (/ slope) slope)
-        look-fn (if steep (swap-args-fn look-fn) look-fn)
-        p1 (if steep (rev-vec-pair seg-start) seg-start)
-        p2 (if steep (rev-vec-pair seg-end) seg-end)
-        ^double x1 (p1 0)
-        ^double y1 (p1 1)
-        ^double x2 (p2 0)
-        ^double y2 (p2 1)
+        look-fn (if steep (swap-args-fn look-fn) look-fn) ;;if it's steep, we swap...
+        p1  (if steep (vrev p1) p1)
+        p2  (if steep (vrev p2) p2)
+        ^double
+        x1  (p1 0)
+        ^double
+        y1  (p1 1)
+        ^double
+        x2  (p2 0)
+        ^double
+        y2  (p2 1)
         x-pos-dir? (<= x1 x2)
         y-pos-dir? (<= y1 y2)
-        shifts (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
-        ^double x-shift (if x-pos-dir? (shifts 0) (- ^double (shifts 0))) ; correct their directions
-        ^double y-shift (if y-pos-dir? (shifts 1) (- ^double (shifts 1)))
-        x-comp (if x-pos-dir? gt lt)   ; and choose tests for when we've 
-        y-comp (if y-pos-dir? gt lt)]  ;  gone too far
+        xe-ye      (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
+        ^double
+        x-shift (if x-pos-dir? (xe-ye  0) (- ^double (xe-ye  0))) ; correct their directions
+        ^double
+        y-shift (if y-pos-dir? (xe-ye  1) (- ^double (xe-ye  1)))
+        x-comp (if x-pos-dir? gt lt)   ; and choose tests for when we've
+        y-comp (if y-pos-dir? gt lt)
+        ]  ;  gone too far
     (loop [x x1, y y1]
       (let [food (look-fn x y)]
         (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
@@ -547,19 +546,12 @@
   (require '[forage.core.env-null :as env])
 
   (def mywalk0 [[0 0] [1 1]])
-  
-  (crit/quick-bench
-    (find-in-seg env/constant-failure-look-fn
-                 0.2
-                 (first mywalk0)
-                 (second mywalk0)))
 
   (crit/quick-bench
-    (find-in-seg (env/create-repeated-success-look-fn 5)
-                 0.2
-                 (first mywalk0)
-                 (second mywalk0)))
-
+      (find-in-seg env/constant-failure-look-fn
+                   0.2
+                   (first mywalk0)
+                   (second mywalk0)))
 
   ;; Test using more realistic (i.e. more like what the simulation uses) data:
   (def seed 1234567890123456)
@@ -581,32 +573,33 @@
   (def mywalk (take 2 walk)) ; => ([0 0] [0.9878431867800612 1.5734173777113207])
 
   (crit/quick-bench
-    (find-in-seg env/constant-failure-look-fn
-                 0.2
-                 (first mywalk)
-                 (second mywalk)))
+    (def result (find-in-seg env/constant-failure-look-fn
+                             0.2
+                             (first mywalk)
+                             (second mywalk)))
+  )
 
 
   ;; Example using all of walk:
 
   (crit/quick-bench
-    (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
-                 walk
-                 walk-rest))
+    (def result (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
+                      walk
+                      walk-rest))
+  ) 
   ;; [If you use a version of find-in-seg that expects coordinates as pairs,
   ;; then the pairs from walk and walk-rest can be passed without pulling
   ;; out the coordinates.]
 
   ;; Example using a look-fn that succeeds every n steps, i.e. at n*eps
-  ;; from start or from the last success.  When it succeeds, it stops
-  ;; searching, so this will run faster than when using
-  ;; constant-failure-look-fn.
+  ;; from start or from the last success:
   (crit/quick-bench
-    (mapv (partial find-in-seg
-                   (env/create-repeated-success-look-fn 50)
-                   0.2) 
-          walk
-          walk-rest))
+    (def result (mapv (partial find-in-seg
+                               (env/create-repeated-success-look-fn 50)
+                               0.2) 
+                      walk
+                      walk-rest))
+  )
 
 )
 

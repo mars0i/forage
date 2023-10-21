@@ -10,8 +10,8 @@
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
-(fm/use-primitive-operators)
 
+(fm/use-primitive-operators)
 
 (defn remove-decimal-pt
   "Given a number, returns a (base-10) string representation of the
@@ -50,6 +50,7 @@
 (def ln math/log) ; alias so I don't have to remember whether log is ln or is arbitrary base
 (defn log-to-base [base x] (/ (math/log x) (math/log base))) ; don't use ln--confuses compiler optimization
 
+
 (defn rotate
   "Given an angle theta in radians and a pair of coordinates [x y], returns
   a new pair of coordinates that is the rotation of [x y] by theta."
@@ -58,6 +59,16 @@
       (* y (sin theta))) ,
    (+ (* y (cos theta))
       (* x (sin theta)))])
+
+
+(defn distance-2D
+  "Computes distance between two-dimensional points [x0 y0] and [x1 y1]
+  using the Pythagorean theorem."
+  [[^double x0 ^double y0] [^double x1 ^double y1]]
+  (let [xdiff (- x0 x1)
+        ydiff (- y0 y1)]
+  (sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
+
 
 ;; Implements $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\;$  given $\;ax^2 + bx + c = 0$.
 ;; (If both results are routinely needed inside a tight loop, consider making 
@@ -90,43 +101,35 @@
   [x]
   (= x ##Inf))
 
-;; inspired by joinr's opt branch
-(defn distance-2D
-  "Computes distance between two-dimensional points [x0 y0] and [x1 y1]
-  using the Pythagorean theorem."
-  [pt1 pt2]
-  (let [^double x1 (pt1 0) ; faster than destructuring in parameter list
-        ^double y1 (pt1 1)
-        ^double x2 (pt2 0)
-        ^double y2 (pt2 1)
-        xdiff (- x1 x2)
-        ydiff (- y1 y2)]
-    (sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
+;; Added to Clojure in 1.11
+;; Just a wrapper for Double/isNaN
+;(defn NaN?
+;  "Returns true if and only if x is ##NaN."
+;  [x]
+;  (Double/isNaN x))
 
-;; based on joinr's opt branch
+#_
 (defn slope-from-coords
   "Given a pair of points on a line, return its slope.  This is also the
   vector direction from the first point to the second.  If the line is
   vertical, returns ##Inf (infinity) to indicate that."
-  [pt1 pt2]
-  (let [^double x1 (pt1 0) ; faster than destructuring in parameter list
-        ^double y1 (pt1 1)
-        ^double x2 (pt2 0)
-        ^double y2 (pt2 1)]
+  [[^double x1 ^double y1] [^double x2 ^double y2]]
+  (if (== x1 x2)
+    ##Inf ; infinity is what division below would give for the vertical slope
+    (/ (- y2 y1) (- x2 x1))))
+
+(defn slope-from-coords
+  "Given a pair of points on a line, return its slope.  This is also the
+  vector direction from the first point to the second.  If the line is
+  vertical, returns ##Inf (infinity) to indicate that."
+  ^double [x1y1 x2y2]
+  (let [^double x1 (x1y1 0)
+        ^double y1 (x1y1 1)
+        ^double x2 (x2y2 0)
+        ^double y2 (x2y2 1)]
     (if (== x1 x2)
       ##Inf ; infinity is what division below would give for the vertical slope
       (/ (- y2 y1) (- x2 x1)))))
-
-(comment ;; old version:
-  (defn slope-from-coords
-    "Given a pair of points on a line, return its slope.  This is also the
-    vector direction from the first point to the second.  If the line is
-    vertical, returns ##Inf (infinity) to indicate that."
-    [[^double x1 ^double y1] [^double x2 ^double y2]]
-    (if (== x1 x2)
-      ##Inf ; infinity is what division below would give for the vertical slope
-      (/ (- y2 y1) (- x2 x1))))
-)
 
 ;; y = mx + b  so  b = y - mx
 (defn intercept-from-slope
