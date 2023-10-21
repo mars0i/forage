@@ -3,11 +3,12 @@
 
 (defn constant-failure-look-fn
   "A look-fn that never finds a foodspot."
-  [x y]
+  [^double x ^double y]
   false)
 
+#_
 (defn create-repeated-success-look-fn
-  "Use this e.g. with partial to create a look-fn that \"finds\" 
+  "Use this e.g. with partial to create a look-fn that \"finds\"
   a foodspot--i.e. returns truthy--every n calls.  Example:
      (def look-fn (partial regular-success-look-fn-fn 1000))
   The resulting function takes two arguments, x and y coordinates,
@@ -20,6 +21,24 @@
             true)
         (do (swap! look-cnt$ inc)
             false)))))
+
+(defn create-repeated-success-look-fn
+  "Use this e.g. with partial to create a look-fn that \"finds\" 
+  a foodspot--i.e. returns truthy--every n calls.  Example:
+     (def look-fn (partial regular-success-look-fn-fn 1000))
+  The resulting function takes two arguments, x and y coordinates,
+  and returns falsey or truthy."
+  [^long interval]
+  (let [^longs look-cnt$ (long-array 1)
+        _ (aset look-cnt$ 0 1)]
+    (fn [^double x ^double y]
+      (if (= (aget look-cnt$ 0) interval)
+        (do (aset look-cnt$ 0 1)
+            true)
+        (do (aset look-cnt$ 0 (unchecked-inc (aget look-cnt$ 0)))
+            false)))))
+
+
 
 (comment
   (def look-fn (create-repeated-success-look-fn 3))

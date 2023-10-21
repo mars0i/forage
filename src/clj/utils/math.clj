@@ -8,19 +8,19 @@
               [clojure.core :as cc] ; to replace fastmath macros in reduce, map, etc.
               [clojure.string :as st]))
 
-(set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
-(fm/use-primitive-operators)
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
 
+(fm/use-primitive-operators)
 
 (defn remove-decimal-pt
   "Given a number, returns a (base-10) string representation of the
   number, but with any decimal point removed.  Also works on existing
   string representations of numbers."
   [x]
-  (apply str 
+  (apply str
          (st/split (str x) #"\.")))
-  
+
 (def pi math/PI) ; I just like it lowercase
 (def pi2 (* 2 math/PI)) ; 360
 ;(defn cos [theta] (Math/cos theta)) ; now using clojure.math wrappers
@@ -41,7 +41,7 @@
 (comment
   ;; How to convert from and back to polar coordinates:
   (let [original-r 5
-        original-theta 0.5 
+        original-theta 0.5
         [x y] (polar-to-cartesian original-r original-theta)
         [new-r new-theta] (cartesian-to-polar x y)]
     [x y original-r new-r original-theta new-theta])
@@ -49,6 +49,7 @@
 
 (def ln math/log) ; alias so I don't have to remember whether log is ln or is arbitrary base
 (defn log-to-base [base x] (/ (math/log x) (math/log base))) ; don't use ln--confuses compiler optimization
+
 
 (defn rotate
   "Given an angle theta in radians and a pair of coordinates [x y], returns
@@ -59,8 +60,18 @@
    (+ (* y (cos theta))
       (* x (sin theta)))])
 
+
+(defn distance-2D
+  "Computes distance between two-dimensional points [x0 y0] and [x1 y1]
+  using the Pythagorean theorem."
+  [[^double x0 ^double y0] [^double x1 ^double y1]]
+  (let [xdiff (- x0 x1)
+        ydiff (- y0 y1)]
+  (sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
+
+
 ;; Implements $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\;$  given $\;ax^2 + bx + c = 0$.
-;; (If both results are routinely needed inside a tight loop, consider making 
+;; (If both results are routinely needed inside a tight loop, consider making
 ;; a version of this function that returns both of them.)
 (defn quadratic-formula
   "Returns the result of the quadratic formula applied to the coefficients in
@@ -83,50 +94,32 @@
         (neg? x) -1
         :else 0))
 
-;; Note that Java's Double/isInfinite and Float/isInfinite don't distinguish 
+;; Note that Java's Double/isInfinite and Float/isInfinite don't distinguish
 ;; between ##Inf and ##-Inf.
 (defn pos-inf?
   "Returns true if and only if x is ##Inf."
   [x]
   (= x ##Inf))
 
-;; inspired by joinr's opt branch
-(defn distance-2D
-  "Computes distance between two-dimensional points [x0 y0] and [x1 y1]
-  using the Pythagorean theorem."
-  [pt1 pt2]
-  (let [^double x1 (pt1 0) ; faster than destructuring in parameter list
-        ^double y1 (pt1 1)
-        ^double x2 (pt2 0)
-        ^double y2 (pt2 1)
-        xdiff (- x1 x2)
-        ydiff (- y1 y2)]
-    (sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
+;; Added to Clojure in 1.11
+;; Just a wrapper for Double/isNaN
+;(defn NaN?
+;  "Returns true if and only if x is ##NaN."
+;  [x]
+;  (Double/isNaN x))
 
-;; based on joinr's opt branch
 (defn slope-from-coords
   "Given a pair of points on a line, return its slope.  This is also the
   vector direction from the first point to the second.  If the line is
   vertical, returns ##Inf (infinity) to indicate that."
-  [pt1 pt2]
-  (let [^double x1 (pt1 0) ; faster than destructuring in parameter list
-        ^double y1 (pt1 1)
-        ^double x2 (pt2 0)
-        ^double y2 (pt2 1)]
-    (if (== x1 x2)
-      ##Inf ; infinity is what division below would give for the vertical slope
-      (/ (- y2 y1) (- x2 x1)))))
-
-(comment ;; old version:
-  (defn slope-from-coords
-    "Given a pair of points on a line, return its slope.  This is also the
-    vector direction from the first point to the second.  If the line is
-    vertical, returns ##Inf (infinity) to indicate that."
-    [[^double x1 ^double y1] [^double x2 ^double y2]]
-    (if (== x1 x2)
-      ##Inf ; infinity is what division below would give for the vertical slope
-      (/ (- y2 y1) (- x2 x1))))
-)
+  (^double [[^double x1 ^double y1] [^double x2 ^double y2]]
+   (if (== x1 x2)
+     ##Inf ; infinity is what division below would give for the vertical slope
+     (/ (- y2 y1) (- x2 x1))))
+  (^double [^double x1 ^double y1 ^double x2 ^double y2]
+   (if (== x1 x2)
+     ##Inf ; infinity is what division below would give for the vertical slope
+     (/ (- y2 y1) (- x2 x1)))))
 
 ;; y = mx + b  so  b = y - mx
 (defn intercept-from-slope
@@ -136,7 +129,7 @@
 
 ;; CONSIDER REPLACING WITH SIMILAR FUNCTIONS IN fastmath
 (defn equalish?
-  "True if numbers x and y are == or are within (* n-ulps ulp) of 
+  "True if numbers x and y are == or are within (* n-ulps ulp) of
   each other, where ulp is the minimum of (Math/ulp x) and (Math/ulp y).
   A ulp is \"units in the last place\", i.e. the minimum possible difference
   between two floating point numbers, but the numeric value of a ulp differs
@@ -277,9 +270,9 @@
       (/ (* alpha (math/pow xm alpha))
          (math/pow x (inc alpha)))))
 
-  ; Assuming that $\mu > 1$, 
+  ; Assuming that $\mu > 1$,
   ; $\int_r^{\infty} x^{-\mu} \; dl = \frac{r^{1-\mu}}{\mu-1} \,$.
-  ; &nbsp; So to distribute step lengths $x$ as $x^{-\mu}$ with $r$ as 
+  ; &nbsp; So to distribute step lengths $x$ as $x^{-\mu}$ with $r$ as
   ; the minimum length,
   ; $\mathsf{P}(x) = x^{-\mu}\frac{\mu-1}{r^{1-\mu}} = x^{-\mu}r^{\mu-1}(\mu-1)$.
   ;; &nbsp; See steplengths.md for further details.  &nbsp; cf. Viswanathan et al., *Nature* 1999.
