@@ -88,7 +88,7 @@
   (RandomSource/createLong))
 
 (defn set-seed
-  "Resets the seed of rng to seed."
+  "Resets the seed of rng to seed.  Apparently doesn't work with Apache 1.4 RNGs."
   [rng seed]
   (.setSeed rng seed))
 
