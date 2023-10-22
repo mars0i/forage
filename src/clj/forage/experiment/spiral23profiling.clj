@@ -10,7 +10,7 @@
 ;; THIS VERSION has multiple targets at the same distance from origin.
 ;;
 (ns forage.experiment.spiral23profiling
-  (:require ;[criterium.core :as crit]
+  (:require [criterium.core :as crit]
             [clj-async-profiler.core :as prof]
             ;[clojure.math :as cmath]
             [utils.math :as um]
@@ -48,9 +48,8 @@
 ;;
 ;; See notes/forage/models/spiralplan23.md .
 
-
 (def homedir (System/getenv "HOME"))
-(def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral23joinr/"))
+(def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral23cnuernber/"))
 
 (def half-size  10000) ; half the full width of the env
 (def maxpathlen (* 100 half-size)) ; max length of an entire continuous search path
@@ -308,8 +307,8 @@
   (def walks-per-fn 1000)
   (def walks-per-fn-jit-warmup (/ walks-per-fn 2))
 
+  ;; CLJ-ASYNC-PROFILER
   ;; THEN GO FIND THE FLAMEGRAPH FILE(s) IN /tmp/clj-async-profiler/results
-
   ;; SPIRAL COMPOSITE WALKS:
   (time (prof/profile
           (def mu1-spiral-data-and-rng
@@ -356,7 +355,26 @@
                 (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))))
 
 
+
+
 )
+
+(comment
+  ;; Criterium tests
+
+  (def walks-per-fn 100)
+  (def seed -7370724773351240133)
+  (def rng (r/make-well19937 seed))
+  (def initial-state (r/get-state rng))
+
+  (crit/quick-bench ; will run at least 60 iterations
+    (do
+      (r/set-state rng initial-state)
+      (fr/walk-experiments (update params :basename #(str % "mu2"))
+                           mu2-walk-fns walks-per-fn seed)))
+
+)
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
