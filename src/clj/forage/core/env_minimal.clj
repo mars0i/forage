@@ -4,6 +4,10 @@
   (:require [utils.math :as um]
             [forage.core.food :as f]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; GENERAL-PURPOSE FNS
+
+(def foodspot-coords identity)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ENVIRONMENT THAT CONSISTS OF A BARE COORDINATE PAIR
