@@ -49,7 +49,7 @@
 ;; See notes/forage/models/spiralplan23.md .
 
 
-(def default-dirname "../../data.foraging/forage/spiral23/")
+(def default-dirname "/Users/mabrams/docs/src/data.foraging/forage/spiral23joinr/")
 
 (def half-size  10000) ; half the full width of the env
 (def maxpathlen (* 100 half-size)) ; max length of an entire continuous search path
@@ -135,7 +135,10 @@
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
-  (partial env/perc-foodspots-exactly env (params :perc-radius)))
+  (fn [^double x ^double y]
+    (env/perc-foodspots-exactly env (params :perc-radius) x y)))
+;; Doesn't work with joinr's optimization of swap-args-fn:
+;  (partial env/perc-foodspots-exactly env (params :perc-radius))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

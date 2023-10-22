@@ -102,7 +102,7 @@
 (defn perc-foodspots-exactly
   "Returns a MASON Bag of foodspots within perc-radius of (x,y),
   or nil if there are none.  Uses Continuous2D's local cell lookup."
-  [^Continuous2D env perc-radius x y]
+  [^Continuous2D env perc-radius ^double x ^double y]
   (let [foodspots-bag (.getNeighborsExactlyWithinDistance env
                                                           (Double2D. x y)
                                                           perc-radius)]
@@ -111,7 +111,7 @@
 (defn perc-foodspots-exactly-toroidal
   "Returns a MASON Bag of foodspots within perc-radius of (x,y), or 
   nil if there are none.  Uses Continuous2D's local toroidal cell lookup."
-  [^Continuous2D env perc-radius x y]
+  [^Continuous2D env perc-radius ^double x ^double y]
   (let [foodspots-bag (.getNeighborsExactlyWithinDistance env
                                                           (Double2D. x y)
                                                           perc-radius true)]
