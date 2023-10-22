@@ -203,7 +203,10 @@
         (recur (dec n)
                fw
                (+ n-segments (w/count-segments-until-found fw))
-               (conj found (env/foodspot-coords-if-found (first fw)))
+               (conj found (if-let [found-foodspot-seq (first fw)]
+                             (env/foodspot-coords (first found-foodspot-seq))
+                             nil))
+               ;old: (conj found (env/foodspot-coords-if-found (first fw)))
                (conj lengths (w/path-until-found-length fw)))))))
 
 
