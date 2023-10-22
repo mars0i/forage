@@ -378,8 +378,8 @@
              "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
              "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
              "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)}]
-      (fr/walk-experiments (update params :basename #(str % "mu2"))
-                           mu2-walk-fns walks-per-fn seed rng))))
+        (fr/walk-experiments (update params :basename #(str % "mu2"))
+                             mu2-walk-fns walks-per-fn seed rng))))
 
 
   ;; How much overhead does the setup add?
