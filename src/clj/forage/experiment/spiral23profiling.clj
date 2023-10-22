@@ -362,6 +362,7 @@
 (comment
   ;; Criterium tests
 
+
   (def walks-per-fn 100)
   (def seed -7370724773351240133)
   (def rng (r/make-well19937 seed))
@@ -369,9 +370,35 @@
 
   (crit/quick-bench ; will run at least 60 iterations
     (do
+      ;; These setup calls are needed to make each Criterium run the same.
+      ;; On my MBP the average time added by them is 2.859466 µs, i.e. < 3/1,000,000 second.
       (r/set-state rng initial-state)
+      (let [mu2-walk-fns
+            {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
+             "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
+             "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
+             "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)}]
       (fr/walk-experiments (update params :basename #(str % "mu2"))
-                           mu2-walk-fns walks-per-fn seed rng)))
+                           mu2-walk-fns walks-per-fn seed rng))))
+
+
+  ;; How much overhead does the setup add?
+  (crit/quick-bench
+    (do
+      (r/set-state rng initial-state)
+      (let [mu2-walk-fns
+            {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
+             "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
+             "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
+             "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)}]
+        mu2-walk-fns)))
+  ; eval (effective-root-form): (crit/quick-bench (do (r/set-...
+  ; (out) Evaluation count : 242370 in 6 samples of 40395 calls.
+  ; (out)              Execution time k2.859466 µs
+  ; (out)     Execution time std-deviation : 259.528239 ns
+  ; (out)    Execution time lower quantile : 2.639472 µs ( 2.5%)
+  ; (out)    Execution time upper quantile : 3.239725 µs (97.5%)
+  ; (out)                    Overhead used : 6.026528 ns
 
 )
 
