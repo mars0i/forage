@@ -48,7 +48,6 @@
 ;;
 ;; See notes/forage/models/spiralplan23.md .
 
-
 (def homedir (System/getenv "HOME"))
 (def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral23joinr/"))
 
@@ -136,10 +135,7 @@
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
-  (fn [^double x ^double y]
-    (env/perc-foodspots-exactly env (params :perc-radius) x y)))
-;; Doesn't work with joinr's optimization of swap-args-fn:
-;  (partial env/perc-foodspots-exactly env (params :perc-radius))
+  (partial env/perc-foodspots-exactly env (params :perc-radius)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -359,11 +355,26 @@
                 (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))))
 
 
-  ;; CRITERIUM
-  (crit/quick-bench (fr/walk-experiments (update params :basename #(str % "mu2"))
-                                         mu2-walk-fns walks-per-fn seed))
+
 
 )
+
+(comment
+  ;; Criterium tests
+
+  (def walks-per-fn 100)
+  (def seed -7370724773351240133)
+  (def rng (r/make-well19937 seed))
+  (def initial-state (r/get-state rng))
+
+  (crit/quick-bench ; will run at least 60 iterations
+    (do
+      (r/set-state rng initial-state)
+      (fr/walk-experiments (update params :basename #(str % "mu2"))
+                           mu2-walk-fns walks-per-fn seed)))
+
+)
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
