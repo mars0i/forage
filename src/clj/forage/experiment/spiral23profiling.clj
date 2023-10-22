@@ -49,7 +49,7 @@
 ;; See notes/forage/models/spiralplan23.md .
 
 (def homedir (System/getenv "HOME"))
-(def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral23joinr/"))
+(def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral23/"))
 
 (def half-size  10000) ; half the full width of the env
 (def maxpathlen (* 100 half-size)) ; max length of an entire continuous search path
