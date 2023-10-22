@@ -69,6 +69,14 @@
         ydiff (- y0 y1)]
   (sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
 
+(defn distance-2D*
+  "Computes distance between two-dimensional points (x0, y0) and (x1, y1)
+  using the Pythagorean theorem."
+  [^double x0 ^double y0 ^double x1 ^double y1]
+  (let [xdiff (- x0 x1)
+        ydiff (- y0 y1)]
+  (sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
+
 
 ;; Implements $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\;$  given $\;ax^2 + bx + c = 0$.
 ;; (If both results are routinely needed inside a tight loop, consider making 
