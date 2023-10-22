@@ -371,7 +371,7 @@
     (do
       (r/set-state rng initial-state)
       (fr/walk-experiments (update params :basename #(str % "mu2"))
-                           mu2-walk-fns walks-per-fn seed)))
+                           mu2-walk-fns walks-per-fn seed rng)))
 
 )
 
