@@ -135,7 +135,10 @@
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
-  (partial env/perc-foodspots-exactly env (params :perc-radius)))
+  (fn [^double x ^double y]
+    (env/perc-foodspots-exactly env (params :perc-radius) x y)))
+;; Doesn't work with joinr's optimization of swap-args-fn:
+;  (partial env/perc-foodspots-exactly env (params :perc-radius))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
