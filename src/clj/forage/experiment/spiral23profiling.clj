@@ -10,7 +10,7 @@
 ;; THIS VERSION has multiple targets at the same distance from origin.
 ;;
 (ns forage.experiment.spiral23profiling
-  (:require ;[criterium.core :as crit]
+  (:require [criterium.core :as crit]
             [clj-async-profiler.core :as prof]
             ;[clojure.math :as cmath]
             [utils.math :as um]
@@ -307,8 +307,8 @@
   (def walks-per-fn 1000)
   (def walks-per-fn-jit-warmup (/ walks-per-fn 2))
 
+  ;; CLJ-ASYNC-PROFILER
   ;; THEN GO FIND THE FLAMEGRAPH FILE(s) IN /tmp/clj-async-profiler/results
-
   ;; SPIRAL COMPOSITE WALKS:
   (time (prof/profile
           (def mu1-spiral-data-and-rng
@@ -354,6 +354,10 @@
             (do (println "mu=2.5 homogeneous runs:")
                 (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))))
 
+
+  ;; CRITERIUM
+  (crit/quick-bench (fr/walk-experiments (update params :basename #(str % "mu2"))
+                                         mu2-walk-fns walks-per-fn seed))
 
 )
 
