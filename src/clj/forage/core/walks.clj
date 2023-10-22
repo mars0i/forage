@@ -416,14 +416,7 @@
     [0 eps]))
 
 
-(defn swap-args-fn
-  "Given a function that accepts two arguments, wraps it in a function
-  that reverses the arguments and passes them to the original function."
-  [^clojure.lang.IFn$DDO f]
-  (fn [^double x ^double y] (.invokePrim f y x)))
-
 ;;primitive variant if we know we're passing double coords....
-#_
 (defn swap-args-fn
   "Given a function that accepts two arguments, wraps it in a function
   that reverses the arguments and passes them to the original function."
