@@ -355,11 +355,26 @@
                 (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))))
 
 
-  ;; CRITERIUM
-  (crit/quick-bench (fr/walk-experiments (update params :basename #(str % "mu2"))
-                                         mu2-walk-fns walks-per-fn seed))
+
 
 )
+
+(comment
+  ;; Criterium tests
+
+  (def walks-per-fn 100)
+  (def seed -7370724773351240133)
+  (def rng (r/make-well19937 seed))
+  (def initial-state (r/get-state rng))
+
+  (crit/quick-bench ; will run at least 60 iterations
+    (do
+      (r/set-state rng initial-state)
+      (fr/walk-experiments (update params :basename #(str % "mu2"))
+                           mu2-walk-fns walks-per-fn seed)))
+
+)
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
