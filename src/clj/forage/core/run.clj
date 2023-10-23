@@ -136,7 +136,7 @@
   would normally be a foodwalk from the previous run, will be ignored."
   [rng env _]
   (let [coords (first (r/sample-from-coll rng 1
-                                          (map env/foodspot-coords (env/env-foodspots env))))]
+                                          (env/env-foodspot-coords env)))]
     ;(println "start of walk:" coords) ; DEBUG
     coords))
 
