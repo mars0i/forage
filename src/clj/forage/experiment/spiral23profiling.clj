@@ -73,6 +73,7 @@
              :trunclen            trunclen
              :look-eps            0.2    ; TODO WILL THIS WORK WITH SHORTER SPIRAL SEGMENTS?
              :basename            (str default-dirname "spiral23_")
+             :foodspot-coords-fn  env/foodspot-coords
              ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

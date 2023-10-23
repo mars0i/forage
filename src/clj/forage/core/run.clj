@@ -97,14 +97,15 @@
   the original boundaries, then with no foodspot found, the coordinates
   will be the actual, un\"wrapped\" coordinates, while if a foodspot was
   found, it will have the \"wrapped\" coordinates within the original
-  boundaries.  
+  boundaries.  foodspot-coords-fn is a function that extracts coordinates 
+  from foodspots.  It's usually defined in the relevant env namespace.
   A recommended use is to pass (partial end-of-walk some-initial-loc) as
   the value of init-loc-fn in run-and-collect, possibly via the
   :init-loc-fn value in params."
-  [default-loc fw]
+  [foodspot-coords-fn default-loc fw]
   (if fw
     (if-let [found (first fw)]
-      (env/foodspot-coords (first found)) ; if two or more found, ignore others
+      (foodspot-coords-fn (first found)) ; if two or more found, ignore others
       (last (second fw))) ; could also use third
     default-loc))
 
@@ -119,24 +120,28 @@
   toroidal/periodic, and the walk went outside of the original
   boundaries, the coordinates returned will have the \"wrapped\"
   coordinates within the original boundaries.
+  foodspot-coords-fn is a function that extracts coordinates 
+  from foodspots.  It's usually defined in the relevant env namespace.
   A recommended use is to pass (partial end-of-walk some-initial-loc) as
   the value of init-loc-fn in run-and-collect, possibly via the
   :init-loc-fn value in params."
-  [default-loc fw]
+  [foodspot-coords-fn default-loc fw]
   (if fw
     (if-let [found (first fw)]
-      (env/foodspot-coords (first found)) ; if two or more found, ignore others
+      (foodspot-coords-fn (first found)) ; if two or more found, ignore others
       nil)
     default-loc))
 
 ;; This can be passed as the value of init-loc-fn in order to cause
 ;; each foodwalk to at start a random foodspot in env
 (defn rand-foodspot-coord-pair
-  "Returns the coordinates of a random foodspot in env.  The last argument, which
-  would normally be a foodwalk from the previous run, will be ignored."
-  [rng env _]
+  "Returns the coordinates of a random foodspot in env.  The last argument,
+  which would normally be a foodwalk from the previous run, will be
+  ignored.  env-foodspot-coords-fn is a function passed in to get coordinates
+  of all foodspots in env."
+  [rng env env-foodspot-coords-fn _]
   (let [coords (first (r/sample-from-coll rng 1
-                                          (env/env-foodspot-coords env)))]
+                                          (env-foodspot-coords-fn env)))]
     ;(println "start of walk:" coords) ; DEBUG
     coords))
 
@@ -189,14 +194,16 @@
 ;; foodwalk, retaining and returning only the summary data from foodwalks.
 (defn run-and-collect
   "Generates n-walks foodwalks using walk-fn and init-loc-fn and returns
-  information from them: total number of segments, a sequence of lengths
-  of paths until foodspots were found, and sequence of coordinates of
-  found foodspots, or nil when not found.  Corresponding path lengths
-  and foodspots coordinates (or nil) are in the same (execution) order.
-  nil or the previous foodwalk result will be passed to init-loc-fn to
-  allow it to determine the initial location--the starting point for the
-  walk--that's passed as walk-fn's only argument.  n-walks must be >= 0."
-  [walk-fn init-loc-fn n-walks]
+  information from them: total number of segments, a sequence of lengths of
+  paths until foodspots were found, and sequence of coordinates of found
+  foodspots, or nil when not found.  Corresponding path lengths and
+  foodspots coordinates (or nil) are in the same (execution) order. nil or
+  the previous foodwalk result will be passed to init-loc-fn to allow it to
+  determine the initial location--the starting point for the walk--that's
+  passed as walk-f/n's only argument.  n-walks must be >= 0.
+  foodspot-coords-fn is a function that extracts coordinates from foodspots.
+  It's usually defined in the relevant env namespace."
+  [walk-fn init-loc-fn foodspot-coords-fn n-walks]
   (loop [n n-walks, prev-fw nil, n-segments 0, found [], lengths [] ]
     (if (zero? n)
       [n-segments lengths found]
@@ -205,9 +212,8 @@
                fw
                (+ n-segments (w/count-segments-until-found fw))
                (conj found (if-let [found-foodspot-seq (first fw)]
-                             (env/foodspot-coords (first found-foodspot-seq))
+                             (foodspot-coords-fn (first found-foodspot-seq))
                              nil))
-               ;old: (conj found (env/foodspot-coords-if-found (first fw)))
                (conj lengths (w/path-until-found-length fw)))))))
 
 
@@ -305,7 +311,9 @@
            (str base-state-filename "_mu" walk-name "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin")
            (r/get-state rng)))
        (let [walk-fn (walk-fns walk-name) ; remaining arg is initial location [walk-name is a string, so can't be first]
-             [n-segments lengths found] (time (run-and-collect walk-fn init-loc-fn walks-per-fn))
+             [n-segments lengths found] (time (run-and-collect walk-fn init-loc-fn
+                                                               (params :env-foodspot-coords-fn)
+                                                               walks-per-fn))
              n-found (count (keep identity found))
              total-length (reduce + lengths)
              efficiency (/ n-found total-length)] ; lengths start as doubles and remain so--this is double div
