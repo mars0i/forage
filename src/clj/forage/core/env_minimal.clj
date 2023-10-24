@@ -18,21 +18,7 @@
   (make-multiple-foodspot-env (list '(1 2) [13.0 45.7] (range 2)))
 )
 
-(defn perc-multiple-foodspots
-  "Returns a vector containing the the first foodspot within perc-radius
-  of forager-coords (an x, y Clojure pair), or nil no foodspot is found.
-  foodspots are tested in the order they are listed in env."
-  [env ^double perc-radius ^double x ^double y] 
-  (loop [foodspots (seq env)]
-    (if-let [remaining-foodspots foodspots]
-      (let [fs (first remaining-foodspots)]
-        (if (<= (um/distance-2D* x y (fs 0) (fs 1))
-                perc-radius)
-          [fs]
-          (recur (next remaining-foodspots))))
-      nil))) ; none found within perc-radius [not when-let since the nil is meaningful]
-
-#_
+;; less slow
 (defn perc-multiple-foodspots
   "Returns a vector containing the the first foodspot within perc-radius
   of forager-coords (an x, y Clojure pair), or nil no foodspot is found.
@@ -46,6 +32,22 @@
           [fs]
           (recur (rest foodspots)))))))
 
+(comment
+  ;; very slow:
+  (defn perc-multiple-foodspots
+    "Returns a vector containing the the first foodspot within perc-radius
+    of forager-coords (an x, y Clojure pair), or nil no foodspot is found.
+    foodspots are tested in the order they are listed in env."
+    [env ^double perc-radius ^double x ^double y] 
+    (loop [foodspots (seq env)]
+      (if-let [remaining-foodspots foodspots]
+        (let [fs (first remaining-foodspots)]
+          (if (<= (um/distance-2D* x y (fs 0) (fs 1))
+                  perc-radius)
+            [fs]
+            (recur (next remaining-foodspots))))
+        nil))) ; none found within perc-radius [not when-let since the nil is meaningful]
+)
 
 (def foodspot-coords identity)
 
