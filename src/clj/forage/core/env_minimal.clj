@@ -2,7 +2,12 @@
 ;; few foodspots, without toroidal lookup.
 (ns forage.core.env-minimal
   (:require [utils.math :as um]
+            [fastmath.core :as fm]
             [forage.core.food :as f]))
+
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
+(fm/use-primitive-operators)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ENVIRONMENT THAT CONSISTS OF A COLLECTION of COORDINATE PAIRS.

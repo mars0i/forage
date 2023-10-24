@@ -2,7 +2,12 @@
 ;; single foodspot, without toroidal lookup.
 (ns forage.core.env-single
   (:require [utils.math :as um]
+            [fastmath.core :as fm]
             [forage.core.food :as f]))
+
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
+(fm/use-primitive-operators)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ENVIRONMENT THAT CONSISTS OF A BARE COORDINATE PAIR
@@ -25,7 +30,8 @@
   Example usage:
      (def look-fn (partial env (params :perc-radius)))"
   [env ^double perc-radius ^double x ^double y] 
-  (if (<= (um/distance-2D* x y (env 0) (env 1)) perc-radius)
+  (if (<= (um/distance-2D* x y (double (env 0)) (double (env 1))) perc-radius)
+  ;(if (<= (um/distance-2D* x y (env 0) (env 1)) perc-radius)
     [env]
     nil))
 
