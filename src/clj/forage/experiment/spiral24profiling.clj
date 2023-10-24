@@ -212,11 +212,11 @@
   (def rng (r/make-well19937 seed))
   (def initial-state (r/get-state rng))
 
+  (time
   (crit/quick-bench ; will run at least 60 iterations
     (do
       ;; These setup calls are needed to make each Criterium run the same.
       ;; On my MBP the average time added by them is 2.859466 µs, i.e. < 3/1,000,000 second.
-  (time
       (r/set-state rng initial-state)
       (let [mu2-walk-fns
             {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
