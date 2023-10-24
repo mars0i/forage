@@ -312,7 +312,7 @@
            (r/get-state rng)))
        (let [walk-fn (walk-fns walk-name) ; remaining arg is initial location [walk-name is a string, so can't be first]
              [n-segments lengths found] (time (run-and-collect walk-fn init-loc-fn
-                                                               (params :env-foodspot-coords-fn)
+                                                               (params :foodspot-coords-fn)
                                                                walks-per-fn))
              n-found (count (keep identity found))
              total-length (reduce + lengths)
