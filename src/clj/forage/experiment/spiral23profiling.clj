@@ -10,7 +10,7 @@
 ;; THIS VERSION has multiple targets at the same distance from origin.
 ;;
 (ns forage.experiment.spiral23profiling
-  (:require ;[criterium.core :as crit]
+  (:require [criterium.core :as crit]
             [clj-async-profiler.core :as prof]
             ;[clojure.math :as cmath]
             [utils.math :as um]
@@ -48,8 +48,8 @@
 ;;
 ;; See notes/forage/models/spiralplan23.md .
 
-
-(def default-dirname "../../data.foraging/forage/spiral23/")
+(def homedir (System/getenv "HOME"))
+(def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral23joinr/"))
 
 (def half-size  10000) ; half the full width of the env
 (def maxpathlen (* 100 half-size)) ; max length of an entire continuous search path
@@ -135,7 +135,10 @@
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
-  (partial env/perc-foodspots-exactly env (params :perc-radius)))
+  (fn [^double x ^double y]
+    (env/perc-foodspots-exactly env (params :perc-radius) x y)))
+;; Doesn't work with joinr's optimization of swap-args-fn:
+;  (partial env/perc-foodspots-exactly env (params :perc-radius))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -307,8 +310,8 @@
   (def walks-per-fn 1000)
   (def walks-per-fn-jit-warmup (/ walks-per-fn 2))
 
+  ;; CLJ-ASYNC-PROFILER
   ;; THEN GO FIND THE FLAMEGRAPH FILE(s) IN /tmp/clj-async-profiler/results
-
   ;; SPIRAL COMPOSITE WALKS:
   (time (prof/profile
           (def mu1-spiral-data-and-rng
@@ -355,7 +358,53 @@
                 (time (fr/walk-experiments (update params :basename #(str % "mu25")) mu25-walk-fns walks-per-fn seed))))))
 
 
+
+
 )
+
+(comment
+  ;; Criterium tests
+
+  (def walks-per-fn 100)
+  (def seed -7370724773351240133)
+  (def rng (r/make-well19937 seed))
+  (def initial-state (r/get-state rng))
+
+  (time
+  (crit/quick-bench ; will run at least 60 iterations
+    (do
+      ;; These setup calls are needed to make each Criterium run the same.
+      ;; On my MBP the average time added by them is 2.859466 µs, i.e. < 3/1,000,000 second.
+      (r/set-state rng initial-state)
+      (let [mu2-walk-fns
+            {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
+             "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
+             "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
+             "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)}]
+      (fr/walk-experiments (update params :basename #(str % "mu2"))
+                           mu2-walk-fns walks-per-fn seed rng)))))
+
+
+  ;; How much overhead does the setup add?
+  (crit/quick-bench
+    (do
+      (r/set-state rng initial-state)
+      (let [mu2-walk-fns
+            {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
+             "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
+             "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
+             "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)}]
+        mu2-walk-fns)))
+  ; eval (effective-root-form): (crit/quick-bench (do (r/set-...
+  ; (out) Evaluation count : 242370 in 6 samples of 40395 calls.
+  ; (out)              Execution time k2.859466 µs
+  ; (out)     Execution time std-deviation : 259.528239 ns
+  ; (out)    Execution time lower quantile : 2.639472 µs ( 2.5%)
+  ; (out)    Execution time upper quantile : 3.239725 µs (97.5%)
+  ; (out)                    Overhead used : 6.026528 ns
+
+)
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
