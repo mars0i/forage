@@ -19,6 +19,7 @@
         ;com.taoensso/nippy {:mvn/version "3.1.1"} ; for preventing a problem with clerk's use of nippy
         metasoarous/oz {:mvn/version "2.0.0-alpha5"}
         cljplot/cljplot {:mvn/version "0.0.2a-SNAPSHOT"} ; also by generateme
+        structural/structural {:mvn/version "0.2.0-SNAPSHOT"}
         mason/mason {:mvn/version "21"}
         }
  :aliases {:nrepl-server {:extra-deps {nrepl/nrepl {:mvn/version "1.0.0"} ; see note above
