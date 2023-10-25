@@ -125,8 +125,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MIN POINT ON SEGMENT
 ;; Functions for calculating the point on a line segment with the mininum
-;; distance to another point.  See distanceToAlineSegment.md for a derivation
-;; of the calculation.
+;; distance to another point.  
+;; See distanceToAlineSegment.md for derivation.
 
 (defn on-segment?
   "Returns true iff (p,q) is on the line segment from (x0,y0) to (x1,y1),
