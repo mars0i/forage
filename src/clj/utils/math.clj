@@ -8,8 +8,8 @@
               [clojure.core :as cc] ; to replace fastmath macros in reduce, map, etc.
               [clojure.string :as st]))
 
-;(set! *warn-on-reflection* true)
-;(set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
 
 (fm/use-primitive-operators)
 
@@ -60,6 +60,20 @@
    (+ (* y (cos theta))
       (* x (sin theta)))])
 
+;; Implements $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\;$  given $\;ax^2 + bx + c = 0$.
+;; (If both results are routinely needed inside a tight loop, consider making 
+;; a version of this function that returns both of them.)
+(defn quadratic-formula
+  "Returns the result of the quadratic formula applied to the coefficients in
+  ax^2 + bx + c = 0.  plus-or-minus should be one of the two functions: + - ."
+  [plus-or-minus ^double a ^double b ^double c]
+  (let [root-part (sqrt (- (* b b) (* 4 a c)))
+        negb (- b)
+        a2 (* 2 a)]
+    (/ (double (plus-or-minus negb root-part)) a2)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; BASIC LINEAR GEOMETRY FUNCTIONS
 
 (defn distance-2D
   "Computes distance between two-dimensional points [x0 y0] and [x1 y1]
@@ -78,18 +92,79 @@
   (sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
 
 
-;; Implements $x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\;$  given $\;ax^2 + bx + c = 0$.
-;; (If both results are routinely needed inside a tight loop, consider making 
-;; a version of this function that returns both of them.)
-(defn quadratic-formula
-  "Returns the result of the quadratic formula applied to the coefficients in
-  ax^2 + bx + c = 0.  plus-or-minus should be one of the two functions: + - ."
-  [plus-or-minus ^double a ^double b ^double c]
-  (let [root-part (sqrt (- (* b b) (* 4 a c)))
-        negb (- b)
-        a2 (* 2 a)]
-    (/ (plus-or-minus negb root-part) a2)))
+(defn slope-from-coords
+  "Given a pair of points on a line, return its slope.  This is also the
+  vector direction from the first point to the second.  If the line is
+  vertical, returns ##Inf (infinity) to indicate that."
+  [[^double x1 ^double y1] [^double x2 ^double y2]]
+  (if (== x1 x2)
+    ##Inf ; infinity is what division below would give for the vertical slope
+    (/ (- y2 y1) (- x2 x1))))
 
+(defn slope-from-coords*
+  "Given a pair of points on a line, return its slope.  This is also the
+  vector direction from the first point to the second.  If the line is
+  vertical, returns ##Inf (infinity) to indicate that."
+  [^double x1 ^double y1 ^double x2 ^double y2]
+  (if (== x1 x2)
+    ##Inf ; infinity is what division below would give for the vertical slope
+    (/ (- y2 y1) (- x2 x1))))
+
+;; y = mx + b  so  b = y - mx
+(defn intercept-from-slope
+  "Given a slope and a point on a line, return the line's y intercept."
+  [^double slope [^double x ^double y]]
+  (- y (* slope x)))
+
+(defn intercept-from-slope*
+  "Given a slope and a point on a line, return the line's y intercept."
+  [^double slope ^double x ^double y]
+  (- y (* slope x)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MIN POINT ON SEGMENT
+;; Functions for calculating the point on a line segment with the mininum
+;; distance to another point.  See distanceToAlineSegment.md for a derivation
+;; of the calculation.
+
+(defn on-segment?
+  "Returns true iff (p,q) is on the line segment from (x0,y0) to (x1,y1),
+  inclusive.  All scalars should be doubles."
+  [x0 y0 x1 y1 p q]
+  (and (<= ^double x0 ^double p ^double x1)
+       (<= ^double y0 ^double q ^double y1)))
+
+(defn min-point-on-line
+  "Given a line with slope m and y-intercept b, return the point on the
+  line with the minimum distance to point (p,q)."
+  [^double m ^double b ^double p ^double q]
+  (let [x (/ (- (* m (- b q))
+                p)
+             (+ 1 (* m m)))
+        y (+ (* m x) q)]
+    [x y]))
+
+(defn min-point-on-segment
+  "Given a line segment from (x0,y0) through (x1,y1), with slope m and
+  y-intercept b, return the point on the segment with minimum distance to
+  point (p,q).  This will be one of the endpoints if the minimum point is
+  not on the segment.  If the slope m and intercept b aren't provided,
+  they'll be calculated from the two endpoints."
+  ([x0 y0 x1 y1 p q]
+   (let [m (slope-from-coords* x0 x0 x1 y1)
+         b (intercept-from-slope* m x0 y0)]
+     (min-point-on-segment x0 y0 x1 y1 m b p q)))
+  ([x0 y0 x1 y1 m b p q]
+   (let [min-pt (min-point-on-line m b p q)
+         min-x (min-pt 0)
+         min-y (min-pt 1)]
+     (cond (on-segment? x0 y0 x1 y1 min-x min-y) [min-x min-y]
+           (< (distance-2D* x0 y0 min-x min-y)
+              (distance-2D* x1 y1 min-x min-y)) [x0 x0] ; the min point is closer to (x0,y0)
+           :else [x1 y1]))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn bool-to-bin
   "Returns 1 if x is truthy, 0 if it's falsey."
@@ -115,21 +190,6 @@
 ;  "Returns true if and only if x is ##NaN."
 ;  [x]
 ;  (Double/isNaN x))
-
-(defn slope-from-coords
-  "Given a pair of points on a line, return its slope.  This is also the
-  vector direction from the first point to the second.  If the line is
-  vertical, returns ##Inf (infinity) to indicate that."
-  [[^double x1 ^double y1] [^double x2 ^double y2]]
-  (if (== x1 x2)
-    ##Inf ; infinity is what division below would give for the vertical slope
-    (/ (- y2 y1) (- x2 x1))))
-
-;; y = mx + b  so  b = y - mx
-(defn intercept-from-slope
-  "Given a slope and a point on a line, return the line's y intercept."
-  [^double slope [^double x ^double y]]
-  (- y (* slope x)))
 
 ;; CONSIDER REPLACING WITH SIMILAR FUNCTIONS IN fastmath
 (defn equalish?
