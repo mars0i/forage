@@ -34,17 +34,19 @@ $$(x^2 -2p x + p^2) + ([mx+b]^2 -2q[mx+b] + q^2) =$$
 
 $$(x^2 -2p x + p^2) + (m^2x^2 + 2mbx + b^2 - 2mqx - 2qb + q^2) =$$
 
-$$(m^2+1)x^2 - 2(mb-mq-p)x + (p^2+b^2-2qb+q^2)$$
+$$(m^2+1)x^2 + 2(mb-mq-p)x + (p^2+b^2-2qb+q^2)$$
 
 A minimum or maximum occurs when the first derivative is $0$:
 
-$$2(m^2+1)x - 2(mb-mq-p) = 0$$
+$$2(m^2+1)x + 2(mb-mq-p) = 0$$
 
 i.e. when 
 
-$$x = \frac{mb-mq-p}{m^2+1}$$
+$$x = \frac{p + mq - mb}{m^2+1}$$
 
-This is p minumum since the second derivative is positive when
+If you think about what this minimization looks like it's obvious
+that the zero of the derivative is a minimum, but let's check.
+This is a minumum since the second derivative is positive when
 
 $$2(m^2+1) > 0$$
 
@@ -56,15 +58,15 @@ and since $m$ is real, $m^2 \ge 0$.
 
 So the minum point occurs when
 
-$$x = \frac{m(b-q)-p}{m^2+1}$$
+$$x = \frac{m(q-b)+p}{m^2+1}$$
 
 and 
 
-$$y \;=\; mx+q \;=\; \frac{m^2(b-q) - mp}{m^2+1} + q$$
+$$y \;=\; mx+b \;=\; \frac{m^2(q-b) + mp}{m^2+1} + b$$
 
 i.e. the minimum point on the line is
 
-$$\left(\frac{m(b-q)-p}{m^2+1} \;,\; \frac{m[m(b-q) - p]}{m^2+1} + q\right)$$
+$$\left(\frac{m(q-b)+p}{m^2+1} \;,\; \frac{m[m(q-b)+p]}{m^2+1} + b\right)$$
 
 where $m$ is the slope, $c$ is the $y$ intercept, and $(p,q)$ is
 the point to which we wanted the minimum distance.
@@ -81,7 +83,7 @@ $$x_0 \;\le\; \frac{m(b-q)-p}{m^2+1} \;\le\; x_1$$
 
 and
 
-$$y_0 \;\le\; \frac{m^2(b-q) - mp}{m^2+1} + q \;\le\; y_1$$
+$$y_0 \;\le\; \frac{m^2(b-q) - mp}{m^2+1} + b \;\le\; y_1$$
 
 ---
 
