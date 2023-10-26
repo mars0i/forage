@@ -135,14 +135,16 @@
   (and (<= ^double x0 ^double p ^double x1)
        (<= ^double y0 ^double q ^double y1)))
 
+;; FIXME NOT RIGHT  I think my derivation in the md file is wrong.
 (defn min-point-on-line
   "Given a line with slope m and y-intercept b, return the point on the
   line with the minimum distance to point (p,q)."
   [^double m ^double b ^double p ^double q]
-  (let [x (/ (- (* m (- b q))
-                p)
-             (+ 1 (* m m)))
+  (prn m b p q) ; DEBUG
+  (let [x (/ (+ (* m (- q b)) p)
+             (+ (* m m) 1))
         y (+ (* m x) q)]
+    (prn x y) ; DEBUG
     [x y]))
 
 (defn min-point-on-segment
@@ -159,10 +161,29 @@
    (let [min-pt (min-point-on-line m b p q)
          min-x (min-pt 0)
          min-y (min-pt 1)]
+     (println min-pt (on-segment? x0 y0 x1 y1 min-x min-y)) ; DEBUG
      (cond (on-segment? x0 y0 x1 y1 min-x min-y) [min-x min-y]
            (< (distance-2D* x0 y0 min-x min-y)
               (distance-2D* x1 y1 min-x min-y)) [x0 x0] ; the min point is closer to (x0,y0)
            :else [x1 y1]))))
+
+(comment
+  (min-point-on-segment 0 0
+                        5 5
+                        1 0
+                        2 2)
+
+  (require '[forage.core.walks :as w])
+  (require '[utils.random :as r])
+  (def seed 1234567890123456)
+  (def rng (r/make-well19937 seed))
+  (def levy-vecs (w/make-levy-vecs rng (r/make-powerlaw rng 1 1.25) 5 100)) ; an infinite seq
+  (def maxlen 200)
+  (def walk (walk-stops [0 0] (vecs-upto-len maxlen levy-vecs))) ; seq of points summing to maxlen
+  (count walk) 
+
+)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
