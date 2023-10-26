@@ -128,7 +128,7 @@
 ;; distance to another point.  
 ;; See distanceToAlineSegment.md for derivation.
 
-(defn on-segment?
+(defn on-seg?
   "Returns true iff (p,q) is on the line segment from (x0,y0) to (x1,y1),
   inclusive.  All scalars should be doubles."
   [x0 y0 x1 y1 p q]
@@ -147,7 +147,7 @@
     ;(prn x y) ; DEBUG
     [x y]))
 
-(defn min-pt-on-segment
+(defn min-pt-on-seg
   "Given a line segment from (x0,y0) through (x1,y1), with slope m and
   y-intercept b, return the point on the segment with minimum distance to
   point (p,q).  This will be one of the endpoints if the minimum point is
@@ -156,20 +156,20 @@
   ([x0 y0 x1 y1 p q]
    (let [m (slope-from-coords* x0 x0 x1 y1)
          b (intercept-from-slope* m x0 y0)]
-     (min-pt-on-segment x0 y0 x1 y1 m b p q)))
+     (min-pt-on-seg x0 y0 x1 y1 m b p q)))
   ([x0 y0 x1 y1 m b p q]
    (let [min-pt (min-pt-on-line m b p q)
          min-x (min-pt 0)
          min-y (min-pt 1)]
-     ;(println min-pt (on-segment? x0 y0 x1 y1 min-x min-y)) ; DEBUG
-     (cond (on-segment? x0 y0 x1 y1 min-x min-y) [min-x min-y]
+     ;(println min-pt (on-seg? x0 y0 x1 y1 min-x min-y)) ; DEBUG
+     (cond (on-seg? x0 y0 x1 y1 min-x min-y) [min-x min-y]
            (< (distance-2D* x0 y0 min-x min-y)
               (distance-2D* x1 y1 min-x min-y)) [x0 x0] ; the min point is closer to (x0,y0)
            :else [x1 y1]))))
 
 (comment
   (min-pt-on-line 1 0 2 2)
-  (min-pt-on-segment 0 0 5 5 3 2)
+  (min-pt-on-seg 0 0 5 5 3 2)
 
   (require '[utils.random :as r])
   (require '[forage.core.walks :as w])
@@ -187,7 +187,7 @@
   (def p 25)
   (def q 50)
   (def env (env/make-env 5 170 [[p q]]))
-  (def min-pts (map (fn [[x0 y0] [x1 y1]] (min-pt-on-segment x0 y0 x1 y1 p q))
+  (def min-pts (map (fn [[x0 y0] [x1 y1]] (min-pt-on-seg x0 y0 x1 y1 p q))
                     walk walk-))
   ;; TODO add min-pts to the plot:
   (oz/view! (h/vega-envwalk-plot env 600 0.75 2 walk :foodspots-on-top? true))
