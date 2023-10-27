@@ -175,6 +175,8 @@
   (require '[forage.core.walks :as w])
   (require '[forage.core.env-mason :as env])
   (require '[forage.viz.hanami :as h])
+  (require '[aerial.hanami.common :as hc])
+  (require '[aerial.hanami.templates :as ht])
   (require '[oz.core :as oz])
   (oz/start-server!)
 
@@ -184,14 +186,29 @@
   (def levy-vecs (w/make-levy-vecs rng (r/make-powerlaw rng 1 1.25) 5 100)) ; an infinite seq
   (def walk (w/walk-stops [80 80] (w/vecs-upto-len maxlen levy-vecs))) ; seq of points summing to maxlen
   (def walk- (rest walk))
-  (def p 25)
-  (def q 50)
+  (def p 35)
+  (def q 70)
   (def env (env/make-env 5 170 [[p q]]))
-  (def min-pts (map (fn [[x0 y0] [x1 y1]] (min-pt-on-seg x0 y0 x1 y1 p q))
-                    walk walk-))
-  ;; TODO add min-pts to the plot:
-  (oz/view! (h/vega-envwalk-plot env 600 0.75 2 walk :foodspots-on-top? true))
+  (def min-pts (map (fn [[x0 y0] [x1 y1]] (min-pt-on-seg x0 y0 x1 y1 p q)) walk walk-))
+  (def vega-walk (h/add-point-labels "walk" walk))
+  (def vega-min-pts (h/add-point-labels "min-pt" min-pts))
+  (def vega-min-pts-plus-food (into vega-min-pts [{"x" p "y" q "label" "food"}]))
+  (def env-plot (h/vega-env-plot env 600 1.5))
+  (def walk-ploj (h/vega-walk-plot 600 130 1.0 vega-walk))
+  (def min-pts-plot (h/vega-food-plot vega-min-pts 120 600 1.0))
+  (def plot (h/vega-food-plot vega-min-pts-plus-food 120 600 1.5))
+  (def env-plot2 (h/vega-env-plot env 600 1.5 :extra-pts vega-min-pts))
+  (def plot (h/vega-envwalk-plot env 600 1.0 1.5 walk :env-plot env-plot2))
+  (oz/view! plot)
+  (oz/view! env-plot)
+  (oz/view! walk-plot)
+  (oz/view! min-pts-plot)
 
+  ;(def plot (h/vega-envwalk-plot env 600 0.75 2 walk :foodspots-on-top? true))
+  ;(def plot2 (hc/xform (ht/layer-chart :LAYER (list min-pts-plot walk-plot env-plot))))
+  ;(def plot (h/vega-walk-plot 600 170 0.75 (concat vega-min-pts vega-walk)))
+  ;(def plot (merge env-plot walk-plot min-pts-plot))
+  ;(def plot (merge env-plot min-pts-plot))
 
 
 )
