@@ -272,11 +272,13 @@
   plot-dim is the Vega-Lite dimension.  display-radius is the
   Vega-Lite size for foodspots in perc-radius units: a display-radius
   of 1 is the perc-radius of a forager."
-  [env plot-dim display-radius]
-  (vega-food-plot (add-point-labels "food" (env/env-foodspot-coords env))
-                  (env/env-size env)
-                  plot-dim
-                  display-radius))
+  [env plot-dim display-radius & {:keys [extra-pts]}]
+  (let [food (add-point-labels "food" (env/env-foodspot-coords env))
+        food (if extra-pts (concat food extra-pts))]
+    (vega-food-plot food
+                    (env/env-size env)
+                    plot-dim
+                    display-radius)))
 
 ;; TODO add a nice header
 (defn vega-envwalk-plot
@@ -290,8 +292,8 @@
   top of the walk paths; otherwise walk paths will be appear on top of
   foodspots. (Note that stroke-width uses Vega-Lite units, whereas
   display-radius uses units based on simulation values.)"
-  [env plot-dim stroke-width display-radius walk-stops & {:keys [foodspots-on-top?]}]
-  (let [env-plot (vega-env-plot env plot-dim display-radius)
+  [env plot-dim stroke-width display-radius walk-stops & {:keys [foodspots-on-top? env-plot]}]
+  (let [env-plot (or env-plot (vega-env-plot env plot-dim display-radius))
         data-dim (env/env-size env)
         toroidal-walk (tor/toroidal-to-vega-lite "piece" (tor/wrap-path 0 data-dim walk-stops))
         walk-plot (vega-walk-plot plot-dim data-dim stroke-width toroidal-walk)
