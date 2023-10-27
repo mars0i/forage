@@ -96,19 +96,19 @@
   "Given a pair of points on a line, return its slope.  This is also the
   vector direction from the first point to the second.  If the line is
   vertical, returns ##Inf (infinity) to indicate that."
-  [[^double x1 ^double y1] [^double x2 ^double y2]]
-  (if (== x1 x2)
+  [[^double x0 ^double y0] [^double x1 ^double y1]]
+  (if (== x0 x1)
     ##Inf ; infinity is what division below would give for the vertical slope
-    (/ (- y2 y1) (- x2 x1))))
+    (/ (- y1 y0) (- x1 x0))))
 
 (defn slope-from-coords*
   "Given a pair of points on a line, return its slope.  This is also the
   vector direction from the first point to the second.  If the line is
   vertical, returns ##Inf (infinity) to indicate that."
-  [^double x1 ^double y1 ^double x2 ^double y2]
-  (if (== x1 x2)
+  [^double x0 ^double y0 ^double x1 ^double y1]
+  (if (== x0 x1)
     ##Inf ; infinity is what division below would give for the vertical slope
-    (/ (- y2 y1) (- x2 x1))))
+    (/ (- y1 y0) (- x1 x0))))
 
 ;; y = mx + b  so  b = y - mx
 (defn intercept-from-slope
@@ -127,6 +127,8 @@
 ;; Functions for calculating the point on a line segment with the mininum
 ;; distance to another point.  
 ;; See distanceToAlineSegment.md for derivation.
+
+;; TODO Do I have to provide special handling for vertical lines?
 
 (defn on-seg?
   "Returns true iff (p,q) is on the line segment from (x0,y0) to (x1,y1),
@@ -154,7 +156,7 @@
   not on the segment.  If the slope m and intercept b aren't provided,
   they'll be calculated from the two endpoints."
   ([x0 y0 x1 y1 p q]
-   (let [m (slope-from-coords* x0 x0 x1 y1)
+   (let [m (slope-from-coords* x0 y0 x1 y1)
          b (intercept-from-slope* m x0 y0)]
      (min-pt-on-seg x0 y0 x1 y1 m b p q)))
   ([x0 y0 x1 y1 m b p q]
@@ -164,7 +166,7 @@
      ;(println min-pt (on-seg? x0 y0 x1 y1 min-x min-y)) ; DEBUG
      (cond (on-seg? x0 y0 x1 y1 min-x min-y) [min-x min-y]
            (< (distance-2D* x0 y0 min-x min-y)
-              (distance-2D* x1 y1 min-x min-y)) [x0 x0] ; the min point is closer to (x0,y0)
+              (distance-2D* x1 y1 min-x min-y)) [x0 y0] ; the min point is closer to (x0,y0)
            :else [x1 y1]))))
 
 (comment
@@ -186,23 +188,56 @@
   (def maxlen 200)
   (def levy-vecs (w/make-levy-vecs rng (r/make-powerlaw rng 1 1.25) 5 100)) ; an infinite seq
   (def walk (w/walk-stops [80 80] (w/vecs-upto-len maxlen levy-vecs))) ; seq of points summing to maxlen
+  (count walk) ; 9
+
+  ;; Bundled test plot construction function
+  (defn testmin
+    "Walk is a series of connected line segments. p and q are to ber
+    coordinates of a single foodspot.  Point colors are labeled with
+    endpoints of the line segment the point is supposed to correspond to
+    it--i.e. that's supposed to be the point on the segment that has
+    minimum distance to the foodspot."
+    [walk p q]
+    (let [walk- (rest walk)
+          env (env/make-env 5 170 [[p q]])
+          vega-walk (h/add-point-labels "walk" walk)
+          vega-min-pts (map (fn [[x0 y0] [x1 y1]]
+                              (let [[x y] (min-pt-on-seg x0 y0 x1 y1 p q)]
+                                {"x" x
+                                 "y" y
+                                 "label" (str (mapv round [x0 y0 x1 y1]))}))
+                            walk walk-)
+          env-plot2 (h/vega-env-plot env 600 1.5 :extra-pts vega-min-pts)
+          plot (h/vega-envwalk-plot env 600 1.0 1.5 walk :env-plot env-plot2)]
+      plot))
+
+  (oz/view! (testmin walk 97 118)) ; mostly working?
+  (oz/view! (testmin (take 2 (drop 4 walk)) 97 118)) ; mostly working?
+  ;; These don't seem to be working correctly. Why?:
+  (def seg (take 2 (drop 4 walk)))
+  (oz/view! (testmin seg 97 118))
+  (def seg* [[(first (first seg)) 115] (second seg)])
+  (def seg* [[(first (first seg)) 15] (second seg)])
+  (oz/view! (testmin seg* 97 118))
+
+
+  ;; standalone
   (def walk- (rest walk))
   (def p 35)
   (def q 70)
-  (def env (env/make-env 5 170 [[p q]]))
   (def vega-walk (h/add-point-labels "walk" walk))
   (def min-pts (map (fn [[x0 y0] [x1 y1]] (min-pt-on-seg x0 y0 x1 y1 p q)) walk- walk))
   (def min-pts (map (fn [[x0 y0] [x1 y1]] (min-pt-on-seg x0 y0 x1 y1 p q)) walk walk-))
-  ;(def min-pts (map (fn [[x0 y0] [x1 y1]] (min-pt-on-seg x0 y0 x1 y1 p q)) walk walk))
   (def vega-min-pts (h/add-point-labels "min-pt" min-pts))
-  ;(def vega-min-pts-plus-food (into vega-min-pts [{"x" p "y" q "label" "food"}]))
-  ;(def env-plot (h/vega-env-plot env 600 1.5))
-  ;(def min-pts-plot (h/vega-food-plot vega-min-pts 120 600 1.0))
-  ;(def plot (h/vega-food-plot vega-min-pts-plus-food 120 600 1.5))
   (def env-plot2 (h/vega-env-plot env 600 1.5 :extra-pts vega-min-pts))
   (def plot (h/vega-envwalk-plot env 600 1.0 1.5 walk :env-plot env-plot2))
   (oz/view! plot)
 
+  ;(def min-pts (map (fn [[x0 y0] [x1 y1]] (min-pt-on-seg x0 y0 x1 y1 p q)) walk walk))
+  ;(def vega-min-pts-plus-food (into vega-min-pts [{"x" p "y" q "label" "food"}]))
+  ;(def env-plot (h/vega-env-plot env 600 1.5))
+  ;(def min-pts-plot (h/vega-food-plot vega-min-pts 120 600 1.0))
+  ;(def plot (h/vega-food-plot vega-min-pts-plus-food 120 600 1.5))
   ;(oz/view! env-plot)
   ;(oz/view! min-pts-plot)
   ;(def walk-plot (h/vega-walk-plot 600 130 1.0 vega-walk))
