@@ -170,6 +170,7 @@
 (comment
   (min-pt-on-line 1 0 2 2)
   (min-pt-on-seg 0 0 5 5 3 2)
+  (min-pt-on-seg 0 0 1 5 3 2)
 
   (require '[utils.random :as r])
   (require '[forage.core.walks :as w])
@@ -180,7 +181,7 @@
   (require '[oz.core :as oz])
   (oz/start-server!)
 
-  (def seed 1234567890123456)
+  (def seed 1334567890123456)
   (def rng (r/make-well19937 seed))
   (def maxlen 200)
   (def levy-vecs (w/make-levy-vecs rng (r/make-powerlaw rng 1 1.25) 5 100)) ; an infinite seq
