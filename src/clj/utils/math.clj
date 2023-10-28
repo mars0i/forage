@@ -200,7 +200,7 @@
     [walk p q]
     (let [walk- (rest walk)
           env (env/make-env 5 170 [[p q]])
-          vega-walk (h/add-point-labels "walk" walk)
+          ;; vega-walk (h/add-point-labels "walk" walk)
           vega-min-pts (map (fn [[x0 y0] [x1 y1]]
                               (let [[x y] (min-pt-on-seg x0 y0 x1 y1 p q)]
                                 {"x" x
