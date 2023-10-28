@@ -39,6 +39,17 @@
   that are actually vertical, but don't appear so because of float slop."
   1.0)
 
+(def ^:const +steep-slope-inf+ 
+  "If a slope is greater than this value, the x and y coordinates will
+  be swapped temporarily and then unswapped later.  This is a way to
+  deal with both truly vertical slopes (slope = ##Inf) and slopes that are
+  so close to vertical that moving through a line segment with this slope
+  will be problematic.  It also sidesteps the problem of identifying slopes
+  that are actually vertical, but don't appear so because of float slop."
+  1.0)
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
 
