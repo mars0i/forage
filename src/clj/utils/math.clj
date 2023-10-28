@@ -215,6 +215,7 @@
 ;; Version 3, like v2, but when a seg goes from left to right, reverses
 ;; which endpoint is considered the minimum.  This caused problems in
 ;; application of v1 and v2.
+#_
 (defn near-pt-on-seg
   "Given a line segment from (x0,y0) through (x1,y1), with slope m and
   y-intercept b, return the point on the segment with minimum distance to
@@ -247,6 +248,56 @@
            (> proj-x right-x) [right-x right-y]
            :else [proj-x proj-y]))))
 
+;; V.4 
+;; Notes on code below:
+;; Since proj-pt is a projection onto the line y = mx + b, if it's
+;; not in the interval of the line segment, its x coord is < the 
+;; left endpoint of the segment, or > the right endpoint of the 
+;; segment. No need to test the y coordinates as well--unless the 
+;; line is vertical or close to vertical, in which case testing the 
+;; y coordinate alone is enough, but in that case we swap x and y
+;; first: So if the x coordinate is
+;; beyond the x ends of the line segment, choose to use the nearest 
+;; endpoint rather than the projection.
+(defn near-pt-on-seg
+  "Given a line segment from (x0,y0) through (x1,y1), with slope m and
+  y-intercept b, return the point on the segment with minimum distance to
+  point (p,q).  This will be the projection onto the line, or one of the
+  endpoints if the projected point is not on the segment.  If the slope m
+  and intercept b aren't provided, they'll be calculated from the two
+  endpoints."
+  ([x0 y0 x1 y1 p q]
+   (let [m (slope-from-coords* x0 y0 x1 y1)
+         b (intercept-from-slope* m x0 y0)]
+     (near-pt-on-seg x0 y0 x1 y1 m b p q)))
+  ([x0 y0 x1 y1 m b p q]
+   (let [steep (or (infinite? m)
+                   (> (abs m) +steep-slope-inf+))
+         ^double m m ; get rid of reflection warning on next line
+         m (if steep (/ m) m)
+         ^doubles data (if steep  ; based on cnuernber's version of walk.clj
+                         (hamf/double-array [y0 x0 y1 x1]) ; swap x and y
+                         (hamf/double-array [x0 y0 x1 y1])) ; make no change
+         x0 (aget data 0)
+         y0 (aget data 1)
+         x1 (aget data 2)
+         y1 (aget data 3)
+         proj-pt (project-pt-on-line m b p q)
+         ^double proj-x (proj-pt 0)
+         ^double proj-y (proj-pt 1)
+         ;; IS THERE A BETTER WAY?:  e.g. choose the comparison operator. cf. joinr's and cnuernber's walks.clj
+         left-x (min (double x0) (double x1))
+         right-x (max (double x0) (double x1)) ; use prev result to determine this one? 
+         left-y (if (= left-x x0) y0 y1) ; is there a better way?  TODO
+         right-y (if (= right-x x0) y0 y1) ; see joinr's and cnuernber's walks.clj
+         near-pt (cond (< proj-x left-x)  [left-x left-y] ; see comment before the function
+                       (> proj-x right-x) [right-x right-y]
+                       :else [proj-x proj-y])]
+     (if steep
+       [(near-pt 0) (near-pt 1)]
+       near-pt))))
+
+
 (comment
   (project-pt-on-line 1 0 2 2)
   (near-pt-on-seg 0 0 5 5 3 2)
@@ -278,7 +329,6 @@
     [walk p q]
     (let [walk- (rest walk)
           env (env/make-env 5 170 [[p q]])
-          ;; vega-walk (h/add-point-labels "walk" walk)
           vega-min-pts (map (fn [[x0 y0] [x1 y1]]
                               (let [[x y] (near-pt-on-seg x0 y0 x1 y1 p q)]
                                 {"x" x
