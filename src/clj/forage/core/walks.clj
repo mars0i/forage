@@ -25,20 +25,13 @@
 ;;     and then create the coordinate pair sequences as you normally would.
 
 
-;; Setting this to 1 would give us symmetry between the swapped and
+;; Setting this to 1 gives us symmetry between the swapped and
 ;; unswapped coordinates.  Seems as if it would improve performance
 ;; slightly to have a higher value, since then the x,y swap operations
 ;; would happen less often.  However, benchmarking shows otherwise.
-;; See steep-slope-inf-benchmarks.txt.
-(def steep-slope-inf
-  "If a slope is greater than this value, the x and y coordinates will
-  be swapped temporarily and then unswapped later.  This is a way to
-  deal with both truly vertical slopes (slope = ##Inf) and slopes that are
-  so close to vertical that moving through a line segment with this slope
-  will be problematic.  It also sidesteps the problem of identifying slopes
-  that are actually vertical, but don't appear so because of float slop."
-  1.0)
-
+;; See steep-slope-inf-benchmarks.txt.  (That was from an early stage.
+;; I haven't tried changing this value since I started optimizing in 
+;; October 2023.)
 (def ^:const +steep-slope-inf+ 
   "If a slope is greater than this value, the x and y coordinates will
   be swapped temporarily and then unswapped later.  This is a way to
@@ -488,7 +481,7 @@
   [look-fn eps [x1 y1] [x2 y2]]
   (let [^double slope (m/slope-from-coords [x1 y1] [x2 y2])
         steep (or (infinite? slope)
-                  (> (abs slope) (double steep-slope-inf)))
+                  (> (abs slope) +steep-slope-inf+))
         slope (if steep (/ slope) slope)
         look-fn (if steep (swap-args-fn look-fn) look-fn)
         [[^double x1 ^double y1] [^double x2 ^double y2]] (if steep
