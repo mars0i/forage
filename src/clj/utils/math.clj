@@ -192,7 +192,7 @@
 
   ;; Bundled test plot construction function
   (defn testmin
-    "Walk is a series of connected line segments. p and q are to ber
+    "Walk is a series of connected line segments. p and q are to be
     coordinates of a single foodspot.  Point colors are labeled with
     endpoints of the line segment the point is supposed to correspond to
     it--i.e. that's supposed to be the point on the segment that has
