@@ -13,6 +13,16 @@
 
 (fm/use-primitive-operators)
 
+(def ^:const +steep-slope-inf+ 
+  "If a slope is greater than this value, the x and y coordinates will
+  be swapped temporarily and then unswapped later.  This is a way to
+  deal with both truly vertical slopes (slope = ##Inf) and slopes that are
+  so close to vertical that moving through a line segment with this slope
+  will be problematic.  It also sidesteps the problem of identifying slopes
+  that are actually vertical, but don't appear so because of float slop."
+  1.0)
+
+
 (defn remove-decimal-pt
   "Given a number, returns a (base-10) string representation of the
   number, but with any decimal point removed.  Also works on existing
@@ -158,7 +168,10 @@
   not on the segment.  If the slope m and intercept b aren't provided,
   they'll be calculated from the two endpoints."
   ([x0 y0 x1 y1 p q]
-   (let [m (slope-from-coords* x0 y0 x1 y1)
+   (let [actual-m (slope-from-coords* x0 y0 x1 y1)
+         steep (or (infinite? slope)
+                   (> (abs actual-m) +steep-slope-inf+))
+         m (if steep (/ actual-m) actual-m)
          b (intercept-from-slope* m x0 y0)]
      (near-pt-on-seg x0 y0 x1 y1 m b p q)))
   ([x0 y0 x1 y1 m b p q]
