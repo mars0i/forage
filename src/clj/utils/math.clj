@@ -5,6 +5,7 @@
               [clojure.math :as math :refer [cos sin tan atan2 sqrt round]]
               [fastmath.stats :as fstats]
               [fastmath.core :as fm]
+              [ham-fisted.api :as hamf]
               [clojure.core :as cc] ; to replace fastmath macros in reduce, map, etc.
               [clojure.string :as st]))
 
@@ -290,12 +291,10 @@
          right-x (max (double x0) (double x1)) ; use prev result to determine this one? 
          left-y (if (= left-x x0) y0 y1) ; is there a better way?  TODO
          right-y (if (= right-x x0) y0 y1) ; see joinr's and cnuernber's walks.clj
-         near-pt (cond (< proj-x left-x)  [left-x left-y] ; see comment before the function
-                       (> proj-x right-x) [right-x right-y]
-                       :else [proj-x proj-y])]
-     (if steep
-       [(near-pt 0) (near-pt 1)]
-       near-pt))))
+         near-pt (cond (< proj-x left-x)  (if steep [right-y right-x] [left-x left-y])
+                       (> proj-x right-x) (if steep [left-y left-x] [right-x right-y])
+                       :else (if steep [proj-y proj-x] [proj-x proj-y]))]
+     near-pt)))
 
 
 (comment
@@ -339,8 +338,15 @@
           plot (h/vega-envwalk-plot env 600 1.0 1.5 walk :env-plot env-plot2)]
       plot))
 
-  (oz/view! (testmin walk 97 118)) ; mostly working?
-  (oz/view! (testmin (take 2 (drop 4 walk)) 97 118)) ; mostly working?
+  ;; TODO using v4, this looks good, but there appears to be a missing projection point.
+  ;; It's missing from the third segment.  The second and third are sharing
+  ;; the same min-pt at an apex, but it shouldn't be there fore the third
+  ;; segment; there should be a projection into the middle of the segment:
+  (oz/view! (testmin walk 97 98)) ; mostly working?
+  ;; This exhibits a similar problem on 6th segment.  These are both
+  ;; somewhat vertical segments:
+  (oz/view! (testmin walk 97 138)) ; mostly working?
+  (oz/view! (testmin (take 2 (drop 2 walk)) 97 118)) ; mostly working?
   ;; These don't seem to be working correctly. Why?:
   (def seg (take 2 (drop 4 walk)))
   (oz/view! (testmin seg 97 118))
