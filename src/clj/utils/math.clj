@@ -138,7 +138,7 @@
        (<= ^double y0 ^double q ^double y1)))
 
 ;; FIXME NOT RIGHT  I think my derivation in the md file is wrong.
-(defn min-pt-on-line
+(defn project-pt-on-line
   "Given a line with slope m and y-intercept b, return the point on the
   line with the minimum distance to point (p,q)."
   [^double m ^double b ^double p ^double q]
@@ -149,7 +149,9 @@
     ;(prn x y) ; DEBUG
     [x y]))
 
-(defn min-pt-on-seg
+;; Version 1, uses on-seg?
+#_
+(defn near-pt-on-seg
   "Given a line segment from (x0,y0) through (x1,y1), with slope m and
   y-intercept b, return the point on the segment with minimum distance to
   point (p,q).  This will be one of the endpoints if the minimum point is
@@ -158,21 +160,84 @@
   ([x0 y0 x1 y1 p q]
    (let [m (slope-from-coords* x0 y0 x1 y1)
          b (intercept-from-slope* m x0 y0)]
-     (min-pt-on-seg x0 y0 x1 y1 m b p q)))
+     (near-pt-on-seg x0 y0 x1 y1 m b p q)))
   ([x0 y0 x1 y1 m b p q]
-   (let [min-pt (min-pt-on-line m b p q)
+   (let [min-pt (project-pt-on-line m b p q)
          min-x (min-pt 0)
          min-y (min-pt 1)]
      ;(println min-pt (on-seg? x0 y0 x1 y1 min-x min-y)) ; DEBUG
-     (cond (on-seg? x0 y0 x1 y1 min-x min-y) [min-x min-y]
+     (cond (on-seg? x0 y0 x1 y1 min-x min-y) [min-x min-y] ;; TODO This test is wasteful; I don't need four <= tests.
            (< (distance-2D* x0 y0 min-x min-y)  ;; TODO don't need the sqrt!
               (distance-2D* x1 y1 min-x min-y)) [x0 y0] ; the min point is closer to (x0,y0)
            :else [x1 y1]))))
 
+;; Version 2, tests x endpoints independently without using on-seg?
+#_
+(defn near-pt-on-seg
+  "Given a line segment from (x0,y0) through (x1,y1), with slope m and
+  y-intercept b, return the point on the segment with minimum distance to
+  point (p,q).  This will be one of the endpoints if the minimum point is
+  not on the segment.  If the slope m and intercept b aren't provided,
+  they'll be calculated from the two endpoints."
+  ([x0 y0 x1 y1 p q]
+   (let [m (slope-from-coords* x0 y0 x1 y1)
+         b (intercept-from-slope* m x0 y0)]
+     (near-pt-on-seg x0 y0 x1 y1 m b p q)))
+  ([x0 y0 x1 y1 m b p q]
+   (let [proj-pt (project-pt-on-line m b p q)
+         ^double proj-x (proj-pt 0)
+         ^double proj-y (proj-pt 1)]
+     ;; Since proj-pt is a projection onto the line y = mx + b, if it's
+     ;; not in the interval of the line segment, its x coord is < the 
+     ;; left endpoint of the segment, or > the right endpoint of the 
+     ;; segment. No need to test the y coordinates as well--unless the 
+     ;; line is vertical or close to vertical, in which case testing the 
+     ;; y coordinate alone is enough: TODO .  So if the x coordinate is
+     ;; beyond the x ends of the line segment, choose to use the nearest 
+     ;; endpoint rather than the projection:
+     (cond (< proj-x ^double x0) [x0 y0]
+           (> proj-x ^double x1) [x1 y1]
+           :else [proj-x proj-y]))))
+
+;; Version 3, like v2, but when a seg goes from left to right, reverses
+;; which endpoint is considered the minimum.  This caused problems in
+;; application of v1 and v2.
+(defn near-pt-on-seg
+  "Given a line segment from (x0,y0) through (x1,y1), with slope m and
+  y-intercept b, return the point on the segment with minimum distance to
+  point (p,q).  This will be the projection onto the line, or one of the
+  endpoints if the projected point is not on the segment.  If the slope m
+  and intercept b aren't provided, they'll be calculated from the two
+  endpoints."
+  ([x0 y0 x1 y1 p q]
+   (let [m (slope-from-coords* x0 y0 x1 y1)
+         b (intercept-from-slope* m x0 y0)]
+     (near-pt-on-seg x0 y0 x1 y1 m b p q)))
+  ([x0 y0 x1 y1 m b p q]
+   (let [proj-pt (project-pt-on-line m b p q)
+         ^double proj-x (proj-pt 0)
+         ^double proj-y (proj-pt 1)
+         ;; IS THERE A BETTER WAY?:  e.g. choose the comparison operator. cf. joinr's and cnuernber's walks.clj
+         left-x (min (double x0) (double x1))
+         right-x (max (double x0) (double x1)) ; use prev result to determine this one? 
+         left-y (if (= left-x x0) y0 y1) ; is there a better way?  TODO
+         right-y (if (= right-x x0) y0 y1)] ; See joinr's and cnuernber's walks.clj
+     ;; Since proj-pt is a projection onto the line y = mx + b, if it's
+     ;; not in the interval of the line segment, its x coord is < the 
+     ;; left endpoint of the segment, or > the right endpoint of the 
+     ;; segment. No need to test the y coordinates as well--unless the 
+     ;; line is vertical or close to vertical, in which case testing the 
+     ;; y coordinate alone is enough: TODO .  So if the x coordinate is
+     ;; beyond the x ends of the line segment, choose to use the nearest 
+     ;; endpoint rather than the projection:
+     (cond (< proj-x left-x)  [left-x left-y]
+           (> proj-x right-x) [right-x right-y]
+           :else [proj-x proj-y]))))
+
 (comment
-  (min-pt-on-line 1 0 2 2)
-  (min-pt-on-seg 0 0 5 5 3 2)
-  (min-pt-on-seg 0 0 1 5 3 2)
+  (project-pt-on-line 1 0 2 2)
+  (near-pt-on-seg 0 0 5 5 3 2)
+  (near-pt-on-seg 0 0 1 5 3 2)
 
   (require '[utils.random :as r])
   (require '[forage.core.walks :as w])
@@ -202,7 +267,7 @@
           env (env/make-env 5 170 [[p q]])
           ;; vega-walk (h/add-point-labels "walk" walk)
           vega-min-pts (map (fn [[x0 y0] [x1 y1]]
-                              (let [[x y] (min-pt-on-seg x0 y0 x1 y1 p q)]
+                              (let [[x y] (near-pt-on-seg x0 y0 x1 y1 p q)]
                                 {"x" x
                                  "y" y
                                  "label" (str (mapv round [x0 y0 x1 y1]))}))
@@ -218,7 +283,17 @@
   (oz/view! (testmin seg 97 118))
   (def seg* [[(first (first seg)) 115] (second seg)])
   (def seg* [[(first (first seg)) 15] (second seg)])
+  (def seg* [[(first (first seg)) 15] [65 150]])
   (oz/view! (testmin seg* 97 118))
+  ;; TODO This seems to have a problem:  (Is it just float slop??  Maybe it's the steepnees.)
+  (oz/view! (testmin (take 2 (drop 0 walk)) 97 118)) ; mostly working?
+
+  (oz/view! (testmin walk 100 78)) 
+
+  ;; Why isn't this working?  Not it, is. The projeciton is just to the
+  ;; right of the segment.
+  (def seg (take 2 (drop 4 walk)))
+  (oz/view! (testmin seg 100 78)) 
 
 
   ;; standalone
@@ -226,14 +301,14 @@
   (def p 35)
   (def q 70)
   (def vega-walk (h/add-point-labels "walk" walk))
-  (def min-pts (map (fn [[x0 y0] [x1 y1]] (min-pt-on-seg x0 y0 x1 y1 p q)) walk- walk))
-  (def min-pts (map (fn [[x0 y0] [x1 y1]] (min-pt-on-seg x0 y0 x1 y1 p q)) walk walk-))
+  (def min-pts (map (fn [[x0 y0] [x1 y1]] (near-pt-on-seg x0 y0 x1 y1 p q)) walk- walk))
+  (def min-pts (map (fn [[x0 y0] [x1 y1]] (near-pt-on-seg x0 y0 x1 y1 p q)) walk walk-))
   (def vega-min-pts (h/add-point-labels "min-pt" min-pts))
   (def env-plot2 (h/vega-env-plot env 600 1.5 :extra-pts vega-min-pts))
   (def plot (h/vega-envwalk-plot env 600 1.0 1.5 walk :env-plot env-plot2))
   (oz/view! plot)
 
-  ;(def min-pts (map (fn [[x0 y0] [x1 y1]] (min-pt-on-seg x0 y0 x1 y1 p q)) walk walk))
+  ;(def min-pts (map (fn [[x0 y0] [x1 y1]] (near-pt-on-seg x0 y0 x1 y1 p q)) walk walk))
   ;(def vega-min-pts-plus-food (into vega-min-pts [{"x" p "y" q "label" "food"}]))
   ;(def env-plot (h/vega-env-plot env 600 1.5))
   ;(def min-pts-plot (h/vega-food-plot vega-min-pts 120 600 1.0))
