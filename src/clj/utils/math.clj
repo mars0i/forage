@@ -165,7 +165,7 @@
          min-y (min-pt 1)]
      ;(println min-pt (on-seg? x0 y0 x1 y1 min-x min-y)) ; DEBUG
      (cond (on-seg? x0 y0 x1 y1 min-x min-y) [min-x min-y]
-           (< (distance-2D* x0 y0 min-x min-y)
+           (< (distance-2D* x0 y0 min-x min-y)  ;; TODO don't need the sqrt!
               (distance-2D* x1 y1 min-x min-y)) [x0 y0] ; the min point is closer to (x0,y0)
            :else [x1 y1]))))
 
