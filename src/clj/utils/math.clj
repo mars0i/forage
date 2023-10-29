@@ -14,15 +14,6 @@
 
 (fm/use-primitive-operators)
 
-(def ^:const +steep-slope-inf+ 
-  "If a slope is greater than this value, the x and y coordinates will
-  be swapped temporarily and then unswapped later.  This is a way to
-  deal with both truly vertical slopes (slope = ##Inf) and slopes that are
-  so close to vertical that moving through a line segment with this slope
-  will be problematic.  It also sidesteps the problem of identifying slopes
-  that are actually vertical, but don't appear so because of float slop."
-  1.0)
-
 
 (defn remove-decimal-pt
   "Given a number, returns a (base-10) string representation of the
@@ -157,7 +148,14 @@
 ;; distance to another point.  
 ;; See distanceToAlineSegment.md for derivation.
 
-;; TODO Do I have to provide special handling for vertical lines?
+(def ^:const +steep-slope-inf+ 
+  "If a slope is greater than this value, the x and y coordinates will
+  be swapped temporarily and then unswapped later.  This is a way to
+  deal with both truly vertical slopes (slope = ##Inf) and slopes that are
+  so close to vertical that moving through a line segment with this slope
+  will be problematic.  It also sidesteps the problem of identifying slopes
+  that are actually vertical, but don't appear so because of float slop."
+  1.0)
 
 (defn on-seg?
   "Returns true iff (p,q) is on the line segment from (x0,y0) to (x1,y1),
@@ -168,9 +166,10 @@
 
 (defn project-pt-on-line
   "Given a line with slope m and y-intercept b, return the point on the
-  line with the minimum distance to point (p,q).  Returns a Clojure vector."
+  line with the minimum distance to point (p,q).  Returns a Clojure vector.
+  Doesn't work with vertical lines (m = ##Inf), and results may be
+  questionable with nearly vertical lines (m is large)."
   [^double m ^double b ^double p ^double q]
-  ;(prn m b p q) ; DEBUG
   (let [x (/ (+ (* m (- q b)) p)
              (+ (* m m) 1))
         y (+ (* m x) b)]
@@ -179,12 +178,338 @@
 
 (defn project-pt-on-line*
   "Given a line with slope m and y-intercept b, return the point on the
-  line with the minimum distance to point (p,q).  Returns a Java array."
-  ^doubles [^double m ^double b ^double p ^double q]
+  line with the minimum distance to point (p,q).  Returns a Java array.
+  Doesn't work with vertical lines (m = ##Inf), and results may be
+  questionable with nearly vertical lines (m is large)."
+  [^double m ^double b ^double p ^double q]
   (let [x (/ (+ (* m (- q b)) p)
              (+ (* m m) 1))
         y (+ (* m x) b)]
     (hamf/double-array [x y])))
+
+;; V.6 rearranged the steep calculations
+;; Notes on code below:
+;; Since proj-pt is a projection onto the line y = mx + b, if it's
+;; not in the interval of the line segment, its x coord is < the 
+;; left endpoint of the segment, or > the right endpoint of the 
+;; segment. No need to test the y coordinates as well--unless the 
+;; line is vertical or close to vertical, in which case testing the 
+;; y coordinate alone is enough, but in that case we swap x and y
+;; first: So if the x coordinate is
+;; beyond the x ends of the line segment, choose to use the nearest 
+;; endpoint rather than the projection.
+(defn near-pt-on-seg
+  "Given a line segment from (x0,y0) through (x1,y1), with slope m and
+  y-intercept b, return the point on the segment with minimum distance to
+  point (p,q).  This will be the projection onto the line, or one of the
+  endpoints if the projected point is not on the segment.  If the slope m
+  and intercept b aren't provided, they'll be calculated from the two
+  endpoints."
+  [x0 y0 x1 y1 p q]
+  (let [m (slope-from-coords* x0 y0 x1 y1)
+        ;; If slope is too steep, work with a lipne reflected across
+        ;; y=x by reversing x and y; then swap x and y back at the end:
+        steep (or (infinite? m)
+                  (> (abs m) +steep-slope-inf+))
+        ;; This double-array stuff is supposed to be more efficient in an
+        ;; inner loop, but TODO need to test. cf. cnuernber's walk.clj and comments in Zulip.
+        ^doubles tea (if steep  ; tea is the result of steeping :-)
+                       (hamf/double-array [y0 x0 y1 x1 q p (/ m)]) ; swap x, y, etc.
+                       (hamf/double-array [x0 y0 x1 y1 p q m])) ; make no change
+        x0 (aget tea 0)
+        y0 (aget tea 1)
+        x1 (aget tea 2)
+        y1 (aget tea 3)
+        p  (aget tea 4) ; if we're flipping the line, we need to flip the target, too
+        q  (aget tea 5)
+        m  (aget tea 6)
+        new-endpts (if (< x0 x1)  ; if the segment runs from right to left, swap the endpoints
+                     (hamf/double-array [x0 y0 x1 y1])  ; unswapped
+                     (hamf/double-array [x1 y1 x0 y0])) ; swapped
+        left-x (aget new-endpts 0)
+        left-y (aget new-endpts 1)
+        right-x (aget new-endpts 2)
+        right-y (aget new-endpts 3)
+        b (intercept-from-slope* m x0 y0) ; x1,y1 would work too.
+        proj-pt (project-pt-on-line* m b p q) ; having trouble getting types work
+        proj-x (aget ^doubles proj-pt 0)
+        proj-y (aget ^doubles proj-pt 1)
+        near-pt (cond (< proj-x left-x)  [left-x left-y]   ; projection is beyond left end
+                      (> proj-x right-x) [right-x right-y] ; projection is beyond right end
+                      :else [proj-x proj-y])] ; projection is in segment, so use it
+    (if steep  ; if steep, need to swap back x and y for the return value
+      [(near-pt 1) (near-pt 0)]
+      near-pt)))
+
+
+(comment
+  (project-pt-on-line 1 0 2 2)
+  (near-pt-on-seg 0 0 5 5 3 2)
+  (near-pt-on-seg 0 0 1 5 3 2)
+
+  (require '[utils.random :as r])
+  (require '[forage.core.walks :as w])
+  (require '[forage.core.env-mason :as env])
+  (require '[forage.viz.hanami :as h])
+  (require '[aerial.hanami.common :as hc])
+  (require '[aerial.hanami.templates :as ht])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+
+  (def seed 1334567890123456)
+  (def seed 1334067890123456)
+  (def rng (r/make-well19937 seed))
+  (def maxlen 200)
+  (def levy-vecs (w/make-levy-vecs rng (r/make-powerlaw rng 1 1.25) 5 100)) ; an infinite seq
+  (def walk (w/walk-stops [80 80] (w/vecs-upto-len maxlen levy-vecs))) ; seq of points summing to maxlen
+  (count walk) ; 9
+
+  ;; Bundled test plot construction function
+  (defn testmin
+    "Walk is a series of connected line segments. p and q are to be
+    coordinates of a single foodspot.  Point colors are labeled with
+    endpoints of the line segment the point is supposed to correspond to
+    it--i.e. that's supposed to be the point on the segment that has
+    minimum distance to the foodspot."
+    [walk p q]
+    (let [walk- (rest walk)
+          env (env/make-env 5 170 [[p q]])
+          vega-min-pts (map (fn [[x0 y0] [x1 y1]]
+                              (let [[x y] (near-pt-on-seg x0 y0 x1 y1 p q)]
+                                {"x" x
+                                 "y" y
+                                 "label" (str (mapv round [x0 y0 x1 y1]))}))
+                            walk walk-)
+          env-plot2 (h/vega-env-plot env 600 1.5 :extra-pts vega-min-pts)
+          plot (h/vega-envwalk-plot env 600 1.0 1.5 walk :env-plot env-plot2)]
+      plot))
+
+  ;; TODO using v4, this looks good, but there appears to be a missing projection point.
+  ;; It's missing from the third segment.  The second and third are sharing
+  ;; the same min-pt at an apex, but it shouldn't be there fore the third
+  ;; segment; there should be a projection into the middle of the segment:
+  ;; TODO with v5 it's weirder: I get projections, but one of them is not
+  ;; orthogonal. wth!
+  (oz/view! (testmin walk 10 75))
+  ;; This exhibits a similar problem on 6th segment.  These are both
+  ;; somewhat vertical segments:
+  (oz/view! (testmin walk 115 138))
+  (oz/view! (testmin walk 87 154))
+  (oz/view! (testmin walk 120 130))
+  (oz/view! (testmin walk 100 80))
+  (oz/view! (testmin (take 2 (drop 2 walk)) 97 118)) ; mostly working?
+  ;; These don't seem to be working correctly. Why?:
+  (def seg (take 2 (drop 4 walk)))
+  (oz/view! (testmin seg 97 118))
+  (def seg* [[(first (first seg)) 115] (second seg)])
+  (def seg* [[(first (first seg)) 15] (second seg)])
+  (def seg* [[(first (first seg)) 15] [65 150]])
+  (oz/view! (testmin seg* 97 118))
+  ;; TODO This seems to have a problem:  (Is it just float slop??  Maybe it's the steepnees.)
+  (oz/view! (testmin (take 2 (drop 0 walk)) 97 118)) ; mostly working?
+
+  (oz/view! (testmin walk 100 78)) 
+
+  ;; Why isn't this working?  Not it, is. The projeciton is just to the
+  ;; right of the segment.
+  (def seg (take 2 (drop 4 walk)))
+  (oz/view! (testmin seg 85 78)) 
+
+)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn bool-to-bin
+  "Returns 1 if x is truthy, 0 if it's falsey."
+  [x]
+  (if x 1 0))
+
+;; Generates reflection warning, but I want it to work with any number type.
+;; I can add type-specific versions if needed.
+(defn sign
+  [x]
+  (cond (pos? x) 1
+        (neg? x) -1
+        :else 0))
+
+;; Note that Java's Double/isInfinite and Float/isInfinite don't distinguish 
+;; between ##Inf and ##-Inf.
+(defn pos-inf?
+  "Returns true if and only if x is ##Inf."
+  [x]
+  (= x ##Inf))
+
+;; Added to Clojure in 1.11
+;; Just a wrapper for Double/isNaN
+;(defn NaN?
+;  "Returns true if and only if x is ##NaN."
+;  [x]
+;  (Double/isNaN x))
+
+;; CONSIDER REPLACING WITH SIMILAR FUNCTIONS IN fastmath
+(defn equalish?
+  "True if numbers x and y are == or are within (* n-ulps ulp) of 
+  each other, where ulp is the minimum of (Math/ulp x) and (Math/ulp y).
+  A ulp is \"units in the last place\", i.e. the minimum possible difference
+  between two floating point numbers, but the numeric value of a ulp differs
+  depending on the number, even within the same numeric class such as double.
+  We use the minimum since that's the least difference between one of the
+  numbers and the next one up or down from  it.  (It seem as if multiplying a
+  number that's one ulp off produces a number that is some power of 2 ulp's
+  away from the correct value.) See java.lang.Math for more."
+  [^double n-ulps ^double x ^double y]
+  (or (== x y)
+      (let [xd (double x) ; Math/ulp doesn't work on integers
+            yd (double y)
+            ulp (min (Math/ulp xd) (Math/ulp yd))]
+        (<= (abs (- xd yd))
+            (* n-ulps ulp)))))
+
+;(defn old-mean
+;  "Returns the mean value of all numbers in collection xs, or the
+;  first n values if n is provided.  If n greater than the length of xs,
+;  takes the mean of xs."
+;  ([xs]
+;   (let [n (count xs)]
+;     (/ (reduce + xs) n)))
+;  ([n xs] (old-mean (take n xs)))) ; don't divide by n explicitly: xs may be short
+
+(defn mean
+  "Returns the mean value of all numbers in collection xs, or the
+  expectation using corresponding probabilities in weights.  Return
+  value is always a double."
+  ([xs] (fstats/mean xs))
+  ([xs weights] (fstats/wmean xs weights)))
+
+(comment
+  (mean [1 2 3 4])
+  (mean [1 2 3 4] [0.5 0.25 0.25 0.0])
+)
+
+;; If I were to use fastmath's names, I'd probably forget that fastmath's
+;; variance is the sample-variance, and that what I normally call variance
+;; is fastmath's population-variance.  (fastmath follows Apache's naming convention.)
+(def variance
+  "[xs] [xs mean]
+  Calculate the (population, normal, simple) variance  of the numbers in
+  xs, treating each as having probability 1/N: The internal sum is divided
+  by N, the size of xs.  If mean is provided, uses that rather than
+  calculating the mean value of xs."
+  fstats/population-variance)
+
+(def sample-variance
+  "[xs] [xs mean]
+  Calculate the sample variance  of the numbers in xs. The internal sum is
+  divided by N-1, where N is the size of xs.  If mean is provided, uses
+  that rather than calculating the mean value of xs."
+  fstats/variance)
+
+(comment
+  (variance [1 1 2 2])
+  (let [xs [1 1 2 2]
+        m (mean xs)
+        squares (map #(* % %) xs)]
+    (- (mean squares) (* m m)))
+
+  (sample-variance [1 1 2 2])
+  (let [xs [1 1 2 2]
+        m (mean xs)]
+    (/ (reduce + (map (fn [x] (let [y (- x m)] (* y y))) xs))
+       (dec (count xs))))
+)
+
+(defn count-decimal-digits
+  "Given a number, returns the number of digits in the decimal
+  representation of its integer part."
+  [n]
+  (count (str (round n))))
+
+(defn strictly-increasing?
+  "Returns true iff the numbers in xs are strictly increasing."
+  [xs]
+  (every? identity (map cc/< xs (rest xs))))
+
+(defn strictly-decreasing?
+  [xs]
+  "Returns true iff the numbers in xs are strictly descreasing."
+  (every? identity (map cc/> xs (rest xs))))
+
+(defn monotonically-increasing?
+  [xs]
+  "Returns true iff the numbers in xs are monotonically increasing, i.e. if
+  every value is greater than or equal to the one before it."
+  (every? identity (map cc/<= xs (rest xs))))
+
+(defn monotonically-decreasing?
+  [xs]
+  "Returns true iff the numbers in xs are monotonically decreasing, i.e. if
+  every value is less than or equal to the one before it."
+  (every? identity (map cc/>= xs (rest xs))))
+
+(comment
+  (monotonically-decreasing? [2 2 2 2 3 3 4 5])
+  (monotonically-increasing? [2 2 2 2 3 3 4 5])
+  (monotonically-increasing? [2 3 4 5])
+  (strictly-decreasing? [2 3 4 5])
+  (strictly-increasing? [2 3 4 5])
+  (strictly-increasing? [2 2 2 2 3 3 4 5])
+
+  (monotonically-decreasing? [5 4 3 2])
+  (strictly-decreasing? [5 4 3 2])
+  (monotonically-increasing? [5 4 3 2])
+  (strictly-increasing? [5 4 3 2])
+
+  (monotonically-decreasing? [2 1 4 5])
+  (strictly-decreasing? [2 1 4 5])
+  (monotonically-increasing? [2 1 4 5])
+  (strictly-increasing? [2 1 4 5])
+
+  (monotonically-decreasing? [5 3 3 2 1 1])
+  (strictly-decreasing? [5 3 3 2 1 1])
+  (monotonically-increasing? [5 3 3 2 1 1])
+  (strictly-increasing? [5 3 3 2 1 1])
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;
+
+(comment
+  ;; USE APACHE COMMONS PARETO DISTRIBUTION INSTEAD:
+
+  ;; Pareto PDF: $\mathsf{P}(x) = \frac{\alpha x_m^{\alpha}}{x^{\alpha + 1}}$, again for $x \leq x_m$.
+  ;; (Note that memoizing this makes it slower.  Rearranging to use expt only
+  ;; once also makes it slower.)
+  (defn pareto
+    "Given a scale parameter x_m (min value, should be positive) and a shape parameter
+    alpha (positive), returns the value of the Pareto density function at x
+    (from https://en.wikipedia.org/wiki/Pareto_distribution).  Returns 0
+    if x < minumum"
+    [xm alpha x]
+    (if (< x xm)
+      0
+      (/ (* alpha (math/pow xm alpha))
+         (math/pow x (inc alpha)))))
+
+  ; Assuming that $\mu > 1$, 
+  ; $\int_r^{\infty} x^{-\mu} \; dl = \frac{r^{1-\mu}}{\mu-1} \,$.
+  ; &nbsp; So to distribute step lengths $x$ as $x^{-\mu}$ with $r$ as 
+  ; the minimum length,
+  ; $\mathsf{P}(x) = x^{-\mu}\frac{\mu-1}{r^{1-\mu}} = x^{-\mu}r^{\mu-1}(\mu-1)$.
+  ;; &nbsp; See steplengths.md for further details.  &nbsp; cf. Viswanathan et al., *Nature* 1999.
+  ;; This can be viewed as a Pareto distribution, but parameterized differently.
+  (defn powerlaw
+    "Returns probability of x with normalized density x^mu, where r is
+    x's minimum value.  Returns 0 if x < minumum."
+    [r mu x]
+    (if (< x r)
+      0
+      (let [mu- (dec mu)]
+        (* (math/pow x (- mu)) (math/pow r mu-) mu-))))
+)
+
+
+(fm/unuse-primitive-operators)
+
 
 ;; Version 1, uses on-seg?
 #_
@@ -372,327 +697,3 @@
     (if steep
       [(near-pt 1) (near-pt 0)]
       near-pt)))
-
-
-;; TODO NOT RIGHT
-;; V.6 rearranged the steep calculations
-;; Notes on code below:
-;; Since proj-pt is a projection onto the line y = mx + b, if it's
-;; not in the interval of the line segment, its x coord is < the 
-;; left endpoint of the segment, or > the right endpoint of the 
-;; segment. No need to test the y coordinates as well--unless the 
-;; line is vertical or close to vertical, in which case testing the 
-;; y coordinate alone is enough, but in that case we swap x and y
-;; first: So if the x coordinate is
-;; beyond the x ends of the line segment, choose to use the nearest 
-;; endpoint rather than the projection.
-(defn near-pt-on-seg
-  "Given a line segment from (x0,y0) through (x1,y1), with slope m and
-  y-intercept b, return the point on the segment with minimum distance to
-  point (p,q).  This will be the projection onto the line, or one of the
-  endpoints if the projected point is not on the segment.  If the slope m
-  and intercept b aren't provided, they'll be calculated from the two
-  endpoints."
-  [x0 y0 x1 y1 p q]
-  (let [m (slope-from-coords* x0 y0 x1 y1)
-        ;; If slope is too steep, worked with a version reflected across
-        ;; y=x by reversing x and y, and then swap x and y back at the end:
-        steep (or (infinite? m)
-                  (> (abs m) +steep-slope-inf+))
-        ;; all of this double-array stuff is supposed to be more efficient in an
-        ;; inner loop. cf. cnuernber's very of walk.clj and his comments in Zulip.
-        ^doubles tea (if steep  ; tea is the result of steeping
-                       (hamf/double-array [y0 x0 y1 x1 q p (/ m)]) ; swap x, y, etc.
-                       (hamf/double-array [x0 y0 x1 y1 p q m])) ; make no change
-        x0 (aget tea 0)
-        y0 (aget tea 1)
-        x1 (aget tea 2)
-        y1 (aget tea 3)
-        p  (aget tea 4) ; if we're flipping the line, we need to flip the target, too
-        q  (aget tea 5)
-        m  (aget tea 6)
-        b (intercept-from-slope* m x0 y0) ; if steep, could undo by multiplying by original m
-        ;proj-pt (project-pt-on-line* m b p q)) ; having trouble getting this to work
-        proj-pt (project-pt-on-line m b p q)
-        ^double proj-x (proj-pt 0)
-        ^double proj-y (proj-pt 1)
-        new-endpts (if (< x0 x1)  ; if the segment runs from right to left, swap the endpoints
-                     (hamf/double-array [x0 y0 x1 y1])  ; unswapped
-                     (hamf/double-array [x1 y1 x0 y0])) ; swapped
-        left-x (aget new-endpts 0)
-        left-y (aget new-endpts 1)
-        right-x (aget new-endpts 2)
-        right-y (aget new-endpts 3)
-        near-pt (cond (< proj-x left-x)  [left-x left-y]   ; projection is beyond left end
-                      (> proj-x right-x) [right-x right-y] ; projection is beyond right end
-                      :else [proj-x proj-y])] ; projection is in segment, so use it
-    (if steep  ; if steep, need to swap back x and y for the return value
-      [(near-pt 1) (near-pt 0)]
-      near-pt)))
-
-
-(comment
-  (project-pt-on-line 1 0 2 2)
-  (near-pt-on-seg 0 0 5 5 3 2)
-  (near-pt-on-seg 0 0 1 5 3 2)
-
-  (require '[utils.random :as r])
-  (require '[forage.core.walks :as w])
-  (require '[forage.core.env-mason :as env])
-  (require '[forage.viz.hanami :as h])
-  (require '[aerial.hanami.common :as hc])
-  (require '[aerial.hanami.templates :as ht])
-  (require '[oz.core :as oz])
-  (oz/start-server!)
-
-  (def seed 1334567890123456)
-  (def seed 1334067890123456)
-  (def rng (r/make-well19937 seed))
-  (def maxlen 200)
-  (def levy-vecs (w/make-levy-vecs rng (r/make-powerlaw rng 1 1.25) 5 100)) ; an infinite seq
-  (def walk (w/walk-stops [80 80] (w/vecs-upto-len maxlen levy-vecs))) ; seq of points summing to maxlen
-  (count walk) ; 9
-
-  ;; Bundled test plot construction function
-  (defn testmin
-    "Walk is a series of connected line segments. p and q are to be
-    coordinates of a single foodspot.  Point colors are labeled with
-    endpoints of the line segment the point is supposed to correspond to
-    it--i.e. that's supposed to be the point on the segment that has
-    minimum distance to the foodspot."
-    [walk p q]
-    (let [walk- (rest walk)
-          env (env/make-env 5 170 [[p q]])
-          vega-min-pts (map (fn [[x0 y0] [x1 y1]]
-                              (let [[x y] (near-pt-on-seg x0 y0 x1 y1 p q)]
-                                {"x" x
-                                 "y" y
-                                 "label" (str (mapv round [x0 y0 x1 y1]))}))
-                            walk walk-)
-          env-plot2 (h/vega-env-plot env 600 1.5 :extra-pts vega-min-pts)
-          plot (h/vega-envwalk-plot env 600 1.0 1.5 walk :env-plot env-plot2)]
-      plot))
-
-  ;; TODO using v4, this looks good, but there appears to be a missing projection point.
-  ;; It's missing from the third segment.  The second and third are sharing
-  ;; the same min-pt at an apex, but it shouldn't be there fore the third
-  ;; segment; there should be a projection into the middle of the segment:
-  ;; TODO with v5 it's weirder: I get projections, but one of them is not
-  ;; orthogonal. wth!
-  (oz/view! (testmin walk 65 89)) ; mostly working?
-  ;; This exhibits a similar problem on 6th segment.  These are both
-  ;; somewhat vertical segments:
-  (oz/view! (testmin walk 115 138))
-  (oz/view! (testmin walk 87 154))
-  (oz/view! (testmin walk 120 130))
-  (oz/view! (testmin walk 100 80))
-  (oz/view! (testmin (take 2 (drop 2 walk)) 97 118)) ; mostly working?
-  ;; These don't seem to be working correctly. Why?:
-  (def seg (take 2 (drop 4 walk)))
-  (oz/view! (testmin seg 97 118))
-  (def seg* [[(first (first seg)) 115] (second seg)])
-  (def seg* [[(first (first seg)) 15] (second seg)])
-  (def seg* [[(first (first seg)) 15] [65 150]])
-  (oz/view! (testmin seg* 97 118))
-  ;; TODO This seems to have a problem:  (Is it just float slop??  Maybe it's the steepnees.)
-  (oz/view! (testmin (take 2 (drop 0 walk)) 97 118)) ; mostly working?
-
-  (oz/view! (testmin walk 100 78)) 
-
-  ;; Why isn't this working?  Not it, is. The projeciton is just to the
-  ;; right of the segment.
-  (def seg (take 2 (drop 4 walk)))
-  (oz/view! (testmin seg 85 78)) 
-
-)
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn bool-to-bin
-  "Returns 1 if x is truthy, 0 if it's falsey."
-  [x]
-  (if x 1 0))
-
-(defn sign
-  [x]
-  (cond (pos? x) 1
-        (neg? x) -1
-        :else 0))
-
-;; Note that Java's Double/isInfinite and Float/isInfinite don't distinguish 
-;; between ##Inf and ##-Inf.
-(defn pos-inf?
-  "Returns true if and only if x is ##Inf."
-  [x]
-  (= x ##Inf))
-
-;; Added to Clojure in 1.11
-;; Just a wrapper for Double/isNaN
-;(defn NaN?
-;  "Returns true if and only if x is ##NaN."
-;  [x]
-;  (Double/isNaN x))
-
-;; CONSIDER REPLACING WITH SIMILAR FUNCTIONS IN fastmath
-(defn equalish?
-  "True if numbers x and y are == or are within (* n-ulps ulp) of 
-  each other, where ulp is the minimum of (Math/ulp x) and (Math/ulp y).
-  A ulp is \"units in the last place\", i.e. the minimum possible difference
-  between two floating point numbers, but the numeric value of a ulp differs
-  depending on the number, even within the same numeric class such as double.
-  We use the minimum since that's the least difference between one of the
-  numbers and the next one up or down from  it.  (It seem as if multiplying a
-  number that's one ulp off produces a number that is some power of 2 ulp's
-  away from the correct value.) See java.lang.Math for more."
-  [^double n-ulps ^double x ^double y]
-  (or (== x y)
-      (let [xd (double x) ; Math/ulp doesn't work on integers
-            yd (double y)
-            ulp (min (Math/ulp xd) (Math/ulp yd))]
-        (<= (abs (- xd yd))
-            (* n-ulps ulp)))))
-
-;(defn old-mean
-;  "Returns the mean value of all numbers in collection xs, or the
-;  first n values if n is provided.  If n greater than the length of xs,
-;  takes the mean of xs."
-;  ([xs]
-;   (let [n (count xs)]
-;     (/ (reduce + xs) n)))
-;  ([n xs] (old-mean (take n xs)))) ; don't divide by n explicitly: xs may be short
-
-(defn mean
-  "Returns the mean value of all numbers in collection xs, or the
-  expectation using corresponding probabilities in weights.  Return
-  value is always a double."
-  ([xs] (fstats/mean xs))
-  ([xs weights] (fstats/wmean xs weights)))
-
-(comment
-  (mean [1 2 3 4])
-  (mean [1 2 3 4] [0.5 0.25 0.25 0.0])
-)
-
-;; If I were to use fastmath's names, I'd probably forget that fastmath's
-;; variance is the sample-variance, and that what I normally call variance
-;; is fastmath's population-variance.  (fastmath follows Apache's naming convention.)
-(def variance
-  "[xs] [xs mean]
-  Calculate the (population, normal, simple) variance  of the numbers in
-  xs, treating each as having probability 1/N: The internal sum is divided
-  by N, the size of xs.  If mean is provided, uses that rather than
-  calculating the mean value of xs."
-  fstats/population-variance)
-
-(def sample-variance
-  "[xs] [xs mean]
-  Calculate the sample variance  of the numbers in xs. The internal sum is
-  divided by N-1, where N is the size of xs.  If mean is provided, uses
-  that rather than calculating the mean value of xs."
-  fstats/variance)
-
-(comment
-  (variance [1 1 2 2])
-  (let [xs [1 1 2 2]
-        m (mean xs)
-        squares (map #(* % %) xs)]
-    (- (mean squares) (* m m)))
-
-  (sample-variance [1 1 2 2])
-  (let [xs [1 1 2 2]
-        m (mean xs)]
-    (/ (reduce + (map (fn [x] (let [y (- x m)] (* y y))) xs))
-       (dec (count xs))))
-)
-
-(defn count-decimal-digits
-  "Given a number, returns the number of digits in the decimal
-  representation of its integer part."
-  [n]
-  (count (str (round n))))
-
-(defn strictly-increasing?
-  "Returns true iff the numbers in xs are strictly increasing."
-  [xs]
-  (every? identity (map cc/< xs (rest xs))))
-
-(defn strictly-decreasing?
-  [xs]
-  "Returns true iff the numbers in xs are strictly descreasing."
-  (every? identity (map cc/> xs (rest xs))))
-
-(defn monotonically-increasing?
-  [xs]
-  "Returns true iff the numbers in xs are monotonically increasing, i.e. if
-  every value is greater than or equal to the one before it."
-  (every? identity (map cc/<= xs (rest xs))))
-
-(defn monotonically-decreasing?
-  [xs]
-  "Returns true iff the numbers in xs are monotonically decreasing, i.e. if
-  every value is less than or equal to the one before it."
-  (every? identity (map cc/>= xs (rest xs))))
-
-(comment
-  (monotonically-decreasing? [2 2 2 2 3 3 4 5])
-  (monotonically-increasing? [2 2 2 2 3 3 4 5])
-  (monotonically-increasing? [2 3 4 5])
-  (strictly-decreasing? [2 3 4 5])
-  (strictly-increasing? [2 3 4 5])
-  (strictly-increasing? [2 2 2 2 3 3 4 5])
-
-  (monotonically-decreasing? [5 4 3 2])
-  (strictly-decreasing? [5 4 3 2])
-  (monotonically-increasing? [5 4 3 2])
-  (strictly-increasing? [5 4 3 2])
-
-  (monotonically-decreasing? [2 1 4 5])
-  (strictly-decreasing? [2 1 4 5])
-  (monotonically-increasing? [2 1 4 5])
-  (strictly-increasing? [2 1 4 5])
-
-  (monotonically-decreasing? [5 3 3 2 1 1])
-  (strictly-decreasing? [5 3 3 2 1 1])
-  (monotonically-increasing? [5 3 3 2 1 1])
-  (strictly-increasing? [5 3 3 2 1 1])
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;
-
-(comment
-  ;; USE APACHE COMMONS PARETO DISTRIBUTION INSTEAD:
-
-  ;; Pareto PDF: $\mathsf{P}(x) = \frac{\alpha x_m^{\alpha}}{x^{\alpha + 1}}$, again for $x \leq x_m$.
-  ;; (Note that memoizing this makes it slower.  Rearranging to use expt only
-  ;; once also makes it slower.)
-  (defn pareto
-    "Given a scale parameter x_m (min value, should be positive) and a shape parameter
-    alpha (positive), returns the value of the Pareto density function at x
-    (from https://en.wikipedia.org/wiki/Pareto_distribution).  Returns 0
-    if x < minumum"
-    [xm alpha x]
-    (if (< x xm)
-      0
-      (/ (* alpha (math/pow xm alpha))
-         (math/pow x (inc alpha)))))
-
-  ; Assuming that $\mu > 1$, 
-  ; $\int_r^{\infty} x^{-\mu} \; dl = \frac{r^{1-\mu}}{\mu-1} \,$.
-  ; &nbsp; So to distribute step lengths $x$ as $x^{-\mu}$ with $r$ as 
-  ; the minimum length,
-  ; $\mathsf{P}(x) = x^{-\mu}\frac{\mu-1}{r^{1-\mu}} = x^{-\mu}r^{\mu-1}(\mu-1)$.
-  ;; &nbsp; See steplengths.md for further details.  &nbsp; cf. Viswanathan et al., *Nature* 1999.
-  ;; This can be viewed as a Pareto distribution, but parameterized differently.
-  (defn powerlaw
-    "Returns probability of x with normalized density x^mu, where r is
-    x's minimum value.  Returns 0 if x < minumum."
-    [r mu x]
-    (if (< x r)
-      0
-      (let [mu- (dec mu)]
-        (* (math/pow x (- mu)) (math/pow r mu-) mu-))))
-)
-
-
-(fm/unuse-primitive-operators)
