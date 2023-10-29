@@ -260,6 +260,7 @@
 ;; first: So if the x coordinate is
 ;; beyond the x ends of the line segment, choose to use the nearest 
 ;; endpoint rather than the projection.
+#_
 (defn near-pt-on-seg
   "Given a line segment from (x0,y0) through (x1,y1), with slope m and
   y-intercept b, return the point on the segment with minimum distance to
@@ -296,6 +297,50 @@
                        :else (if steep [proj-y proj-x] [proj-x proj-y]))]
      near-pt)))
 
+;; V.5 
+;; Notes on code below:
+;; Since proj-pt is a projection onto the line y = mx + b, if it's
+;; not in the interval of the line segment, its x coord is < the 
+;; left endpoint of the segment, or > the right endpoint of the 
+;; segment. No need to test the y coordinates as well--unless the 
+;; line is vertical or close to vertical, in which case testing the 
+;; y coordinate alone is enough, but in that case we swap x and y
+;; first: So if the x coordinate is
+;; beyond the x ends of the line segment, choose to use the nearest 
+;; endpoint rather than the projection.
+(defn near-pt-on-seg
+  "Given a line segment from (x0,y0) through (x1,y1), with slope m and
+  y-intercept b, return the point on the segment with minimum distance to
+  point (p,q).  This will be the projection onto the line, or one of the
+  endpoints if the projected point is not on the segment.  If the slope m
+  and intercept b aren't provided, they'll be calculated from the two
+  endpoints."
+  [x0 y0 x1 y1 p q]
+  (let [m (slope-from-coords* x0 y0 x1 y1)
+        steep (or (infinite? m)
+                  (> (abs m) +steep-slope-inf+))
+        ^double m m ; get rid of reflection warning on next line
+        m (if steep (/ m) m)
+        ^doubles endpts (if steep  ; based on cnuernber's version of walk.clj
+                          (hamf/double-array [y0 x0 y1 x1]) ; swap x and y
+                          (hamf/double-array [x0 y0 x1 y1])) ; make no change
+        x0 (aget endpts 0)
+        y0 (aget endpts 1)
+        x1 (aget endpts 2)
+        y1 (aget endpts 3)
+        b (intercept-from-slope* m x0 y0)
+        proj-pt (project-pt-on-line m b p q)
+        ^double proj-x (proj-pt 0)
+        ^double proj-y (proj-pt 1)
+        ;; IS THERE A BETTER WAY?:  e.g. choose the comparison operator. cf. joinr's and cnuernber's walks.clj
+        left-x (min (double x0) (double x1))
+        right-x (max (double x0) (double x1)) ; use prev result to determine this one? 
+        left-y (if (= left-x x0) y0 y1) ; is there a better way?  TODO
+        right-y (if (= right-x x0) y0 y1) ; see joinr's and cnuernber's walks.clj
+        near-pt (cond (< proj-x left-x)  (if steep [right-y right-x] [left-x left-y])
+                      (> proj-x right-x) (if steep [left-y left-x] [right-x right-y])
+                      :else (if steep [proj-y proj-x] [proj-x proj-y]))]
+    near-pt))
 
 (comment
   (project-pt-on-line 1 0 2 2)
@@ -342,10 +387,12 @@
   ;; It's missing from the third segment.  The second and third are sharing
   ;; the same min-pt at an apex, but it shouldn't be there fore the third
   ;; segment; there should be a projection into the middle of the segment:
-  (oz/view! (testmin walk 97 98)) ; mostly working?
+  ;; TODO with v5 it's weirder: I get projections, but one of them is not
+  ;; orthogonal. wth!
+  (oz/view! (testmin walk 80 98)) ; mostly working?
   ;; This exhibits a similar problem on 6th segment.  These are both
   ;; somewhat vertical segments:
-  (oz/view! (testmin walk 97 138)) ; mostly working?
+  (oz/view! (testmin walk 97 138))
   (oz/view! (testmin (take 2 (drop 2 walk)) 97 118)) ; mostly working?
   ;; These don't seem to be working correctly. Why?:
   (def seg (take 2 (drop 4 walk)))
@@ -362,36 +409,7 @@
   ;; Why isn't this working?  Not it, is. The projeciton is just to the
   ;; right of the segment.
   (def seg (take 2 (drop 4 walk)))
-  (oz/view! (testmin seg 100 78)) 
-
-
-  ;; standalone
-  (def walk- (rest walk))
-  (def p 35)
-  (def q 70)
-  (def vega-walk (h/add-point-labels "walk" walk))
-  (def min-pts (map (fn [[x0 y0] [x1 y1]] (near-pt-on-seg x0 y0 x1 y1 p q)) walk- walk))
-  (def min-pts (map (fn [[x0 y0] [x1 y1]] (near-pt-on-seg x0 y0 x1 y1 p q)) walk walk-))
-  (def vega-min-pts (h/add-point-labels "min-pt" min-pts))
-  (def env-plot2 (h/vega-env-plot env 600 1.5 :extra-pts vega-min-pts))
-  (def plot (h/vega-envwalk-plot env 600 1.0 1.5 walk :env-plot env-plot2))
-  (oz/view! plot)
-
-  ;(def min-pts (map (fn [[x0 y0] [x1 y1]] (near-pt-on-seg x0 y0 x1 y1 p q)) walk walk))
-  ;(def vega-min-pts-plus-food (into vega-min-pts [{"x" p "y" q "label" "food"}]))
-  ;(def env-plot (h/vega-env-plot env 600 1.5))
-  ;(def min-pts-plot (h/vega-food-plot vega-min-pts 120 600 1.0))
-  ;(def plot (h/vega-food-plot vega-min-pts-plus-food 120 600 1.5))
-  ;(oz/view! env-plot)
-  ;(oz/view! min-pts-plot)
-  ;(def walk-plot (h/vega-walk-plot 600 130 1.0 vega-walk))
-  ;(oz/view! walk-plot)
-  ;(def plot (h/vega-envwalk-plot env 600 0.75 2 walk :foodspots-on-top? true))
-  ;(def plot2 (hc/xform (ht/layer-chart :LAYER (list min-pts-plot walk-plot env-plot))))
-  ;(def plot (h/vega-walk-plot 600 170 0.75 (concat vega-min-pts vega-walk)))
-  ;(def plot (merge env-plot walk-plot min-pts-plot))
-  ;(def plot (merge env-plot min-pts-plot))
-
+  (oz/view! (testmin seg 85 78)) 
 
 )
 
