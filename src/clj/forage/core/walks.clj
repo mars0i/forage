@@ -479,7 +479,7 @@
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
   [look-fn eps [x1 y1] [x2 y2]]
-  (let [^double slope (m/slope-from-coords [x1 y1] [x2 y2])
+  (let [slope (m/slope-from-coords [x1 y1] [x2 y2])
         steep (or (infinite? slope)
                   (> (abs slope) +steep-slope-inf+))
         slope (if steep (/ slope) slope)
