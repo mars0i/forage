@@ -107,7 +107,7 @@
   "Given a pair of points on a line, return its slope.  This is also the
   vector direction from the first point to the second.  If the line is
   vertical, returns ##Inf (infinity) to indicate that."
-  [[^double x0 ^double y0] [^double x1 ^double y1]]
+  ^double [[^double x0 ^double y0] [^double x1 ^double y1]]
   (if (== x0 x1)
     ##Inf ; infinity is what division below would give for the vertical slope
     (/ (- y1 y0) (- x1 x0))))
@@ -116,7 +116,7 @@
   "Given a pair of points on a line, return its slope.  This is also the
   vector direction from the first point to the second.  If the line is
   vertical, returns ##Inf (infinity) to indicate that."
-  [^double x0 ^double y0 ^double x1 ^double y1]
+  ^double [^double x0 ^double y0 ^double x1 ^double y1]
   (if (== x0 x1)
     ##Inf ; infinity is what division below would give for the vertical slope
     (/ (- y1 y0) (- x1 x0))))
@@ -132,6 +132,24 @@
   [^double slope ^double x ^double y]
   (- y (* slope x)))
 
+(defn invert-line
+  "Given a slope m and y-intercept b for equation y=mx+b, returns slope and
+  intercept for the flipped equation in which x takes the role of y and
+  vice versa, i.e. y = x/m - b/m.  Returns the Clojure vector [1/m -b/m]."
+  [^double m ^double b]
+  (let [new-m (/ m)
+        new-b (- (/ b new-m))]
+   [new-m new-b]))
+
+(defn invert-line*
+  "Given a slope m and y-intercept b for equation y=mx+b, returns slope and
+  intercept for the flipped equation in which x takes the role of y and
+  vice versa, i.e. y = x/m - b/m.  Returns the Java array containing
+  1/m and -b/m."
+  ^doubles [^double m ^double b]
+  (let [new-m (/ m)
+        new-b (- (/ b new-m))]
+    (hamf/double-array [new-m new-b])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MIN POINT ON SEGMENT
@@ -148,10 +166,9 @@
   (and (<= ^double x0 ^double p ^double x1)
        (<= ^double y0 ^double q ^double y1)))
 
-;; FIXME NOT RIGHT  I think my derivation in the md file is wrong.
 (defn project-pt-on-line
   "Given a line with slope m and y-intercept b, return the point on the
-  line with the minimum distance to point (p,q)."
+  line with the minimum distance to point (p,q).  Returns a Clojure vector."
   [^double m ^double b ^double p ^double q]
   ;(prn m b p q) ; DEBUG
   (let [x (/ (+ (* m (- q b)) p)
@@ -159,6 +176,15 @@
         y (+ (* m x) b)]
     ;(prn x y) ; DEBUG
     [x y]))
+
+(defn project-pt-on-line*
+  "Given a line with slope m and y-intercept b, return the point on the
+  line with the minimum distance to point (p,q).  Returns a Java array."
+  ^doubles [^double m ^double b ^double p ^double q]
+  (let [x (/ (+ (* m (- q b)) p)
+             (+ (* m m) 1))
+        y (+ (* m x) b)]
+    (hamf/double-array [x y])))
 
 ;; Version 1, uses on-seg?
 #_
@@ -297,7 +323,59 @@
                        :else (if steep [proj-y proj-x] [proj-x proj-y]))]
      near-pt)))
 
-;; V.5 
+;; V.5 rearranged the steep calculations
+;; Notes on code below:
+;; Since proj-pt is a projection onto the line y = mx + b, if it's
+;; not in the interval of the line segment, its x coord is < the 
+;; left endpoint of the segment, or > the right endpoint of the 
+;; segment. No need to test the y coordinates as well--unless the 
+;; line is vertical or close to vertical, in which case testing the 
+;; y coordinate alone is enough, but in that case we swap x and y
+;; first: So if the x coordinate is
+;; beyond the x ends of the line segment, choose to use the nearest 
+;; endpoint rather than the projection.
+#_
+(defn near-pt-on-seg
+  "Given a line segment from (x0,y0) through (x1,y1), with slope m and
+  y-intercept b, return the point on the segment with minimum distance to
+  point (p,q).  This will be the projection onto the line, or one of the
+  endpoints if the projected point is not on the segment.  If the slope m
+  and intercept b aren't provided, they'll be calculated from the two
+  endpoints."
+  [x0 y0 x1 y1 p q]
+  (let [m (slope-from-coords* x0 y0 x1 y1)
+        steep (or (infinite? m)
+                  (> (abs m) +steep-slope-inf+))
+        m (if steep (/ m) m)
+        ^doubles endpts (if steep  ; based on cnuernber's version of walk.clj
+                          (hamf/double-array [y0 x0 y1 x1]) ; swap x and y
+                          (hamf/double-array [x0 y0 x1 y1])) ; make no change
+        x0 (aget endpts 0)
+        y0 (aget endpts 1)
+        x1 (aget endpts 2)
+        y1 (aget endpts 3)
+        b (intercept-from-slope* m x0 y0)
+        ;proj-pt (project-pt-on-line m b p q)
+        proj-pt (project-pt-on-line* m b p q)
+        ^double proj-x (aget proj-pt 0)
+        ^double proj-y (aget proj-pt 1)
+        new-endpts (if (< x0 x1)
+                     (hamf/double-array [x0 y0 x1 y1])
+                     (hamf/double-array [x1 y1 x0 y0]))
+        left-x (aget new-endpts 0)
+        left-y (aget new-endpts 1)
+        right-x (aget new-endpts 2)
+        right-y (aget new-endpts 3)
+        near-pt (cond (< proj-x left-x)  [left-x left-y]   ; projection is beyond left end
+                      (> proj-x right-x) [right-x right-y] ; projection is beyond right end
+                      :else [proj-x proj-y])] ; projection is in segment, so use it
+    (if steep
+      [(near-pt 1) (near-pt 0)]
+      near-pt)))
+
+
+;; TODO NOT RIGHT
+;; V.6 rearranged the steep calculations
 ;; Notes on code below:
 ;; Since proj-pt is a projection onto the line y = mx + b, if it's
 ;; not in the interval of the line segment, its x coord is < the 
@@ -317,30 +395,41 @@
   endpoints."
   [x0 y0 x1 y1 p q]
   (let [m (slope-from-coords* x0 y0 x1 y1)
+        ;; If slope is too steep, worked with a version reflected across
+        ;; y=x by reversing x and y, and then swap x and y back at the end:
         steep (or (infinite? m)
                   (> (abs m) +steep-slope-inf+))
-        ^double m m ; get rid of reflection warning on next line
-        m (if steep (/ m) m)
-        ^doubles endpts (if steep  ; based on cnuernber's version of walk.clj
-                          (hamf/double-array [y0 x0 y1 x1]) ; swap x and y
-                          (hamf/double-array [x0 y0 x1 y1])) ; make no change
-        x0 (aget endpts 0)
-        y0 (aget endpts 1)
-        x1 (aget endpts 2)
-        y1 (aget endpts 3)
-        b (intercept-from-slope* m x0 y0)
+        ;; all of this double-array stuff is supposed to be more efficient in an
+        ;; inner loop. cf. cnuernber's very of walk.clj and his comments in Zulip.
+        ^doubles tea (if steep  ; tea is the result of steeping
+                       (hamf/double-array [y0 x0 y1 x1 q p (/ m)]) ; swap x, y, etc.
+                       (hamf/double-array [x0 y0 x1 y1 p q m])) ; make no change
+        x0 (aget tea 0)
+        y0 (aget tea 1)
+        x1 (aget tea 2)
+        y1 (aget tea 3)
+        p  (aget tea 4) ; if we're flipping the line, we need to flip the target, too
+        q  (aget tea 5)
+        m  (aget tea 6)
+        b (intercept-from-slope* m x0 y0) ; if steep, could undo by multiplying by original m
+        ;proj-pt (project-pt-on-line* m b p q)) ; having trouble getting this to work
         proj-pt (project-pt-on-line m b p q)
         ^double proj-x (proj-pt 0)
         ^double proj-y (proj-pt 1)
-        ;; IS THERE A BETTER WAY?:  e.g. choose the comparison operator. cf. joinr's and cnuernber's walks.clj
-        left-x (min (double x0) (double x1))
-        right-x (max (double x0) (double x1)) ; use prev result to determine this one? 
-        left-y (if (= left-x x0) y0 y1) ; is there a better way?  TODO
-        right-y (if (= right-x x0) y0 y1) ; see joinr's and cnuernber's walks.clj
-        near-pt (cond (< proj-x left-x)  (if steep [right-y right-x] [left-x left-y])
-                      (> proj-x right-x) (if steep [left-y left-x] [right-x right-y])
-                      :else (if steep [proj-y proj-x] [proj-x proj-y]))]
-    near-pt))
+        new-endpts (if (< x0 x1)  ; if the segment runs from right to left, swap the endpoints
+                     (hamf/double-array [x0 y0 x1 y1])  ; unswapped
+                     (hamf/double-array [x1 y1 x0 y0])) ; swapped
+        left-x (aget new-endpts 0)
+        left-y (aget new-endpts 1)
+        right-x (aget new-endpts 2)
+        right-y (aget new-endpts 3)
+        near-pt (cond (< proj-x left-x)  [left-x left-y]   ; projection is beyond left end
+                      (> proj-x right-x) [right-x right-y] ; projection is beyond right end
+                      :else [proj-x proj-y])] ; projection is in segment, so use it
+    (if steep  ; if steep, need to swap back x and y for the return value
+      [(near-pt 1) (near-pt 0)]
+      near-pt)))
+
 
 (comment
   (project-pt-on-line 1 0 2 2)
@@ -357,6 +446,7 @@
   (oz/start-server!)
 
   (def seed 1334567890123456)
+  (def seed 1334067890123456)
   (def rng (r/make-well19937 seed))
   (def maxlen 200)
   (def levy-vecs (w/make-levy-vecs rng (r/make-powerlaw rng 1 1.25) 5 100)) ; an infinite seq
@@ -389,10 +479,13 @@
   ;; segment; there should be a projection into the middle of the segment:
   ;; TODO with v5 it's weirder: I get projections, but one of them is not
   ;; orthogonal. wth!
-  (oz/view! (testmin walk 80 98)) ; mostly working?
+  (oz/view! (testmin walk 65 89)) ; mostly working?
   ;; This exhibits a similar problem on 6th segment.  These are both
   ;; somewhat vertical segments:
-  (oz/view! (testmin walk 97 138))
+  (oz/view! (testmin walk 115 138))
+  (oz/view! (testmin walk 87 154))
+  (oz/view! (testmin walk 120 130))
+  (oz/view! (testmin walk 100 80))
   (oz/view! (testmin (take 2 (drop 2 walk)) 97 118)) ; mostly working?
   ;; These don't seem to be working correctly. Why?:
   (def seg (take 2 (drop 4 walk)))
