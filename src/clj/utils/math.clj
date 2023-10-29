@@ -14,7 +14,6 @@
 
 (fm/use-primitive-operators)
 
-
 (defn remove-decimal-pt
   "Given a number, returns a (base-10) string representation of the
   number, but with any decimal point removed.  Also works on existing
@@ -187,17 +186,8 @@
         y (+ (* m x) b)]
     (hamf/double-array [x y])))
 
+
 ;; V.6 rearranged the steep calculations
-;; Notes on code below:
-;; Since proj-pt is a projection onto the line y = mx + b, if it's
-;; not in the interval of the line segment, its x coord is < the 
-;; left endpoint of the segment, or > the right endpoint of the 
-;; segment. No need to test the y coordinates as well--unless the 
-;; line is vertical or close to vertical, in which case testing the 
-;; y coordinate alone is enough, but in that case we swap x and y
-;; first: So if the x coordinate is
-;; beyond the x ends of the line segment, choose to use the nearest 
-;; endpoint rather than the projection.
 (defn near-pt-on-seg
   "Given a line segment from (x0,y0) through (x1,y1), with slope m and
   y-intercept b, return the point on the segment with minimum distance to
@@ -234,6 +224,9 @@
         proj-pt (project-pt-on-line* m b p q) ; having trouble getting types work
         proj-x (aget ^doubles proj-pt 0)
         proj-y (aget ^doubles proj-pt 1)
+	;; Since the projection is to a line that at this stage is
+        ;; not vertical, we can test whether the projected point is 
+        ;; outside the segment by looking only at the x coordinate:
         near-pt (cond (< proj-x left-x)  [left-x left-y]   ; projection is beyond left end
                       (> proj-x right-x) [right-x right-y] ; projection is beyond right end
                       :else [proj-x proj-y])] ; projection is in segment, so use it
@@ -284,31 +277,19 @@
           plot (h/vega-envwalk-plot env 600 1.0 1.5 walk :env-plot env-plot2)]
       plot))
 
-  ;; TODO using v4, this looks good, but there appears to be a missing projection point.
-  ;; It's missing from the third segment.  The second and third are sharing
-  ;; the same min-pt at an apex, but it shouldn't be there fore the third
-  ;; segment; there should be a projection into the middle of the segment:
-  ;; TODO with v5 it's weirder: I get projections, but one of them is not
-  ;; orthogonal. wth!
   (oz/view! (testmin walk 10 75))
-  ;; This exhibits a similar problem on 6th segment.  These are both
-  ;; somewhat vertical segments:
   (oz/view! (testmin walk 115 138))
   (oz/view! (testmin walk 87 154))
   (oz/view! (testmin walk 120 130))
   (oz/view! (testmin walk 100 80))
-  (oz/view! (testmin (take 2 (drop 2 walk)) 97 118)) ; mostly working?
-  ;; These don't seem to be working correctly. Why?:
+  (oz/view! (testmin (take 2 (drop 2 walk)) 97 118))
   (def seg (take 2 (drop 4 walk)))
   (oz/view! (testmin seg 97 118))
   (def seg* [[(first (first seg)) 115] (second seg)])
   (def seg* [[(first (first seg)) 15] (second seg)])
   (def seg* [[(first (first seg)) 15] [65 150]])
   (oz/view! (testmin seg* 97 118))
-  ;; TODO This seems to have a problem:  (Is it just float slop??  Maybe it's the steepnees.)
   (oz/view! (testmin (take 2 (drop 0 walk)) 97 118)) ; mostly working?
-
-  (oz/view! (testmin walk 100 78)) 
 
   ;; Why isn't this working?  Not it, is. The projeciton is just to the
   ;; right of the segment.
