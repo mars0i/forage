@@ -592,15 +592,16 @@
   the sequence up to and including the location from which foodspots were
   found, or the entire sequence.  More specifically, given a sequence of
   stops (coordinate pairs) representing a random walk, and a small eps
-  length, starts at [x1 y1] and uses find-in-segment to incrementally check
-  each line segment defined by pairs of stops to see whether look-fn returns
-  a truthy value, meaning that foodspots were found.  The sequence stops must
-  contain at least two coordinate pairs.  If foodspots are found, returns a
-  pair vector containing: first, the foodspot information returned by look-fn,
-  and second, a truncated sequence of stops in which the last element is the
-  point from which the food was seen, and remaining points have been removed.
-  If no food found in the entire sequence, a pair vector containing nil and
-  the unchanged sequence is returned."
+  length, starts at [x1 y1] and uses seg-exam-fn [default: find-in-seg] to
+  incrementally check each line segment defined by pairs of stops to see
+  whether look-fn returns a truthy value, meaning that foodspots were
+  found.  The sequence stops must contain at least two coordinate pairs.
+  If foodspots are found, returns a pair vector containing: first, the
+  foodspot information returned by look-fn, and second, a truncated
+  sequence of stops in which the last element is the point from which the
+  food was seen, and remaining points have been removed. If no food found
+  in the entire sequence, a pair vector containing nil and the unchanged
+  sequence is returned."
   ([look-fn eps stops]
    (path-with-food find-in-seg look-fn eps stops))
   ([seg-exam-fn look-fn eps stops]
@@ -661,7 +662,10 @@
   foodspots or nil if none found, (b) the generated sequence from start
   until the point from which the foodspots were found or the entire
   sequence if no foodspots were found, and (c) a subsequence containing the
-  remaining stops, if any, after the foodspots were found."
+  remaining stops, if any, after the foodspots were found.  seg-exam-fn
+  [default: forage.core.walks/find-in-seg] should apply look-fn to each
+  segment defined by stop-walk, in order to determine whether it passes
+  within perceptual radius of a foodspot."
   ([look-fn look-eps stop-walk]
    (foodwalk find-in-seg look-fn look-eps stop-walk))
   ([seg-exam-fn look-fn look-eps stop-walk]
