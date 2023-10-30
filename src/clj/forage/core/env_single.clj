@@ -12,6 +12,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ENVIRONMENT THAT CONSISTS OF A BARE COORDINATE PAIR
 
+;; TODO consider replacing the Clojure vector with a Java array
+;; if this would improve performance.
+
 ;; NOTE Since no size, doesn't support toroidal lookup.
 (defn make-single-foodspot-env
   "Make an environment that consists of a single foodspog, and only a
@@ -22,7 +25,7 @@
 
 (defn perc-single-foodspot
   "Returns a collection containing the sole foodspot if it's within
-  perc-radius of forager-coords (an x, y Clojure pair), or nil if not.
+  perc-radius of forager-coords (x, y), or nil if not.
   This is designed to work *only* with environments that are nothing more
   than a pair representing a single foodspot, as created by
   make-single-food-spot-env. If the env has only a single foodspot,
@@ -34,6 +37,15 @@
   ;(if (<= (um/distance-2D* x y (env 0) (env 1)) perc-radius)
     [env]
     nil))
+
+(defn examine-segment
+  [look-fn _ endpt0 endpt1]
+  (let [x0 (endpt0 0)
+        y0 (endpt0 1)
+        x1 (endpt1 0)
+        y1 (endpt1 1)]
+;; TODO
+))
 
 (def foodspot-coords 
   "Extracts the coordinates from a foodspot. (Since in this env, foodspots
