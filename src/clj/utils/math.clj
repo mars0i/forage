@@ -189,6 +189,8 @@
 
 ;; TODO make version using regular clojure vectors, and compare
 ;; benchmarks and profiling.
+;; ALSO TODO consider using the new hamf/dnth instead of aref, which means
+;; you can drop some of the type hints.
 (defn near-pt-on-seg
   "Given a line segment from (x0,y0) through (x1,y1), with slope m and
   y-intercept b, return the point on the segment with minimum distance to

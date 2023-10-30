@@ -461,6 +461,10 @@
 ;; matter as long as look-fn is expensive, which is the case when using MASON
 ;; for look-fns. If I develop more efficient envs and look-fns, it might be
 ;; worth optimizing some of the code further.
+;; 
+;; TODO TODO rewrite cnuernber (or joinr) style. i.e. copy from another branch.
+;; Also, for cneurnber's version, I can now use hamf/dnth instead of aref,
+;; which allows you to get rid of some type annotations.
 (defn find-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
