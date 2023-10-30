@@ -601,18 +601,21 @@
   point from which the food was seen, and remaining points have been removed.
   If no food found in the entire sequence, a pair vector containing nil and
   the unchanged sequence is returned."
-  [look-fn eps stops]
-  (let [stopsv (vec stops)
-        numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
-    (loop [i 0, j 1]
-      (let [from+foodspots (find-in-seg look-fn eps (stopsv i) (stopsv j))]
-        (if from+foodspots               ; all done--found food
-          [(first from+foodspots)        ; the found food
-           (conj (vec (take j stopsv))      ; replace end of stops with point
-                 (second from+foodspots))]  ; on path from which food found
-          (if (< j numstops-)
-            (recur (inc i) (inc j))
-            [nil stopsv])))))) ; no food in any segment; return entire input
+  ([look-fn eps stops]
+   (path-with-food find-in-seg look-fn eps stops))
+  ([seg-exam-fn look-fn eps stops]
+   (let [stopsv (vec stops)
+         numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
+     (loop [i 0, j 1]
+       (let [from+foodspots (seg-exam-fn look-fn eps (stopsv i) (stopsv j))]
+         (if from+foodspots               ; all done--found food
+           [(first from+foodspots)        ; the found food
+            (conj (vec (take j stopsv))      ; replace end of stops with point
+                  (second from+foodspots))]  ; on path from which food found
+           (if (< j numstops-)
+             (recur (inc i) (inc j))
+             [nil stopsv]))))))) ; no food in any segment; return entire input
+
 
 
 (defn trim-full-walk
@@ -659,9 +662,11 @@
   until the point from which the foodspots were found or the entire
   sequence if no foodspots were found, and (c) a subsequence containing the
   remaining stops, if any, after the foodspots were found."
-  [look-fn look-eps stop-walk]
-  (trim-full-walk (conj (path-with-food look-fn look-eps stop-walk)
-                        stop-walk)))
+  ([look-fn look-eps stop-walk]
+   (foodwalk find-in-seg look-fn look-eps stop-walk))
+  ([seg-exam-fn look-fn look-eps stop-walk]
+   (trim-full-walk (conj (path-with-food seg-exam-fn look-fn look-eps stop-walk)
+                         stop-walk))))
 
 (defn levy-foodwalk
   "Generates a random foodwalk starting from point init-loc in direction
