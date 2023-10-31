@@ -1,7 +1,8 @@
 ;; Functions for minimal, fast environments containing a 
 ;; single foodspot, without toroidal lookup.
 (ns forage.core.env-single
-  (:require [utils.math :as um]
+  (:require [ham-fisted.api :as hamf]
+            [utils.math :as um]
             [fastmath.core :as fm]
             [forage.core.food :as f]))
 
@@ -38,15 +39,6 @@
     [env]
     nil))
 
-(defn examine-segment
-  [look-fn _ endpt0 endpt1]
-  (let [x0 (endpt0 0)
-        y0 (endpt0 1)
-        x1 (endpt1 0)
-        y1 (endpt1 1)]
-;; TODO
-))
-
 (def foodspot-coords 
   "Extracts the coordinates from a foodspot. (Since in this env, foodspots
   are coordinate pairs, this is simply the identity function.)"
@@ -63,3 +55,22 @@
   in environment env, or nil if there are none."
   [env]
   [env])
+
+(defn make-look-fn
+  [env perc-radius]
+  (constantly (hamf/double-array [(env 0) (env 1) perc-radius])))
+
+(defn find-in-seg
+  [look-fn _ x0 y0 x1 y1]
+  (let [info (look-fn)
+        p (aget info 0)
+        q (aget info 1)
+        perc-radius (aget info 2)
+        near-pt (um/near-pt-on-seg x0 y0 x1 y1 p q)
+        near-x (aget near-pt 0)
+        near-y (aget near-pt 0)
+        distance (um/distance-2D* near-x near-y p q)]
+    (if (< distance perc-radius)
+      [p q]
+      nil)))
+

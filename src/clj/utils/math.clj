@@ -229,15 +229,15 @@
         proj-pt (project-pt-on-line* m b p q) ; having trouble getting types work
         proj-x (aget ^doubles proj-pt 0)
         proj-y (aget ^doubles proj-pt 1)
-	;; Since the projection is to a line that at this stage is
+        ;; Since the projection is to a line that at this stage is
         ;; not vertical, we can test whether the projected point is 
         ;; outside the segment by looking only at the x coordinate:
         near-pt (cond (< proj-x left-x)  [left-x left-y]   ; projection is beyond left end
                       (> proj-x right-x) [right-x right-y] ; projection is beyond right end
                       :else [proj-x proj-y])] ; projection is in segment, so use it
     (if steep  ; if steep, need to swap back x and y for the return value
-      [(near-pt 1) (near-pt 0)]
-      near-pt)))
+      (hamf/double-array [(near-pt 1) (near-pt 0)])
+      (hamf/double-array near-pt))))
 
 
 (comment
