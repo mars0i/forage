@@ -6,8 +6,8 @@
             [fastmath.core :as fm]
             [forage.core.food :as f]))
 
-;(set! *warn-on-reflection* true)
-;(set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -57,18 +57,20 @@
   [env])
 
 (defn make-look-fn
-  [env perc-radius]
+  ^doubles [env ^double perc-radius]
   (constantly (hamf/double-array [(env 0) (env 1) perc-radius])))
 
+;; Note that look-fn plays a different role here than in walks/find-in-seg,
+;; as it must.
 (defn find-in-seg
   [look-fn _ x0 y0 x1 y1]
   (let [info (look-fn)
-        p (aget info 0)
-        q (aget info 1)
-        perc-radius (aget info 2)
+        p (hamf/dnth info 0)
+        q (hamf/dnth info 1)
+        perc-radius (hamf/dnth info 2)
         near-pt (um/near-pt-on-seg x0 y0 x1 y1 p q)
-        near-x (aget near-pt 0)
-        near-y (aget near-pt 0)
+        near-x (hamf/dnth near-pt 0)
+        near-y (hamf/dnth near-pt 0)
         distance (um/distance-2D* near-x near-y p q)]
     (if (< distance perc-radius)
       [p q]
