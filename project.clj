@@ -13,16 +13,17 @@
                  ;[generateme/fastmath "2.1.8"]
                  ;[generateme/fastmath "2.1.9-SNAPSHOT"]
                  [generateme/fastmath "2.2.2-SNAPSHOT"]
+                 [com.cnuernber/ham-fisted "2.009"]
                  [org.flatland/ordered "1.15.10"] ; for ordered-set
                  [net.mikera/core.matrix "0.63.0"]
                  [aerial.hanami "0.17.0"]
                  ; [dk.ative/docjure "1.19.0"] ; Excel file creation functions
                  [techascent/tech.ml.dataset "7.012"]
-                 [scicloj/tablecloth "7.012"]
                  [techascent/tech.viz "6.00-beta-16-2"]
+                 [scicloj/tablecloth "7.012"]
                  [org.scicloj/clay "2-alpha35"]
                  [io.github.nextjournal/clerk "0.5.346"]
-                 [com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
+                 ;[com.taoensso/nippy "3.1.1"] ; for preventing a problem with clerk's use of nippy
                  ;; NOTE oz MUST BE LISTED *AFTER* clerk (if clerk is present):
                  [metasoarous/oz "2.0.0-alpha5"]
                  [cljplot "0.0.2a-SNAPSHOT"]
