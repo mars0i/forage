@@ -482,8 +482,8 @@
   returned depends on look-fn, which should reflect the way that this 
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
-  [look-fn eps [x1 y1] [x2 y2]]
-  (let [slope (m/slope-from-coords [x1 y1] [x2 y2])
+  [look-fn eps x1 y1 x2 y2]
+  (let [slope (m/slope-from-coords* x1 y1 x2 y2)
         steep (or (infinite? slope)
                   (> (abs slope) +steep-slope-inf+))
         slope (if steep (/ slope) slope)
@@ -531,12 +531,14 @@
   (crit/quick-bench
     (find-in-seg env/constant-failure-look-fn
                  0.2
+                 ;; FIXME:
                  (first mywalk0)
                  (second mywalk0)))
 
   (crit/quick-bench
     (find-in-seg (env/create-repeated-success-look-fn 5)
                  0.2
+                 ;; FIXME:
                  (first mywalk0)
                  (second mywalk0)))
 
@@ -563,12 +565,14 @@
   (crit/quick-bench
     (find-in-seg env/constant-failure-look-fn
                  0.2
+                 ;; FIXME:
                  (first mywalk)
                  (second mywalk)))
 
 
   ;; Example using all of walk:
 
+                 ;; FIXME:
   (crit/quick-bench
     (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
                  walk
@@ -581,6 +585,7 @@
   ;; from start or from the last success.  When it succeeds, it stops
   ;; searching, so this will run faster than when using
   ;; constant-failure-look-fn.
+                 ;; FIXME:
   (crit/quick-bench
     (mapv (partial find-in-seg
                    (env/create-repeated-success-look-fn 50)
@@ -612,7 +617,11 @@
    (let [stopsv (vec stops)
          numstops- (dec (count stops))] ; stop inc'ing two consecutive idxs one before length of stops vector
      (loop [i 0, j 1]
-       (let [from+foodspots (seg-exam-fn look-fn eps (stopsv i) (stopsv j))]
+       (let [endpt-i (stopsv i)
+             endpt-j (stopsv j)
+             from+foodspots (seg-exam-fn look-fn eps
+                                         (endpt-i 0) (endpt-i 1)
+                                         (endpt-j 0) (endpt-j 1))]
          (if from+foodspots               ; all done--found food
            [(first from+foodspots)        ; the found food
             (conj (vec (take j stopsv))      ; replace end of stops with point
