@@ -199,7 +199,7 @@
   endpoints if the projected point is not on the segment.  If the slope m
   and intercept b aren't provided, they'll be calculated from the two
   endpoints."
-  [x0 y0 x1 y1 p q]
+  ^doubles [x0 y0 x1 y1 p q]
   (let [m (slope-from-coords* x0 y0 x1 y1)
         ;; If slope is too steep, work with a lipne reflected across
         ;; y=x by reversing x and y; then swap x and y back at the end:
