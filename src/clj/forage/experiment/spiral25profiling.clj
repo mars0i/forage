@@ -21,7 +21,7 @@
 (def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral25"))
 
 (def half-size  10000) ; half the full width of the env
-(def maxpathlen (* 100 half-size)) ; max length of an entire continuous search path
+(def maxpathlen (* 1000 half-size)) ; max length of an entire continuous search path
 (def explore-segment-len (/ maxpathlen 400.0)) ; max length of walk segments that go far
 (def examine-segment-len (/ maxpathlen 50.0))  ; max length of walk segments that stay local (not exploit, but rather "look closely", examine)
 (def trunclen explore-segment-len)
@@ -65,7 +65,9 @@
         zero-tgt [distance-from-zero 0] ; east from origin--will be shifted later
         directions [0]
         target (shift-point half-size half-size zero-tgt)]
+    (prn target)
     (env/make-single-foodspot-env (target 0) (target 1))))
+
 
 ;; Make envs each with a single target but at several different distances
 ;; from center as proportion of size of env:
@@ -157,10 +159,21 @@
 ;; NOTE Only using the first four envs (i.e. the first four target distances).
 
 (def mu2-walk-fns
-  {"mu2-env0" (fn [init-loc] (w/foodwalk um/near-pt-on-seg (make-unbounded-look-fn (envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-   "mu2-env1" (fn [init-loc] (w/foodwalk um/near-pt-on-seg (make-unbounded-look-fn (envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-   "mu2-env2" (fn [init-loc] (w/foodwalk um/near-pt-on-seg (make-unbounded-look-fn (envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-   "mu2-env3" (fn [init-loc] (w/foodwalk um/near-pt-on-seg (make-unbounded-look-fn (envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))})
+  {"mu2-env0" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+   "mu2-env1" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+   "mu2-env2" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+   "mu2-env3" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))})
+
+
+(defn straight-path [init-loc] [init-loc [(init-loc 0) (params :maxpathlen)]])
+
+(def straight-walk-fns
+  {"mu2-env0" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 0)) "IGNORED" (straight-path init-loc)))
+   "mu2-env1" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 1)) "IGNORED" (straight-path init-loc)))
+   "mu2-env2" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 2)) "IGNORED" (straight-path init-loc)))
+   "mu2-env3" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 3)) "IGNORED" (straight-path init-loc)))})
+
+
 
 ;; FIXME
 ;; composite mu=1.1 and mu=3
@@ -223,13 +236,24 @@
   ;; TESTS
 
 
-  (def walks-per-fn 100)
+  (def walks-per-fn 1000)
 
   (def seed -7370724773351240133)
   (def rng (r/make-well19937 seed))
   (def initial-state (r/get-state rng))
 
-  (def mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu2")) mu2-walk-fns walks-per-fn seed)))
+  ;; This is finding no targets.  It should find a target every time!
+  ;; I should try this with spiral23.
+  (def straight-data-and-rng
+    (time (fr/walk-experiments (update params :basename #(str % "mu2"))
+                               straight-walk-fns walks-per-fn seed)))
+
+  ;; This is finding no targets.  Should it?
+  (def mu2-data-and-rng
+    (time (fr/walk-experiments (update params :basename #(str % "mu2"))
+                               mu2-walk-fns walks-per-fn seed)))
+
+  (clojure.repl/pst)
 
   ;(crit/quick-bench ; will run at least 60 iterations
   (time
