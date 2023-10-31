@@ -113,6 +113,8 @@
                 (range 1 6))) ; five targets at 1/5, 2/5, 3/5, 4/5, 5/5 of distance to border
 ;; NOTE The fifth env may be unused below.
 
+(map env/all-foodspot-coords envs)
+
 ;; DEBUG/TESTING:
 ;(def envs (mapv (partial make-multiple-target-env 4 5)
 ;                (range 1 2))) 
@@ -202,6 +204,17 @@
 ;; walks in each of the different environments defined above.
 
 ;; NOTE Only using the first four envs (i.e. the first four target distances).
+
+;; Sanity check
+(defn straight-path [init-loc] 
+  [init-loc [(init-loc 0) (params :maxpathlen)]])
+
+(def straight-walk-fns
+  {"straight-env0" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-look-fn (envs 0)) 0.2 (straight-path init-loc)))
+   "straight-env1" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-look-fn (envs 1)) 0.2 (straight-path init-loc)))
+   "straight-env2" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-look-fn (envs 2)) 0.2 (straight-path init-loc)))
+   "straight-env3" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-look-fn (envs 3)) 0.2 (straight-path init-loc)))})
+
 
 ;; composite mu=1.1 and mu=3
 (def mu1-mu3-walk-fns
@@ -301,6 +314,13 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
 
+  ;; Sanity check: supposed to find foodspot on every run.
+  (def straight-data-and-rng
+    (time (fr/walk-experiments (update params :basename #(str % "mu2"))
+                               straight-walk-fns 2 seed)))
+
+  (clojure.repl/pst)
+
   (def walks-per-fn 1000)
   ;; With 100 walks-per-fn, the following each took max of 10 mins, for a
   ;; total about an hour on my MBA.  The MBP should be about twice as fast.
@@ -321,7 +341,8 @@
       ;; SPIRAL COMPOSITE WALKS:
       (def mu1-spiral-data-and-rng
         (do (println "mu=1.1 + spiral composite runs:")
-            (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral")) mu1-spiral-walk-fns walks-per-fn seed))))
+            (time (fr/walk-experiments (update params :basename #(str % "mu1-spiral"))
+                                       mu1-spiral-walk-fns walks-per-fn seed))))
 
       (def mu15-spiral-data-and-rng 
         (do (println "mu=1.5 + spiral composite runs:")
