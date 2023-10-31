@@ -190,7 +190,8 @@
 ;; TODO make version using regular clojure vectors, and compare
 ;; benchmarks and profiling.
 ;; ALSO TODO consider using the new hamf/dnth instead of aref, which means
-;; you can drop some of the type hints.
+;; you can drop some of the type hints, I think.  Need to benchmark the
+;; change.
 (defn near-pt-on-seg
   "Given a line segment from (x0,y0) through (x1,y1), with slope m and
   y-intercept b, return the point on the segment with minimum distance to
@@ -216,6 +217,7 @@
         p  (aget tea 4) ; if we're flipping the line, we need to flip the target, too
         q  (aget tea 5)
         m  (aget tea 6)
+        ;; This has to happen after the x-y swap (what if it was vertical?):
         new-endpts (if (< x0 x1)  ; if the segment runs from right to left, swap the endpoints
                      (hamf/double-array [x0 y0 x1 y1])  ; unswapped
                      (hamf/double-array [x1 y1 x0 y0])) ; swapped
