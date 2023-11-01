@@ -316,7 +316,7 @@
                                                                walks-per-fn))
              n-found (count (keep identity found))
              total-length (reduce + lengths)
-             efficiency (/ n-found total-length)] ; lengths start as doubles and remain so--this is double div
+             efficiency (if (zero? total-length) ##Inf (/ n-found total-length))] ; lengths start as doubles and remain so--this is double div
          (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-fn-digits n-found efficiency) ; walks-per-fn digits makes num found same width
          (swap! found-coords$ conj found)
          ;; TODO: THIS IS WHERE I LEAVE BEHIND RELATION BETWEEN FOUND FOODSPOTS AND WALK LENGTHS.
