@@ -68,11 +68,14 @@
         p (hamf/dnth info 0)
         q (hamf/dnth info 1)
         perc-radius (hamf/dnth info 2)
+        ;_ (println "\ntarget:" p q ", radius:" perc-radius) ; DEBUG
         near-pt (um/near-pt-on-seg x0 y0 x1 y1 p q)
         near-x (hamf/dnth near-pt 0)
-        near-y (hamf/dnth near-pt 0)
+        near-y (hamf/dnth near-pt 1)
+        ;_ (println "near-x:" near-x " near-y:" near-y) ; DEBUG
         distance (um/distance-2D* near-x near-y p q)]
+    ; (println "distance:" distance) ; DEBUG
     (if (< distance perc-radius)
-      [p q]
+      [[[p q]] [near-x near-y]]
       nil)))
 

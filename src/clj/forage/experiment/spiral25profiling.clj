@@ -168,13 +168,21 @@
 (defn straight-path [init-loc] [init-loc [(params :maxpathlen) (init-loc 1)]])
 
 (def straight-walk-fns
-  {"mu2-env0" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 0)) "IGNORED" (straight-path init-loc)))
-   "mu2-env1" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 1)) "IGNORED" (straight-path init-loc)))
-   "mu2-env2" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 2)) "IGNORED" (straight-path init-loc)))
-   "mu2-env3" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 3)) "IGNORED" (straight-path init-loc)))
-   "mu2-env4" (fn [init-loc]
-                (prn (envs 4) (straight-path init-loc)) ; DEBUG
-                (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 4)) "IGNORED" (straight-path init-loc)))})
+  {"straight-env0" (fn [init-loc]
+                     ;(print "\nenv:" (envs 0) (straight-path init-loc)) ; DEBUG
+                     (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 0)) "IGNORED" (straight-path init-loc)))
+   "straight-env1" (fn [init-loc]
+                     ;(print "\nenv:" (envs 1) (straight-path init-loc)) ; DEBUG
+                     (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 1)) "IGNORED" (straight-path init-loc)))
+   "straight-env2" (fn [init-loc]
+                     ;(print "\nenv:" (envs 2) (straight-path init-loc)) ; DEBUG
+                     (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 2)) "IGNORED" (straight-path init-loc)))
+   "straight-env3" (fn [init-loc] 
+                     ;(print "\nenv:" (envs 3) (straight-path init-loc)) ; DEBUG
+                     (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 3)) "IGNORED" (straight-path init-loc)))
+   "straight-env4" (fn [init-loc]
+                     ;(print "\nenv:" (envs 4) (straight-path init-loc)) ; DEBUG
+                     (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 4)) "IGNORED" (straight-path init-loc)))})
 
 
 
@@ -238,18 +246,15 @@
 (comment
   ;; TESTS
 
+  (def straight-data-and-rng
+    (time (fr/walk-experiments (update params :basename #(str % "straight"))
+                               straight-walk-fns 10000 seed)))
 
-  (def walks-per-fn 1000)
+  (def walks-per-fn 10000)
 
   (def seed -7370724773351240133)
   (def rng (r/make-well19937 seed))
   (def initial-state (r/get-state rng))
-
-  ;; This is finding no targets.  It should find a target every time!
-  ;; I should try this with spiral23.
-  (def straight-data-and-rng
-    (time (fr/walk-experiments (update params :basename #(str % "straight"))
-                               straight-walk-fns 10 seed)))
 
   ;; This is finding no targets.  Should it?
   (def mu2-data-and-rng
