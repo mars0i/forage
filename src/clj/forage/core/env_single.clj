@@ -75,7 +75,7 @@
         ;_ (println "near-x:" near-x " near-y:" near-y) ; DEBUG
         distance (um/distance-2D* near-x near-y p q)]
     ; (println "distance:" distance) ; DEBUG
-    (if (< distance perc-radius)
+    (if (<= distance perc-radius)
       [[[p q]] [near-x near-y]]
       nil)))
 
