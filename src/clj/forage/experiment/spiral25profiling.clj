@@ -1,4 +1,4 @@
-;; Like spiral23profiling and spiral24profiling, but uses env-single instead 
+; ; Like spiral23profiling and spiral24profiling, but uses env-single instead 
 ;; of env-mason or env-minimal namespace, and usees single-target envs.
 (ns forage.experiment.spiral25profiling
   (:require ;[criterium.core :as crit]
@@ -65,7 +65,7 @@
         zero-tgt [distance-from-zero 0] ; east from origin--will be shifted later
         directions [0]
         target (shift-point half-size half-size zero-tgt)]
-    (prn target)
+    (prn target) ; DEBUG
     (env/make-single-foodspot-env (target 0) (target 1))))
 
 
@@ -165,13 +165,16 @@
    "mu2-env3" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))})
 
 
-(defn straight-path [init-loc] [init-loc [(init-loc 0) (params :maxpathlen)]])
+(defn straight-path [init-loc] [init-loc [(params :maxpathlen) (init-loc 1)]])
 
 (def straight-walk-fns
   {"mu2-env0" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 0)) "IGNORED" (straight-path init-loc)))
    "mu2-env1" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 1)) "IGNORED" (straight-path init-loc)))
    "mu2-env2" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 2)) "IGNORED" (straight-path init-loc)))
-   "mu2-env3" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 3)) "IGNORED" (straight-path init-loc)))})
+   "mu2-env3" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 3)) "IGNORED" (straight-path init-loc)))
+   "mu2-env4" (fn [init-loc]
+                (prn (envs 4) (straight-path init-loc)) ; DEBUG
+                (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 4)) "IGNORED" (straight-path init-loc)))})
 
 
 
@@ -245,8 +248,8 @@
   ;; This is finding no targets.  It should find a target every time!
   ;; I should try this with spiral23.
   (def straight-data-and-rng
-    (time (fr/walk-experiments (update params :basename #(str % "mu2"))
-                               straight-walk-fns walks-per-fn seed)))
+    (time (fr/walk-experiments (update params :basename #(str % "straight"))
+                               straight-walk-fns 10 seed)))
 
   ;; This is finding no targets.  Should it?
   (def mu2-data-and-rng

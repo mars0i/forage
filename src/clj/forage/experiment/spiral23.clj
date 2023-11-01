@@ -207,7 +207,7 @@
 
 ;; Sanity check
 (defn straight-path [init-loc] 
-  [init-loc [(init-loc 0) (params :maxpathlen)]])
+  [init-loc [(params :maxpathlen) (init-loc 1)]])
 
 (def straight-walk-fns
   {"straight-env0" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-look-fn (envs 0)) 0.2 (straight-path init-loc)))
@@ -314,10 +314,11 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; RUN THE EXPERIMENTS
 
+  (env/all-foodspot-coords (envs 3))
   ;; Sanity check: supposed to find foodspot on every run.
   (def straight-data-and-rng
-    (time (fr/walk-experiments (update params :basename #(str % "mu2"))
-                               straight-walk-fns 2 seed)))
+    (time (fr/walk-experiments (update params :basename #(str % "straight"))
+                               straight-walk-fns 100 seed)))
 
   (clojure.repl/pst)
 
