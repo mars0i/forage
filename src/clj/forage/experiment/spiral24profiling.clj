@@ -218,14 +218,14 @@
    "mu15-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 1.5)})
 
 ;; pure mu=2 walks (using my older interface)
-;(def mu2-walk-fns
-;  {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
-;   "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
-;   "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
-;   "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)})
+(def mu2-walk-fns
+  {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
+   "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
+   "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
+   "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)})
 
 ;; pure mu=2 walks USING NEW INTERFACE
-(def mu2-walk-fns
+(def new-mu2-walk-fns
   {"mu2-env0" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
    "mu2-env1" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
    "mu2-env2" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
@@ -249,7 +249,7 @@
 
   (def mu2-data-and-rng
     (time (fr/walk-experiments (update params :basename #(str % "mu2"))
-                               mu2-walk-fns 10000 seed rng)))
+                               new-mu2-walk-fns 1000 seed rng)))
 
 
   (def walks-per-fn 10)
