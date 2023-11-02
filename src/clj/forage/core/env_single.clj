@@ -1,7 +1,7 @@
 ;; Functions for minimal, fast environments containing a 
 ;; single foodspot, without toroidal lookup.
 (ns forage.core.env-single
-  (:require [ham-fisted.api :as hamf]
+  (:require [ham-fisted.api :as hf]
             [utils.math :as um]
             [fastmath.core :as fm]
             [forage.core.food :as f]))
@@ -58,20 +58,20 @@
 
 (defn make-look-fn
   ^doubles [env ^double perc-radius]
-  (constantly (hamf/double-array [(env 0) (env 1) perc-radius])))
+  (constantly (hf/double-array [(env 0) (env 1) perc-radius])))
 
 ;; Note that look-fn plays a different role here than in walks/find-in-seg,
 ;; as it must.
 (defn find-in-seg
   [look-fn _ x0 y0 x1 y1]
   (let [info (look-fn)
-        p (hamf/dnth info 0)
-        q (hamf/dnth info 1)
-        perc-radius (hamf/dnth info 2)
+        p (hf/dnth info 0)
+        q (hf/dnth info 1)
+        perc-radius (hf/dnth info 2)
         ;_ (println "\ntarget:" p q ", radius:" perc-radius) ; DEBUG
         near-pt (um/near-pt-on-seg x0 y0 x1 y1 p q)
-        near-x (hamf/dnth near-pt 0)
-        near-y (hamf/dnth near-pt 1)
+        near-x (hf/dnth near-pt 0)
+        near-y (hf/dnth near-pt 1)
         ;_ (println "near-x:" near-x " near-y:" near-y) ; DEBUG
         distance (um/distance-2D* near-x near-y p q)]
     ; (println "distance:" distance) ; DEBUG
