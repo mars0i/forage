@@ -81,8 +81,7 @@
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
-  (partial env/perc-multiple-foodspots env (params :perc-radius)))
-
+  (env/make-look-fn env (params :perc-radius)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MAKE THE EXPERIMENTS
@@ -98,6 +97,8 @@
 ;; Component distributions
 (def mu1dist (r/make-powerlaw rng 1 1.1))
 (def mu15dist (r/make-powerlaw rng 1 1.5))
+(def mu2dist (r/make-powerlaw rng 1 2))
+;; TODO add mu=2.5
 (def mu3dist (r/make-powerlaw rng 1 3))
 ;; I use mu=other values as well, but only using my older levy-experiments interface
 
@@ -106,10 +107,15 @@
   (w/vecs-upto-len explore-segment-len (w/make-levy-vecs rng mu1dist 1 (params :trunclen))))
 (defn more-mu15-vecs [] 
   (w/vecs-upto-len explore-segment-len (w/make-levy-vecs rng mu15dist 1 (params :trunclen))))
+(defn more-mu2-vecs [] 
+  (w/vecs-upto-len explore-segment-len (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
+;; TODO add mu=2.5
 (defn more-mu3-vecs [] 
   (w/vecs-upto-len examine-segment-len (w/make-levy-vecs rng mu3dist  1 (params :trunclen))))
 (defn more-spiral-vecs []
   (w/vecs-upto-len examine-segment-len (sp/unit-archimedean-spiral-vecs 2 0.1)))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Functions that construct composite walks
@@ -146,9 +152,33 @@
                           (interleave (repeatedly more-mu15-vecs)
                                       (repeatedly more-spiral-vecs)))))
 
+(defn mu2-vecs
+  [maxpathlen]
+  (w/vecs-upto-len maxpathlen (more-mu2-vecs)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Maps whose values are functions that run composite and non-composite 
 ;; walks in each of the different environments defined above.
+
+(defn straight-path [init-loc] [init-loc [(params :maxpathlen) (init-loc 1)]])
+
+(def straight-walk-fns
+  {"straight-env0" (fn [init-loc]
+                     ;(print "\nenv:" (envs 0) (straight-path init-loc)) ; DEBUG
+                     (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 0)) "IGNORED" (straight-path init-loc)))
+   "straight-env1" (fn [init-loc]
+                     ;(print "\nenv:" (envs 1) (straight-path init-loc)) ; DEBUG
+                     (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 1)) "IGNORED" (straight-path init-loc)))
+   "straight-env2" (fn [init-loc]
+                     ;(print "\nenv:" (envs 2) (straight-path init-loc)) ; DEBUG
+                     (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 2)) "IGNORED" (straight-path init-loc)))
+   "straight-env3" (fn [init-loc] 
+                     ;(print "\nenv:" (envs 3) (straight-path init-loc)) ; DEBUG
+                     (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 3)) "IGNORED" (straight-path init-loc)))
+   "straight-env4" (fn [init-loc]
+                     ;(print "\nenv:" (envs 4) (straight-path init-loc)) ; DEBUG
+                     (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 4)) "IGNORED" (straight-path init-loc)))})
+
 
 ;; NOTE Only using the first four envs (i.e. the first four target distances).
 
@@ -180,7 +210,7 @@
    "composite-mu15-spiral-env2" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
    "composite-mu15-spiral-env3" (fn [init-loc] (w/foodwalk (make-unbounded-look-fn (envs 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))})
 
-;; pure mu=2 walks (using my older interface)
+;; pure mu=1.5 walks (using my older interface)
 (def mu15-walk-fns
   {"mu15-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 1.5)
    "mu15-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 1.5)
@@ -188,11 +218,18 @@
    "mu15-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 1.5)})
 
 ;; pure mu=2 walks (using my older interface)
+;(def mu2-walk-fns
+;  {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
+;   "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
+;   "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
+;   "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)})
+
+;; pure mu=2 walks USING NEW INTERFACE
 (def mu2-walk-fns
-  {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
-   "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
-   "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
-   "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)})
+  {"mu2-env0" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+   "mu2-env1" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+   "mu2-env2" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+   "mu2-env3" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))})
 
 ;; pure mu=2.5 walks (using my older interface)
 (def mu25-walk-fns
@@ -204,27 +241,36 @@
 
 
 (comment
-  ;; CRITERIUM TESTS
+  ;; TESTS
+
+  (def straight-data-and-rng
+    (time (fr/walk-experiments (update params :basename #(str % "straight"))
+                               straight-walk-fns 1000 seed)))
+
+  (def mu2-data-and-rng
+    (time (fr/walk-experiments (update params :basename #(str % "mu2"))
+                               mu2-walk-fns 10000 seed rng)))
 
 
-  (def walks-per-fn 100)
+  (def walks-per-fn 10)
   (def seed -7370724773351240133)
   (def rng (r/make-well19937 seed))
   (def initial-state (r/get-state rng))
 
+
   (time
-  (crit/quick-bench ; will run at least 60 iterations
-    (do
-      ;; These setup calls are needed to make each Criterium run the same.
-      ;; On my MBP the average time added by them is 2.859466 µs, i.e. < 3/1,000,000 second.
-      (r/set-state rng initial-state)
-      (let [mu2-walk-fns
-            {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
-             "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
-             "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
-             "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)}]
-      (fr/walk-experiments (update params :basename #(str % "mu2"))
-                           mu2-walk-fns walks-per-fn seed rng)))))
+    (crit/quick-bench ; will run at least 60 iterations
+                      (do
+                        ;; These setup calls are needed to make each Criterium run the same.
+                        ;; On my MBP the average time added by them is 2.859466 µs, i.e. < 3/1,000,000 second.
+                        (r/set-state rng initial-state)
+                        (let [mu2-walk-fns
+                              {"mu2-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.0)
+                               "mu2-env1" (partial fr/levy-run rng (make-unbounded-look-fn (envs 1)) nil params 2.0)
+                               "mu2-env2" (partial fr/levy-run rng (make-unbounded-look-fn (envs 2)) nil params 2.0)
+                               "mu2-env3" (partial fr/levy-run rng (make-unbounded-look-fn (envs 3)) nil params 2.0)}]
+                          (fr/walk-experiments (update params :basename #(str % "mu2"))
+                                               mu2-walk-fns walks-per-fn seed rng)))))
 
   ;; How much overhead does the setup add?
   (crit/quick-bench
