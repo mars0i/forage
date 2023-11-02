@@ -10,8 +10,8 @@
 ;; THIS VERSION has multiple targets at the same distance from origin.
 ;;
 (ns forage.experiment.spiral23profiling
-  (:require [criterium.core :as crit]
-            [clj-async-profiler.core :as prof]
+  (:require ;[criterium.core :as crit]
+            ;[clj-async-profiler.core :as prof]
             ;[clojure.math :as cmath]
             [utils.math :as um]
             [forage.core.run :as fr]
@@ -230,7 +230,7 @@
 ;; examine-segment-len, total.  This extends the walk to maxpathlen.
 (defn mu2-vecs
   [maxpathlen]
-  (w/vecs-upto-len maxpathlen (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
+  (w/vecs-upto-len maxpathlen (w/make-levy-vecs rng mu2dist 1 (params :trunclen))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Maps whose values are functions that run composite and non-composite 
@@ -293,6 +293,8 @@
    "mu2-env2" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-look-fn (envs 2)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
    "mu2-env3" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-look-fn (envs 3)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))})
 
+(count (mu2-vecs maxpathlen))
+
 ;; pure mu=2.5 walks (using my older interface)
 (def mu25-walk-fns
   {"mu25-env0" (partial fr/levy-run rng (make-unbounded-look-fn (envs 0)) nil params 2.5)
@@ -352,12 +354,12 @@
 (comment
   ;; TESTS
 
-  (def straight-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "straight")) straight-walk-fns 1000 seed)))
+  (def straight-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "straight")) straight-walk-fns 100 seed)))
 
-  (def mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu2")) mu2-walk-fns 1000 seed)))
-  ;; THIS NEXT ONE IS FINDING NO TARGETS.  I kind of expected it to produce results identical to the preceding.
-  (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 1000 seed)))
-  (def foo                  (time (fr/walk-experiments (update params :basename #(str % "mu15-mu3")) mu15-mu3-walk-fns 1000 seed)))
+  (def mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "mu2")) mu2-walk-fns 100 seed)))
+  (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 100 seed)))
+
+  (count new-mu2-walk-fns)
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
