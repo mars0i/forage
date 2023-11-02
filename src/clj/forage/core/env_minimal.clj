@@ -1,13 +1,16 @@
 ;; Functions for minimal, fast environments containing a 
 ;; few foodspots, without toroidal lookup.
 (ns forage.core.env-minimal
-  (:require [utils.math :as um]
+  (:require [ham-fisted.api :as hf]
             [fastmath.core :as fm]
             [forage.core.food :as f]))
 
-;(set! *warn-on-reflection* true)
-;(set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
+
+;; TODO: Is there a reason to use a Java array rather than a Clojure vector
+;; for the foodspots?
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ENVIRONMENT THAT CONSISTS OF A COLLECTION of COORDINATE PAIRS.
@@ -67,3 +70,38 @@
   env, or nil if there are none."
   [env]
   env)
+
+
+;; I could randomize the order of foodspots with a different look-fn.
+(defn make-look-fn
+  ^doubles [env ^double perc-radius]
+  (constantly
+    (hf/double-array
+      (into [perc-radius (inc (count env))] ; second element is index of last coordinate
+            (apply concat env)))))
+
+
+
+;; Note that look-fn plays a different role here than in walks/find-in-seg,
+;; as it must.
+(defn find-in-seg
+  "Only returns the first foodspot found.  The search in order that
+  foodspots are returned by look-fn."
+  [look-fn _ x0 y0 x1 y1]
+  (let [^doubles info (look-fn)
+        perc-radius (hf/dnth info 0)
+        last-index (long (hf/dnth info 1)) ; env size + 1
+        near-pt-fn (partial (um/near-pt-on-seg x0 y0 x1 y1))] ; Is this a good idea?
+    (loop [i 2]
+      (let [j (inc i)
+            p (hf/dnth info i)
+            q (hf/dnth info j)
+            near-pt (near-pt-fn p q)
+            near-x (hf/dnth near-pt 0)
+            near-y (hf/dnth near-pt 1)
+            distance (um/distance-2D* near-x near-y p q)]
+        (cond (<= distance perc-radius) [[[p q]] [near-x near-y]] ; seq of single foodspot found, where found from
+              (= j last-index) nil
+              :else (recur (inc i)))))))
+
+
