@@ -57,7 +57,7 @@
   [env])
 
 (defn make-look-fn
-  ^doubles [env ^double perc-radius]
+  [env ^double perc-radius]
   (constantly (hf/double-array [(env 0) (env 1) perc-radius])))
 
 ;; Note that look-fn plays a different role here than in walks/find-in-seg,

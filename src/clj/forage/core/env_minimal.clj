@@ -3,6 +3,7 @@
 (ns forage.core.env-minimal
   (:require [ham-fisted.api :as hf]
             [fastmath.core :as fm]
+            [utils.math :as um]
             [forage.core.food :as f]))
 
 (set! *warn-on-reflection* true)
@@ -74,7 +75,7 @@
 
 ;; I could randomize the order of foodspots with a different look-fn.
 (defn make-look-fn
-  ^doubles [env ^double perc-radius]
+  [env ^double perc-radius]
   (constantly
     (hf/double-array
       (into [perc-radius (inc (count env))] ; second element is index of last coordinate
@@ -91,7 +92,7 @@
   (let [^doubles info (look-fn)
         perc-radius (hf/dnth info 0)
         last-index (long (hf/dnth info 1)) ; env size + 1
-        near-pt-fn (partial (um/near-pt-on-seg x0 y0 x1 y1))] ; Is this a good idea?
+        near-pt-fn (partial um/near-pt-on-seg x0 y0 x1 y1)] ; Is this a good idea?
     (loop [i 2]
       (let [j (inc i)
             p (hf/dnth info i)
