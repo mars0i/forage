@@ -114,7 +114,7 @@
   (w/vecs-upto-len examine-segment-len (sp/unit-archimedean-spiral-vecs 2 0.1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Functions that construct composite walks
+;; Functions that construct composite (and other) walks
 
 (defn mu2-vecs
   [maxpathlen]
@@ -151,6 +151,12 @@
                    (apply concat
                           (interleave (repeatedly more-mu15-vecs)
                                       (repeatedly more-spiral-vecs)))))
+
+;; Doesn't use more-mu2-vecs because that is limited to
+;; examine-segment-len, total.  This extends the walk to maxpathlen.
+(defn mu2-vecs
+  [maxpathlen]
+  (w/vecs-upto-len maxpathlen (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Maps whose values are functions that run composite and non-composite 

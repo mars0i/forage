@@ -1,7 +1,7 @@
 ;; Like spiral23profiling, but uses env-minimal instead of env-mason namespace.
 (ns forage.experiment.spiral24profiling
-  (:require [criterium.core :as crit]
-            [clj-async-profiler.core :as prof]
+  (:require ;[criterium.core :as crit]
+            ;[clj-async-profiler.core :as prof]
             ;[clojure.math :as cmath]
             [utils.math :as um]
             [forage.core.run :as fr]
@@ -152,9 +152,11 @@
                           (interleave (repeatedly more-mu15-vecs)
                                       (repeatedly more-spiral-vecs)))))
 
+;; Doesn't use more-mu2-vecs because that is limited to
+;; examine-segment-len, total.  This extends the walk to maxpathlen.
 (defn mu2-vecs
   [maxpathlen]
-  (w/vecs-upto-len maxpathlen (more-mu2-vecs)))
+  (w/vecs-upto-len maxpathlen (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Maps whose values are functions that run composite and non-composite 
@@ -249,7 +251,7 @@
 
   (def mu2-data-and-rng
     (time (fr/walk-experiments (update params :basename #(str % "mu2"))
-                               new-mu2-walk-fns 1000 seed rng)))
+                               new-mu2-walk-fns 100 seed rng)))
 
 
   (def walks-per-fn 10)
