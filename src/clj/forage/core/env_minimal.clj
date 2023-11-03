@@ -91,7 +91,7 @@
   [look-fn _ x0 y0 x1 y1]
   (let [^doubles info (look-fn)
         perc-radius (hf/dnth info 0)
-        last-index (long (hf/dnth info 1)) ; env size + 1
+        last-index (inc (long (hf/dnth info 1))) ; env size + 2
         near-pt-fn (partial um/near-pt-on-seg x0 y0 x1 y1)] ; Is this a good idea?
     (loop [i 2]
       (let [j (inc i)

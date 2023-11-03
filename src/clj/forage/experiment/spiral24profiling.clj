@@ -247,13 +247,21 @@
 
   (def straight-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "straight")) straight-walk-fns 1000 seed)))
 
-  (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 100 seed)))
-
-
-  (def walks-per-fn 10)
   (def seed -7370724773351240133)
   (def rng (r/make-well19937 seed))
   (def initial-state (r/get-state rng))
+
+  (do
+    (r/set-state rng initial-state)
+    (let[new-mu2-walk-fns
+         {"mu2-env0" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+          "mu2-env1" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+          "mu2-env2" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+          "mu2-env3" (fn [init-loc] (w/foodwalk env/find-in-seg (make-unbounded-look-fn (envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
+      (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 10 seed)))))
+
+
+  (def walks-per-fn 10)
 
 
   (time
