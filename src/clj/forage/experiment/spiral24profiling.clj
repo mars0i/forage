@@ -17,7 +17,7 @@
 (def targets-per-env 6)
 
 (def homedir (System/getenv "HOME"))
-(def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral24"))
+(def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral24/"))
 
 (def half-size  10000) ; half the full width of the env
 (def maxpathlen (* 100 half-size)) ; max length of an entire continuous search path
@@ -245,13 +245,9 @@
 (comment
   ;; TESTS
 
-  (def straight-data-and-rng
-    (time (fr/walk-experiments (update params :basename #(str % "straight"))
-                               straight-walk-fns 1000 seed)))
+  (def straight-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "straight")) straight-walk-fns 1000 seed)))
 
-  (def mu2-data-and-rng
-    (time (fr/walk-experiments (update params :basename #(str % "mu2"))
-                               new-mu2-walk-fns 100 seed rng)))
+  (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 100 seed)))
 
 
   (def walks-per-fn 10)

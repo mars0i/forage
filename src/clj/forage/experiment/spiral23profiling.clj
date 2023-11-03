@@ -309,11 +309,6 @@
    ;; AND MAYBE ADD: Full spiral of length equal to maxpathlen
    
 
-(defn mu2-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen (more-mu2-vecs)))
-
-
 (comment
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; EXAMINE, CONFIGURE:
