@@ -123,6 +123,8 @@
   [env]
   (envminimal/make-look-fn env (params :perc-radius)))
 
+  ;; TODO NOTE I SHOULD REPLACE walks/find-in-seg WITH NUERNBER'S VERSION.
+  ;; THAT SHOULD SPEED THIS UP A LITTLE.
 (defn make-unbounded-envmason-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
@@ -336,6 +338,8 @@
 
   (clojure.repl/pst)
 
+  ;; TODO NOTE I SHOULD REPLACE walks/find-in-seg WITH NUERNBER'S VERSION.
+  ;; THAT SHOULD SPEED THIS UP A LITTLE.
   ;; env-mason
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmason/foodspot-coords)
   (do
