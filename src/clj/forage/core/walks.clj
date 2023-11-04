@@ -474,9 +474,7 @@
   no foodspots are found.  look-fn should take a single argument, a
   pair representing the coordinates of a location from which to check
   whether a foodspot is perceptible.  If foodspots are found, this function 
-  stops searching and returns a pair in which the first element is the 
-  coordinate pair for the location from which the foodspots were perceived,
-  and the second element is the representation of the foodspots found, which
+  stops searching and returns a representation of the foodspots found, which
   may be a collection of foodspot objects, a collection of coordinates of
   foodspot objects, or some other truthy value.  (The kind of value to be
   returned depends on look-fn, which should reflect the way that this 
