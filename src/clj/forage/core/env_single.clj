@@ -65,6 +65,9 @@
 ;; foodspot or nil.
 
 ;; Version with primitive invoke is slower?
+;; Maybe, but note that I don't think it's supposed to help here; it only
+;; helps when you pass in a function.  That's why it only works in a let--
+;; because you're creating a new version of the function.
 #_
 (defn make-look-fn
   [env ^double perc-radius]
@@ -91,6 +94,9 @@
         [[[p q]] [near-x near-y]]
         nil))))
 
+;; TODO maybe use ham-fisted's primitive invoke?  But can't because
+;; look-fn's return value is too complex.  So maybe use literal primtive
+;; invoke?
 (defn find-in-seg
   [look-fn _ x0 y0 x1 y1]
   (look-fn x0 y0 x1 y1))
@@ -112,7 +118,6 @@
   [look-fn _ x0 y0 x1 y1]
   (hfl/let [[perc-radius p q] (dbls (look-fn))  ; _ (println "\ntarget:" p q ", radius:" perc-radius) ; DEBUG
         [near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))  ; _ (println "near-x:" near-x " near-y:" near-y) ; DEBUG
-        ;; TODO: Wrap this in ham-fisted.primitive-invoke/->ddddd?
         distance (um/distance-2D* near-x near-y p q)]  ; (println "distance:" distance) ; DEBUG
     (if (<= distance perc-radius)
       [[[p q]] [near-x near-y]]
