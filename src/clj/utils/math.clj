@@ -6,6 +6,7 @@
               [fastmath.stats :as fstats]
               [fastmath.core :as fm]
               [ham-fisted.api :as hamf]
+              [ham-fisted.primitive-invoke :as hfpi]
               [clojure.core :as cc] ; to replace fastmath macros in reduce, map, etc.
               [clojure.string :as st]))
 
@@ -91,6 +92,15 @@
   (let [xdiff (- x0 x1)
         ydiff (- y0 y1)]
   (sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))
+
+(def distance-2D-prim
+  "Computes distance between two-dimensional points (x0, y0) and (x1, y1)
+  using the Pythagorean theorem.  Designed to be called with
+  ham-fisted.primitive-invoke/ddddd ."
+  (hfpi/->ddddd (fn ^double [^double x0 ^double y0 ^double x1 ^double y1]
+                  (let [xdiff (- x0 x1)
+                        ydiff (- y0 y1)]
+                    (sqrt (+ (* xdiff xdiff) (* ydiff ydiff)))))))
 
 
 (defn slope-from-coords
