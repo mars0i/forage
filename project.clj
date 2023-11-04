@@ -13,7 +13,7 @@
                  ;[generateme/fastmath "2.1.8"]
                  ;[generateme/fastmath "2.1.9-SNAPSHOT"]
                  [generateme/fastmath "2.2.2-SNAPSHOT"]
-                 [com.cnuernber/ham-fisted "2.009"]
+                 [com.cnuernber/ham-fisted "2.010"]
                  [org.flatland/ordered "1.15.10"] ; for ordered-set
                  [net.mikera/core.matrix "0.63.0"]
                  [aerial.hanami "0.17.0"]
