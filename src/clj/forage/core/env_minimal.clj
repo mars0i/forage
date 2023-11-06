@@ -20,7 +20,17 @@
 ;; If two targets are within percecptual range of a segment, the first one
 ;; *should* be found, but at present, a different one might be the one
 ;; returned.  Also, at present, only the first target found is returned;
-;; within a segment, we stop looking after that.
+;; within a segment, we stop looking after that.  So it's theoretically 
+;; possible for a walk to skip over a target that it could have found, 
+;; and proceed to find another target that is very far away.  This is 
+;; unlikely if foodspots are few and far, because a long segment would need
+;; to be at just the right orientation, but it's possible.  (We might think
+;; of this as a rare perceptual lapse on the part of the forager.)
+
+;; Another reason to use this environment type only with few targets is
+;; that for *every* segment, search is linear in the number of *all* 
+;; targets in the environment.  For many targets, env-mason is likely
+;; to be faster.
 
 ;; TODO: Is there a reason to use a Java array rather than a Clojure vector
 ;; for the foodspots?  Maybe I should make that change.
