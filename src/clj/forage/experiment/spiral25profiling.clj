@@ -71,7 +71,7 @@
         zero-tgt [distance-from-zero 0] ; east from origin--will be shifted later
         directions [0]
         target (shift-point half-size half-size zero-tgt)]
-    (prn target) ; DEBUG
+    ;(prn target) ; DEBUG
     (envsingle/make-single-foodspot-env (target 0) (target 1))))
 
 ;; A bit more complicated than needed because it's a modified version
@@ -87,7 +87,7 @@
         zero-tgt [distance-from-zero 0] ; east from origin--will be shifted later
         directions [0]
         targets [(shift-point half-size half-size zero-tgt)]]
-    (prn targets) ; DEBUG
+    ;(prn targets) ; DEBUG
     (envminimal/make-multiple-foodspot-env targets)))
 
 (defn make-single-target-envmason
@@ -101,7 +101,7 @@
         zero-tgt [distance-from-zero 0] ; east from origin--will be shifted later
         directions [0]
         targets [(shift-point half-size half-size zero-tgt)]]
-    (prn targets) ; DEBUG
+    ;(prn targets) ; DEBUG
     (envmason/make-env (params :env-discretization)
                        (params :env-size)
                        targets)))
@@ -313,18 +313,6 @@
 
   (def straight-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "straight")) straight-walk-fns 10000 seed)))
 
-  (def seed -7370724773351240133)
-  (def rng (r/make-well19937 seed))
-  (def initial-state (r/get-state rng))
-
-  ;; These are different because the RNG advances:
-  (def stops0 (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen))))
-  (def stops1 (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen))))
-  (def stops2 (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen))))
-  (def stops3 (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen))))
-  (def stops4 (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen))))
-
-
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
   ;; VERSIONS IN WHICH GENERATION OF WALKS IS NOT INCLUDED IN THE TIME
   ;; Note that in this case a *different* walk is used in each env
@@ -332,26 +320,49 @@
   ;; env-single, env-minimal, env-mason.
   ;; An alternative is to use the same walk in each env.
 
+  (do ;; SETUP
+
+      ;; NOTE that mu2-vecs is defined above using the PRNG defined in the
+      ;; main code in this file.  So the only way to reset and get exactly
+      ;; the same walks is to re-evaluate the file.  At the moment I don't want to pass
+      ;; in PRNG to all of the functions that the following depends on.
+
+      ;(def seed -7370724773351240133)
+      ;(def rng (r/make-well19937 seed))
+      ;(def initial-state (r/get-state rng)) ; only used for some of the tests below
+
+      ;; A different walk for each of the five environments.
+      ;; These are each different because the RNG advances.
+      (def walks [(w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                  (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                  (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                  (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                  (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))])
+
+      (println "# of coordinate pairs in walks 0 through 4, respectively:")
+      (prn (map count walks))
+  )
+
   (def walks-per-fn 1)
 
   ;; env-single
   ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
-  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (w/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 0)) "IGNORED" stops0))
-                          "mu2-env1" (fn [ignored-init-loc] (w/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 1)) "IGNORED" stops1))
-                          "mu2-env2" (fn [ignored-init-loc] (w/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 2)) "IGNORED" stops2))
-                          "mu2-env3" (fn [ignored-init-loc] (w/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 3)) "IGNORED" stops3))
-                          "mu2-env4" (fn [ignored-init-loc] (w/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 4)) "IGNORED" stops4))}]
+  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (w/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 0)) "IGNORED" (walks 0)))
+                          "mu2-env1" (fn [ignored-init-loc] (w/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 1)) "IGNORED" (walks 1)))
+                          "mu2-env2" (fn [ignored-init-loc] (w/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 2)) "IGNORED" (walks 2)))
+                          "mu2-env3" (fn [ignored-init-loc] (w/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 3)) "IGNORED" (walks 3)))
+                          "mu2-env4" (fn [ignored-init-loc] (w/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 4)) "IGNORED" (walks 4)))}]
     (crit/quick-bench
       (fr/walk-experiments (update params :basename #(str % "env_single_mu2_1each")) new-mu2-walk-fns walks-per-fn seed)))
 
   ;; env-minimal
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envminimal/foodspot-coords)
   ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
-  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 0)) "IGNORED" stops0))
-                          "mu2-env1" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 1)) "IGNORED" stops1))
-                          "mu2-env2" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 2)) "IGNORED" stops2))
-                          "mu2-env3" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 3)) "IGNORED" stops3))
-                          "mu2-env4" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 4)) "IGNORED" stops4))}]
+  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 0)) "IGNORED" (walks 0)))
+                          "mu2-env1" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 1)) "IGNORED" (walks 1)))
+                          "mu2-env2" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 2)) "IGNORED" (walks 2)))
+                          "mu2-env3" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 3)) "IGNORED" (walks 3)))
+                          "mu2-env4" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 4)) "IGNORED" (walks 4)))}]
     (crit/quick-bench
       (fr/walk-experiments (update params :basename #(str % "env_minimal_mu2_1each")) new-mu2-walk-fns walks-per-fn seed)))
 
@@ -360,16 +371,18 @@
   ;; env-mason
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmason/foodspot-coords)
   ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
-  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 0)) (params :look-eps) stops0))
-                          "mu2-env1" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 1)) (params :look-eps) stops1))
-                          "mu2-env2" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 2)) (params :look-eps) stops2))
-                          "mu2-env3" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 3)) (params :look-eps) stops3))
-                          "mu2-env4" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 4)) (params :look-eps) stops4))}]
+  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 0)) (params :look-eps) (walks 0)))
+                          "mu2-env1" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 1)) (params :look-eps) (walks 1)))
+                          "mu2-env2" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 2)) (params :look-eps) (walks 2)))
+                          "mu2-env3" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 3)) (params :look-eps) (walks 3)))
+                          "mu2-env4" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 4)) (params :look-eps) (walks 4)))}]
     (crit/quick-bench
       (fr/walk-experiments (update params :basename #(str % "env_mason_mu2_1each")) new-mu2-walk-fns walks-per-fn seed)))
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; ATTEMPT TO PRE-COMPUTE A LARGE NUMBER OF DIFFERENT WALKS
+  ;; MAY BE VERY SLOW.
 
 
   (def walks-per-fn 10)
