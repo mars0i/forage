@@ -27,7 +27,7 @@
   single point.  The environment returned is is simply a pair [x y] of
   coordinates for that foodspot."
   [x y]
-  [x y])
+  (double-array [x y]))
 
 (defn perc-single-foodspot
   "Returns a collection containing the sole foodspot if it's within
@@ -38,20 +38,19 @@
   but it's in a collection, use perc-mulitple-foodspots instead.
   Example usage:
      (def look-fn (partial env (params :perc-radius)))"
-  [env ^double perc-radius ^double x ^double y] 
-  (if (<= (um/distance-2D* x y (double (env 0)) (double (env 1))) perc-radius)
-  ;(if (<= (um/distance-2D* x y (env 0) (env 1)) perc-radius)
-    [env]
+  [^doubles env ^double perc-radius ^double x ^double y] 
+  (if (>= perc-radius
+          (um/distance-2D* x y (aget env 0) (aget env 1)))
+    [(vec env)]
     nil))
 
-(def foodspot-coords 
-  "Extracts the coordinates from a foodspot. (Since in this env, foodspots
-  are coordinate pairs, this is simply the identity function.)"
-  identity)
+(defn foodspot-coords 
+  "Extracts the coordinates from the one foodspot (as a vector pair)."
+  [env]
+  (vec env))
 
 (defn env-foodspots
-  "Returns a collection containing the sole foodspot in environment env, or
-  nil if there are none."
+  "Returns a collection containing the sole foodspot in environment env."
   [env]
   [env])
 
@@ -59,10 +58,10 @@
   "Returns a collection containing the sole coordinate pair of a foodspot
   in environment env, or nil if there are none."
   [env]
-  [env])
+  [(vec env)])
 
 (defn make-look-fn
-  [env ^double perc-radius]
+  [^doubles env ^double perc-radius]
   (fn [x0 y0 x1 y1]
     (hfl/let [[p q] (dbls env)
               [near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))  ; _ (println "near-x:" near-x " near-y:" near-y) ; DEBUG
