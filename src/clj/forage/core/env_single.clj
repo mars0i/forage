@@ -1,5 +1,7 @@
 ;; Functions for minimal, fast environments containing a 
 ;; single foodspot, without toroidal lookup.
+;; The search process runs globally for each segment, and doesn't
+;; step through the segment as in env-mason.
 (ns forage.core.env-single
   (:require [ham-fisted.api :as hf]
             [ham-fisted.hlet :as hfl]

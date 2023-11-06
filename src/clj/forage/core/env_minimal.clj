@@ -1,5 +1,7 @@
 ;; Functions for minimal, fast environments containing a 
 ;; few foodspots, without toroidal lookup.
+;; The search process runs globally for each segment, and doesn't
+;; step through the segment as in env-mason.
 (ns forage.core.env-minimal
   (:require [ham-fisted.api :as hf]
             [ham-fisted.hlet :as hfl]
@@ -11,8 +13,17 @@
 (set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
+;; NOTE: This environment type should only be used when targets/foodspots
+;; are far apart, and only when there are few targets.  Even then, there 
+;; could be something funny that occurs with a long segment.  The reason 
+;; is that for each segment, targets are examined in no particular order.
+;; If two targets are within percecptual range of a segment, the first one
+;; *should* be found, but at present, a different one might be the one
+;; returned.  Also, at present, only the first target found is returned;
+;; within a segment, we stop looking after that.
+
 ;; TODO: Is there a reason to use a Java array rather than a Clojure vector
-;; for the foodspots?
+;; for the foodspots?  Maybe I should make that change.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ENVIRONMENT THAT CONSISTS OF A COLLECTION of COORDINATE PAIRS.
