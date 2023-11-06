@@ -5,7 +5,7 @@
 (ns forage.core.env-single
   (:require [ham-fisted.api :as hf]
             [ham-fisted.hlet :as hfl]
-            [ham-fisted.primitive-invoke :as hfpi]
+            [ham-fisted.primitive-invoke :as hfp]
             [utils.math :as um]
             [clojure.math :as math :refer [sqrt]]
             [fastmath.core :as fm]
@@ -71,9 +71,8 @@
         [[[p q]] [near-x near-y]]
         nil))))
 
-;; TODO maybe use ham-fisted's primitive invoke?  But can't because
-;; look-fn's return value is too complex.  So maybe use literal primtive
-;; invoke?
+;; Use ham-fisted's primitive invoke?  No, can't because look-fn's
+;; return value is too complex.
 (defn find-in-seg
   [look-fn _ x0 y0 x1 y1]
   (look-fn x0 y0 x1 y1))
@@ -137,11 +136,11 @@
     (hfl/let [[p q] (dbls env)
               [near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))  ; _ (println "near-x:" near-x " near-y:" near-y) ; DEBUG
               ;; Has to be local?
-              distance-2D-prim (hfpi/->ddddd (fn ^double [^double x0 ^double y0 ^double x1 ^double y1]
+              distance-2D-prim (hfp/->ddddd (fn ^double [^double x0 ^double y0 ^double x1 ^double y1]
                                                (let [xdiff (- x0 x1)
                                                      ydiff (- y0 y1)]
                                                  (sqrt (+ (* xdiff xdiff) (* ydiff ydiff))))))
-              distance (hfpi/ddddd distance-2D-prim near-x near-y p q)]  ; (println "distance:" distance) ; DEBUG
+              distance (hfp/ddddd distance-2D-prim near-x near-y p q)]  ; (println "distance:" distance) ; DEBUG
       (if (<= distance perc-radius)
         [[[p q]] [near-x near-y]]
         nil))))
