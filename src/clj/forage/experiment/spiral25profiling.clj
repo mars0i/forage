@@ -370,9 +370,20 @@
 
 
 
+  (def walks-per-fn 10)
 
-  (def walks (repeatedly #(w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))))
-  (take 2 walks)
+  ;; Note this puts the walks in reverse order:
+  (def walks$ (atom (into () (repeatedly walks-per-fn #(w/walk-stops [half-size half-size] (mu2-vecs 2))))))
+
+   ;; Returns popped walks in list order (i.e. reverse of repeatedly):
+  (defn next-walk!
+   "ws$ is an atom containing a list of walks. (It must be a list.)  This
+   function pops off the first walk and returns it. The list in the atom
+   will contain the rest of the walks.  If the list becomes empty, the next
+   call to this function will generate an error."
+   [ws$]
+   (ffirst (swap-vals! ws$ pop)))
+
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
