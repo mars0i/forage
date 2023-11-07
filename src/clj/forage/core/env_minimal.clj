@@ -43,10 +43,10 @@
   representing foodspots. coords should be a sequence of x,y pairs of
   numbers."
   [coords]
-  (mapv #(mapv double %) coords))
+  (mapv double-array coords))
 
 (comment
-  (make-multiple-foodspot-env (list '(1 2) [13.0 45.7] (range 2)))
+  (map class (make-multiple-foodspot-env (list '(1 2) [13.0 45.7] (range 2))))
 )
 
 ;; less slow
@@ -92,8 +92,13 @@
   "Returns a collection of coordinate pairs of all foodspots in environment
   env, or nil if there are none."
   [env]
-  env)
+  (map vec env))
 
+(comment
+  (map class
+       (env-foodspot-coords (make-multiple-foodspot-env (list '(1 2) [13.0 45.7] (range 2))))
+  )
+)
 
 ;; env-mason look-fns take a pair of coordinates representing the current
 ;; location, so that Continuous2D can look for any targets in the nearest bucket.
@@ -102,6 +107,7 @@
 ;; function of no arguments that always returns the same targets.
 ;;
 ;; I could randomize the order of foodspots with a different look-fn.
+#_
 (defn make-look-fn
   [env ^double perc-radius]
   (constantly
@@ -118,7 +124,9 @@
       (conj [perc-radius (+ 1.0 (* 2.0 (count env)))] ; second element is index of last coordinate
             (apply concat env)))))
 
+
 ;; Note that look-fn plays a different role here than in walks/find-in-seg, as it must.
+#_
 (defn find-in-seg
   "Only returns the first foodspot found.  The search in order that
   foodspots are returned by look-fn."
@@ -140,13 +148,33 @@
               :else (recur (+ 2 i)))))))
 
 
-(comment
-  (let [[x & ys] (range 5)]
-   (conj (vec ys) x))
+;; Shifting work from find-in-seg to look-fn to match original conception
+(defn make-look-fn
+  [env ^double perc-radius]
+  (fn [x0 y0 x1 y1]
+    (let [last-index (count env)
+          near-pt-fn (partial um/near-pt-on-seg x0 y0 x1 y1)] ; Is partial a good idea?
+      (loop [foodspots env]
+        (let [foodspot (first foodspots)
+              p (hf/dnth foodspot 0)
+              q (hf/dnth foodspot 1)
+              near-pt (near-pt-fn p q)
+              near-x (hf/dnth near-pt 0)
+              near-y (hf/dnth near-pt 1)
+              distance (um/distance-2D* near-x near-y p q)]
+          (if (<= distance perc-radius)
+            [[[p q]] [near-x near-y]] ; seq of single foodspot found, where found from
+            (let [more-foodspots (next foodspots)]
+              (if more-foodspots
+                (recur more-foodspots)
+                nil))))))))
 
-  (let [[idx & data] (hf/double-array [2 1 2 3 4 5])]
-    (nth data idx))
-)
+;; Use ham-fisted's primitive invoke?  No, can't because look-fn's
+;; return value is too complex.
+(defn find-in-seg
+  [look-fn _ x0 y0 x1 y1]
+  (look-fn x0 y0 x1 y1))
+
 
 ;; The new ham-fisted let is not yet flexible enough for vectors with
 ;; length only known at runtime, because you don't know in advance what
