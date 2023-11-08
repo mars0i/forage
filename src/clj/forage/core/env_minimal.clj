@@ -38,12 +38,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ENVIRONMENT THAT CONSISTS OF A COLLECTION of COORDINATE PAIRS.
 
+#_
 (defn make-multiple-foodspot-env
-  "Make an environment that consists of a vector of vector pairs of doubles
-  representing foodspots. coords should be a sequence of x,y pairs of
-  numbers."
+  "Make an environment that consists of a vector of Java array pairs of
+  doubles representing foodspots. coords should be a sequence of x,y pairs
+  of numbers."
   [coords]
   (mapv double-array coords))
+
+;; ENV AS A SINGLE SEQUENCE OF COORDINATES, ALTERNATING X AND Y:
+(defn make-multiple-foodspot-env
+  "Make an environment that consists of a single Java array with
+  alternating x an y coordinstes representing foodspots. coords should be a
+  sequence of x,y pairs of numbers."
+  ^doubles [coords]
+  (double-array (apply concat coords)))
 
 (comment
   (map class (make-multiple-foodspot-env (list '(1 2) [13.0 45.7] (range 2))))
@@ -110,6 +119,7 @@
 ;; function of no arguments that always returns the same targets.
 ;;
 ;; I could randomize the order of foodspots with a different look-fn.
+#_
 (defn make-look-fn
   [env ^double perc-radius]
   (constantly
@@ -119,6 +129,7 @@
 
 
 ;; Note that look-fn plays a different role here than in walks/find-in-seg, as it must.
+#_
 (defn find-in-seg
   "Only returns the first foodspot found.  The search in order that
   foodspots are returned by look-fn."
@@ -164,9 +175,24 @@
                 (recur more-foodspots)
                 nil))))))))
 
+;; VERSION FOR A SINGLE-SEQUENCE ARRAY OF COORDINATES:
+(defn make-look-fn
+  [^doubles env ^double perc-radius]
+  (fn [x0 y0 x1 y1]
+    (let [env-len (alength env)
+          near-pt-fn (partial um/near-pt-on-seg x0 y0 x1 y1)] ; Is partial a good idea?
+      (loop [i 0 j 1]
+        (if (= j env-len)
+          nil
+          (hfl/let [p (hf/dnth env i)
+                    q (hf/dnth env j)
+                    [near-x near-y] (dbls (near-pt-fn p q))
+                    distance (um/distance-2D* near-x near-y p q)]
+            (if (<= distance perc-radius) [[[p q]] [near-x near-y]] ; seq of single foodspot found, where found from
+              (recur (inc i) (inc j)))))))))
+
 ;; Use ham-fisted's primitive invoke?  No, can't because look-fn's
 ;; return value is too complex.
-#_
 (defn find-in-seg
   [look-fn _ x0 y0 x1 y1]
   (look-fn x0 y0 x1 y1))
