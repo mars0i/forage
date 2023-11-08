@@ -100,6 +100,9 @@
   )
 )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; HEAVY FIND-IN-SEG, LIGHTWEIGHT MAKE-LOOK-FN
+
 ;; env-mason look-fns take a pair of coordinates representing the current
 ;; location, so that Continuous2D can look for any targets in the nearest bucket.
 ;; In env-minimal returns the same collection of targets no matter where you are,
@@ -107,7 +110,6 @@
 ;; function of no arguments that always returns the same targets.
 ;;
 ;; I could randomize the order of foodspots with a different look-fn.
-#_
 (defn make-look-fn
   [env ^double perc-radius]
   (constantly
@@ -115,18 +117,8 @@
       (into [perc-radius (+ 1.0 (* 2.0 (count env)))] ; second element is index of last coordinate
             (apply concat env)))))
 
-;; Another version
-#_
-(defn make-look-fn
-  [env ^double perc-radius]
-  (constantly
-    (hf/double-array
-      (conj [perc-radius (+ 1.0 (* 2.0 (count env)))] ; second element is index of last coordinate
-            (apply concat env)))))
-
 
 ;; Note that look-fn plays a different role here than in walks/find-in-seg, as it must.
-#_
 (defn find-in-seg
   "Only returns the first foodspot found.  The search in order that
   foodspots are returned by look-fn."
@@ -147,8 +139,11 @@
               (= j last-index) nil
               :else (recur (+ 2 i)))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; HEAVY MAKE-LOOK-FN, LIGHTWEIGHT FIND-IN-SEG
 
 ;; Shifting work from find-in-seg to look-fn to match original conception
+#_
 (defn make-look-fn
   [env ^double perc-radius]
   (fn [x0 y0 x1 y1]
@@ -171,10 +166,14 @@
 
 ;; Use ham-fisted's primitive invoke?  No, can't because look-fn's
 ;; return value is too complex.
+#_
 (defn find-in-seg
   [look-fn _ x0 y0 x1 y1]
   (look-fn x0 y0 x1 y1))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; OTHER VERSIONS OF FIND-IN-SEG, MAKE-LOOK-FN
 
 ;; The new ham-fisted let is not yet flexible enough for vectors with
 ;; length only known at runtime, because you don't know in advance what
@@ -201,3 +200,12 @@
               (= j last-index) nil
               :else (recur (inc i))))))))
 
+
+;; Another version
+#_
+(defn make-look-fn
+  [env ^double perc-radius]
+  (constantly
+    (hf/double-array
+      (conj [perc-radius (+ 1.0 (* 2.0 (count env)))] ; second element is index of last coordinate
+            (apply concat env)))))
