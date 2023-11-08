@@ -7,7 +7,8 @@
               [utils.random :as r]
               [fastmath.core :as fm]
               [clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
-))
+              [ham-fisted.api :as hamf])
+    (:import [clojure.lang IFn$DDO]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -420,17 +421,33 @@
     [0 eps]))
 
 
+(defn- ->ddo-fn
+  ^IFn$DDO [f]
+  (when-not (instance? IFn$DDO f)
+    (throw (RuntimeException. (str "Function is not double->double->object " f))))
+  f)
+
+(defn swap-args-fn
+  "Given a function that accepts two arguments, wraps it in a function
+  that reverses the arguments and passes them to the original function."
+  [f]
+  (let [f (->ddo-fn f)]
+    (fn [^double x ^double y] (.invokePrim f y x))))
+
+#_
 (defn swap-args-fn
   "Given a function that accepts two arguments, wraps it in a function
   that reverses the arguments and passes them to the original function."
   [f]
   (fn [x y] (f y x)))
 
+(defn- lt [^double l ^double r] (< l r))
+(defn- gt [^double l ^double r] (> l r))
 
 ;; See doc/xyshifts.md for notes about this function and xy-shifts.
 ;; Possibly store slope and/or intercept earlier; they were available
 ;; when the line pair was created.
-;; 
+;;
 ;; WHY ONLY TEST FOR x = endpoint x2, and not the y coords, too?
 ;; (See the cond within the loop/recur expression.)
 ;; The code in the function flips coords so that when the test for
@@ -444,7 +461,7 @@
 ;; only for x = x2, we avoid this problem, and since lines are not
 ;; vertical or even close to vertical, there are no cases in which
 ;; x stops changing before reaching the end of the segment.
-;; Note WHAT THIS MEANS: That we are treating a y coordinate that is 
+;; Note WHAT THIS MEANS: That we are treating a y coordinate that is
 ;; not equal to the y endpoint as if it were equal to it.  Once the
 ;; x coordinate becomes equal to the x endpoint, we pretend that the
 ;; y coords are equal even if they aren't.  But that's OK, because
@@ -461,10 +478,59 @@
 ;; matter as long as look-fn is expensive, which is the case when using MASON
 ;; for look-fns. If I develop more efficient envs and look-fns, it might be
 ;; worth optimizing some of the code further.
-;; 
-;; TODO TODO rewrite cnuernber (or joinr) style. i.e. copy from another branch.
-;; Also, for cneurnber's version, I can now use hamf/dnth instead of aref,
-;; which allows you to get rid of some type annotations.
+
+
+;; VERSION BASED ON branch cnuerber-main
+;; TODO replace some of the agets with new ham-fisted structred let
+#_
+(defn find-in-seg
+  "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
+  and a small shift length, starts at [x1 y1] and incrementally checks
+  points along the line segment at every shift length locations, checking 
+  to see whether look-fn returns a truthy value representing one or more 
+  foodspots from the perspective of that location, or a falsey value if
+  no foodspots are found.  look-fn should take a single argument, a
+  pair representing the coordinates of a location from which to check
+  whether a foodspot is perceptible.  If foodspots are found, this function 
+  stops searching and returns a representation of the foodspots found, which
+  may be a collection of foodspot objects, a collection of coordinates of
+  foodspot objects, or some other truthy value.  (The kind of value to be
+  returned depends on look-fn, which should reflect the way that this 
+  function will be used.)  If no foodspots are found by the time [x2 y2]
+  is checked, this function returns nil."
+  [look-fn eps x1 y1 x2 y2]
+  (let [slope (m/slope-from-coords* x1 y1 x2 y2)
+        steep (or (infinite? slope)
+                  (> (abs slope) +steep-slope-inf+))
+        slope (if steep (/ slope) slope)
+        look-fn (if steep (swap-args-fn look-fn) look-fn)
+        ^doubles data (if steep
+                        (hamf/double-array [y1 x1 y2 x2]) ; swap x and y
+                        (hamf/double-array [x1 y1 x2 y2])) ; make no change
+        x1 (aget data 0)
+        y1 (aget data 1)
+        x2 (aget data 2)
+        y2 (aget data 3)
+        x-pos-dir? (<= x1 x2)
+        y-pos-dir? (<= y1 y2)
+        xy-eps (xy-shifts eps slope) ; x-eps, y-eps always >= 0
+        x-eps (double (xy-eps 0))
+        y-eps (double (xy-eps 1))
+        x-shift (if x-pos-dir? x-eps (- x-eps))             ; correct their directions
+        y-shift (if y-pos-dir? y-eps (- y-eps))
+        look-fn (->ddo-fn look-fn)
+        x-comp (->ddo-fn (if x-pos-dir? gt lt))  ; and choose tests for when we've
+        y-comp (->ddo-fn (if y-pos-dir? gt lt))] ;  gone too far
+    (loop [x x1, y y1]
+      (let [food (.invokePrim look-fn x y)]
+        (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
+              (== x x2)  nil ; last point: see comment above function def for explanation.
+              :else  (let [xsh (+ x x-shift)
+                           ysh (+ y y-shift)]
+                       (recur (if (.invokePrim x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
+                              (if (.invokePrim y-comp ysh y2) y2 ysh))))))))
+
+
 (defn find-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
