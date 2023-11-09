@@ -434,8 +434,7 @@
   (let [f (->ddo-fn f)]
     (fn [^double x ^double y] (.invokePrim f y x))))
 
-#_
-(defn swap-args-fn
+(defn old-swap-args-fn
   "Given a function that accepts two arguments, wraps it in a function
   that reverses the arguments and passes them to the original function."
   [f]
@@ -482,7 +481,6 @@
 
 ;; VERSION BASED ON branch cnuerber-main
 ;; TODO replace some of the agets with new ham-fisted structred let
-#_
 (defn find-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
@@ -531,6 +529,7 @@
                               (if (.invokePrim y-comp ysh y2) y2 ysh))))))))
 
 
+#_
 (defn find-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
@@ -551,7 +550,7 @@
         steep (or (infinite? slope)
                   (> (abs slope) +steep-slope-inf+))
         slope (if steep (/ slope) slope)
-        look-fn (if steep (swap-args-fn look-fn) look-fn)
+        look-fn (if steep (old-swap-args-fn look-fn) look-fn)
         [[^double x1 ^double y1] [^double x2 ^double y2]] (if steep
                                                             [[y1 x1] [y2 x2]]    ; swap x and y
                                                             [[x1 y1] [x2 y2]])   ; make no change
