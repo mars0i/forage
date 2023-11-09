@@ -366,8 +366,8 @@
     (time (crit/quick-bench
             (fr/walk-experiments (update params :basename #(str % "env_minimal_mu2_1each")) new-mu2-walk-fns walks-per-fn seed))))
 
-  ;; TODO NOTE I SHOULD REPLACE walks/find-in-seg WITH NUERNBER'S VERSION.
-  ;; THAT SHOULD SPEED THIS UP A LITTLE.
+  (clojure.repl/pst)
+
   ;; env-mason
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmason/foodspot-coords)
   ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
@@ -376,9 +376,8 @@
                           "mu2-env2" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 2)) (params :look-eps) (walks 2)))
                           "mu2-env3" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 3)) (params :look-eps) (walks 3)))
                           "mu2-env4" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (envmasons 4)) (params :look-eps) (walks 4)))}]
-    (time (crit/bench
+    (time (crit/quick-bench
             (fr/walk-experiments (update params :basename #(str % "env_mason_mu2_1each")) new-mu2-walk-fns walks-per-fn seed))))
-
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; ATTEMPT TO PRE-COMPUTE A LARGE NUMBER OF DIFFERENT WALKS
