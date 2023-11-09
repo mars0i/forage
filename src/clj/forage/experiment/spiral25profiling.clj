@@ -14,7 +14,8 @@
             [utils.math :as um]
             [utils.random :as r]
             [utils.spiral :as sp]
-            [utils.csv :as csv]))
+            [utils.csv :as csv])
+    (:import [clojure.lang IFn$DDO]))
 
 
 
@@ -125,13 +126,11 @@
   [env]
   (envminimal/make-look-fn env (params :perc-radius)))
 
-  ;; TODO NOTE I SHOULD REPLACE walks/find-in-seg WITH NUERNBER'S VERSION.
-  ;; THAT SHOULD SPEED THIS UP A LITTLE.
 (defn make-unbounded-envmason-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
-  (partial envmason/perc-foodspots-exactly env (params :perc-radius)))
+  ^IFn$DDO (partial envmason/perc-foodspots-exactly env (params :perc-radius)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MAKE THE EXPERIMENTS
@@ -326,7 +325,6 @@
       ;; main code in this file.  So the only way to reset and get exactly
       ;; the same walks is to re-evaluate the file.  At the moment I don't want to pass
       ;; in PRNG to all of the functions that the following depends on.
-
       ;(def seed -7370724773351240133)
       ;(def rng (r/make-well19937 seed))
       ;(def initial-state (r/get-state rng)) ; only used for some of the tests below

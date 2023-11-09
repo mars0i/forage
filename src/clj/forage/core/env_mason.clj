@@ -6,6 +6,9 @@
              [sim.util Double2D]) ; Bag
     (:require [forage.core.food :as f]))
 
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
+
 ;; The class annotations below (^Foodspot, ^Continuous2D) make the
 ;; functions faster, with a speed improvement of about 20X when used
 ;; as part of a food search run.
@@ -37,7 +40,7 @@
   "Does the same thing as foodspot-coords, but without the type hint.  Therefore
   this function might be slightly slower in some contexts, but it can be more
   flexible when this file is repeatedly reloaded during testing."
-  [foodspot]
+  [^Foodspot foodspot]
   [(.x foodspot) (.y foodspot)])
 
 (defn add-foodspots!
@@ -102,7 +105,7 @@
 (defn perc-foodspots-exactly
   "Returns a MASON Bag of foodspots within perc-radius of (x,y),
   or nil if there are none.  Uses Continuous2D's local cell lookup."
-  [^Continuous2D env perc-radius x y]
+  [^Continuous2D env perc-radius ^double x ^double y]
   (let [foodspots-bag (.getNeighborsExactlyWithinDistance env
                                                           (Double2D. x y)
                                                           perc-radius)]
@@ -111,7 +114,7 @@
 (defn perc-foodspots-exactly-toroidal
   "Returns a MASON Bag of foodspots within perc-radius of (x,y), or 
   nil if there are none.  Uses Continuous2D's local toroidal cell lookup."
-  [^Continuous2D env perc-radius x y]
+  [^Continuous2D env perc-radius ^double x ^double y]
   (let [foodspots-bag (.getNeighborsExactlyWithinDistance env
                                                           (Double2D. x y)
                                                           perc-radius true)]

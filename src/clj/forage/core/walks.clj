@@ -420,17 +420,40 @@
       [x-eps y-eps])
     [0 eps]))
 
-
 (defn- ->ddo-fn
   ^IFn$DDO [f]
   (when-not (instance? IFn$DDO f)
     (throw (RuntimeException. (str "Function is not double->double->object " f))))
   f)
 
+(comment
+  (defn foo [^IFn$DDO f ^double x ^double y]
+    (f x y))
+
+  (defn bar [^double x ^double y]
+    (* x y))
+
+  (instance? IFn$DDO bar)
+  (isa? (class bar) IFn$DDO)
+
+  (defn baz [^double c ^double x ^double y]
+    (+ c (* x y)))
+
+  (def yo1 ^IFn$DDO (partial baz 10.0))
+  (instance? IFn$DDO yo2)
+
+  (def yo2 (let [c 10.0] (fn [^double x ^double y] (baz c x y))))
+  (instance? IFn$DDO yo2)
+
+  (isa? (class yo1) IFn$DDO)
+  (isa? (class yo3) IFn$DDO)
+
+)
+
 (defn swap-args-fn
   "Given a function that accepts two arguments, wraps it in a function
   that reverses the arguments and passes them to the original function."
-  [f]
+  [^IFn$DDO f]
   (let [f (->ddo-fn f)]
     (fn [^double x ^double y] (.invokePrim f y x))))
 
@@ -496,7 +519,7 @@
   returned depends on look-fn, which should reflect the way that this 
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
-  [look-fn eps x1 y1 x2 y2]
+  [^IFn$DDO look-fn eps x1 y1 x2 y2]
   (let [slope (m/slope-from-coords* x1 y1 x2 y2)
         steep (or (infinite? slope)
                   (> (abs slope) +steep-slope-inf+))
