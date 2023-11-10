@@ -7,7 +7,8 @@
               [utils.random :as r]
               [fastmath.core :as fm]
               [clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
-              [ham-fisted.api :as hamf])
+              [ham-fisted.api :as hf]
+              [ham-fisted.hlet :as hfl])
     (:import [clojure.lang IFn$DDO]))
 
 (set! *warn-on-reflection* true)
@@ -150,8 +151,7 @@
                 (cons new-vec
                       (if-let [new-sw-data ((first sw-fns) new-vec sw-data)] ; truthy means "keep using this vec fn"
                         (make-vecs sw-fns v-fns labls new-sw-data)
-                        (make-vecs (next sw-fns) (next v-fns) (next labls) nil)
-                        )))))]
+                        (make-vecs (next sw-fns) (next v-fns) (next labls) nil))))))]
     (make-vecs (cycle switch-fns) (cycle vec-fns) (cycle labels) nil))))
 
 (defn switch-after-n-steps-fn
@@ -426,42 +426,20 @@
     (throw (RuntimeException. (str "Function is not double->double->object " f))))
   f)
 
-(comment
-  (defn foo [^IFn$DDO f ^double x ^double y]
-    (f x y))
-
-  (defn bar [^double x ^double y]
-    (* x y))
-
-  (instance? IFn$DDO bar)
-  (isa? (class bar) IFn$DDO)
-
-  (defn baz [^double c ^double x ^double y]
-    (+ c (* x y)))
-
-  (def yo1 ^IFn$DDO (partial baz 10.0))
-  (instance? IFn$DDO yo2)
-
-  (def yo2 (let [c 10.0] (fn [^double x ^double y] (baz c x y))))
-  (instance? IFn$DDO yo2)
-
-  (isa? (class yo1) IFn$DDO)
-  (isa? (class yo3) IFn$DDO)
-
-)
-
 (defn swap-args-fn
   "Given a function that accepts two arguments, wraps it in a function
   that reverses the arguments and passes them to the original function."
   [^IFn$DDO f]
-  (let [f (->ddo-fn f)]
-    (fn [^double x ^double y] (.invokePrim f y x))))
+  ;(let [f (->ddo-fn f)]
+    (fn [^double x ^double y] (.invokePrim f y x))) ;)
 
-(defn old-swap-args-fn
-  "Given a function that accepts two arguments, wraps it in a function
-  that reverses the arguments and passes them to the original function."
-  [f]
-  (fn [x y] (f y x)))
+(comment
+  (defn old-swap-args-fn
+    "Given a function that accepts two arguments, wraps it in a function
+    that reverses the arguments and passes them to the original function."
+    [f]
+    (fn [x y] (f y x)))
+)
 
 (defn- lt [^double l ^double r] (< l r))
 (defn- gt [^double l ^double r] (> l r))
@@ -520,28 +498,32 @@
   function will be used.)  If no foodspots are found by the time [x2 y2]
   is checked, this function returns nil."
   [^IFn$DDO look-fn eps x1 y1 x2 y2]
-  (let [slope (m/slope-from-coords* x1 y1 x2 y2)
-        steep (or (infinite? slope)
-                  (> (abs slope) +steep-slope-inf+))
-        slope (if steep (/ slope) slope)
-        look-fn (if steep (swap-args-fn look-fn) look-fn)
-        ^doubles data (if steep
-                        (hamf/double-array [y1 x1 y2 x2]) ; swap x and y
-                        (hamf/double-array [x1 y1 x2 y2])) ; make no change
-        x1 (aget data 0)
-        y1 (aget data 1)
-        x2 (aget data 2)
-        y2 (aget data 3)
-        x-pos-dir? (<= x1 x2)
-        y-pos-dir? (<= y1 y2)
-        xy-eps (xy-shifts eps slope) ; x-eps, y-eps always >= 0
-        x-eps (double (xy-eps 0))
-        y-eps (double (xy-eps 1))
-        x-shift (if x-pos-dir? x-eps (- x-eps))             ; correct their directions
-        y-shift (if y-pos-dir? y-eps (- y-eps))
-        look-fn (->ddo-fn look-fn)
-        x-comp (->ddo-fn (if x-pos-dir? gt lt))  ; and choose tests for when we've
-        y-comp (->ddo-fn (if y-pos-dir? gt lt))] ;  gone too far
+  ;; TODO replace some of the agets with new ham-fisted structred let
+  (hfl/let [slope (m/slope-from-coords* x1 y1 x2 y2)
+            steep (or (infinite? slope)
+                      (> (abs slope) +steep-slope-inf+))
+            slope (if steep (/ slope) slope)
+            ^IFn$DDO look-fn (if steep (swap-args-fn look-fn) look-fn)
+            [x1 y1 x2 y2] (dbls (if steep
+                                  (hf/double-array [y1 x1 y2 x2]) ; swap x and y
+                                  (hf/double-array [x1 y1 x2 y2]))) ; make no change
+            ;^doubles data (if steep
+            ;                (hf/double-array [y1 x1 y2 x2]) ; swap x and y
+            ;                (hf/double-array [x1 y1 x2 y2])) ; make no change
+            ;x1 (aget data 0)
+            ;y1 (aget data 1)
+            ;x2 (aget data 2)
+            ;y2 (aget data 3)
+            x-pos-dir? (<= x1 x2)
+            y-pos-dir? (<= y1 y2)
+            [x-eps y-eps] (dbls (xy-shifts eps slope)) ; x-eps, y-eps always >= 0
+            ;xy-eps (xy-shifts eps slope) ; x-eps, y-eps always >= 0
+            ;x-eps (double (xy-eps 0))
+            ;y-eps (double (xy-eps 1))
+            x-shift (if x-pos-dir? x-eps (- x-eps))             ; correct their directions
+            y-shift (if y-pos-dir? y-eps (- y-eps))
+            ^IFn$DDO x-comp (if x-pos-dir? gt lt)  ; and choose tests for when we've
+            ^IFn$DDO y-comp (if y-pos-dir? gt lt)] ; gone too far
     (loop [x x1, y y1]
       (let [food (.invokePrim look-fn x y)]
         (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
@@ -552,46 +534,48 @@
                               (if (.invokePrim y-comp ysh y2) y2 ysh))))))))
 
 
-#_
-(defn find-in-seg
-  "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
-  and a small shift length, starts at [x1 y1] and incrementally checks
-  points along the line segment at every shift length locations, checking 
-  to see whether look-fn returns a truthy value representing one or more 
-  foodspots from the perspective of that location, or a falsey value if
-  no foodspots are found.  look-fn should take a single argument, a
-  pair representing the coordinates of a location from which to check
-  whether a foodspot is perceptible.  If foodspots are found, this function 
-  stops searching and returns a representation of the foodspots found, which
-  may be a collection of foodspot objects, a collection of coordinates of
-  foodspot objects, or some other truthy value.  (The kind of value to be
-  returned depends on look-fn, which should reflect the way that this 
-  function will be used.)  If no foodspots are found by the time [x2 y2]
-  is checked, this function returns nil."
-  [look-fn eps x1 y1 x2 y2]
-  (let [slope (m/slope-from-coords* x1 y1 x2 y2)
-        steep (or (infinite? slope)
-                  (> (abs slope) +steep-slope-inf+))
-        slope (if steep (/ slope) slope)
-        look-fn (if steep (old-swap-args-fn look-fn) look-fn)
-        [[^double x1 ^double y1] [^double x2 ^double y2]] (if steep
-                                                            [[y1 x1] [y2 x2]]    ; swap x and y
-                                                            [[x1 y1] [x2 y2]])   ; make no change
-        x-pos-dir? (<= x1 x2)
-        y-pos-dir? (<= y1 y2)
-        [^double x-eps ^double y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
-        x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
-        y-shift (if y-pos-dir? y-eps (- y-eps))
-        x-comp (if x-pos-dir? cc/> cc/<)   ; and choose tests for when we've 
-        y-comp (if y-pos-dir? cc/> cc/<)]  ;  gone too far
-    (loop [x x1, y y1]
-      (let [food (look-fn x y)]
-        (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
-              (== x x2)  nil ; last point: see comment above function def for explanation.
-              :else  (let [xsh (+ x x-shift)
-                           ysh (+ y y-shift)]
-                       (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
-                              (if (y-comp ysh y2) y2 ysh))))))))
+(comment
+  ;; Old (not too old) version:
+  (defn find-in-seg
+    "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
+    and a small shift length, starts at [x1 y1] and incrementally checks
+    points along the line segment at every shift length locations, checking 
+    to see whether look-fn returns a truthy value representing one or more 
+    foodspots from the perspective of that location, or a falsey value if
+    no foodspots are found.  look-fn should take a single argument, a
+    pair representing the coordinates of a location from which to check
+    whether a foodspot is perceptible.  If foodspots are found, this function 
+    stops searching and returns a representation of the foodspots found, which
+    may be a collection of foodspot objects, a collection of coordinates of
+    foodspot objects, or some other truthy value.  (The kind of value to be
+    returned depends on look-fn, which should reflect the way that this 
+    function will be used.)  If no foodspots are found by the time [x2 y2]
+    is checked, this function returns nil."
+    [look-fn eps x1 y1 x2 y2]
+    (let [slope (m/slope-from-coords* x1 y1 x2 y2)
+          steep (or (infinite? slope)
+                    (> (abs slope) +steep-slope-inf+))
+          slope (if steep (/ slope) slope)
+          look-fn (if steep (old-swap-args-fn look-fn) look-fn)
+          [[^double x1 ^double y1] [^double x2 ^double y2]] (if steep
+                                                              [[y1 x1] [y2 x2]]    ; swap x and y
+                                                              [[x1 y1] [x2 y2]])   ; make no change
+          x-pos-dir? (<= x1 x2)
+          y-pos-dir? (<= y1 y2)
+          [^double x-eps ^double y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
+          x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
+          y-shift (if y-pos-dir? y-eps (- y-eps))
+          x-comp (if x-pos-dir? cc/> cc/<)   ; and choose tests for when we've 
+          y-comp (if y-pos-dir? cc/> cc/<)]  ;  gone too far
+      (loop [x x1, y y1]
+        (let [food (look-fn x y)]
+          (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
+                (== x x2)  nil ; last point: see comment above function def for explanation.
+                :else  (let [xsh (+ x x-shift)
+                             ysh (+ y y-shift)]
+                         (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
+                                (if (y-comp ysh y2) y2 ysh))))))))
+)
 
 
 (comment
