@@ -22,7 +22,7 @@
 ;; if this would improve performance.
 
 ;; NOTE Since no size, doesn't support toroidal lookup.
-(defn make-single-foodspot-env
+(defn make-env
   "Make an environment that consists of a single foodspog, and only a
   single point.  The environment returned is is simply a pair [x y] of
   coordinates for that foodspot."

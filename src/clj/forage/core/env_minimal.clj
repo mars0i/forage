@@ -39,7 +39,7 @@
 ;; ENVIRONMENT THAT CONSISTS OF A COLLECTION of COORDINATE PAIRS.
 
 #_
-(defn make-multiple-foodspot-env
+(defn make-env
   "Make an environment that consists of a vector of Java array pairs of
   doubles representing foodspots. coords should be a sequence of x,y pairs
   of numbers."
@@ -47,7 +47,7 @@
   (mapv double-array coords))
 
 ;; ENV AS A SINGLE SEQUENCE OF COORDINATES, ALTERNATING X AND Y:
-(defn make-multiple-foodspot-env
+(defn make-env
   "Make an environment that consists of a single Java array with
   alternating x an y coordinstes representing foodspots. coords should be a
   sequence of x,y pairs of numbers."
@@ -55,7 +55,7 @@
   (double-array (apply concat coords)))
 
 (comment
-  (map class (make-multiple-foodspot-env (list '(1 2) [13.0 45.7] (range 2))))
+  (map class (make-env (list '(1 2) [13.0 45.7] (range 2))))
 )
 
 ;; less slow

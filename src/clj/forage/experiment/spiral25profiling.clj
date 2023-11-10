@@ -75,7 +75,7 @@
         directions [0]
         target (shift-point half-size half-size zero-tgt)]
     ;(prn target) ; DEBUG
-    (envsingle/make-single-foodspot-env (target 0) (target 1))))
+    (envsingle/make-env (target 0) (target 1))))
 
 ;; A bit more complicated than needed because it's a modified version
 ;; of make-multiple-target-env from spiral2[34]*.clj.
@@ -91,7 +91,7 @@
         directions [0]
         targets [(shift-point half-size half-size zero-tgt)]]
     ;(prn targets) ; DEBUG
-    (envminimal/make-multiple-foodspot-env targets)))
+    (envminimal/make-env targets)))
 
 (defn make-single-target-envmason
   "Make an env with a num-targets multiple foodspots at the same
@@ -400,7 +400,7 @@
   ;; MAY BE VERY SLOW.
 
 
-  (def walks-per-fn 10)
+  (def walks-per-fn 2)
 
   ;; Note this puts the walks in reverse order:
   (def walks$ (atom (into () (repeatedly (* 5 walks-per-fn) #(w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))))))
