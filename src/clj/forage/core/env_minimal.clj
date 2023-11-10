@@ -101,7 +101,7 @@
   "Returns a collection of coordinate pairs of all foodspots in environment
   env, or nil if there are none."
   [env]
-  (map vec env))
+  (mapv vec (partition 2 env)))
 
 (comment
   (map class
