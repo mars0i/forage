@@ -18,6 +18,8 @@
     (:import [clojure.lang IFn$DDO]))
 
 
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
 
 (def targets-per-env 1)
 
@@ -35,8 +37,8 @@
 ;; (a) Search starts in a random initial direction
 ;; (b) Search starts exactly from init-loc (e.g. for destructive search)
 (def params (sorted-map ; sort so labels match values
-             :perc-radius         1  ; distance that an animal can "see" in searching for food
-             :powerlaw-min        1
+             :perc-radius         1.0  ; distance that an animal can "see" in searching for food
+             :powerlaw-min        1.0
              :env-size            (* 2 half-size)
              :env-discretization  5 ; for Continuous2D; see foodspot.clj
              :init-loc-fn         (constantly [half-size half-size])
@@ -131,15 +133,16 @@
 (defn make-unbounded-envmason-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
-  [env]
-  ^IFn$DDO (partial envmason/perc-foodspots-exactly env (params :perc-radius)))
+  ^IFn$DDO [env]
+  (partial envmason/perc-foodspots-exactly env (params :perc-radius)))
 
 (defn make-unbounded-envmason-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   ^IFn$DDO [env]
-  (let [perc-radius (params :perc-radius)]
-    (fn [x y] (envmason/perc-foodspots-exactly env perc-radius x y))))
+  (let [^double perc-radius (params :perc-radius)]
+    ^IFn$DDO (fn [^double x ^double y]
+               (envmason/perc-foodspots-exactly env perc-radius x y))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MAKE THE EXPERIMENTS
@@ -348,9 +351,15 @@
 
       (println "# of coordinate pairs in walks 0 through 4, respectively:")
       (prn (map count walks))
+
+      (def walks-per-fn 1)
   )
 
-  (def walks-per-fn 1)
+
+  ;; consider wrapping criterium calls in one or more of these:
+  ;(binding [crit/*report-progress* true
+  ;          crit/*report-debug* true
+  ;          crit/*report-warn* true])
 
   ;; env-single
   ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
