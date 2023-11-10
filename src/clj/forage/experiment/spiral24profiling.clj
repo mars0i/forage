@@ -69,7 +69,7 @@
                                 directions))
         targets (map (partial shift-point half-size half-size)
                      zero-targets)]
-    (env/make-multiple-foodspot-env targets)))
+    (env/make-env targets)))
 
 ;; Make envs each with a single target but at several different distances
 ;; from center as proportion of size of env:
