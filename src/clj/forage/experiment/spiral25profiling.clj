@@ -126,11 +126,20 @@
   [env]
   (envminimal/make-look-fn env (params :perc-radius)))
 
+
+#_
 (defn make-unbounded-envmason-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
   ^IFn$DDO (partial envmason/perc-foodspots-exactly env (params :perc-radius)))
+
+(defn make-unbounded-envmason-look-fn
+  "Make a non-toroidal look-fn from env.  Searches that leave the core env
+  will just continue without success unless they wander back."
+  ^IFn$DDO [env]
+  (let [perc-radius (params :perc-radius)]
+    (fn [x y] (envmason/perc-foodspots-exactly env perc-radius x y))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MAKE THE EXPERIMENTS
