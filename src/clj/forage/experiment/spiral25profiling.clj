@@ -19,7 +19,7 @@
 
 
 (set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
+;(set! *unchecked-math* :warn-on-boxed)
 
 (def targets-per-env 1)
 
@@ -139,7 +139,7 @@
 (defn make-unbounded-envmason-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
-  ^IFn$DDO [env]
+  [env]
   (let [^double perc-radius (params :perc-radius)]
     ^IFn$DDO (fn [^double x ^double y]
                (envmason/perc-foodspots-exactly env perc-radius x y))))
