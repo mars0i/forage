@@ -2,7 +2,7 @@
 ;; of env-single, env-minimal, and env-mason on single-target envs.
 ;; This is similar, but uses six-target envs, as used in spiral24* and
 ;; previous "spiral" namespaces.  Thus env-single is not used below.
-(ns forage.experiment.spiral25profiling
+(ns forage.experiment.spiral26profiling
   (:require [criterium.core :as crit]
             ;[clj-async-profiler.core :as prof]
             ;[clojure.math :as cmath]
