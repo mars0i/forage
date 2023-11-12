@@ -284,7 +284,7 @@
   ;; every time there is a walk through an env, it will be different (unless you repeat the whole
   ;; process, e.g. during benchmarking.)
 
-  (def walks-per-fn 20) ;; On MBP setting walks-per-fn to 5 to create 25 walks takes aobut 15 seconds.
+  (def walks-per-fn 25) ;; On MBP setting walks-per-fn to 5 to create 25 walks takes aobut 15 seconds.
 
   (defn make-walks 
     "Returns an atom containing a list of (5 x walks-per-fn) walks."
