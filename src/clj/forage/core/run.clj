@@ -266,13 +266,12 @@
        - total path length.
        - a series of fields containing path lengths from individual runs.
   * Returns map with keys:
-       - :data; value is data in CSV file.
+       - :data; value is the data that is written to the CSV file.
        - :found-coords; value is sequence of per-parameter-combo sequences
          of found foodspot coord pairs (nil if not found), in combo order.
        - :rng; value is PRNG object with state as it was at end of runs, or nil
          if no PRNG was passed to this function."
-  ([params 
-    walk-fns walks-per-fn seed]
+  ([params walk-fns walks-per-fn seed]
    (walk-experiments params walk-fns walks-per-fn seed nil))
   ([params walk-fns walks-per-fn seed rng]
    (let [num-dirs (params :num-dirs)
