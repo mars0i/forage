@@ -131,6 +131,7 @@
 
 (def seed (r/make-seed))
 ;(def seed -7370724773351240133)
+(def seed -1645093054649086646)
 (println "Using seed" seed)
 (def rng (r/make-well19937 seed))
 
@@ -357,9 +358,7 @@
 
 
 
-
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; VERSIONS IN WHICH GENERATION OF WALKS IS INCLUDED IN THE TIME
   ;; Note that in this case a *different* walk is used in each env
   ;; because mu2-vecs ultimately calls make-levy-vecs with an 
@@ -367,8 +366,59 @@
   ;; (supposed to be at least) used in each env type, i.e.
   ;; env-minimal, env-mason.
 
-  ;; env-minimal
-  ;; note if needed: params s/b/ (update params :foodspot-coords-fn envminimal/foodspot-coords)
+
+  (def walks-per-fn 100)
+
+  ;; NOTE It's not enough to reset the PRNG to a known state here.  You
+  ;; have to revaluate this whole file WITH THE SAME SEED; I think parts of 
+  ;; the code in the file uses random numbers in code outside of comments when first run.
+  (let [new-mu2-walk-fns
+        {"mu2-env0" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+         "mu2-env1" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+         "mu2-env2" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+         "mu2-env3" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
+    (time
+      ;(crit/quick-bench
+      (def result-minimal
+        (-> params
+            (assoc :foodspot-coords-fn  envminimal/foodspot-coords)
+            (update :basename #(str % "env_minimal_mu2_" walks-per-fn "each"))
+            (fr/walk-experiments new-mu2-walk-fns walks-per-fn seed))
+      )
+    )
+  )
+
+  (clojure.repl/pst)
+
+  ;; env-mason
+  (let[new-mu2-walk-fns
+       {"mu2-env0" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+        "mu2-env1" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 1)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+        "mu2-env2" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 2)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+        "mu2-env3" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 3)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
+    (time
+      ;(crit/quick-bench
+      (def result-mason
+        (-> params
+            (assoc :foodspot-coords-fn  envmason/foodspot-coords)
+            (update :basename #(str % "env_mason_mu2_" walks-per-fn "each"))
+            (fr/walk-experiments new-mu2-walk-fns walks-per-fn seed))
+      )
+    )
+  )
+
+
+  ;; Quick test: did the two env types find the same foodspots?
+  (= (result-mason :found-coords) (result-minimal :found-coords))
+
+
+)
+
+
+(comment
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; OLD/OBSOLETE
+  
   (do
     (r/set-state rng initial-state)
     (let [new-mu2-walk-fns
