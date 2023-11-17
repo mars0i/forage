@@ -72,23 +72,6 @@
           [fs]
           (recur (rest foodspots)))))))
 
-(comment
-  ;; very slow:
-  (defn perc-multiple-foodspots
-    "Returns a vector containing the the first foodspot within perc-radius
-    of forager-coords (an x, y Clojure pair), or nil no foodspot is found.
-    foodspots are tested in the order they are listed in env."
-    [env ^double perc-radius ^double x ^double y] 
-    (loop [foodspots (seq env)]
-      (if-let [remaining-foodspots foodspots]
-        (let [fs (first remaining-foodspots)]
-          (if (<= (um/distance-2D* x y (fs 0) (fs 1))
-                  perc-radius)
-            [fs]
-            (recur (next remaining-foodspots))))
-        nil))) ; none found within perc-radius [not when-let since the nil is meaningful]
-)
-
 (def foodspot-coords identity)
 
 (defn env-foodspots
@@ -119,61 +102,10 @@
 ;; function of no arguments that always returns the same targets.
 ;;
 ;; I could randomize the order of foodspots with a different look-fn.
-#_
-(defn make-look-fn
-  [env ^double perc-radius]
-  (constantly
-    (hf/double-array
-      (into [perc-radius (+ 1.0 (* 2.0 (count env)))] ; second element is index of last coordinate
-            (apply concat env)))))
 
-
-;; Note that look-fn plays a different role here than in walks/find-in-seg, as it must.
-#_
-(defn find-in-seg
-  "Only returns the first foodspot found.  The search in order that
-  foodspots are returned by look-fn."
-  [look-fn _ x0 y0 x1 y1]
-  (let [^doubles info (look-fn)
-        perc-radius (hf/dnth info 0)
-        last-index (long (hf/dnth info 1)) ; env size + 2
-        near-pt-fn (partial um/near-pt-on-seg x0 y0 x1 y1)] ; Is this a good idea?
-    (loop [i 2]
-      (let [j (inc i)
-            p (hf/dnth info i)
-            q (hf/dnth info j)
-            near-pt (near-pt-fn p q)
-            near-x (hf/dnth near-pt 0)
-            near-y (hf/dnth near-pt 1)
-            distance (um/distance-2D* near-x near-y p q)]
-        (cond (<= distance perc-radius) [[[p q]] [near-x near-y]] ; seq of single foodspot found, where found from
-              (= j last-index) nil
-              :else (recur (+ 2 i)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HEAVY MAKE-LOOK-FN, LIGHTWEIGHT FIND-IN-SEG
-
-;; Shifting work from find-in-seg to look-fn to match original conception
-#_
-(defn make-look-fn
-  [env ^double perc-radius]
-  (fn [x0 y0 x1 y1]
-    (let [last-index (count env)
-          near-pt-fn (partial um/near-pt-on-seg x0 y0 x1 y1)] ; Is partial a good idea?
-      (loop [foodspots env]
-        (let [foodspot (first foodspots)
-              p (hf/dnth foodspot 0)
-              q (hf/dnth foodspot 1)
-              near-pt (near-pt-fn p q)
-              near-x (hf/dnth near-pt 0)
-              near-y (hf/dnth near-pt 1)
-              distance (um/distance-2D* near-x near-y p q)]
-          (if (<= distance perc-radius)
-            [[[p q]] [near-x near-y]] ; seq of single foodspot found, where found from
-            (let [more-foodspots (next foodspots)]
-              (if more-foodspots
-                (recur more-foodspots)
-                nil))))))))
 
 ;; VERSION FOR A SINGLE-SEQUENCE ARRAY OF COORDINATES:
 (defn make-look-fn
@@ -196,42 +128,3 @@
 (defn find-in-seg
   [look-fn _ x0 y0 x1 y1]
   (look-fn x0 y0 x1 y1))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; OTHER VERSIONS OF FIND-IN-SEG, MAKE-LOOK-FN
-
-;; The new ham-fisted let is not yet flexible enough for vectors with
-;; length only known at runtime, because you don't know in advance what
-;; variable names to assign.
-;; This was an attempt, but it doesn't work.
-;; Note that look-fn plays a different role here than in walks/find-in-seg, as it must.
-;; Version using new ham-fisted typed destructuring macros
-#_
-(defn find-in-seg
-  "Only returns the first foodspot found.  The search in order that
-  foodspots are returned by look-fn."
-  [look-fn _ x0 y0 x1 y1]
-  (hfl/let [[perc-radius last-index target-coords] (dbls (look-fn))]
-    (println (class target-coords))
-    (let [last-index (long last-index)
-          near-pt-fn (partial um/near-pt-on-seg x0 y0 x1 y1)] ; Is this a good idea?
-    (loop [i 0]
-      (hfl/let [j (inc i)
-                p (hf/dnth target-coords i)
-                q (hf/dnth target-coords j)
-                [near-x near-y] (near-pt-fn p q)
-                distance (um/distance-2D* near-x near-y p q)]
-        (cond (<= distance perc-radius) [[[p q]] [near-x near-y]] ; seq of single foodspot found, where found from
-              (= j last-index) nil
-              :else (recur (inc i))))))))
-
-
-;; Another version
-#_
-(defn make-look-fn
-  [env ^double perc-radius]
-  (constantly
-    (hf/double-array
-      (conj [perc-radius (+ 1.0 (* 2.0 (count env)))] ; second element is index of last coordinate
-            (apply concat env)))))
