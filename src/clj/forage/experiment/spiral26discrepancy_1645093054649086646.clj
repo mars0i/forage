@@ -317,21 +317,15 @@
 
   (first fwdata-minimal)
   (def walk-til-found-minimal (second fwdata-minimal))
-  (count walk-til-found-minimal) ; => 1268
-  (def last-segment [(last (butlast walk-til-found-minimal)) (last walk-til-found-minimal)])
-  (def check [(nth walk-til-found-minimal 1266) (nth walk-til-found-minimal 1267)])
-  (= last-segment check)
+  (def past-found-minimal (nth fwdata-minimal 2))
 
-  (take 2 (nth fwdata-minimal 2))
+  (count walk-til-found-minimal)
+  (drop 1264 walk-til-found-minimal)
+  (take 4 past-found-minimal)
 
-  (def whole-walk-minimal (vec (concat (nth fwdata-minimal 1) (nth fwdata-minimal 2))))
-  (count whole-walk-minimal)
-
-  (map class fwdata-mason)
   (def walk-unfound-mason (second fwdata-mason))
   (count walk-unfound-mason)
-  (def should-be-last-segment [(nth walk-unfound-mason 1266) (nth walk-unfound-mason 1267)])
-  (= last-segment should-be-last-segment) ; => false !
+  (take 8 (drop 1264 walk-unfound-mason))
 
   ;; WTF?!:
   ; --------------------------------------------------------------------------------
