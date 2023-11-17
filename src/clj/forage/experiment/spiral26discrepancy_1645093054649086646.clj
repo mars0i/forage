@@ -315,17 +315,25 @@
      ((params :init-loc-fn))))
 
 
-  (first fwdata-minimal)
-  (def walk-til-found-minimal (second fwdata-minimal))
-  (def past-found-minimal (nth fwdata-minimal 2))
+  (first fwdata-minimal) ; check that found a taget
+  (def minim-tilfound (second fwdata-minimal))
+  (def minim-pastfound (nth fwdata-minimal 2))
+  (count minim-tilfound) ;=> 1268
+  (count minim-pastfound) ;=> 1008652
+  (+ 1268 1008652) ;=> 1009920
+  (drop 1262 minim-tilfound)
+  (take 6 minim-pastfound)
 
-  (count walk-til-found-minimal)
-  (drop 1264 walk-til-found-minimal)
-  (take 4 past-found-minimal)
+  (first fwdata-mason) ; check that failed to find a target
+  (def mason-tilfound (second fwdata-mason)) ; should be the whole walk, since nothing found
+  (def mason-pastfound (nth fwdata-mason 2)) ; should be nil
+  (count mason-tilfound) ;=> 1009920
+  (take 12 (drop 1262 mason-tilfound))
 
-  (def walk-unfound-mason (second fwdata-mason))
-  (count walk-unfound-mason)
-  (take 8 (drop 1264 walk-unfound-mason))
+  ;; SOMETHING WEIRD IS HAPPENING IN THE LAST POINT IN the env-minimal
+  ;; tilfound sequence.  There's a point there that doesn't appear in
+  ;; the env-mason tilfound sequence, [9999.562482364767 11000.293304096997].
+
 
   ;; WTF?!:
   ; --------------------------------------------------------------------------------
