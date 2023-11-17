@@ -46,7 +46,7 @@
              :maxpathlen          maxpathlen
              :trunclen            trunclen
              :basename            (str default-dirname "spiral25_")
-             :look-eps            0.2 ; shouldn't be used
+             :look-eps            0.2
              :foodspot-coords-fn  "UPDATE FOR ENV TYPE"
              :rpt-to-stdout       true ; write-experiments writes to stdout only if true
              :save-to-files       true ; write-experiments saves summary data to files only if true
@@ -84,6 +84,9 @@
 
 (def minimal-envs (mapv envminimal/make-env target-coords))
 (def mason-envs (mapv (partial envmason/make-env (params :env-discretization) (params :env-size)) target-coords))
+
+(first target-coords)
+(first minimal-envs)
 
 (comment
   ;; Visually check that envs are as intended
@@ -291,6 +294,12 @@
     ((fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
      ((params :init-loc-fn))))
 
+  (def lil-walk (take 12 (drop 1262 mason-tilfound)))
+
+  (def fwdata-minimal-lil
+    ((fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" lil-walk))
+     ((params :init-loc-fn))))
+
   ;; env-mason
   (let[new-mu2-walk-fns
        {"mu2-env0" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
@@ -314,8 +323,15 @@
     ((fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
      ((params :init-loc-fn))))
 
+  (def fwdata-mason-eps01
+    ((fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) 0.1 (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+     ((params :init-loc-fn))))
 
-  (first fwdata-minimal) ; check that found a taget
+  (def fwdata-mason-eps001
+    ((fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) 0.01 (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+     ((params :init-loc-fn))))
+
+  (first fwdata-minimal) ; check that found a target
   (def minim-tilfound (second fwdata-minimal))
   (def minim-pastfound (nth fwdata-minimal 2))
   (count minim-tilfound) ;=> 1268
@@ -330,12 +346,10 @@
   (count mason-tilfound) ;=> 1009920
   (take 12 (drop 1262 mason-tilfound))
 
+
   ;; SOMETHING WEIRD IS HAPPENING IN THE LAST POINT IN the env-minimal
   ;; tilfound sequence.  There's a point there that doesn't appear in
   ;; the env-mason tilfound sequence, [9999.562482364767 11000.293304096997].
-
-
-  ;; WTF?!:
   ; --------------------------------------------------------------------------------
   ; eval (word): last-segment
   ; [[10008.406713748816 11013.486120836493]
@@ -344,6 +358,20 @@
   ; eval (word): should-be-last-segment
   ; [[10008.406713748816 11013.486120836493]
   ;  [9991.226003348465 10987.857894490566]]
+
+  (first fwdata-mason-eps01) ; check that failed to find a target
+  (def mason-tilfound-eps01 (second fwdata-mason-eps01)) ; should be the whole walk, since nothing found
+  (def mason-pastfound-eps01 (nth fwdata-mason-eps01 2)) ; should be nil
+  (count mason-tilfound-eps01) ;=> 1009918  ;; WHY TWO POINTS SHORTER?
+  (take 12 (drop 1262 mason-tilfound-eps01))
+
+
+  (first fwdata-mason-eps001) ; check that failed to find a target
+  (def mason-tilfound-eps001 (second fwdata-mason-eps001)) ; should be the whole walk, since nothing found
+  (def mason-pastfound-eps001 (nth fwdata-mason-eps001 2)) ; should be nil
+  (count mason-tilfound-eps001) ;=> 1009918  ;; WHY TWO POINTS SHORTER?
+  (take 12 (drop 1262 mason-tilfound-eps001))
+
 
   (def equal-steps? (map (fn [minimal mason index] [(= minimal mason) index])
                          walk-til-found-minimal
