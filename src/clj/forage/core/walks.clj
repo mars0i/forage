@@ -703,19 +703,23 @@
 
 
 (defn trim-full-walk
-  "Gvien a foodwalk triple of the kind returned by levy-foodwalk
+  "Gvien a foodwalk triple of the kind returned by foodwalk, levy-foodwalk,
   or straight-foodwalk, returns a similar triple in which the third
-  element, full-walk, has been truncated at the front to include only
-  those line segments not included in walk-until-food. Specifically:
-  If no food was found, full-walk is replaced by nil since 
-  walk-until-food is identical to full-walk.
-  If food was found, let n be the number of points in walk-until-food;
-  Then the first n-1 points are dropped from full-walk in the return 
-  triple.  The last point in walk-until-food is the point from which
-  food was found, which is usually not included in full-walk.  Backing
-  up by one means that full-walk includes full line segment from within 
-  which the food was found, partially.  The original full-walk can be
-  reconstructed e.g. by removing the last element from walk-until-food
+  element, full-walk, has been truncated at the front to include only those
+  line segments not included in walk-until-food. That is, if no food was
+  found, the current function will return a triple [nil, the full walk,
+  nil]. If food was found, then walk-until-food contains the walk only up
+  to the point that food was found.  The current function will then return
+  a triple [collection containing foodspots, the walk up until the food was
+  found, the rest of the walk]. Specifically: If no food was found,
+  full-walk is replaced by nil since walk-until-food is identical to
+  full-walk. If food was found, let n be the number of points in
+  walk-until-food; Then the first n-1 points are dropped from full-walk in
+  the return triple.  The last point in walk-until-food is the point from
+  which food was found, which is usually not included in full-walk.
+  Backing up by one means that full-walk includes full line segment from
+  within which the food was found, partially.  The original full-walk can
+  be reconstructed e.g. by removing the last element from walk-until-food
   and then concatenating the two sequences."
   [[found walk-until-food full-walk]]
   (if-not found
