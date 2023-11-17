@@ -114,14 +114,14 @@
     (let [env-len (alength env)
           near-pt-fn (partial um/near-pt-on-seg x0 y0 x1 y1)] ; Is partial a good idea?
       (loop [i 0 j 1]
-        (if (= j env-len)
+        (if (= i env-len)
           nil
           (hfl/let [p (hf/dnth env i)
                     q (hf/dnth env j)
                     [near-x near-y] (dbls (near-pt-fn p q))
                     distance (um/distance-2D* near-x near-y p q)]
             (if (<= distance perc-radius) [[[p q]] [near-x near-y]] ; seq of single foodspot found, where found from
-              (recur (inc i) (inc j)))))))))
+              (recur (+ i 2) (+ j 2)))))))))
 
 ;; Use ham-fisted's primitive invoke?  No, can't because look-fn's
 ;; return value is too complex.
