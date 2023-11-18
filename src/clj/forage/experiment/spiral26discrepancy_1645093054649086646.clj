@@ -222,6 +222,16 @@
   ;; env-minimal, env-mason.
  
 
+  ;; THE PROBLEM BELOW WAS DUE TO A BUG IN env-minimal/make-look-fn.  It
+  ;; was stepping through the env incorrectly, and finding spurious
+  ;; foodspots.
+  ;; The discrepancy between the last point of the walk til found and the
+  ;; the corresponding point when nothing is found was due to
+  ;; walks/path-with-food, which is supposed to return as the last point of
+  ;; the sequence finding the target, the point closest to the target, not
+  ;; the end of the segment.
+  ;; TODO QUESTION: Does this work with env-minimal and env-single?
+
   ;;;; INVESTIGATE THIS:
   ;;;; 
   ;;;; seed = -1645093054649086646
