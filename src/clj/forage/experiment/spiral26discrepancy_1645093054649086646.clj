@@ -231,6 +231,7 @@
   ;; the sequence finding the target, the point closest to the target, not
   ;; the end of the segment.
   ;; TODO QUESTION: Does this work with env-minimal and env-single?
+  ;; Yes, but the point they return is slightly different.
 
   ;;;; INVESTIGATE THIS:
   ;;;; 
