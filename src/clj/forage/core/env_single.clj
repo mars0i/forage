@@ -62,11 +62,24 @@
   [env])
 
 (defn make-look-fn
+  "Returns a function that accepts x, y coordinates from two points
+  representing a line segment.  The returned function will checks to see
+  whether env's sole foodspot is within perc-radius of the line at any
+  point.  If so, returns a pair containing the coordinates of the foodspot
+  as a pair, and the coordinates of point on the line segment that is
+  closest to the foodspot, also as a pair.  (Note that the point
+  returned--the one that is closest to the foodspot--is not, in general,
+  the first point at which the foodspot could have been perceived; it's not
+  where line segment crosses within perc-radius of the foodspot.  If
+  perc-radius is large, the returned point might be some distance away from
+  the point at which perception would have been possible.  It's as if the
+  forager only has narrowly focused eyes on the side of its head, and only
+  sees perpendicularly, unless it steps on a foodspot.)"
   [env ^double perc-radius]
   (fn [x0 y0 x1 y1]
     (hfl/let [[p q] (dbls env)
-              [near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))  ; _ (println "near-x:" near-x " near-y:" near-y) ; DEBUG
-              distance (um/distance-2D* near-x near-y p q)]  ; (println "distance:" distance) ; DEBUG
+              [near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))
+              distance (um/distance-2D* near-x near-y p q)]
       (if (<= distance perc-radius)
         [[[p q]] [near-x near-y]]
         nil))))
@@ -74,73 +87,7 @@
 ;; Use ham-fisted's primitive invoke?  No, can't because look-fn's
 ;; return value is too complex.
 (defn find-in-seg
+  "Applies look-fn to x0 y0 x1 y1, ignoring the first argument."
   [look-fn _ x0 y0 x1 y1]
   (look-fn x0 y0 x1 y1))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; OLDER VERSIONS OF look-fn, find-in-seg
-
-;; env-mason look-fns take a pair of coordinates representing the current
-;; location, so that Continuous2D can look for any targets in the nearest bucket.
-;; In env_single, there is only one target no matter where you are, so
-;; there's no need to pass in coordinates.  So make-look-fn returns a
-;; function of no arguments that always returns the same target.
-#_
-(defn make-look-fn
-  [env ^double perc-radius]
-  (constantly (hf/double-array [perc-radius (env 0) (env 1)])))
-
-;; Note that look-fn plays a different role here than in walks/find-in-seg, as it must.
-;; Version with new ham-fisted destructuring let:
-#_
-(defn find-in-seg
-  [look-fn _ x0 y0 x1 y1]
-  (hfl/let [[perc-radius p q] (dbls (look-fn))  ; _ (println "\ntarget:" p q ", radius:" perc-radius) ; DEBUG
-        [near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))  ; _ (println "near-x:" near-x " near-y:" near-y) ; DEBUG
-        distance (um/distance-2D* near-x near-y p q)]  ; (println "distance:" distance) ; DEBUG
-    (if (<= distance perc-radius)
-      [[[p q]] [near-x near-y]]
-      nil)))
-
-
-;; Note that look-fn plays a different role here than in walks/find-in-seg, as it must.
-;; OLD VERSION without new ham-fisted destructuring let:
-#_
-(defn find-in-seg
-  [look-fn _ x0 y0 x1 y1]
-  (let [info (look-fn)
-        perc-radius (hf/dnth info 0)
-        p (hf/dnth info 1)
-        q (hf/dnth info 2)
-        ;_ (println "\ntarget:" p q ", radius:" perc-radius) ; DEBUG
-        near-pt (um/near-pt-on-seg x0 y0 x1 y1 p q)
-        near-x (hf/dnth near-pt 0)
-        near-y (hf/dnth near-pt 1)
-        ;_ (println "near-x:" near-x " near-y:" near-y) ; DEBUG
-        distance (um/distance-2D* near-x near-y p q)]
-    ; (println "distance:" distance) ; DEBUG
-    (if (<= distance perc-radius)
-      [[[p q]] [near-x near-y]]
-      nil)))
-
-
-;; Version with primitive invoke is slower?
-;; Maybe, but note that I don't think it's supposed to help here; it only
-;; helps when you pass in a function.  That's why it only works in a let--
-;; because you're creating a new version of the function.
-#_
-(defn make-look-fn
-  [env ^double perc-radius]
-  (fn [x0 y0 x1 y1]
-    (hfl/let [[p q] (dbls env)
-              [near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))  ; _ (println "near-x:" near-x " near-y:" near-y) ; DEBUG
-              ;; Has to be local?
-              distance-2D-prim (hfp/->ddddd (fn ^double [^double x0 ^double y0 ^double x1 ^double y1]
-                                               (let [xdiff (- x0 x1)
-                                                     ydiff (- y0 y1)]
-                                                 (sqrt (+ (* xdiff xdiff) (* ydiff ydiff))))))
-              distance (hfp/ddddd distance-2D-prim near-x near-y p q)]  ; (println "distance:" distance) ; DEBUG
-      (if (<= distance perc-radius)
-        [[[p q]] [near-x near-y]]
-        nil))))

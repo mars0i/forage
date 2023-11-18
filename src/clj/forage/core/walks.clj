@@ -680,7 +680,8 @@
   sequence of stops in which the last element is the point from which the
   food was seen, and remaining points have been removed. If no food found
   in the entire sequence, a pair vector containing nil and the unchanged
-  sequence is returned."
+  sequence is returned.  For backward compatibility, if seg-exam-fn is not
+  passed, walks/find-in-seg is used as its default value."
   ([look-fn eps stops]
    (path-with-food find-in-seg look-fn eps stops))
   ([seg-exam-fn look-fn eps stops]

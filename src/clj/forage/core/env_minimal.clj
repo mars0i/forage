@@ -109,6 +109,19 @@
 
 ;; VERSION FOR A SINGLE-SEQUENCE ARRAY OF COORDINATES:
 (defn make-look-fn
+  "Returns a function that accepts x, y coordinates from two points
+  representing a line segment.  The returned function will check to see
+  whether any foodspot in env is within perc-radius of the line at any
+  point.  If so, returns a pair containing the coordinates of the foodspot
+  found, as a pair, and the coordinates of point on the line segment that
+  is closest to the foodspot, also as a pair.  (Note that the point
+  returned--the one that is closest to the foodspot--is not, in general,
+  the first point at which the foodspot could have been perceived; it's not
+  where line segment crosses within perc-radius of the foodspot.  If
+  perc-radius is large, the returned point might be some distance away from
+  the point at which perception would have been possible.  It's as if the
+  forager only has narrowly focused eyes on the side of its head, and only
+  sees perpendicularly, unless it steps on a foodspot.)"
   [^doubles env ^double perc-radius]
   (fn [x0 y0 x1 y1]
     (let [env-len (alength env)
@@ -126,5 +139,6 @@
 ;; Use ham-fisted's primitive invoke?  No, can't because look-fn's
 ;; return value is too complex.
 (defn find-in-seg
+  "Applies look-fn to x0 y0 x1 y1, ignoring the first argument."
   [look-fn _ x0 y0 x1 y1]
   (look-fn x0 y0 x1 y1))
