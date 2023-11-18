@@ -366,52 +366,6 @@
   ;; (supposed to be at least) used in each env type, i.e.
   ;; env-minimal, env-mason.
  
-
-  ;;;; INVESTIGATE THIS:
-  ;;;; 
-  ;;;; seed = -1645093054649086646
-  ;;;;
-  ;;;; Why is env-minimal finding a target that env-mason is not?
-  ;;;; [Note that I accidentally didn't run the last env. s/b 5. This was my pattern previously.]
-  ;;;; [Also interesting that env-mason is faster. I've seen that before.]
-  ;;;; 
-  ;;;; ; eval (effective-root-form): (def walks-per-fn 100)
-  ;;;; #'forage.experiment.spiral26profiling/walks-per-fn
-  ;;;; ; --------------------------------------------------------------------------------
-  ;;;; ; eval (effective-root-form): (let [new-mu2-walk-fns {"mu2-env0" (fn [init-loc] (w/foodwalk e...
-  ;;;; ; (out) Performing 400 runs in groups of 100 ...
-  ;;;; ; (out) group 1 [walk-fn mu2-env0, init-dir nil] ... num found =   1, efficiency = 0.0000000010100929485382696
-  ;;;; ; (out) group 2 [walk-fn mu2-env1, init-dir nil] ... num found =   1, efficiency = 0.0000000010100778726471375
-  ;;;; ; (out) group 3 [walk-fn mu2-env2, init-dir nil] ... num found =   0, efficiency = 0.0
-  ;;;; ; (out) group 4 [walk-fn mu2-env3, init-dir nil] ... num found =   2, efficiency = 0.000000002040252240509354
-  ;;;; ; (out)  done.
-  ;;;; ; (out) "Elapsed time: 1932363.727214 msecs"
-  ;;;; #'forage.experiment.spiral26profiling/result-minimal
-  ;;;; ; --------------------------------------------------------------------------------
-  ;;;; ; eval (file): .../clojure/forage/src/clj/forage/experiment/spiral26profiling.clj
-  ;;;; ; (out) Using seed -1645093054649086646
-  ;;;; nil
-  ;;;; ; --------------------------------------------------------------------------------
-  ;;;; ; eval (effective-root-form): (let[new-mu2-walk-fns {"mu2-env0" (fn [init-loc] (w/foodwalk w/...
-  ;;;; ; (out) Performing 400 runs in groups of 100 ...
-  ;;;; ; (out) group 1 [walk-fn mu2-env0, init-dir nil] ... num found =   0, efficiency = 0.0
-  ;;;; ; (out) group 2 [walk-fn mu2-env1, init-dir nil] ... num found =   1, efficiency = 0.0000000010100778731046172
-  ;;;; ; (out) group 3 [walk-fn mu2-env2, init-dir nil] ... num found =   0, efficiency = 0.0
-  ;;;; ; (out) group 4 [walk-fn mu2-env3, init-dir nil] ... num found =   2, efficiency = 0.000000002040252242673076
-  ;;;; ; (out)  done.
-  ;;;; ; (out) "Elapsed time: 1114066.769844 msecs"
-  ;;;; #'forage.experiment.spiral26profiling/result-mason
-  ;;;;
-  ;;;; More info:
-  ;;;;
-  ;;;; (def badruns-minimal (first (result-minimal :found-coords)))
-  ;;;; (def badruns-mason (first (result-mason :found-coords)))
-  ;;;; (def inconsistency (vec (map not= badruns-minimal badruns-mason)))
-  ;;;; (.indexOf inconsistency true) 
-  ;;;; (badruns-minimal 12) ;=> [10000.0 11000.0]
-  ;;;; (badruns-mason 12) ;=> nil
-
-
   (def walks-per-fn 100)
 
   ;; NOTE It's not enough to reset the PRNG to a known state here.  You
@@ -457,6 +411,7 @@
 
   ;; Quick test: did the two env types find the same foodspots?
   (= (result-mason :found-coords) (result-minimal :found-coords))
+  (= (result-mason :data) (result-minimal :data))
 
 
 
