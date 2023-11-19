@@ -33,6 +33,7 @@
                 ]
 
   :source-paths ["src/clj"]
+  :java-source-paths ["src/java"] ; such sources will be compiled; apparently there's no analog in deps.edn
 
   ; :plugins [[cider/cider-nrepl "0.24.0"]] ; FOR CONJURE
 
