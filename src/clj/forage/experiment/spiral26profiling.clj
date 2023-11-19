@@ -133,6 +133,7 @@
 ;(def seed -7370724773351240133)
 (def seed -1645093054649086646)
 (println "Using seed" seed)
+;(def rng (r/make-mrg32k3a seed))
 (def rng (r/make-well19937 seed))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -366,7 +367,7 @@
   ;; (supposed to be at least) used in each env type, i.e.
   ;; env-minimal, env-mason.
  
-  (def walks-per-fn 100)
+  (def walks-per-fn 20)
 
   ;; NOTE It's not enough to reset the PRNG to a known state here.  You
   ;; have to revaluate this whole file WITH THE SAME SEED; I think parts of 
