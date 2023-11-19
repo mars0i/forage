@@ -1,4 +1,4 @@
-{:paths ["src/clj"] 
+{:paths ["src/clj" "target/classes"] ; classes is where .class files are; deps.edn won't compile them (?)
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         org.clojure/math.numeric-tower {:mvn/version "0.0.5"}
         org.apache.commons/commons-math3 {:mvn/version "3.6.1"}    ; NOTE USING DIFFERENT INCOMPATIBLE
