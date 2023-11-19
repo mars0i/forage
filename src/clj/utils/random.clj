@@ -10,7 +10,8 @@
 ;; See e.g.
 ;; https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/RandomSource.html
 (ns utils.random
-  (:import [org.apache.commons.math3.distribution ParetoDistribution] ; 3.6.1
+  (:import MRG32k3a 
+           [org.apache.commons.math3.distribution ParetoDistribution] ; 3.6.1
            [org.apache.commons.rng UniformRandomProvider] ; 1.4
            [org.apache.commons.rng.simple RandomSource] ; 1.4
            [org.apache.commons.rng.core RandomProviderDefaultState] ; 1.4
@@ -26,6 +27,9 @@
   (:require ;[clojure.math.numeric-tower :as nt] ; now using clojure.math/pow instead of nt/expt see https://clojureverse.org/t/article-blog-post-etc-about-clojure-math-vs-numeric-tower/9805/6?u=mars0i
             [clojure.math :as math]
             [clojure.java.io :as io]))
+
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
 
 ;; NOTE Apache Commons Math 3.6.1 is latest official, but I started using
 ;; the newer version, 1.4, because it allowed saving internal state of
@@ -145,6 +149,12 @@
      (flush44497 rng)
      rng))) 
 
+(defn make-mrg32k3a
+  ([] (make-mrg32k3a (make-seed)))
+  ([^long long-seed]
+   (MRG32k3a. long-seed)))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FUNCTIONS FOR SAVING/RESTORING PRNG STATE
 
@@ -249,29 +259,37 @@
 (extend-protocol RandDist
   ; DISTRIBUTIONS:
   InverseTransformParetoSampler
-    (next-double
-      ([this] (.sample this))
-      ([this low high] (loop [x (.sample this)]
-                             (if (and (<= x high) (>= x low))
-                               x
-                               (recur (.sample this))))))
+  (next-double
+    ([this] (.sample this))
+    ([this low high] (loop [x (.sample this)]
+                       (if (and (<= x high) (>= x low))
+                         x
+                         (recur (.sample this))))))
 
   ; PRNGS:
   Well19937c
-    (next-double
-      ([this] (.nextDouble this))
-      ([this low high] (loop [x (.nextDouble this)]
-                             (if (and (<= x high) (>= x low))
-                               x
-                               (recur (.nextDouble this))))))
+  (next-double
+    ([this] (.nextDouble this))
+    ([this low high] (loop [x (.nextDouble this)]
+                       (if (and (<= x high) (>= x low))
+                         x
+                         (recur (.nextDouble this))))))
 
   Well44497b
-    (next-double
-      ([this] (.nextDouble this))
-      ([this low high] (loop [x (.nextDouble this)]
-                             (if (and (<= x high) (>= x low))
-                               x
-                               (recur (.nextDouble this)))))))
+  (next-double
+    ([this] (.nextDouble this))
+    ([this low high] (loop [x (.nextDouble this)]
+                       (if (and (<= x high) (>= x low))
+                         x
+                         (recur (.nextDouble this))))))
+
+  MRG32k3a
+  (next-double
+    ([this] (.nextDouble this))
+    ([this low high] (loop [x (.nextDouble this)]
+                       (if (and (<= x high) (>= x low))
+                         x
+                         (recur (.nextDouble this)))))))
 
 (defn next-double-fn
   "Rather than returning the result of '(next-double dist)' or 
