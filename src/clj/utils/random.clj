@@ -2,10 +2,6 @@
 ;; under the Gnu General Public License version 3.0 as specified in the
 ;; the file LICENSE.
 
-;; TODO check to see if there's reflection happening
-;; TODO check if it's doing what it's supposed to
-;; 
-
 ;; Functions for generating and using random numbers.
 ;; See e.g.
 ;; https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/RandomSource.html
@@ -26,15 +22,17 @@
            [java.util ArrayList])
   (:require ;[clojure.math.numeric-tower :as nt] ; now using clojure.math/pow instead of nt/expt see https://clojureverse.org/t/article-blog-post-etc-about-clojure-math-vs-numeric-tower/9805/6?u=mars0i
             [clojure.math :as math]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [fastmath.core :as fm]))
 
 ;(set! *warn-on-reflection* true)
 ;(set! *unchecked-math* :warn-on-boxed)
+(fm/use-primitive-operators)
 
-;; NOTE Apache Commons Math 3.6.1 is latest official, but I started using
-;; the newer version, 1.4, because it allowed saving internal state of
+
+;; I started using a newer Apache Commons version, 1.4, because it allowed saving internal state of
 ;; a PRNG.  However, some functions aren't yet realeased with 1.4, so
-;; I'm using 3.6.1 now, too.
+;; I'm using 3.6.1 now, too.  TODO Check about using 1.5.
 
 (comment
   (def rng (make-well19937 42))
@@ -109,7 +107,7 @@
   "Discard the first n numbers from a PRNG in order to flush out internal 
   state that's might not be as random as what the PRNG is capable of.
   cf.  https://listserv.gmu.edu/cgi-bin/wa?A1=ind1609&L=MASON-INTEREST-L#1 ."
-  [n rng] (dotimes [_ n] (.nextInt rng)))
+  [n ^UniformRandomProvider rng] (dotimes [_ n] (.nextInt rng)))
 
 (def flush1024
   "Flush possible initial low-quality state from a PRNG with a 32-word
@@ -229,7 +227,7 @@
   with contexts where densities are expressed in the mu form.) Without an
   initial PRNG argument rng, uses Well19937c with an internally generated
   seed."
-  [rng k mu] (make-pareto rng k (dec mu)))
+  [rng k ^double mu] (make-pareto rng k (dec mu)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -248,8 +246,8 @@
     [this low high]))
 
 
-(defn next-int
-  ([rng] (.next rng)))
+;(defn next-int
+;  ([rng] (.next rng)))
 
 ;; Apparently, the specializers have to be concrete classes; interfaces and 
 ;; abstract classes don't seem to work.  Too bad--it would save duplication.
@@ -261,16 +259,18 @@
   InverseTransformParetoSampler
   (next-double
     ([this] (.sample this))
-    ([this low high] (loop [x (.sample this)]
-                       (if (and (<= x high) (>= x low))
-                         x
-                         (recur (.sample this))))))
+    ([this ^double low ^double high]
+     (loop [x (.sample this)]
+       (if (and (<= x high) (>= x low))
+         x
+         (recur (.sample this))))))
 
   ; PRNGS:
   Well19937c
   (next-double
     ([this] (.nextDouble this))
-    ([this low high] (loop [x (.nextDouble this)]
+    ([this ^double low ^double high]
+     (loop [x (.nextDouble this)]
                        (if (and (<= x high) (>= x low))
                          x
                          (recur (.nextDouble this))))))
@@ -278,7 +278,8 @@
   Well44497b
   (next-double
     ([this] (.nextDouble this))
-    ([this low high] (loop [x (.nextDouble this)]
+    ([this ^double low ^double high]
+     (loop [x (.nextDouble this)]
                        (if (and (<= x high) (>= x low))
                          x
                          (recur (.nextDouble this))))))
@@ -286,7 +287,8 @@
   MRG32k3a
   (next-double
     ([this] (.nextDouble this))
-    ([this low high] (loop [x (.nextDouble this)]
+    ([this ^double low ^double high]
+     (loop [x (.nextDouble this)]
                        (if (and (<= x high) (>= x low))
                          x
                          (recur (.nextDouble this)))))))
@@ -311,7 +313,7 @@
   "Given a PRNG prng, return a uniformly distributed number between 0
   and pi, i.e. in [0,pi)."
   [rng]
-  (* 2 Math/PI (next-double rng)))
+  (* 2 Math/PI ^double (next-double rng)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; NOTE THE FOLLOWING WERE WRITTEN FOR APACHE COMMONS MATH 3.6.1
@@ -359,7 +361,7 @@
   its previous value, while low and high each must be = to their previous
   values."
   (let [memo$ (atom {})]
-    (fn [dist low high x]
+    (fn [dist ^double low ^double high ^double x]
       (cond (<= x low) 0.0  ; Or throw exception? Return nil?
             (> x high) 1.0
             :else (let [args [dist low high]
@@ -367,7 +369,7 @@
                                      (let [newprob (apply probability args)]
                                        (reset! memo$ {args newprob})
                                        newprob))]
-                    (/ (.cumulativeProbability dist x) tot-prob))))))
+                    (/ ^double (.cumulativeProbability dist x) ^double tot-prob))))))
 
 ;; Worked with old 1.3, not 1.4 (?)
 ;(defn cumulative
@@ -385,11 +387,11 @@
   if provided, maximum value maxval.  Also can be understood as 
   transforming values generated by a power law distribution into uniformly
   distributed values."
-  ([mu minval x] 
+  ([^double mu ^double minval ^double x] 
    (let [-alpha (- 1 mu)]
      (- 1 (/ (math/pow x -alpha)
              (math/pow minval -alpha)))))
-  ([mu minval maxval x]
+  ([^double mu ^double minval ^double maxval ^double x]
    (let [-alpha (- 1 mu)
         minval-pow (math/pow minval -alpha)]
      (/ (- minval-pow (math/pow x -alpha))
