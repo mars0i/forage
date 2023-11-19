@@ -80,7 +80,7 @@ public class MRG32k3a {
 	 *            a 64-bit integer that will be used to seed a SplitMix64
 	 *            generator, whose output will be used to seed this generator.
 	 */
-	MRG32k3a(final long seed) {
+	public MRG32k3a(final long seed) {
 		setSeed(seed);
 	}
 
@@ -94,7 +94,7 @@ public class MRG32k3a {
 	 *            values (s20, s21, s22; not all zeros) in the range
 	 *            [0..4294944443).
 	 */
-	MRG32k3a(final long... seed) {
+	public MRG32k3a(final long... seed) {
 		setSeed(seed);
 	}
 
