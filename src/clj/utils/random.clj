@@ -124,8 +124,28 @@
   internal state such as a WELL44497."
   (partial flush-rng 6000))
 
-;; Re the additional nil argument to .create below, see 
+(defn flush32k3a
+  "Flush possible initial low-quality state from a PRNG with a 384-bit
+  internal state such as an MRG32k3a. i.e. discard the first n numbers from
+  a PRNG in order to flush out internal state that's might not be as random
+  as what the PRNG is capable of."
+  [^MRG32k3a rng]
+  (dotimes [_ 1000] (.nextDouble rng)))
+
+;; Re the additional nil argument to .create below, see
 ;; https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/RandomSource.html#create(java.lang.Object,java.lang.Object...)
+
+(defn make-well1024
+  "Make an Apache Commons WELL 19937c generator, flushing any possible 
+  initial lack of entropy.  (Note that this is the default generator in
+  Apache Commons used by distribution functions if no generator is passed.)"
+  ([] (make-well1024 (make-seed)))
+  ([^long long-seed] 
+   (let [^UniformRandomProvider rng
+         (.create RandomSource/WELL_19937_C long-seed nil)] ; FIXME
+     (flush1024 rng)
+     rng)))
+
 (defn make-well19937
   "Make an Apache Commons WELL 19937c generator, flushing any possible 
   initial lack of entropy.  (Note that this is the default generator in
@@ -147,10 +167,50 @@
      (flush44497 rng)
      rng))) 
 
+;; On whether to flush the initial state:
+;; Vigna's documentation and implmentation of MRG32k3a doesn't say anything
+;; about flushing the initial state.  I don't think L'Ecuyer does either,
+;; but I need to check.  The internal state is six longs, i.e. 384 bits.
+;; Given a long seed, Vigna's MRG32k3a feeds that into a SplitMix to initialize
+;; the six longs.  So the initial state is as random as that is, which is
+;; probably OK.  But it's not a MRG32k3a state.  To be on the safe side,
+;; I am going to flush by default; this might not be good if one were
+;; creating rngs often, but I don't.  Since the state is only 384 bits,
+;; flushing for 2*384 = 768 seems like more than enough.
 (defn make-mrg32k3a
   ([] (make-mrg32k3a (make-seed)))
   ([^long long-seed]
-   (MRG32k3a. long-seed)))
+   (let [^MRG32k3a rng (MRG32k3a. long-seed)]
+     (flush32k3a rng)
+     rng)))
+
+(comment
+  (require '[criterium.core :as crit])
+
+  (def seed (make-seed))
+
+  (def ^Well19937c rng19937 (make-well19937 seed))
+  (time (crit/bench (next-double ^Well19937c rng19937)))
+  ; Is there a cost to indirection through another function, and a protocol?
+  (def rng19937 (make-well19937 seed)) ; reset the seed
+  (time (crit/bench (.nextDouble rng19937)))
+  ;; NO, in fact going through the protocol vastly improves the speed (by
+  ;; about 5X or 6X !).
+  ;; The efficiency of next-double can be recovered using the explicit 
+  ;; .nextDouble by type-hinting the call *right here*, but using
+  ;; apparently next-double removes that need.
+
+  (def rng44497 (make-well44497 seed))
+  (time (crit/bench (next-double rng44497)))
+  (def rng44497 (make-well44497 seed)) ; reset the seed
+  (time (crit/bench (.nextDouble rng44497)))
+
+  (def rngMRG (make-mrg32k3a seed))
+  (time (crit/bench (next-double rngMRG)))
+  (def rngMRG (make-mrg32k3a seed)) ; reset the seed
+  (time (crit/bench (.nextDouble rngMRG)))
+  
+)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
