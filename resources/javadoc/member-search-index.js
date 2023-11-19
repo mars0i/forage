@@ -1,1 +1,1 @@
-memberSearchIndex = [{"p":"<Unnamed>","c":"MRG32k3a","l":"nextDouble()"},{"p":"<Unnamed>","c":"MRG32k3a","l":"setSeed(long)"},{"p":"<Unnamed>","c":"MRG32k3a","l":"setSeed(long...)"}];updateSearchResults();
+memberSearchIndex = [{"p":"<Unnamed>","c":"MRG32k3a","l":"MRG32k3a(long)","u":"%3Cinit%3E(long)"},{"p":"<Unnamed>","c":"MRG32k3a","l":"MRG32k3a(long...)","u":"%3Cinit%3E(long...)"},{"p":"<Unnamed>","c":"MRG32k3a","l":"nextDouble()"},{"p":"<Unnamed>","c":"MRG32k3a","l":"setSeed(long)"},{"p":"<Unnamed>","c":"MRG32k3a","l":"setSeed(long...)"}];updateSearchResults();
