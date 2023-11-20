@@ -45,8 +45,6 @@
   that are actually vertical, but don't appear so because of float slop."
   1.0)
 
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATING RANDOM WALKS
 
@@ -75,6 +73,35 @@
   maximum value high."
   [dir-dist len-dist low high]
   (repeatedly (step-vector-fn dir-dist len-dist low high)))
+
+
+(comment
+  (require '[criterium.core :as crit])
+  (def seed (r/make-seed))
+  (def rng19937 (r/make-well19937 seed))
+  (def rng1024  (r/make-well1024 seed))
+  (def rngmrg   (r/make-mrg32k3a seed))
+
+  (def pow19937 (r/make-powerlaw rng19937 1 2))
+  (def pow1024 (r/make-powerlaw rng1024 1 2))
+  (def powmrg (r/make-powerlaw rngmrg 1 2))
+
+  (def stepfn19937 (step-vector-fn rng19937 pow19937 1 25000))
+  (def stepfn1024 (step-vector-fn rng1024 pow1024 1 25000))
+  (def stepfnmrg (step-vector-fn rngmrg powmrg 1 25000))
+
+  (time (crit/bench (stepfn19937)))
+  (time (crit/bench (stepfn1024)))
+  (time (crit/bench (stepfnmrg)))
+
+  (def mu2_19937 (make-levy-vecs (step-vector-fn rng19937 pow19937 1 25000)))
+  (def mu2_1024 (make-levy-vecs (step-vector-fn rng1024 pow1024 1 25000)))
+  (def mu2_mrg (make-levy-vecs (step-vector-fn rngmrg powmrg 1 25000)))
+
+
+
+)
+
 
 ;; NOTE SEE test/forage/walks.clj for experiments and test of 
 ;; incremental-composite-vecs that were formerly below and above this

@@ -7,11 +7,12 @@
 ;; https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/RandomSource.html
 (ns utils.random
   (:import MRG32k3a 
-           [org.apache.commons.math3.distribution ParetoDistribution] ; 3.6.1
+           ;[org.apache.commons.math3.distribution ParetoDistribution] ; 3.6.1
            [org.apache.commons.rng UniformRandomProvider] ; 1.4
            [org.apache.commons.rng.simple RandomSource] ; 1.4
            [org.apache.commons.rng.core RandomProviderDefaultState] ; 1.4
-           [org.apache.commons.rng.core.source32 AbstractWell Well44497b Well19937c Well1024a] ; 1.4
+           [org.apache.commons.rng.core.source32 AbstractWell Well44497b Well19937c Well1024a] ; 1.4 [more PRNGS in org.apache.commons.rng.core.source64]
+             ;; (There's also a Well512a, but results for it aren't reported in the L'Ecuyer and Simard TestU01 paper.)
            [org.apache.commons.rng.sampling ListSampler] ; 1.4
            [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler SamplerBase] ; 1.4
            ;[org.apache.commons.statistics.distribution ParetoDistribution] ; 1.4, I think, but not Mavenized yet
@@ -143,7 +144,7 @@
 ;; https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/RandomSource.html#create(java.lang.Object,java.lang.Object...)
 
 (defn make-well1024
-  "Make an Apache Commons WELL 19937c generator, flushing any possible 
+  "Make an Apache Commons WELL 1024a generator, flushing any possible 
   initial lack of entropy.  (Note that this is the default generator in
   Apache Commons used by distribution functions if no generator is passed.)"
   ([] (make-well1024 (make-seed)))
@@ -284,16 +285,17 @@
 ;; Note some of the methods are only described in interface RealDistribution.
 ;; https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/distribution/AbstractRealDistribution.html
 
-(defn make-pareto
+(defn make-apache-pareto
   "Returns an Apache Commons 1.4 Pareto distribution with min-value (\"scale\")
   parameter k and shape parameter alpha."
   [rng k alpha]
   (InverseTransformParetoSampler/of rng k alpha))
 
-(comment
-  (def dist (InverseTransformParetoSampler/of rng 1 2))
-  (.sample dist)
-)
+(def make-pareto 
+  "Alias for make-apache-pareto.  Returns an Apache Commons Pareto
+  distribution with min-value (\"scale\") parameter k and shape parameter
+  alpha."
+  make-apache-pareto)
 
 ;; Note $\alpha + 1 = \mu = 2$ (i.e. (\alpha=1$) is the theoretical
 ;; optimum for searches with sparse targets.
