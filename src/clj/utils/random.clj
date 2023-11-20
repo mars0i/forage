@@ -11,7 +11,7 @@
            [org.apache.commons.rng UniformRandomProvider] ; 1.4
            [org.apache.commons.rng.simple RandomSource] ; 1.4
            [org.apache.commons.rng.core RandomProviderDefaultState] ; 1.4
-           [org.apache.commons.rng.core.source32 AbstractWell Well19937c Well44497b] ; 1.4
+           [org.apache.commons.rng.core.source32 AbstractWell Well44497b Well19937c Well1024a] ; 1.4
            [org.apache.commons.rng.sampling ListSampler] ; 1.4
            [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler SamplerBase] ; 1.4
            ;[org.apache.commons.statistics.distribution ParetoDistribution] ; 1.4, I think, but not Mavenized yet
@@ -29,10 +29,17 @@
 ;(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
-
 ;; I started using a newer Apache Commons version, 1.4, because it allowed saving internal state of
 ;; a PRNG.  However, some functions aren't yet realeased with 1.4, so
 ;; I'm using 3.6.1 now, too.  TODO Check about using 1.5.
+
+
+;; NOTE
+;; I have notes in a file named howManyRandomNumbersDoIneed.md that
+;; explains why MRG32k3a has a long enough period for me (while SplitMix 
+;; *might* not be OK).  All of the WELL generators, including 1024a, have
+;; a long enough period, but MRG32k3a is a better generator, as well as 
+;; being faster.
 
 (comment
   (def rng (make-well19937 42))
@@ -142,7 +149,7 @@
   ([] (make-well1024 (make-seed)))
   ([^long long-seed] 
    (let [^UniformRandomProvider rng
-         (.create RandomSource/WELL_19937_C long-seed nil)] ; FIXME
+         (.create RandomSource/WELL_1024_A long-seed nil)]
      (flush1024 rng)
      rng)))
 
@@ -187,10 +194,8 @@
 (comment
   (require '[criterium.core :as crit])
 
-  (def seed (make-seed))
-
-  (def ^Well19937c rng19937 (make-well19937 seed))
-  (time (crit/bench (next-double ^Well19937c rng19937)))
+  (def rng19937 (make-well19937 seed))
+  (time (crit/bench (next-double rng19937)))
   ; Is there a cost to indirection through another function, and a protocol?
   (def rng19937 (make-well19937 seed)) ; reset the seed
   (time (crit/bench (.nextDouble rng19937)))
@@ -200,16 +205,28 @@
   ;; .nextDouble by type-hinting the call *right here*, but using
   ;; apparently next-double removes that need.
 
-  (def rng44497 (make-well44497 seed))
-  (time (crit/bench (next-double rng44497)))
-  (def rng44497 (make-well44497 seed)) ; reset the seed
-  (time (crit/bench (.nextDouble rng44497)))
 
-  (def rngMRG (make-mrg32k3a seed))
-  (time (crit/bench (next-double rngMRG)))
-  (def rngMRG (make-mrg32k3a seed)) ; reset the seed
-  (time (crit/bench (.nextDouble rngMRG)))
-  
+  ;; The following are roughly in order of descreasting average time, i.e.
+  ;; increasing speed.  The improvement is incremental from one to the
+  ;; next.  MRG32k3a (11ns) is twice as fast as WELL 44497 (23ns), and 
+  ;; about 60% faster than WELL 1024 (18ns).  There was one run of it,
+  ;; though, where WELL 44497b was faster than WELL 19937c.
+  (time
+    (let [seed (make-seed)
+          rng44497 (make-well44497 seed)
+          rng19937 (make-well19937 seed)
+          rng1024  (make-well1024 seed)
+          rngMRG   (make-mrg32k3a seed)]
+      (println "seed =" seed)
+      (println "WELL44497b:")
+      (time (crit/bench (next-double rng44497)))
+      (println "WELL19937c:")
+      (time (crit/bench (next-double rng19937)))
+      (println "WELL1024a:")
+      (time (crit/bench (next-double rng1024)))
+      (println "MRG32k3a:")
+      (time (crit/bench (next-double rngMRG)))))
+
 )
 
 
@@ -326,6 +343,15 @@
          (recur (.sample this))))))
 
   ; PRNGS:
+  Well1024a
+  (next-double
+    ([this] (.nextDouble this))
+    ([this ^double low ^double high]
+     (loop [x (.nextDouble this)]
+                       (if (and (<= x high) (>= x low))
+                         x
+                         (recur (.nextDouble this))))))
+
   Well19937c
   (next-double
     ([this] (.nextDouble this))
