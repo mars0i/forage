@@ -310,27 +310,27 @@
 
 (comment
   ;; Commons 1.5:
-  (def wellpareto (make-apache-pareto (make-well19937) 1.0 10000.0))
-  (make-apache-pareto (make-well44497) 1.0 100.0)
-  (make-apache-pareto (make-well1024) 1.0 100.0)
-  (make-apache-pareto (make-mrg32k3a) 1.0 100.0) ; fails
+  (def wellpareto (make-apache-pareto (make-well19937) 1.0 1.0))
+  (make-apache-pareto (make-well44497) 1.0 1.0)
+  (make-apache-pareto (make-well1024) 1.0 1.0)
+  (make-apache-pareto (make-mrg32k3a) 1.0 1.0) ; fails
   ;; Comments 3.6.1:
-  (ParetoDistribution. (make-well19937) 1.0 100.0) ; fails because it's the wrong Well19937c class
-  (ParetoDistribution. (make-mrg32k3a) 1.0 100.0) ; fails
-  (def yo (ParetoDistribution.  1.0 100.0)) ; uses a Well19937c: https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/distribution/ParetoDistribution.html#ParetoDistribution(double,%20double)
+  (ParetoDistribution. (make-well19937) 1.0 1.0) ; fails because it's the wrong Well19937c class
+  (ParetoDistribution. (make-mrg32k3a) 1.0 1.0) ; fails
+  (def yo (ParetoDistribution.  1.0 1.0)) ; uses a Well19937c: https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/distribution/ParetoDistribution.html#ParetoDistribution(double,%20double)
   (.sample yo)
   (next-double yo) ; fails
 
   (next-double wellpareto)
   (def wps (repeatedly #(next-double wellpareto)))
-  (take 200 wps)
+  (take 100 wps)
 
   ;; The output doesn't look right. Where are the large values?
   (def mrg (make-mrg32k3a 1234))
-  (def mrgpareto (make-mrg32k3a-pareto mrg 1.0 100000.0))
+  (def mrgpareto (make-mrg32k3a-pareto mrg 1.0 1.0))
   (next-double mrgpareto)
   (def ps (repeatedly #(next-double mrgpareto)))
-  (take 2000 ps)
+  (take 200 ps)
 )
 
 (defn pareto
@@ -372,11 +372,10 @@
 (comment
   ;; The output doesn't look right. Where are the large values?
   (def mrg (make-mrg32k3a 1234))
-  (def mrgpareto (make-mrg32k3a-pareto mrg 1.0 100000.0))
-  (def mrgpower (make-mrg32k3a-powerlaw mrg 1.0 100000.0))
+  (def mrgpower (make-mrg32k3a-powerlaw mrg 1.0 2.0))
   (next-double mrgpower)
   (def ps (repeatedly #(next-double mrgpower)))
-  (take 2000 ps)
+  (take 200 ps)
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
