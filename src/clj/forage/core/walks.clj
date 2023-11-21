@@ -84,7 +84,7 @@
 
   (def pow19937 (r/make-powerlaw rng19937 1 2))
   (def pow1024 (r/make-powerlaw rng1024 1 2))
-  (def powmrg (r/make-powerlaw rngmrg 1 2))
+  (def powmrg (r/make-mrg32k3a-powerlaw rngmrg 1 2))
 
   (def stepfn19937 (step-vector-fn rng19937 pow19937 1 25000))
   (def stepfn1024 (step-vector-fn rng1024 pow1024 1 25000))
@@ -94,11 +94,10 @@
   (time (crit/bench (stepfn1024)))
   (time (crit/bench (stepfnmrg)))
 
-  (def mu2_19937 (make-levy-vecs (step-vector-fn rng19937 pow19937 1 25000)))
-  (def mu2_1024 (make-levy-vecs (step-vector-fn rng1024 pow1024 1 25000)))
-  (def mu2_mrg (make-levy-vecs (step-vector-fn rngmrg powmrg 1 25000)))
-
-
+  (def mu2_19937 (make-levy-vecs rng19937 pow19937 1 25000))
+  (def mu2_1024 (make-levy-vecs rng1024 pow1024 1 25000))
+  (def mu2_mrg (make-levy-vecs rngmrg powmrg 1 25000))
+  (take 24 mu2_mrg)
 
 )
 
