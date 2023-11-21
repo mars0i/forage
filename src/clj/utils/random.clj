@@ -7,15 +7,15 @@
 ;; https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/RandomSource.html
 (ns utils.random
   (:import MRG32k3a 
-           ;[org.apache.commons.math3.distribution ParetoDistribution] ; 3.6.1
-           [org.apache.commons.rng UniformRandomProvider] ; 1.4
-           [org.apache.commons.rng.simple RandomSource] ; 1.4
-           [org.apache.commons.rng.core RandomProviderDefaultState] ; 1.4
-           [org.apache.commons.rng.core.source32 AbstractWell Well44497b Well19937c Well1024a] ; 1.4 [more PRNGS in org.apache.commons.rng.core.source64]
+           [org.apache.commons.math3.distribution ParetoDistribution] ; 3.6.1
+           [org.apache.commons.rng UniformRandomProvider] ; 1.5
+           [org.apache.commons.rng.simple RandomSource] ; 1.5
+           [org.apache.commons.rng.core RandomProviderDefaultState] ; 1.5
+           [org.apache.commons.rng.core.source32 AbstractWell Well44497b Well19937c Well1024a] ; 1.5 [more PRNGS in org.apache.commons.rng.core.source64]
              ;; (There's also a Well512a, but results for it aren't reported in the L'Ecuyer and Simard TestU01 paper.)
-           [org.apache.commons.rng.sampling ListSampler] ; 1.4
-           [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler SamplerBase] ; 1.4
-           ;[org.apache.commons.statistics.distribution ParetoDistribution] ; 1.4, I think, but not Mavenized yet
+           [org.apache.commons.rng.sampling ListSampler] ; 1.5
+           [org.apache.commons.rng.sampling.distribution InverseTransformParetoSampler SamplerBase] ; 1.5
+           ;[org.apache.commons.statistics.distribution ParetoDistribution] ; 1.5, I think, but not Mavenized yet
            [org.apache.commons.rng.sampling PermutationSampler]
            [java.io
             ByteArrayOutputStream ObjectOutputStream FileOutputStream
@@ -26,13 +26,13 @@
             [clojure.java.io :as io]
             [fastmath.core :as fm]))
 
-;(set! *warn-on-reflection* true)
-;(set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
-;; I started using a newer Apache Commons version, 1.4, because it allowed saving internal state of
-;; a PRNG.  However, some functions aren't yet realeased with 1.4, so
-;; I'm using 3.6.1 now, too.  TODO Check about using 1.5.
+;; I started using a newer Apache Commons version, 1.4 and 1.5, because it
+;; allowed saving internal state of a PRNG.  However, some functions
+;; might only be available in 3.6.1.
 
 
 ;; NOTE
@@ -76,7 +76,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; PRNG-CREATION FUNCTIONS
-;; MOSTLY FROM APACHE COMMONS 1.4
+;; MOSTLY FROM APACHE COMMONS 1.5
 
 ;; Similar to what Apache Commons PRNGs do if unseeded.
 ;; Note that the Apache Commons PRNGs will use all of a long seed--
@@ -98,7 +98,7 @@
   (RandomSource/createLong))
 
 (defn set-seed
-  "Resets the seed of rng to seed.  Apparently doesn't work with Apache 1.4 RNGs."
+  "Resets the seed of rng to seed.  Apparently doesn't work with Apache 1.5 RNGs."
   [rng seed]
   (.setSeed rng seed))
 
@@ -286,10 +286,23 @@
 ;; https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/distribution/AbstractRealDistribution.html
 
 (defn make-apache-pareto
-  "Returns an Apache Commons 1.4 Pareto distribution with min-value (\"scale\")
-  parameter k and shape parameter alpha."
+  "Returns an Apache Commons 1.5 Pareto distribution with min-value
+  (\"scale\") parameter k and shape parameter alpha."
   [rng k alpha]
   (InverseTransformParetoSampler/of rng k alpha))
+
+(comment
+  ;; Commons 1.5:
+  (make-apache-pareto (make-well19937) 1.0 100.0)
+  (make-apache-pareto (make-well44497) 1.0 100.0)
+  (make-apache-pareto (make-well1024) 1.0 100.0)
+  (make-apache-pareto (make-mrg32k3a) 1.0 100.0) ; fails
+  ;; Comments 3.6.1:
+  (ParetoDistribution. (make-well19937) 1.0 100.0) ; fails because it's the wrong Well19937c class
+  (ParetoDistribution. (make-mrg32k3a) 1.0 100.0) ; fails
+  (def yo (ParetoDistribution.  1.0 100.0)) ; uses a Well19937c: https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/distribution/ParetoDistribution.html#ParetoDistribution(double,%20double)
+  (.sample yo)
+)
 
 (def make-pareto 
   "Alias for make-apache-pareto.  Returns an Apache Commons Pareto
@@ -307,6 +320,15 @@
   initial PRNG argument rng, uses Well19937c with an internally generated
   seed."
   [rng k ^double mu] (make-pareto rng k (dec mu)))
+
+
+(defn pareto
+  "Given a value x from a uniformly distributed random number
+  generator, returns a value from a pareto distribution with
+  min-value (\"scale\") parameter k and shape parameter alpha."
+  [^double k ^double alpha ^double x]
+  (- 1 (/ (fm/pow k alpha)
+          (fm/pow x alpha))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -459,7 +481,7 @@
                                        newprob))]
                     (/ ^double (.cumulativeProbability dist x) ^double tot-prob))))))
 
-;; Worked with old 1.3, not 1.4 (?)
+;; Worked with old 1.3, not 1.4/1.5 (?)
 ;(defn cumulative
 ;  "Return the value of the cumulative probability distribution at x for
 ;  (Apache Commons Math3) distribution dist.  If low and high are provided,
