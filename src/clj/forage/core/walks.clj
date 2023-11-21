@@ -104,13 +104,14 @@
   (def mu2_1024 (make-levy-vecs rng1024 pow1024 1 25000))
   (def mu2_mrg (make-levy-vecs rngmrg powmrg 1 25000))
 
-  (time (crit/quick-bench (doall (take 25000 mu2_19937))) ; 1.37 ms
-  (time (crit/quick-bench (doall (take 25000 mu2_1024)))  ; 1.42 ms
-  (time (crit/quick-bench (doall (take 25000 mu2_mrg)))   ; 1.39 ms
+  (time (crit/quick-bench (doall (take 25000 mu2_19937)))) ; 1.37 ms
+  (time (crit/quick-bench (doall (take 25000 mu2_1024))))  ; 1.42 ms
+  (time (crit/quick-bench (doall (take 25000 mu2_mrg))))   ; 1.39 ms
 
-  (time (crit/bench (doall (take 25000 mu2_19937)))
-  (time (crit/bench (doall (take 25000 mu2_1024)))
-  (time (crit/bench (doall (take 25000 mu2_mrg)))
+  (time (crit/bench (doall (take 25000 mu2_19937)))) ; 1.40 ms
+  (time (crit/bench (doall (take 25000 mu2_1024))))  ; 1.26 ms
+  (time (crit/bench (doall (take 25000 mu2_mrg))))   ; 1.17 ms
+
 
 )
 
