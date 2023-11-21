@@ -7,6 +7,7 @@
 ;; https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/RandomSource.html
 (ns utils.random
   (:import MRG32k3a 
+           MRG32k3aParetoSampler ; Apache Commons 1.5 InverseTransformParetoSampler hacked for use with MRG32k3a.
            [org.apache.commons.math3.distribution ParetoDistribution] ; 3.6.1
            [org.apache.commons.rng UniformRandomProvider] ; 1.5
            [org.apache.commons.rng.simple RandomSource] ; 1.5
@@ -26,8 +27,8 @@
             [clojure.java.io :as io]
             [fastmath.core :as fm]))
 
-(set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
 ;; I started using a newer Apache Commons version, 1.4 and 1.5, because it
@@ -285,15 +286,31 @@
 ;; Note some of the methods are only described in interface RealDistribution.
 ;; https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/distribution/AbstractRealDistribution.html
 
+;; TODO put this stuff into a protocol??
 (defn make-apache-pareto
   "Returns an Apache Commons 1.5 Pareto distribution with min-value
   (\"scale\") parameter k and shape parameter alpha."
   [rng k alpha]
   (InverseTransformParetoSampler/of rng k alpha))
 
+;; TODO put this stuff into a protocol??
+(def make-pareto 
+  "Alias for make-apache-pareto.  Returns an Apache Commons Pareto
+  distribution with min-value (\"scale\") parameter k and shape parameter
+  alpha."
+  make-apache-pareto)
+
+;; TODO put this stuff into a protocol??
+(defn make-mrg32k3a-pareto
+  "Returns an MRG32k3aParetoSampler pareto distribution based on rng which
+  should be an MRG32k3a, and with min-value (\"scale\") parameter k and
+  shape parameter alpha."
+  [rng k alpha]
+  (MRG32k3aParetoSampler/of rng k alpha))
+
 (comment
   ;; Commons 1.5:
-  (make-apache-pareto (make-well19937) 1.0 100.0)
+  (def wellpareto (make-apache-pareto (make-well19937) 1.0 10000.0))
   (make-apache-pareto (make-well44497) 1.0 100.0)
   (make-apache-pareto (make-well1024) 1.0 100.0)
   (make-apache-pareto (make-mrg32k3a) 1.0 100.0) ; fails
@@ -302,25 +319,19 @@
   (ParetoDistribution. (make-mrg32k3a) 1.0 100.0) ; fails
   (def yo (ParetoDistribution.  1.0 100.0)) ; uses a Well19937c: https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/distribution/ParetoDistribution.html#ParetoDistribution(double,%20double)
   (.sample yo)
+  (next-double yo) ; fails
+
+  (next-double wellpareto)
+  (def wps (repeatedly #(next-double wellpareto)))
+  (take 200 wps)
+
+  ;; The output doesn't look right. Where are the large values?
+  (def mrg (make-mrg32k3a 1234))
+  (def mrgpareto (make-mrg32k3a-pareto mrg 1.0 100000.0))
+  (next-double mrgpareto)
+  (def ps (repeatedly #(next-double mrgpareto)))
+  (take 2000 ps)
 )
-
-(def make-pareto 
-  "Alias for make-apache-pareto.  Returns an Apache Commons Pareto
-  distribution with min-value (\"scale\") parameter k and shape parameter
-  alpha."
-  make-apache-pareto)
-
-;; Note $\alpha + 1 = \mu = 2$ (i.e. (\alpha=1$) is the theoretical
-;; optimum for searches with sparse targets.
-(defn make-powerlaw
-  "Returns an Apache Commons Pareto distribution with min-value (\"scale\")
-  parameter k and shape parameter alpha = mu - 1.  (i.e. this is a
-  convenience wrapper to make it easier to think about and avoid mistakes
-  with contexts where densities are expressed in the mu form.) Without an
-  initial PRNG argument rng, uses Well19937c with an internally generated
-  seed."
-  [rng k ^double mu] (make-pareto rng k (dec mu)))
-
 
 (defn pareto
   "Given a value x from a uniformly distributed random number
@@ -330,6 +341,43 @@
   (- 1 (/ (fm/pow k alpha)
           (fm/pow x alpha))))
 
+;; TODO put this stuff into a protocol??
+;; Note $\alpha + 1 = \mu = 2$ (i.e. (\alpha=1$) is the theoretical
+;; optimum for searches with sparse targets.
+(defn make-apache-powerlaw
+  "Returns an Apache Commons Pareto distribution with min-value (\"scale\")
+  parameter k and shape parameter alpha = mu - 1.  (i.e. this is a
+  convenience wrapper to make it easier to think about and avoid mistakes
+  with contexts where densities are expressed in the mu form.)"
+  [rng k ^double mu] (make-pareto rng k (dec mu)))
+
+;; TODO put this stuff into a protocol??
+(def make-powerlaw
+  "Alias for make-apache-powerlaw.  Returns an Apache Commons Pareto
+  distribution with min-value (\"scale\") parameter k and shape parameter
+  alpha = mu - 1.  (i.e. this is a convenience wrapper to make it easier to
+  think about and avoid mistakes with contexts where densities are
+  expressed in the mu form.)"
+  make-apache-powerlaw)
+
+;; TODO put this stuff into a protocol??
+(defn make-mrg32k3a-powerlaw
+  "Returns an MRG32k3aParetoSampler pareto distribution based on rng which
+  is an MRG32k3a, with min-value (\"scale\") parameter k and shape
+  parameter alpha = mu - 1.  (i.e. this is a convenience wrapper to make it
+  easier to think about and avoid mistakes with contexts where densities
+  are expressed in the mu form.)"
+  [rng k ^double mu] (make-mrg32k3a-pareto rng k (dec mu)))
+
+(comment
+  ;; The output doesn't look right. Where are the large values?
+  (def mrg (make-mrg32k3a 1234))
+  (def mrgpareto (make-mrg32k3a-pareto mrg 1.0 100000.0))
+  (def mrgpower (make-mrg32k3a-powerlaw mrg 1.0 100000.0))
+  (next-double mrgpower)
+  (def ps (repeatedly #(next-double mrgpower)))
+  (take 2000 ps)
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GENERATOR AND DISTRIBUTION ACCESS FUNCTIONS
@@ -344,7 +392,8 @@
   this range (inclusive) are rejected."
   (next-double 
     [this]
-    [this low high]))
+    [this low high])
+  )
 
 
 ;(defn next-int
@@ -358,6 +407,15 @@
 (extend-protocol RandDist
   ; DISTRIBUTIONS:
   InverseTransformParetoSampler
+  (next-double
+    ([this] (.sample this))
+    ([this ^double low ^double high]
+     (loop [x (.sample this)]
+       (if (and (<= x high) (>= x low))
+         x
+         (recur (.sample this))))))
+
+  MRG32k3aParetoSampler ; hacked version of InverseTransformParetoSampler
   (next-double
     ([this] (.sample this))
     ([this ^double low ^double high]
