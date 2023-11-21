@@ -49,6 +49,11 @@ See <http://creativecommons.org/publicdomain/zero/1.0/>. */
  * they could be implemented easily (e.g., borrowing code from the <a href=
  * "https://github.com/umontreal-simul/ssj/blob/master/src/main/java/umontreal/ssj/rng/MRG32k3a.java">official
  * implementation</a>).
+ *
+ * Additional notes added by Marshall Abrams:
+ *
+ * See also <a href="http://umontreal-simul.github.io/ssj/docs/master/classumontreal_1_1ssj_1_1rng_1_1MRG32k3a.html">Documentation 
+ * for L'Ecuyer's Java version of MRG32k3a</a>.
  */
 
 public class MRG32k3a {
@@ -164,4 +169,24 @@ public class MRG32k3a {
 		s22 = p;
 		return r * norm;
 	}
+
+        /**
+         * (Copied, modified from L'Ecuyer's version.)
+         *
+         * Returns the current state @f$C_g@f$ of this stream. This is a vector of 6
+         * integers. This method is convenient if we want to save the state for
+         * subsequent use.
+         *  @return the current state of the generator
+         */
+        public long[] saveState() {
+                return new long[] {(long)s10, (long)s11, (long)s12,
+                                   (long)s20, (long)s21, (long)s22};
+        }
+
+	public void restoreState(final long... state) {
+                setSeed(state);
+        }
+
+
+
 }

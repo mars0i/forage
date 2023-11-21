@@ -278,6 +278,12 @@
   (set-state newrng (read-state "yo.bin"))
   (def newnums [(.nextDouble newrng) (.nextDouble newrng) (.nextDouble newrng)])
   (= oldnums newnums)
+
+  (def newrng (make-mrg32k3a)) 
+  (def state (get-state newrng))
+  (next-double newrng)
+  (set-state newrng state)
+
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
