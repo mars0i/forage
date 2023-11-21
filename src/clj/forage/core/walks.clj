@@ -76,6 +76,9 @@
 
 
 (comment
+  ;; These are speed comparisons of PRNGs for walk generation.
+  ;; Should they be moved to random.clj?
+
   (require '[criterium.core :as crit])
   (def seed (r/make-seed))
   (def rng19937 (r/make-well19937 seed))
@@ -90,14 +93,24 @@
   (def stepfn1024 (step-vector-fn rng1024 pow1024 1 25000))
   (def stepfnmrg (step-vector-fn rngmrg powmrg 1 25000))
 
-  (time (crit/bench (stepfn19937)))
-  (time (crit/bench (stepfn1024)))
-  (time (crit/bench (stepfnmrg)))
+                                    ; Two bench runs each:
+  (time (crit/bench (stepfn19937))) ; 82 ns, 79 ns
+  (time (crit/bench (stepfn1024)))  ; 71 ns, 75 ns
+  (time (crit/bench (stepfnmrg)))   ; 54 ns, 57 ns
+  ;;  i.e. Well19937 takes 40-50% longer relative to MRG32k3a
+  ;;  i.e. Well1024 takes 30% longer relative to MRG32k3a
 
   (def mu2_19937 (make-levy-vecs rng19937 pow19937 1 25000))
   (def mu2_1024 (make-levy-vecs rng1024 pow1024 1 25000))
   (def mu2_mrg (make-levy-vecs rngmrg powmrg 1 25000))
-  (take 24 mu2_mrg)
+
+  (time (crit/quick-bench (doall (take 25000 mu2_19937))) ; 1.37 ms
+  (time (crit/quick-bench (doall (take 25000 mu2_1024)))  ; 1.42 ms
+  (time (crit/quick-bench (doall (take 25000 mu2_mrg)))   ; 1.39 ms
+
+  (time (crit/bench (doall (take 25000 mu2_19937)))
+  (time (crit/bench (doall (take 25000 mu2_1024)))
+  (time (crit/bench (doall (take 25000 mu2_mrg)))
 
 )
 
