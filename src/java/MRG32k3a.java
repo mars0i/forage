@@ -50,7 +50,7 @@ See <http://creativecommons.org/publicdomain/zero/1.0/>. */
  * "https://github.com/umontreal-simul/ssj/blob/master/src/main/java/umontreal/ssj/rng/MRG32k3a.java">official
  * implementation</a>).
  *
- * Additional notes added by Marshall Abrams:
+ * <p>Additional notes added by Marshall Abrams:
  *
  * See also <a href="http://umontreal-simul.github.io/ssj/docs/master/classumontreal_1_1ssj_1_1rng_1_1MRG32k3a.html">Documentation 
  * for L'Ecuyer's Java version of MRG32k3a</a>.
@@ -120,7 +120,8 @@ public class MRG32k3a {
 	}
 
 	/**
-	 * Set the state of this generator.
+	 * Set the state of this generator, then throw away the first
+         * double.  This follows the behavior of L'Ecuyer's MRG32k3a.
 	 *
 	 * @param seed
 	 *            six numbers: the first three values (s10, s11, s12; not all
@@ -129,6 +130,22 @@ public class MRG32k3a {
 	 *            [0..4294944443).
 	 */
 	public void setSeed(final long... seed) {
+                internalSetSeed(seed);
+		// Throw away one value to align output with L'Ecuyer original version
+		nextDouble();
+	}
+
+        /**
+	 * Set the state of this generator, without throwing away the first
+         * double.
+         *
+	 * @param seed
+	 *            six numbers: the first three values (s10, s11, s12; not all
+	 *            zeros) must be in the range [0..4294967087) and the last three
+	 *            values (s20, s21, s22; not all zeros) in the range
+	 *            [0..4294944443).
+         */
+	public void internalSetSeed(final long... seed) {
 		if (seed.length != 6) throw new IllegalArgumentException("You must provide six numbers");
 		if (seed[0] == 0 && seed[1] == 0 && seed[2] == 0) throw new IllegalArgumentException("s10, s11 and s12 cannot be all zero");
 		if (seed[3] == 0 && seed[4] == 0 && seed[5] == 0) throw new IllegalArgumentException("s20, s21 and s22 cannot be all zero");
@@ -142,8 +159,6 @@ public class MRG32k3a {
 		s20 = seed[3];
 		s21 = seed[4];
 		s22 = seed[5];
-		// Throw away one value to align output with L'Ecuyer original version
-		nextDouble();
 	}
 
 	/**
@@ -171,20 +186,29 @@ public class MRG32k3a {
 	}
 
         /**
-         * (Copied, modified from L'Ecuyer's version.)
-         *
-         * Returns the current state @f$C_g@f$ of this stream. This is a vector of 6
+         * Returns the current state of this stream. This is a vector of 6
          * integers. This method is convenient if we want to save the state for
          * subsequent use.
+         *
          *  @return the current state of the generator
+         *
+         * (Based on L'Ecuyer's code.)
          */
         public long[] saveState() {
                 return new long[] {(long)s10, (long)s11, (long)s12,
                                    (long)s20, (long)s21, (long)s22};
         }
 
+        // This is just internalSetSeed, but it's the name that's used for
+        // the same function in Apache Commons RNG.  We need to call
+        // internalSetSeed rather than setSeed because setSeed throws away
+        // a double, but when we restore the state, we don't want *another*
+        // double thrown out.
+        /**
+         * Sets the internal state (by calling internalSetSeed).
+         */
 	public void restoreState(final long... state) {
-                setSeed(state);
+                internalSetSeed(state);
         }
 
 

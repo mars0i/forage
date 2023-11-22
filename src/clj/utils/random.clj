@@ -279,11 +279,10 @@
   (def newnums [(.nextDouble newrng) (.nextDouble newrng) (.nextDouble newrng)])
   (= oldnums newnums)
 
-  (def newrng (make-mrg32k3a)) 
+  (def newrng (make-mrg32k3a))
   (def state (get-state newrng))
-  (next-double newrng)
+  (take 5 (repeatedly #(next-double newrng)))
   (set-state newrng state)
-
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
