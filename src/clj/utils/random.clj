@@ -235,11 +235,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FUNCTIONS FOR SAVING/RESTORING PRNG STATE
 
+;; Designed to work with any class that has a saveState method.
 (defn get-state
   "Returns the internal state of a PRNG."
   [rng]
   (.saveState rng))
 
+;; Designed to work with any class that has a restoreState method.
 (defn set-state
   "Sets the internal state of a PRNG to a state derived from a PRNG
   of the same kind."
@@ -258,7 +260,9 @@
   [filename state]
   (let [byte-stream (ByteArrayOutputStream.)]
     (.writeObject (ObjectOutputStream. byte-stream)
-                  (.getState state))
+                  (if (instance? org.apache.commons.rng.core.RandomProviderDefaultState state)
+                    (.getState state)
+                    state)) ; kludgey but this won't happen often
     (with-open [w (FileOutputStream. filename)]
       (.write w (.toByteArray byte-stream)))))
 
@@ -272,9 +276,10 @@
 (comment
   ;; Test:
   (def oldrng (make-well19937 123456789))
-  (write-state "yo.bin" (get-state oldrng))
+  (def state (get-state oldrng))
+  (write-state "yowell.bin" state)
   (def oldnums [(.nextDouble oldrng) (.nextDouble oldrng) (.nextDouble oldrng)])
-  (def newrng (make-well19937)) ; seed is irrelevant. Wastefully flushing initial state.
+  (def newrng (make-well19937))
   (set-state newrng (read-state "yo.bin"))
   (def newnums [(.nextDouble newrng) (.nextDouble newrng) (.nextDouble newrng)])
   (= oldnums newnums)
@@ -283,6 +288,7 @@
   (def state (get-state newrng))
   (take 5 (repeatedly #(next-double newrng)))
   (set-state newrng state)
+  (write-state "yomrg.bin" state)
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
