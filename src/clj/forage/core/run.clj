@@ -278,22 +278,22 @@
                            (range (inc num-dirs))) ; inc to include range max
                      [nil]) ; leave initial dir random
          init-loc-fn (params :init-loc-fn)
-         rpt-to-stdout (params :rpt-to-stdout)
-         save-to-files (params :save-to-files)
+         rpt-to-stdout? (params :rpt-to-stdout?)
+         save-to-files? (params :save-to-files?)
          ;; TODO consider replacing these tests with destructuring, ham-fisted, joinr's structure:
-         base-filename (when save-to-files (str (params :dirname) (params :basename) seed))
-         param-filename (when save-to-files (str base-filename "params.csv"))
-         data-filename(when save-to-files (str base-filename "data.csv"))
-         base-state-filename (when save-to-files (str base-filename "state") ); for PRNG state files
-         sorted-params (when save-to-files (into (sorted-map) params) ); for writing param file
-         param-labels (when save-to-files (append-labels (concat ["namespace" "seed"] (keys sorted-params))))
-         param-data (when save-to-files (append-row param-labels
+         base-filename (when save-to-files? (str (params :dirname) (params :basename) seed))
+         param-filename (when save-to-files? (str base-filename "params.csv"))
+         data-filename (when save-to-files? (str base-filename "data.csv"))
+         base-state-filename (when save-to-files? (str base-filename "state") ); for PRNG state files
+         sorted-params (when save-to-files? (into (sorted-map) params) ); for writing param file
+         param-labels (when save-to-files? (append-labels (concat ["namespace" "seed"] (keys sorted-params))))
+         param-data (when save-to-files? (append-row param-labels
                                 (cons (str *ns*)
                                       (cons (str "\"" seed "\"") ; keep Excel from making it a float
                                             (vals sorted-params)))))
          runids (range 1 (inc walks-per-fn))
-         path-labels (when save-to-files (map #(str "path " %) runids))   ; labels for path lengths until found or gave up
-         data$ (if save-to-files
+         path-labels (when save-to-files? (map #(str "path " %) runids))   ; labels for path lengths until found or gave up
+         data$ (if save-to-files?
                  (atom (append-labels (into ["initial dir" "walk-fn" "segments"
                                              "found" "efficency" "total path len"]
                                             path-labels)))
@@ -301,17 +301,17 @@
          found-coords$ (atom [])
          iter-num$ (atom 0)
          walks-per-fn-digits (m/count-decimal-digits walks-per-fn)] ; passed to cl-format to format found foodspot count
-     (when save-to-files (csv/spit-csv param-filename param-data)) ; write out fixed parameters
-     (when rpt-to-stdout
+     (when save-to-files? (csv/spit-csv param-filename param-data)) ; write out fixed parameters
+     (when rpt-to-stdout?
        (cl-format true "Performing ~d runs in groups of ~d ...~%" 
                   (* (count walk-fns) walks-per-fn (if num-dirs (inc num-dirs) 1)) ; walk-fns is a map--count is # of MapEntrys
                   walks-per-fn))
      (doseq [walk-name (keys walk-fns)  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
-       (when rpt-to-stdout
+       (when rpt-to-stdout?
          (cl-format true "~{~c~}group ~d [walk-fn ~a, init-dir ~a] ... " nil (swap! iter-num$ inc) walk-name init-dir)  ; ~{~c~} means stuff all chars (~c) in sequence arg here
          (flush))
-       (when (and save-to-files rng)
+       (when (and save-to-files? rng)
          (r/write-state 
            (str base-state-filename "_mu" walk-name "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin")
            (r/get-state rng)))
@@ -322,14 +322,14 @@
              n-found (count (keep identity found))
              total-length (reduce + lengths)
              efficiency (if (zero? total-length) ##Inf (/ n-found total-length))] ; lengths start as doubles and remain so--this is double div
-         (when rpt-to-stdout
+         (when rpt-to-stdout?
            (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-fn-digits n-found efficiency)) ; walks-per-fn digits makes num found same width
          (swap! found-coords$ conj found)
          ;; TODO: THIS IS WHERE I LEAVE BEHIND RELATION BETWEEN FOUND FOODSPOTS AND WALK LENGTHS.
          ;; NOTE that data is returned within Clojure, but it's not written to the CSV.
          (swap! data$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))
-     (when save-to-files (csv/spit-csv data-filename @data$))
-     (when rpt-to-stdout (println " done."))
+     (when save-to-files? (csv/spit-csv data-filename @data$))
+     (when rpt-to-stdout? (println " done."))
      {:data @data$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
 

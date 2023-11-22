@@ -48,8 +48,8 @@
              :basename            (str default-dirname "spiral25_")
              :look-eps            0.2 ; shouldn't be used
              :foodspot-coords-fn  envsingle/foodspot-coords
-             :rpt-to-stdout       false ; write-experiments writes to stdout only if true
-             :save-to-files       true ; write-experiments saves summary data to files only if true
+             :rpt-to-stdout?       false ; write-experiments writes to stdout only if true
+             :save-to-files?       true ; write-experiments saves summary data to files only if true
              ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
