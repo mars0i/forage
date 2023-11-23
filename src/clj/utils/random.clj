@@ -235,6 +235,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FUNCTIONS FOR SAVING/RESTORING PRNG STATE
 
+;; I don't put get-state and set-state in defprotocol; not worth it:
+;; Some states are just an array of numbers, nothing fancier.
+
 ;; Designed to work with any class that has a saveState method.
 (defn get-state
   "Returns the internal state of a PRNG."
@@ -243,7 +246,7 @@
 
 ;; Designed to work with any class that has a restoreState method.
 (defn set-state
-  "Sets the internal state of a PRNG to a state derived from a PRNG
+  "Sets the internal state of an Apache Commons PRNG to a state derived from a PRNG
   of the same kind."
   [rng state]
   (.restoreState rng state))
@@ -255,23 +258,46 @@
 ;; but it didn't work.  Perhaps there are ways to simplify, but this works.
 
 ;; File size should be 2535 for Well19937, and 5603 for Well44497.
-(defn write-state
-  "Write state from a single PRNG to a file."
+(defn write-apache-state
+  "Write state from a single Apache Commons PRNG to a file.  State should
+  be an org.apache.commons.rng.core.RandomProviderDefaultState ."
   [filename state]
   (let [byte-stream (ByteArrayOutputStream.)]
-    (.writeObject (ObjectOutputStream. byte-stream)
-                  (if (instance? org.apache.commons.rng.core.RandomProviderDefaultState state)
-                    (.getState state)
-                    state)) ; kludgey but this won't happen often
+    (.writeObject (ObjectOutputStream. byte-stream) (.getState state))
     (with-open [w (FileOutputStream. filename)]
       (.write w (.toByteArray byte-stream)))))
 
-(defn read-state
-  "Read state for a single PRNG from a file."
+(def write-state
+  "Alias for write-apache-state.  Writes state from a single Apache Commons
+  PRNG to a file."
+  write-apache-state)
+
+(defn read-apache-state
+  "Read state for a single Apache Commons PRNG from a file. State should be
+  an org.apache.commons.rng.core.RandomProviderDefaultState ."
   [filename]
   (with-open [r (FileInputStream. filename)]
     (RandomProviderDefaultState.
       (.readObject (ObjectInputStream. r)))))
+
+(def read-state
+  "Alias for write-apache-state.  Read state for a single PRNG from a
+  file."
+  read-apache-state)
+
+(defn write-mrg32k3a-state
+  [filename state]
+  (let [byte-stream (ByteArrayOutputStream.)]
+    (.writeObject (ObjectOutputStream. byte-stream) state)
+    (with-open [w (FileOutputStream. filename)]
+      (.write w (.toByteArray byte-stream)))))
+
+(defn read-mrg32k3a-state
+  "Read state for a single Apache Commons PRNG from a file. State should be
+  an org.apache.commons.rng.core.RandomProviderDefaultState ."
+  [filename]
+  (with-open [r (FileInputStream. filename)]
+    (longs (.readObject (ObjectInputStream. r)))))
 
 (comment
   ;; Test:
@@ -286,9 +312,16 @@
 
   (def newrng (make-mrg32k3a))
   (def state (get-state newrng))
+  (class state)
   (take 5 (repeatedly #(next-double newrng)))
   (set-state newrng state)
-  (write-state "yomrg.bin" state)
+  (write-mrg32k3a-state "yomrg.bin" state)
+  (def rng2 (make-mrg32k3a))
+  (def oldstate (read-mrg32k3a-state "yomrg.bin"))
+  (class oldstate)
+  (set-state rng2 state)
+  (take 5 (repeatedly #(next-double rng2)))
+
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -397,17 +430,26 @@
 ;; methods might have different names.
 
 (defprotocol RandDist
-  "Provides a common interface to some functionality shared by Math3 PRNG 
+  "Provides a common interface to some functionality shared by PRNG 
   and distribution classes.  If low and high are provided, numbers outside
   this range (inclusive) are rejected."
   (next-double 
     [this]
-    [this low high])
-  )
+    [this low high]
+    "Gets the next double from a PRNG or distribution object.")
+  (write-from-prng
+    [this filename]
+    "Writes state of PRNG this to filename, overwriting any existing file.")
+  (read-to-prng
+    [this filename]
+    "Reads a PRNG state from filename and sets the state of PRNG this to it."))
 
-
-;(defn next-int
-;  ([rng] (.next rng)))
+(comment
+  (clojure.repl/doc RandDist)
+  (clojure.repl/doc next-double)
+  (clojure.repl/doc write-from-prng)
+  (clojure.repl/doc read-to-prng)
+)
 
 ;; Apparently, the specializers have to be concrete classes; interfaces and 
 ;; abstract classes don't seem to work.  Too bad--it would save duplication.
@@ -424,6 +466,10 @@
        (if (and (<= x high) (>= x low))
          x
          (recur (.sample this))))))
+  (write-from-prng [this filename]
+    (throw (Exception. "write-from-prng isn't implemented for InverseTransformParetoSampler.  Call it on the underlying rng instead.")))
+  (read-to-prng [this filename]
+    (throw (Exception. "read-to-prng isn't implemented for InverseTransformParetoSampler.  Call it on the underlying rng instead.")))
 
   MRG32k3aParetoSampler ; hacked version of InverseTransformParetoSampler
   (next-double
@@ -433,6 +479,10 @@
        (if (and (<= x high) (>= x low))
          x
          (recur (.sample this))))))
+  (write-from-prng [this filename]
+    (throw (Exception. "write-from-prng isn't implemented for MRG3k3aParetoSampler  Call it on the underlying rng instead.")))
+  (read-to-prng [this filename]
+    (throw (Exception. "read-to-prng isn't implemented for MRG3k3aParetoSampler  Call it on the underlying rng instead.")))
 
   ; PRNGS:
   Well1024a
@@ -443,6 +493,10 @@
                        (if (and (<= x high) (>= x low))
                          x
                          (recur (.nextDouble this))))))
+  (write-from-prng [this filename]
+    (write-apache-state filename (get-state this)))
+  (read-to-prng [this filename]
+    (set-state this (read-apache-state filename)))
 
   Well19937c
   (next-double
@@ -452,6 +506,10 @@
                        (if (and (<= x high) (>= x low))
                          x
                          (recur (.nextDouble this))))))
+  (write-from-prng [this filename]
+    (write-apache-state filename (get-state this)))
+  (read-to-prng [this filename]
+    (set-state this (read-apache-state filename)))
 
   Well44497b
   (next-double
@@ -461,6 +519,10 @@
                        (if (and (<= x high) (>= x low))
                          x
                          (recur (.nextDouble this))))))
+  (write-from-prng [this filename]
+    (write-apache-state filename (get-state this)))
+  (read-to-prng [this filename]
+    (set-state this (read-apache-state filename)))
 
   MRG32k3a
   (next-double
@@ -469,7 +531,37 @@
      (loop [x (.nextDouble this)]
                        (if (and (<= x high) (>= x low))
                          x
-                         (recur (.nextDouble this)))))))
+                         (recur (.nextDouble this))))))
+  (write-from-prng [this filename]
+    (write-mrg32k3a-state filename (get-state this)))
+  (read-to-prng [this filename]
+    (set-state this (read-mrg32k3a-state filename)))
+)
+
+
+(comment
+  (def well1 (make-well44497))
+  (write-from-prng well1 "yowell.bin")
+  (take 8 (repeatedly #(next-double well1)))
+  (def well2 (make-well44497))
+  (read-to-prng well2 "yowell.bin")
+  (take 8 (repeatedly #(next-double well2)))
+
+  (def wella (make-well19937))
+  (write-from-prng wella "yowell.bin")
+  (take 8 (repeatedly #(next-double wella)))
+  (def wellb (make-well19937))
+  (read-to-prng wellb "yowell.bin")
+  (take 8 (repeatedly #(next-double wellb)))
+
+  (def mrg1 (make-mrg32k3a))
+  (write-from-prng mrg1 "yomrg.bin")
+  (take 8 (repeatedly #(next-double mrg1)))
+  (def mrg2 (make-mrg32k3a))
+  (read-to-prng mrg2 "yomrg.bin")
+  (take 8 (repeatedly #(next-double mrg2)))
+)
+
 
 (defn next-double-fn
   "Rather than returning the result of '(next-double dist)' or 
