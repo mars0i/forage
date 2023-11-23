@@ -22,34 +22,35 @@
 ;; passed to the fn, but that would only matter in an inner loop.
 
 
+(defn infinite
+  []
+  (repeat 1))
+
+(defn cutfinite
+  [n]
+  (doall (take n (infinite))))
+
+(defn finite-list
+  [n]
+  (loop [acc '() 
+         n' n]
+    (if (zero? n)
+      acc
+      (recur (conj acc 1) (dec n)))))
+
+(defn finite-vec
+  [n]
+  (loop [acc '() 
+         n' n]
+    (if (zero? n)
+      acc
+      (recur (conj acc 1) (dec n)))))
 
 (comment
-  (doc m/rint)
-  (class 1.234e100)
-  (m/rint 1.234e100)
-  (class (m/rint 1.234e100))
-  (m/round 1.234e100)
-  Long/MAX_VALUE
-  (class (m/round 1.234e100))
-
-  (m/rint 4.5)
-  (m/rint 5.5)
-  (m/round 4.5)
-
-  ;; This is standard Java rint behavior .5 is rounded to nearest even integer:
-  (m/rint 42.5) ; rounds down
-  (m/rint 43.5) ; rounds up
-  ;; In fastmath's scaled version, the behavior is less obviously consistent:
-  (m/rint 42.05 0.1) ; rounds down
-  (m/rint 42.15 0.1) ; rounds down
-  (m/rint 42.25 0.1) ; rounds down
-  (m/rint 42.35 0.1) ; rounds up
-  (m/rint 42.45 0.1) ; rounds down
-  (m/rint 42.55 0.1) ; rounds down
-  (m/rint 42.65 0.1) ; rounds down
-  (m/rint 42.75 0.1) ; rounds up
-  (m/rint 42.85 0.1) ; rounds down
-  (m/rint 42.95 0.1) ; rounds up
+  (require '[criterium.core :as crit])
+  (crit/quick-bench (cutfinite 10000))
+  (crit/quick-bench (finite-list 10000))
+  (crit/quick-bench (finite-vec 10000))
 )
 
 
