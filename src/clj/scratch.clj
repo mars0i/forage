@@ -22,13 +22,9 @@
 ;; passed to the fn, but that would only matter in an inner loop.
 
 
-(defn infinite
-  []
-  (repeat 1))
-
 (defn cutfinite
   [n]
-  (doall (take n (infinite))))
+  (doall (take n (repeat 1))))
 
 (defn finite-list
   [n]
@@ -48,9 +44,9 @@
 
 (comment
   (require '[criterium.core :as crit])
-  (crit/quick-bench (cutfinite 10000))
-  (crit/quick-bench (finite-list 10000))
-  (crit/quick-bench (finite-vec 10000))
+  (time (crit/quick-bench (cutfinite 10000)))
+  (time (crit/quick-bench (finite-list 10000)))
+  (time (crit/quick-bench (finite-vec 10000)))
 )
 
 
