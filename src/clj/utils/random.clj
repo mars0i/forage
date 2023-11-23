@@ -437,18 +437,18 @@
     [this]
     [this low high]
     "Gets the next double from a PRNG or distribution object.")
-  (write-from-prng
+  (write-from-rng
     [this filename]
     "Writes state of PRNG this to filename, overwriting any existing file.")
-  (read-to-prng
+  (read-to-rng
     [this filename]
     "Reads a PRNG state from filename and sets the state of PRNG this to it."))
 
 (comment
   (clojure.repl/doc RandDist)
   (clojure.repl/doc next-double)
-  (clojure.repl/doc write-from-prng)
-  (clojure.repl/doc read-to-prng)
+  (clojure.repl/doc write-from-rng)
+  (clojure.repl/doc read-to-rng)
 )
 
 ;; Apparently, the specializers have to be concrete classes; interfaces and 
@@ -466,10 +466,10 @@
        (if (and (<= x high) (>= x low))
          x
          (recur (.sample this))))))
-  (write-from-prng [this filename]
-    (throw (Exception. "write-from-prng isn't implemented for InverseTransformParetoSampler.  Call it on the underlying rng instead.")))
-  (read-to-prng [this filename]
-    (throw (Exception. "read-to-prng isn't implemented for InverseTransformParetoSampler.  Call it on the underlying rng instead.")))
+  (write-from-rng [this filename]
+    (throw (Exception. "write-from-rng isn't implemented for InverseTransformParetoSampler.  Call it on the underlying rng instead.")))
+  (read-to-rng [this filename]
+    (throw (Exception. "read-to-rng isn't implemented for InverseTransformParetoSampler.  Call it on the underlying rng instead.")))
 
   MRG32k3aParetoSampler ; hacked version of InverseTransformParetoSampler
   (next-double
@@ -479,10 +479,10 @@
        (if (and (<= x high) (>= x low))
          x
          (recur (.sample this))))))
-  (write-from-prng [this filename]
-    (throw (Exception. "write-from-prng isn't implemented for MRG3k3aParetoSampler  Call it on the underlying rng instead.")))
-  (read-to-prng [this filename]
-    (throw (Exception. "read-to-prng isn't implemented for MRG3k3aParetoSampler  Call it on the underlying rng instead.")))
+  (write-from-rng [this filename]
+    (throw (Exception. "write-from-rng isn't implemented for MRG3k3aParetoSampler  Call it on the underlying rng instead.")))
+  (read-to-rng [this filename]
+    (throw (Exception. "read-to-rng isn't implemented for MRG3k3aParetoSampler  Call it on the underlying rng instead.")))
 
   ; PRNGS:
   Well1024a
@@ -493,9 +493,9 @@
                        (if (and (<= x high) (>= x low))
                          x
                          (recur (.nextDouble this))))))
-  (write-from-prng [this filename]
+  (write-from-rng [this filename]
     (write-apache-state filename (get-state this)))
-  (read-to-prng [this filename]
+  (read-to-rng [this filename]
     (set-state this (read-apache-state filename)))
 
   Well19937c
@@ -506,9 +506,9 @@
                        (if (and (<= x high) (>= x low))
                          x
                          (recur (.nextDouble this))))))
-  (write-from-prng [this filename]
+  (write-from-rng [this filename]
     (write-apache-state filename (get-state this)))
-  (read-to-prng [this filename]
+  (read-to-rng [this filename]
     (set-state this (read-apache-state filename)))
 
   Well44497b
@@ -519,9 +519,9 @@
                        (if (and (<= x high) (>= x low))
                          x
                          (recur (.nextDouble this))))))
-  (write-from-prng [this filename]
+  (write-from-rng [this filename]
     (write-apache-state filename (get-state this)))
-  (read-to-prng [this filename]
+  (read-to-rng [this filename]
     (set-state this (read-apache-state filename)))
 
   MRG32k3a
@@ -532,33 +532,33 @@
                        (if (and (<= x high) (>= x low))
                          x
                          (recur (.nextDouble this))))))
-  (write-from-prng [this filename]
+  (write-from-rng [this filename]
     (write-mrg32k3a-state filename (get-state this)))
-  (read-to-prng [this filename]
+  (read-to-rng [this filename]
     (set-state this (read-mrg32k3a-state filename)))
 )
 
 
 (comment
   (def well1 (make-well44497))
-  (write-from-prng well1 "yowell.bin")
+  (write-from-rng well1 "yowell.bin")
   (take 8 (repeatedly #(next-double well1)))
   (def well2 (make-well44497))
-  (read-to-prng well2 "yowell.bin")
+  (read-to-rng well2 "yowell.bin")
   (take 8 (repeatedly #(next-double well2)))
 
   (def wella (make-well19937))
-  (write-from-prng wella "yowell.bin")
+  (write-from-rng wella "yowell.bin")
   (take 8 (repeatedly #(next-double wella)))
   (def wellb (make-well19937))
-  (read-to-prng wellb "yowell.bin")
+  (read-to-rng wellb "yowell.bin")
   (take 8 (repeatedly #(next-double wellb)))
 
   (def mrg1 (make-mrg32k3a))
-  (write-from-prng mrg1 "yomrg.bin")
+  (write-from-rng mrg1 "yomrg.bin")
   (take 8 (repeatedly #(next-double mrg1)))
   (def mrg2 (make-mrg32k3a))
-  (read-to-prng mrg2 "yomrg.bin")
+  (read-to-rng mrg2 "yomrg.bin")
   (take 8 (repeatedly #(next-double mrg2)))
 )
 
@@ -580,7 +580,7 @@
   ([dist low high] (repeatedly (next-double-fn dist low high))))
 
 (defn next-radian
-  "Given a PRNG prng, return a uniformly distributed number between 0
+  "Given a PRNG rng, return a uniformly distributed number between 0
   and pi, i.e. in [0,pi)."
   [rng]
   (* 2 Math/PI ^double (next-double rng)))
