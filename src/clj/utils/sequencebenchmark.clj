@@ -1,26 +1,5 @@
-;; File for misc experiments.  Think of it as a repl.
-(ns scratch
-  (:require
-    [clojure.repl :refer :all] ; doc, apropos, dir, find-doc, pst, etc.
-    [fastmath.core :as m]
-    ;[clojure.core.matrix :as mx]
-   ;[utils.random :as ur]
-   ;[utils.math :as um]
-   ;[utils.toroidal :as t]
-   ;[forage.food :as f]
-   ;[forage.walks :as w]
-   ;[clojure.math.numeric-tower :as nt]
-   ;[oz.core :as oz]
-   ;[forage.viz.hanami :as h]   ; don't load with cljplot
-   ;[aerial.hanami.common :as hc]
-   ;[aerial.hanami.templates :as ht]
-   ;[forage.viz.cljplot :as cp] ; don't load with hanami
-   ))
 
-(def $ "$ is an abbreviation for partial." partial)
-;; partial is a lot slower than (fn [...] ...) with four or more args 
-;; passed to the fn, but that would only matter in an inner loop.
-
+;; Speed tests for different sequence generation methods:
 
 (defn cutfinite
   [n]
@@ -66,6 +45,3 @@
   (time (crit/bench (finite-list 100000))) ; 1.07 millisecs
   (time (crit/bench (cutfinite 100000)))   ; 4.91 millisecs
 )
-
-
-"loaded"
