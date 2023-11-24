@@ -3,6 +3,7 @@
     (:require [utils.math :as m]
               [utils.spiral :as spiral]
               [utils.random :as r]
+              [clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
               [fastmath.core :as fm]))
 
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
