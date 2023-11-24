@@ -59,14 +59,6 @@
   ;(let [f (->ddo-fn f)]
     (fn [^double x ^double y] (.invokePrim f y x))) ;)
 
-(comment
-  (defn old-swap-args-fn
-    "Given a function that accepts two arguments, wraps it in a function
-    that reverses the arguments and passes them to the original function."
-    [f]
-    (fn [x y] (f y x)))
-)
-
 (defn- lt [^double l ^double r] (< l r))
 (defn- gt [^double l ^double r] (> l r))
 
