@@ -60,10 +60,22 @@
 
 (comment
   (require '[criterium.core :as crit])
-  (def rng (r/make-mrg32k3a))
+  (def seed (r/make-seed))
+  (def rng (r/make-mrg32k3a seed))
   (def dist (r/make-mrg32k3a-powerlaw rng 1 2))
-  (crit/quick-bench (take 10000 (make-levy-vecs rng dist 1 1000))) ; 14.8 nanosecs (1/1000000000) on MBA
-  (crit/quick-bench (make-n-levy-vecs rng dist 1 1000 10000))      ; 104.8 millisecs (1/1000) on MBA
+  (time (crit/quick-bench (doall (take 10000 (make-levy-vecs rng dist 1 1000))))) ; 1.68, 1.72 millisecs (1/1000000000) on MBA
+  (time (crit/quick-bench (make-n-levy-vecs rng dist 1 1000 10000)))      ; 58, 63 millisecs (1/1000) on MBA
+  ;; WHY IS THE LAZY VERSION SO MUCH FASTER? SOMETHING's WRONG
+  (def lazy (doall (take 10000 (make-levy-vecs rng dist 1 1000)))) ; 1.68, 1.72 millisecs (1/1000000000) on MBA
+  (def eager (make-n-levy-vecs rng dist 1 1000 10000))      ; 58, 63 millisecs (1/1000) on MBA
+  ;; OK THEY'RE NOT DOING THE SAME THING:
+  (= lazy eager)
+  (count lazy)
+  (count eager)
+  (last lazy)
+  (last eager)
+
+  
 )
 
 ;; NOTE SEE test/forage/walks.clj for experiments and test of 
