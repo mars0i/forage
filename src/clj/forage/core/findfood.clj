@@ -1,5 +1,5 @@
 ;; FINDING FOOD IN WALKS
-(ns findfood
+(ns forage.core.findfood
     (:require [utils.math :as m]
               [utils.random :as r]
               [forage.core.walks :as w]
