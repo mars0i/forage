@@ -1,20 +1,14 @@
-;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
-
-
-;; TODO split this into two namespaces, one for generating walks, and one
-;; for examining them.
+;; GENERATING WALKS
 (ns forage.core.walks
     (:require [utils.math :as m]
               [utils.spiral :as spiral]
               [utils.random :as r]
-              [fastmath.core :as fm]
-              [clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
-              [ham-fisted.api :as hf]
-              [ham-fisted.hlet :as hfl])
-    (:import [clojure.lang IFn$DDO]))
+              [fastmath.core :as fm]))
 
-(set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
+;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
+
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
 ;; NOTE Advantages of starting with mathematical vectors (direction,
@@ -27,26 +21,6 @@
 ;;     in the sequence.  If you start from math-vectors, you can just
 ;;     concatenate the sequences of vectors for the different subwalks,
 ;;     and then create the coordinate pair sequences as you normally would.
-
-
-;; Setting this to 1 gives us symmetry between the swapped and
-;; unswapped coordinates.  Seems as if it would improve performance
-;; slightly to have a higher value, since then the x,y swap operations
-;; would happen less often.  However, benchmarking shows otherwise.
-;; See steep-slope-inf-benchmarks.txt.  (That was from an early stage.
-;; I haven't tried changing this value since I started optimizing in 
-;; October 2023.)
-(def ^:const +steep-slope-inf+ 
-  "If a slope is greater than this value, the x and y coordinates will
-  be swapped temporarily and then unswapped later.  This is a way to
-  deal with both truly vertical slopes (slope = ##Inf) and slopes that are
-  so close to vertical that moving through a line segment with this slope
-  will be problematic.  It also sidesteps the problem of identifying slopes
-  that are actually vertical, but don't appear so because of float slop."
-  1.0)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; GENERATING RANDOM WALKS
 
 (defn step-vector-fn
   "Returns a function of no arguments that returns a random mathematical 
@@ -73,7 +47,6 @@
   maximum value high."
   [dir-dist len-dist low high]
   (repeatedly (step-vector-fn dir-dist len-dist low high)))
-
 
 ;; NOTE SEE test/forage/walks.clj for experiments and test of 
 ;; incremental-composite-vecs that were formerly below and above this

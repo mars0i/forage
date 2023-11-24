@@ -1,10 +1,9 @@
+;; FINDING FOOD IN WALKS
 (ns findfood
     (:require [utils.math :as m]
-              [utils.spiral :as spiral]
               [utils.random :as r]
               [forage.core.walks :as w]
               [fastmath.core :as fm]
-              [clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
               [ham-fisted.api :as hf]
               [ham-fisted.hlet :as hfl])
     (:import [clojure.lang IFn$DDO]))
@@ -18,7 +17,7 @@
 ;; unswapped coordinates.  Seems as if it would improve performance
 ;; slightly to have a higher value, since then the x,y swap operations
 ;; would happen less often.  However, benchmarking shows otherwise.
-;; See steep-slope-inf-benchmarks.txt.  (That was from an early stage.
+;; See steep-slope-inf-benchmarks.txt.  (That note was from an early stage.
 ;; I haven't tried changing this value since I started optimizing in 
 ;; October 2023.)
 (def ^:const +steep-slope-inf+ 
@@ -71,6 +70,7 @@
 (defn- lt [^double l ^double r] (< l r))
 (defn- gt [^double l ^double r] (> l r))
 
+;; NOTES ON FIND-IN-SEG
 ;; See doc/xyshifts.md for notes about this function and xy-shifts.
 ;; Possibly store slope and/or intercept earlier; they were available
 ;; when the line pair was created.
@@ -108,7 +108,7 @@
 
 
 ;; VERSION BASED ON branch cnuerber-main
-;; TODO replace some of the agets with new ham-fisted structred let
+;; FOR TEST DATA, BENCHMARKING, SEE END OF FILE.
 (defn find-in-seg
   "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
   and a small shift length, starts at [x1 y1] and incrementally checks
@@ -159,138 +159,7 @@
                            ysh (+ y y-shift)]
                        (recur (if (.invokePrim x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
                               (if (.invokePrim y-comp ysh y2) y2 ysh))))))))
-
-
-(comment
-  ;; Old (not too old) version:
-  (defn find-in-seg
-    "Given a pair of endpoints [x1 y1] and [x2 y2] on a line segment,
-    and a small shift length, starts at [x1 y1] and incrementally checks
-    points along the line segment at every shift length locations, checking 
-    to see whether look-fn returns a truthy value representing one or more 
-    foodspots from the perspective of that location, or a falsey value if
-    no foodspots are found.  look-fn should take a single argument, a
-    pair representing the coordinates of a location from which to check
-    whether a foodspot is perceptible.  If foodspots are found, this function 
-    stops searching and returns a representation of the foodspots found, which
-    may be a collection of foodspot objects, a collection of coordinates of
-    foodspot objects, or some other truthy value.  (The kind of value to be
-    returned depends on look-fn, which should reflect the way that this 
-    function will be used.)  If no foodspots are found by the time [x2 y2]
-    is checked, this function returns nil."
-    [look-fn eps x1 y1 x2 y2]
-    (let [slope (m/slope-from-coords* x1 y1 x2 y2)
-          steep (or (infinite? slope)
-                    (> (abs slope) +steep-slope-inf+))
-          slope (if steep (/ slope) slope)
-          look-fn (if steep (old-swap-args-fn look-fn) look-fn)
-          [[^double x1 ^double y1] [^double x2 ^double y2]] (if steep
-                                                              [[y1 x1] [y2 x2]]    ; swap x and y
-                                                              [[x1 y1] [x2 y2]])   ; make no change
-          x-pos-dir? (<= x1 x2)
-          y-pos-dir? (<= y1 y2)
-          [^double x-eps ^double y-eps] (xy-shifts eps slope)     ; x-eps, y-eps always >= 0
-          x-shift (if x-pos-dir? x-eps (- x-eps)) ; correct their directions
-          y-shift (if y-pos-dir? y-eps (- y-eps))
-          x-comp (if x-pos-dir? cc/> cc/<)   ; and choose tests for when we've 
-          y-comp (if y-pos-dir? cc/> cc/<)]  ;  gone too far
-      (loop [x x1, y y1]
-        (let [food (look-fn x y)]
-          (cond food  [food (if steep [y x] [x y])] ; swap coords back if necess (food is correct)
-                (== x x2)  nil ; last point: see comment above function def for explanation.
-                :else  (let [xsh (+ x x-shift)
-                             ysh (+ y y-shift)]
-                         (recur (if (x-comp xsh x2) x2 xsh) ; search from x2 if xsh went too far
-                                (if (y-comp ysh y2) y2 ysh))))))))
-)
-
-
-(comment
-  ;; Simple test data for find-in-seg.
-  ;; Use with look-fns from the env-null namespace.
-
-  (require '[criterium.core :as crit])
-
-  ;; find-in-seg walks through a line segment from (x1, y1) to (x2, y2) in
-  ;; steps of size eps.  At each step, it passes the current location to
-  ;; look-fn to see whether there is a "foodspot" sufficiently near.  
-  ;; If so, look-fn returns truthy (typically a foodspot or its coordinates);
-  ;; if not, look-fn returns falsey.  So you can test find-in-seg with a
-  ;; single line segment, i.e. a single pair of points (x1, y1), (x2, y2).
-  ;; Or you can call it repeatedly on subsequent pairs of points [normally,
-  ;; with overlapping end points].
-
-  ;; Test with the artificial data:
-  (require '[forage.core.env-null :as env])
-
-  (def mywalk0 [[0 0] [1 1]])
-  
-  (crit/quick-bench
-    (find-in-seg env/constant-failure-look-fn
-                 0.2
-                 ;; FIXME:
-                 (first mywalk0)
-                 (second mywalk0)))
-
-  (crit/quick-bench
-    (find-in-seg (env/create-repeated-success-look-fn 5)
-                 0.2
-                 ;; FIXME:
-                 (first mywalk0)
-                 (second mywalk0)))
-
-
-  ;; Test using more realistic (i.e. more like what the simulation uses) data:
-  (def seed 1234567890123456)
-  (def rng (r/make-well19937 seed))
-  (def levy-vecs (make-levy-vecs rng (r/make-powerlaw rng 1 2) 1 100)) ; an infinite seq
-  (def maxlen 200)
-  (def walk (walk-stops [0 0] (vecs-upto-len maxlen levy-vecs))) ; seq of points summing to maxlen
-  (count walk) ; should = 56
-  (def walk-rest (rest walk))
-  ;; walk is a sequence of coordinate pairs.
-  ;; 
-  ;; To use it as test data, take at least two pairs and from walk, and
-  ;; then pass the first [i.e. x] and second [i.e. y] elements of the pairs
-  ;; to find-in-seg.  You will also need to pass a value for eps [0.2 is
-  ;; what I've been using in production code], and a value for look-fn.
-  ;; There are some dummy look-fn's in forage.core.env-null.
-
-  ;; Now you can perform the test above on the following:
-  (def mywalk (take 2 walk)) ; => ([0 0] [0.9878431867800612 1.5734173777113207])
-
-  (crit/quick-bench
-    (find-in-seg env/constant-failure-look-fn
-                 0.2
-                 ;; FIXME:
-                 (first mywalk)
-                 (second mywalk)))
-
-
-  ;; Example using all of walk:
-
-                 ;; FIXME:
-  (crit/quick-bench
-    (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
-                 walk
-                 walk-rest))
-  ;; [If you use a version of find-in-seg that expects coordinates as pairs,
-  ;; then the pairs from walk and walk-rest can be passed without pulling
-  ;; out the coordinates.]
-
-  ;; Example using a look-fn that succeeds every n steps, i.e. at n*eps
-  ;; from start or from the last success.  When it succeeds, it stops
-  ;; searching, so this will run faster than when using
-  ;; constant-failure-look-fn.
-                 ;; FIXME:
-  (crit/quick-bench
-    (mapv (partial find-in-seg
-                   (env/create-repeated-success-look-fn 50)
-                   0.2) 
-          walk
-          walk-rest))
-
-)
+;; FOR TEST DATA, BENCHMARKING, SEE END OF FILE.
 
 
 (defn path-with-food
@@ -327,7 +196,6 @@
            (if (< j numstops-)
              (recur (inc i) (inc j))
              [nil stopsv]))))))) ; no food in any segment; return entire input
-
 
 
 (defn trim-full-walk
@@ -510,6 +378,94 @@
   [fws]
   (sort-by #(if (first %) 0 1)
            fws))
+
+
+(comment
+  ;; SIMPLE TEST DATA FOR find-in-seg.
+  ;; Use with look-fns from the env-null namespace.
+
+  (require '[criterium.core :as crit])
+
+  ;; find-in-seg walks through a line segment from (x1, y1) to (x2, y2) in
+  ;; steps of size eps.  At each step, it passes the current location to
+  ;; look-fn to see whether there is a "foodspot" sufficiently near.  
+  ;; If so, look-fn returns truthy (typically a foodspot or its coordinates);
+  ;; if not, look-fn returns falsey.  So you can test find-in-seg with a
+  ;; single line segment, i.e. a single pair of points (x1, y1), (x2, y2).
+  ;; Or you can call it repeatedly on subsequent pairs of points [normally,
+  ;; with overlapping end points].
+
+  ;; Test with the artificial data:
+  (require '[forage.core.env-null :as env])
+
+  (def mywalk0 [[0 0] [1 1]])
+  
+  (crit/quick-bench
+    (find-in-seg env/constant-failure-look-fn
+                 0.2
+                 ;; FIXME:
+                 (first mywalk0)
+                 (second mywalk0)))
+
+  (crit/quick-bench
+    (find-in-seg (env/create-repeated-success-look-fn 5)
+                 0.2
+                 ;; FIXME:
+                 (first mywalk0)
+                 (second mywalk0)))
+
+
+  ;; Test using more realistic (i.e. more like what the simulation uses) data:
+  (def seed 1234567890123456)
+  (def rng (r/make-well19937 seed))
+  (def levy-vecs (make-levy-vecs rng (r/make-powerlaw rng 1 2) 1 100)) ; an infinite seq
+  (def maxlen 200)
+  (def walk (walk-stops [0 0] (vecs-upto-len maxlen levy-vecs))) ; seq of points summing to maxlen
+  (count walk) ; should = 56
+  (def walk-rest (rest walk))
+  ;; walk is a sequence of coordinate pairs.
+  ;; 
+  ;; To use it as test data, take at least two pairs and from walk, and
+  ;; then pass the first [i.e. x] and second [i.e. y] elements of the pairs
+  ;; to find-in-seg.  You will also need to pass a value for eps [0.2 is
+  ;; what I've been using in production code], and a value for look-fn.
+  ;; There are some dummy look-fn's in forage.core.env-null.
+
+  ;; Now you can perform the test above on the following:
+  (def mywalk (take 2 walk)) ; => ([0 0] [0.9878431867800612 1.5734173777113207])
+
+  (crit/quick-bench
+    (find-in-seg env/constant-failure-look-fn
+                 0.2
+                 ;; FIXME:
+                 (first mywalk)
+                 (second mywalk)))
+
+
+  ;; Example using all of walk:
+
+                 ;; FIXME:
+  (crit/quick-bench
+    (mapv (partial find-in-seg env/constant-failure-look-fn 0.2) 
+                 walk
+                 walk-rest))
+  ;; [If you use a version of find-in-seg that expects coordinates as pairs,
+  ;; then the pairs from walk and walk-rest can be passed without pulling
+  ;; out the coordinates.]
+
+  ;; Example using a look-fn that succeeds every n steps, i.e. at n*eps
+  ;; from start or from the last success.  When it succeeds, it stops
+  ;; searching, so this will run faster than when using
+  ;; constant-failure-look-fn.
+                 ;; FIXME:
+  (crit/quick-bench
+    (mapv (partial find-in-seg
+                   (env/create-repeated-success-look-fn 50)
+                   0.2) 
+          walk
+          walk-rest))
+
+)
 
 
 (fm/unuse-primitive-operators) ; needed when I upgrade to Clojure 1.12
