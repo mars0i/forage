@@ -1,13 +1,11 @@
 (ns forage.core.run
   (:require [clojure.pprint :refer [cl-format]]
-            [aerial.hanami.common :as hc]
             [utils.misc :as misc]
             [utils.csv :as csv]
             [utils.math :as m]
             [utils.random :as r]
             [forage.viz.hanami :as h]
-            [forage.core.walks :as w]
-            [forage.core.food :as f]
+            [forage.core.findfood :as ff]
             [forage.core.env-mason :as env])) ; only needed in deprecated legacy functions below
 
 (def default-dirname "../../data.foraging/forage/")
@@ -153,7 +151,7 @@
    (levy-run rng look-fn init-dir params exponent
              ((params :init-loc-fn) nil)))
   ([rng look-fn init-dir params exponent init-loc]
-   (w/levy-foodwalk look-fn
+   (ff/levy-foodwalk look-fn
                     (params :look-eps) 
                     (params :maxpathlen) 
                     init-dir
@@ -201,11 +199,11 @@
       (let [fw (walk-fn (init-loc-fn prev-fw))]
         (recur (dec n)
                fw
-               (+ n-segments (w/count-segments-until-found fw))
+               (+ n-segments (ff/count-segments-until-found fw))
                (conj found (if-let [found-foodspot-seq (first fw)]
                              (foodspot-coords-fn (first found-foodspot-seq))
                              nil))
-               (conj lengths (w/path-until-found-length fw)))))))
+               (conj lengths (ff/path-until-found-length fw)))))))
 
 
 ;; NEW, GENERALIZED VERSION OF leyv-experiments.
@@ -364,7 +362,7 @@
          init-dirs (if num-dirs
                      (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
                            (range (inc num-dirs))) ; inc to include range max
-                     [nil]) ; tell w/levy-walks to leave initial dir random
+                     [nil]) ; tell ff/levy-walks to leave initial dir random
          init-loc-fn (params :init-loc-fn)
          base-filename (str dirname (params :basename) seed)
          param-filename (str base-filename "params.csv")
@@ -424,11 +422,11 @@
   "Perform one straight run using walks/straight-foodwalk using the given
   look-fn init-dir, and exponent, and other arguments taken from params."
   ([look-fn params init-dir dir-dist]
-   (w/straight-foodwalk 
+   (ff/straight-foodwalk 
      look-fn (params :look-eps) (params :maxpathlen) dir-dist 
      (params :init-pad) ((params :init-loc-fn) nil) init-dir))
   ([look-fn params init-dir]
-   (w/straight-foodwalk
+   (ff/straight-foodwalk
      look-fn (params :look-eps) (params :maxpathlen)
      ((params :init-loc-fn) nil) init-dir)))
 
@@ -465,7 +463,7 @@
         dir-found-lengths (mapv (fn [dir fw]
                                   [dir
                                    (if (first fw) 1 0)
-                                   (w/path-until-found-length fw)])
+                                   (ff/path-until-found-length fw)])
                                 init-dirs
                                 foodwalks+)
         data-filename  (str file-prefix "straight_data"  id ".csv")
@@ -554,6 +552,7 @@
     (let [ks (keys fws-counts)]
       (zipmap ks (map (fn [k] (/ (fws-counts k) (fws-lengths k))) ks))))
 
+  (require '[forage.core.walks :as w])
   (count (filter first (fws 2.0)))
   (reduce + (map (comp w/stops-path-len second) (fws 2.0)))
   (def fws-efficiencies
