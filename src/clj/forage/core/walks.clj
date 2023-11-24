@@ -49,6 +49,23 @@
   [dir-dist len-dist low high]
   (repeatedly (step-vector-fn dir-dist len-dist low high)))
 
+(defn make-n-levy-vecs
+  [dir-dist len-dist low high n]
+  (when (neg? n) (throw (Exception. (str "make-n-levy-vecs: length of sequence can't be negative: n =" n))))
+  (loop [acc [], i n]
+    (if (zero? i)
+      acc
+      (recur (conj acc [(r/next-radian dir-dist) (r/next-double len-dist)])
+             (dec i)))))
+
+(comment
+  (require '[criterium.core :as crit])
+  (def rng (r/make-mrg32k3a))
+  (def dist (r/make-mrg32k3a-powerlaw rng 1 2))
+  (crit/quick-bench (take 10000 (make-levy-vecs rng dist 1 1000))) ; 14.8 nanosecs (1/1000000000) on MBA
+  (crit/quick-bench (make-n-levy-vecs rng dist 1 1000 10000))      ; 104.8 millisecs (1/1000) on MBA
+)
+
 ;; NOTE SEE test/forage/walks.clj for experiments and test of 
 ;; incremental-composite-vecs that were formerly below and above this
 ;; point.
