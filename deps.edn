@@ -26,7 +26,7 @@
                                        cider/cider-nrepl {:mvn/version "0.29.0"}}
                           :main-opts  ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}
            :production {:jvm-opts ["-Xms4g"  ; initial heap
-                                   "-Xmx18g" ; max heap
+                                   "-Xmx20g" ; max heap
                                    "-Xss1g"  ; max per-thread stack size (s/b smaller?)
                                    "-XX:TieredStopAtLevel=4"]} ; 3X improvement
            :smallproduction {:jvm-opts ["-Xms4g" ; initial heap
