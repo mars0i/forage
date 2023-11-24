@@ -228,6 +228,50 @@
       (time (crit/bench (next-double rng1024)))
       (println "MRG32k3a:")
       (time (crit/bench (next-double rngMRG)))))
+)
+
+(comment
+  ;; These are speed comparisons of PRNGs for walk generation.
+
+  (require '[criterium.core :as crit])
+  (require '[forage.core.walks :as w])
+
+  (def seed (r/make-seed))
+  (def rng19937 (r/make-well19937 seed))
+  (def rng1024  (r/make-well1024 seed))
+  (def rngmrg   (r/make-mrg32k3a seed))
+
+  (def pow19937 (r/make-powerlaw rng19937 1 2))
+  (def pow1024 (r/make-powerlaw rng1024 1 2))
+  (def powmrg (r/make-mrg32k3a-powerlaw rngmrg 1 2))
+
+  (def stepfn19937 (w/step-vector-fn rng19937 pow19937 1 25000))
+  (def stepfn1024 (w/step-vector-fn rng1024 pow1024 1 25000))
+  (def stepfnmrg (w/step-vector-fn rngmrg powmrg 1 25000))
+
+                                    ; Two bench runs each:
+  (time (crit/bench (stepfn19937))) ; 82 ns, 79 ns
+  (time (crit/bench (stepfn1024)))  ; 71 ns, 75 ns
+  (time (crit/bench (stepfnmrg)))   ; 54 ns, 57 ns
+  ;;  i.e. Well19937 takes 40-50% longer relative to MRG32k3a
+  ;;  i.e. Well1024 takes 30% longer relative to MRG32k3a
+
+  (def mu2_19937 (w/make-levy-vecs rng19937 pow19937 1 25000))
+  (def mu2_1024 (w/make-levy-vecs rng1024 pow1024 1 25000))
+  (def mu2_mrg (w/make-levy-vecs rngmrg powmrg 1 25000))
+
+  (time (crit/quick-bench (doall (take 25000 mu2_19937)))) ; 1.37 ms
+  (time (crit/quick-bench (doall (take 25000 mu2_1024))))  ; 1.42 ms
+  (time (crit/quick-bench (doall (take 25000 mu2_mrg))))   ; 1.39 ms
+
+  (time (crit/bench (doall (take 25000 mu2_19937)))) ; 1.40 ms, 1.39 ms
+  (time (crit/bench (doall (take 25000 mu2_1024))))  ; 1.26 ms, 1.34 ms
+  (time (crit/bench (doall (take 25000 mu2_mrg))))   ; 1.17 ms, ; 1.35 ms
+  ;; So Well19937 takes about 20% longer than MRG32k3a, sometimes.
+  ;; But they are clearly comparable, at least.
+  ;; So the PRNG differences are getting washed out by the rest of the
+  ;; computation.  (But I think MRG32k3a is still better than the WELL 
+  ;; generators.)
 
 )
 
