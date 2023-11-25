@@ -137,31 +137,6 @@
               newlast [old-dir (- old-len overshoot)]]
           (conj (vec (butlast out-vecs)) newlast))))))
 
-(comment ;; OLD VERSION:
-(defn vecs-upto-len
-  "Given a desired total path length, and a sequence of step vectors,
-  returns a sequence of step vectors (beginning from the front of the
-  sequence) whose lengths sum to at least desired-total.  By default, the
-  lengths are made to sum to exactly desired-total by reducing the length
-  in the last step vector.  Add ':trim false' or ':trim nil' to return a
-  sequence with the last vector as it was in the input vecs sequence.
-  This function is eager rather than lazy."
-  [^double desired-total vecs & {trim :trim :or {trim true}}]
-  (loop [tot-len 0.0, out-vecs [], in-vecs vecs] ; init with 0.0 to avoid warn-on-reflection error
-    (if (empty? in-vecs)
-      out-vecs
-      (if (< tot-len desired-total)
-        (let [[_ len :as v] (first in-vecs)]
-          (recur (+ tot-len len)
-                 (conj out-vecs v)
-                 (rest in-vecs)))
-        (if-not trim
-          out-vecs
-          (let [overshoot (- tot-len desired-total)
-                [old-dir old-len] (last out-vecs)
-                newlast [old-dir (- old-len overshoot)]]
-            (conj (vec (butlast out-vecs)) newlast)))))))
-)
 
 ;; Instead of the following, one could use 
 ;; (count (vecs-upto-len desired-total vecs))
