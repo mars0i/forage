@@ -74,8 +74,8 @@
   [dir-dist len-dist low high n]
   (let [dblpairs (make-array Double/TYPE n 2)]
     (dotimes [i n]
-      (aset dblpairs i 0 (r/next-radian dir-dist))
-      (aset dblpairs i 1 (r/next-double len-dist low high)))
+      (aset-double dblpairs i 0 (r/next-radian dir-dist))
+      (aset-double dblpairs i 1 (r/next-double len-dist low high)))
     dblpairs))
 
 ;; This takes about the same amount of time as the lazy approach, and
