@@ -3,6 +3,7 @@
     (:require [utils.math :as m]
               [utils.spiral :as spiral]
               [utils.random :as r]
+              [clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
               [fastmath.core :as fm]))
 
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
@@ -47,6 +48,35 @@
   maximum value high."
   [dir-dist len-dist low high]
   (repeatedly (step-vector-fn dir-dist len-dist low high)))
+
+(defn make-n-levy-vecs
+  [dir-dist len-dist low high n]
+  (when (neg? n) (throw (Exception. (str "make-n-levy-vecs: length of sequence can't be negative: n =" n))))
+  (loop [acc [], i n]
+    (if (zero? i)
+      acc
+      (recur (conj acc [(r/next-radian dir-dist) (r/next-double len-dist)])
+             (dec i)))))
+
+(comment
+  (require '[criterium.core :as crit])
+  (def seed (r/make-seed))
+  (def rng (r/make-mrg32k3a seed))
+  (def dist (r/make-mrg32k3a-powerlaw rng 1 2))
+  (time (crit/quick-bench (doall (take 10000 (make-levy-vecs rng dist 1 1000))))) ; 1.68, 1.72 millisecs (1/1000000000) on MBA
+  (time (crit/quick-bench (make-n-levy-vecs rng dist 1 1000 10000)))      ; 58, 63 millisecs (1/1000) on MBA
+  ;; WHY IS THE LAZY VERSION SO MUCH FASTER? SOMETHING's WRONG
+  (def lazy (doall (take 10000 (make-levy-vecs rng dist 1 1000)))) ; 1.68, 1.72 millisecs (1/1000000000) on MBA
+  (def eager (make-n-levy-vecs rng dist 1 1000 10000))      ; 58, 63 millisecs (1/1000) on MBA
+  ;; OK THEY'RE NOT DOING THE SAME THING:
+  (= lazy eager)
+  (count lazy)
+  (count eager)
+  (last lazy)
+  (last eager)
+
+  
+)
 
 ;; NOTE SEE test/forage/walks.clj for experiments and test of 
 ;; incremental-composite-vecs that were formerly below and above this

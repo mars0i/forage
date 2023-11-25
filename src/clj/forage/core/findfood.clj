@@ -1,5 +1,5 @@
 ;; FINDING FOOD IN WALKS
-(ns findfood
+(ns forage.core.findfood
     (:require [utils.math :as m]
               [utils.random :as r]
               [forage.core.walks :as w]
@@ -58,14 +58,6 @@
   [^IFn$DDO f]
   ;(let [f (->ddo-fn f)]
     (fn [^double x ^double y] (.invokePrim f y x))) ;)
-
-(comment
-  (defn old-swap-args-fn
-    "Given a function that accepts two arguments, wraps it in a function
-    that reverses the arguments and passes them to the original function."
-    [f]
-    (fn [x y] (f y x)))
-)
 
 (defn- lt [^double l ^double r] (< l r))
 (defn- gt [^double l ^double r] (> l r))

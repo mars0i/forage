@@ -8,6 +8,7 @@
             ;[clojure.math :as cmath]
             [forage.core.run :as fr]
             [forage.core.food :as f]
+            [forage.core.findfood :as ff]
             [forage.core.walks :as w]
             [forage.core.env-minimal :as envminimal]
             [forage.core.env-mason :as envmason]
@@ -252,11 +253,11 @@
   ;; env-minimal
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envminimal/foodspot-coords)
   ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
-  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" (walks 0)))
-                          "mu2-env1" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 1)) "IGNORED" (walks 1)))
-                          "mu2-env2" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 2)) "IGNORED" (walks 2)))
-                          "mu2-env3" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 3)) "IGNORED" (walks 3)))
-                          "mu2-env4" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 4)) "IGNORED" (walks 4)))}]
+  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" (walks 0)))
+                          "mu2-env1" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 1)) "IGNORED" (walks 1)))
+                          "mu2-env2" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 2)) "IGNORED" (walks 2)))
+                          "mu2-env3" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 3)) "IGNORED" (walks 3)))
+                          "mu2-env4" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 4)) "IGNORED" (walks 4)))}]
     (time (crit/quick-bench
             (fr/walk-experiments (update params
                                          :basename #(str % "env_minimal_mu2_1each")
@@ -268,11 +269,11 @@
   ;; env-mason
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmason/foodspot-coords)
   ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
-  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) (params :look-eps) (walks 0)))
-                          "mu2-env1" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 1)) (params :look-eps) (walks 1)))
-                          "mu2-env2" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 2)) (params :look-eps) (walks 2)))
-                          "mu2-env3" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 3)) (params :look-eps) (walks 3)))
-                          "mu2-env4" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 4)) (params :look-eps) (walks 4)))}]
+  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) (params :look-eps) (walks 0)))
+                          "mu2-env1" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 1)) (params :look-eps) (walks 1)))
+                          "mu2-env2" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 2)) (params :look-eps) (walks 2)))
+                          "mu2-env3" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 3)) (params :look-eps) (walks 3)))
+                          "mu2-env4" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 4)) (params :look-eps) (walks 4)))}]
     (time (crit/quick-bench
             (fr/walk-experiments (update params
                                          :basename #(str % "env_mason_mu2_1each")
@@ -301,11 +302,11 @@
   ;; env-minimal
   (let [i$ (atom -1)
         next-walk! #(walks (swap! i$ inc))
-        new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" (next-walk!)))
-                          "mu2-env1" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 1)) "IGNORED" (next-walk!)))
-                          "mu2-env2" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 2)) "IGNORED" (next-walk!)))
-                          "mu2-env3" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 3)) "IGNORED" (next-walk!)))
-                          "mu2-env4" (fn [ignored-init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 4)) "IGNORED" (next-walk!)))}]
+        new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" (next-walk!)))
+                          "mu2-env1" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 1)) "IGNORED" (next-walk!)))
+                          "mu2-env2" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 2)) "IGNORED" (next-walk!)))
+                          "mu2-env3" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 3)) "IGNORED" (next-walk!)))
+                          "mu2-env4" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 4)) "IGNORED" (next-walk!)))}]
     (time
       ;(crit/quick-bench
       (def result-minimal
@@ -322,11 +323,11 @@
   ;; env-mason
   (let [i$ (atom -1)
         next-walk! #(walks (swap! i$ inc))
-        new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) (params :look-eps) (next-walk!)))
-                          "mu2-env1" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 1)) (params :look-eps) (next-walk!)))
-                          "mu2-env2" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 2)) (params :look-eps) (next-walk!)))
-                          "mu2-env3" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 3)) (params :look-eps) (next-walk!)))
-                          "mu2-env4" (fn [ignored-init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 4)) (params :look-eps) (next-walk!)))}]
+        new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) (params :look-eps) (next-walk!)))
+                          "mu2-env1" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 1)) (params :look-eps) (next-walk!)))
+                          "mu2-env2" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 2)) (params :look-eps) (next-walk!)))
+                          "mu2-env3" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 3)) (params :look-eps) (next-walk!)))
+                          "mu2-env4" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 4)) (params :look-eps) (next-walk!)))}]
     (time
       ;(crit/quick-bench
       (def result-mason
@@ -373,11 +374,11 @@
   ;; have to revaluate this whole file WITH THE SAME SEED; I think parts of 
   ;; the code in the file uses random numbers in code outside of comments when first run.
   (let [new-mu2-walk-fns
-        {"mu2-env0" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-         "mu2-env1" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-         "mu2-env2" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-         "mu2-env3" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-         "mu2-env4" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 4)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
+        {"mu2-env0" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+         "mu2-env1" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+         "mu2-env2" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+         "mu2-env3" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+         "mu2-env4" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 4)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
     (time
       ;(crit/quick-bench
       (def result-minimal
@@ -393,11 +394,11 @@
 
   ;; env-mason
   (let[new-mu2-walk-fns
-       {"mu2-env0" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-        "mu2-env1" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 1)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-        "mu2-env2" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 2)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-        "mu2-env3" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 3)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-        "mu2-env4" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 4)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
+       {"mu2-env0" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+        "mu2-env1" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 1)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+        "mu2-env2" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 2)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+        "mu2-env3" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 3)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+        "mu2-env4" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 4)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
     (time
       ;(crit/quick-bench
       (def result-mason
@@ -427,10 +428,10 @@
   (do
     (r/set-state rng initial-state)
     (let [new-mu2-walk-fns
-         {"mu2-env0" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env1" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env2" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env3" (fn [init-loc] (w/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
+         {"mu2-env0" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+          "mu2-env1" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+          "mu2-env2" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+          "mu2-env3" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
       (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 10 seed)))))
 
   (clojure.repl/pst)
@@ -440,10 +441,10 @@
   (do
     (r/set-state rng initial-state)
     (let[new-mu2-walk-fns
-         {"mu2-env0" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env1" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 1)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env2" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 2)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env3" (fn [init-loc] (w/foodwalk w/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 3)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
+         {"mu2-env0" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 0)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+          "mu2-env1" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 1)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+          "mu2-env2" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 2)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+          "mu2-env3" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (mason-envs 3)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
       (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 10 seed)))))
 
   (def fixed-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) fixed-mu2-walk-fns 10 seed)))
