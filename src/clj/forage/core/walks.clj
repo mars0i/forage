@@ -8,8 +8,8 @@
 
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
 
-;(set! *warn-on-reflection* true)
-;(set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
 ;; NOTE Advantages of starting with mathematical vectors (direction,
@@ -49,33 +49,120 @@
   [dir-dist len-dist low high]
   (repeatedly (step-vector-fn dir-dist len-dist low high)))
 
+(comment
+  ;; Failed attempts to create a faster alternative to the preceding:
+
+  ;; Summary: Most of the versions below were vastly slower than using
+  ;; doall and take with the lazy version above.  The Java flat vector
+  ;; version is about the same speed as the lazy strategy, but not
+  ;; faster.
+
+#_
 (defn make-n-levy-vecs
   [dir-dist len-dist low high n]
   (when (neg? n) (throw (Exception. (str "make-n-levy-vecs: length of sequence can't be negative: n =" n))))
   (loop [acc [], i n]
     (if (zero? i)
       acc
-      (recur (conj acc [(r/next-radian dir-dist) (r/next-double len-dist)])
+      (recur (conj acc [(r/next-radian dir-dist) (r/next-double len-dist low high)])
              (dec i)))))
 
-(comment
+;; This is SLOWER than the loop-recur version (which is slower than
+;; doall'ing the lazy version output):
+#_
+(defn make-n-levy-vecs
+  [dir-dist len-dist low high n]
+  (let [dblpairs (make-array Double/TYPE n 2)]
+    (dotimes [i n]
+      (aset dblpairs i 0 (r/next-radian dir-dist))
+      (aset dblpairs i 1 (r/next-double len-dist low high)))
+    dblpairs))
+
+;; This takes about the same amount of time as the lazy approach, and
+;; is slightly faster if you remove the partition call (but then it's
+;; not doing the right thing).
+#_
+(defn make-n-levy-vecs
+  [dir-dist len-dist low high n]
+  (let [^double n n
+        dblpairs (double-array (* n 2))]
+    (dotimes [i n]
+      (let [k (* 2 i)
+            k+ (inc k)]
+        (aset-double dblpairs k  (r/next-radian dir-dist))
+        (aset-double dblpairs k+ (r/next-double len-dist low high))))
+    (partition n 2 dblpairs)))
+
+
+  ;; Test that make-levy-vecs and make-n-levy-vecs produce the same result:
+  (def lazy 
+    (let [rng (r/make-mrg32k3a seed)
+          dist (r/make-mrg32k3a-powerlaw rng 1 2)]
+      (doall (take 10000 (make-levy-vecs rng dist 1 1000)))))
+
+  (def eager 
+    (let [rng (r/make-mrg32k3a seed)
+          dist (r/make-mrg32k3a-powerlaw rng 1 2)]
+      (make-n-levy-vecs rng dist 1 1000 10000)))
+
+  (= lazy eager)
+  (= lazy (map vec eager)) ; for the Java array version
+
   (require '[criterium.core :as crit])
   (def seed (r/make-seed))
-  (def rng (r/make-mrg32k3a seed))
-  (def dist (r/make-mrg32k3a-powerlaw rng 1 2))
-  (time (crit/quick-bench (doall (take 10000 (make-levy-vecs rng dist 1 1000))))) ; 1.68, 1.72 millisecs (1/1000000000) on MBA
-  (time (crit/quick-bench (make-n-levy-vecs rng dist 1 1000 10000)))      ; 58, 63 millisecs (1/1000) on MBA
-  ;; WHY IS THE LAZY VERSION SO MUCH FASTER? SOMETHING's WRONG
-  (def lazy (doall (take 10000 (make-levy-vecs rng dist 1 1000)))) ; 1.68, 1.72 millisecs (1/1000000000) on MBA
-  (def eager (make-n-levy-vecs rng dist 1 1000 10000))      ; 58, 63 millisecs (1/1000) on MBA
-  ;; OK THEY'RE NOT DOING THE SAME THING:
-  (= lazy eager)
-  (count lazy)
-  (count eager)
-  (last lazy)
-  (last eager)
 
-  
+  ;; 1.25, 1.29 ms (millisecs) on MBP:
+  (let [rng (r/make-mrg32k3a seed)
+        dist (r/make-mrg32k3a-powerlaw rng 1 2)]
+    (time (crit/quick-bench
+            (doall (take 10000 (make-levy-vecs rng dist 1 1000))))))
+
+  ;; loop-recur version: 42, 43 ms on MBP.
+  ;; Java array version: 85, 87, 90 ms on MBP (even with type hints).
+  (let [rng (r/make-mrg32k3a seed)
+        dist (r/make-mrg32k3a-powerlaw rng 1 2)]
+    (time (crit/quick-bench 
+            (make-n-levy-vecs rng dist 1 1000 10000))))
+
+  ;; 1.34 ms on MBP:
+  (let [rng (r/make-mrg32k3a seed)
+        dist (r/make-mrg32k3a-powerlaw rng 1 2)]
+    (time (crit/bench
+            (doall (take 10000 (make-levy-vecs rng dist 1 1000))))))
+
+  ;; loop-recur version: 43 ms on MBP.
+  ;; Java array version: 91 ms on MBP (even with type hints).
+  (let [rng (r/make-mrg32k3a seed)
+        dist (r/make-mrg32k3a-powerlaw rng 1 2)]
+    (time (crit/bench 
+            (make-n-levy-vecs rng dist 1 1000 10000))))
+
+  ;; NOTE I checked and double-checked the units in the report by Criterium.
+  ;; They really are ms, i.e. milliseconds, in each case.
+
+  ;; In utils/sequencebenchmark.clj, the toy non-lazy loop-recur is 4X
+  ;; faster than doalling the lazy one.
+  ;; I wouldn't expect so much of a difference, but I didn't expect that
+  ;; the lazy version was 32X faster.  Wth! Maybe in the toy version, JIT
+  ;; optimized away a lot.  Maybe it realized it was just repeating a
+  ;; constant or something.  Well, and I guess Clojure optimizes the 
+  ;; heck out of its lazy sequences.  Chunking wins.  Or something.
+
+  ;; Making the sequence a bit longer--this is how long it was in
+  ;; sequencebenchmark.clj--doesn't change the relationship:
+
+  ;; 13.57 ms on MBP:
+  (let [rng (r/make-mrg32k3a seed)
+        dist (r/make-mrg32k3a-powerlaw rng 1 2)]
+    (time (crit/quick-bench
+            (doall (take 100000 (make-levy-vecs rng dist 1 1000))))))
+
+  ;; loop-recur version: 432.59 ms on MBP:
+  (let [rng (r/make-mrg32k3a seed)
+        dist (r/make-mrg32k3a-powerlaw rng 1 2)]
+    (time (crit/quick-bench 
+            (make-n-levy-vecs rng dist 1 1000 100000))))
+
 )
 
 ;; NOTE SEE test/forage/walks.clj for experiments and test of 
