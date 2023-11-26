@@ -284,9 +284,11 @@
          param-data          (when save? (append-row param-labels (cons (str *ns*)
                                                            (cons (str "\"" runs-label "\"") ; keep Excel from making it a float
                                                                  (vals sorted-params)))))
-         data$ (atom (when save? (append-labels (into ["initial dir" "walk-fn" "segments"
+         ;; Old data stru [formerly data$] for writing simple csv table [TODO: may go away in future]:
+         csvdata$ (atom (when save? (append-labels (into ["initial dir" "walk-fn" "segments"
                                                        "found" "efficency" "total path len"]
                                                       path-labels))))
+         data$ (atom (when save? {:env nil :walk nil :length  [] :found []})) ; start with a dataset instead of map?
          found-coords$ (atom [])
          iter-num$ (atom 0)
          walks-per-fn-digits (m/count-decimal-digits walks-per-fn)] ; passed to cl-format to format found foodspot count
@@ -295,28 +297,38 @@
      (when rpt? (cl-format true "Performing ~d runs in groups of ~d ...~%" 
                            (* (count walk-fns) walks-per-fn (if num-dirs (inc num-dirs) 1)) ; walk-fns is a map--count is # of MapEntrys
                            walks-per-fn))
-     ;; MAIN LOOP THROUGH EXPERIMENTS:
+     ;; MAIN LOOP THROUGH EXPERIMENT CONFIGS:
      (doseq [walk-name (keys walk-fns)  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
        (when rpt? (cl-format true "~{~c~}group ~d [walk-fn ~a, init-dir ~a] ... " nil (swap! iter-num$ inc) walk-name init-dir)  ; ~{~c~} means stuff all chars (~c) in sequence arg here
                   (flush))
        (when (and save? rng) (r/write-from-rng rng (str base-state-filename walk-name "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin")))
+
+       (swap! data$ assoc :walk walk-name) ; TODO IS THIS RIGHT?
+       ;; TODO where do I get the env name?
+
        (let [walk-fn (walk-fns walk-name) ; remaining arg is initial location [walk-name is a string, so can't be first]
              [n-segments lengths found] (run-and-collect walk-fn init-loc-fn
                                                          (params :foodspot-coords-fn)
                                                          walks-per-fn)
+
+             (swap! data$ update :found conj found)     ; TODO IS THIS RIGHT?
+             (swap! data$ update :length conj lengths)  ; TODO IS THIS RIGHT?
+
+             ;; old stats:
              n-found (count (keep identity found))
              total-length (reduce + lengths)
+             ;; TODO should maybe go away in the future:
              efficiency (if (zero? total-length) ##Inf (/ n-found total-length))] ; lengths start as doubles and remain so--this is double div
          (when rpt? (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-fn-digits n-found efficiency)) ; walks-per-fn digits makes num found same width
          (swap! found-coords$ conj found)
          ;; TODO ? THIS IS WHERE I LEAVE BEHIND RELATION BETWEEN FOUND FOODSPOTS AND WALK LENGTHS. Data returned in Clojure, but written to CSV.
-         (swap! data$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))
+         (swap! csvdata$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))
      ;; DONE WITH EXPERIMENTS, NOW WRITE AND RETURN DATA:
-     (when save? (csv/spit-csv data-filename @data$)) ; write out summary data
+     (when save? (csv/spit-csv data-filename @csvdata$)) ; write out summary data
      (when (and save? rng) (r/write-from-rng rng (str base-state-filename "_end" ".bin"))) ; save PRNG state after all runs are done
      (when rpt? (println " done."))
-     {:data @data$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
+     {:data @csvdata$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
 
 (defn levy-experiments
