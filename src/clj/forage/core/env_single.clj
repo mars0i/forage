@@ -61,10 +61,44 @@
   [env]
   [env])
 
-(defn make-look-fn
+;; Basic idea: near-pt-on-seg is a little bit expensive.
+;; But a segment can't possibly be near a foodspot if:
+;;   - no endpoint is within perc radius of the foodspot AND
+;;   - the foodspot is not inside [x0,x1] or [y0,1y].
+;; Those are cheaper to test, so test them first.
+(defn new-make-look-fn
   "Returns a function that accepts x, y coordinates from two points
   representing a line segment.  The returned function will checks to see
   whether env's sole foodspot is within perc-radius of the line at any
+  point.  If so, returns a pair containing the coordinates of the foodspot
+  as a pair, and the coordinates of point on the line segment that is
+  closest to the foodspot, also as a pair.  (Note that the point
+  returned--the one that is closest to the foodspot--is not, in general,
+  the first point at which the foodspot could have been perceived; it's not
+  where line segment crosses within perc-radius of the foodspot.  If
+  perc-radius is large, the returned point might be some distance away from
+  the point at which perception would have been possible.  It's as if the
+  forager only has narrowly focused eyes on the side of its head, and only
+  sees perpendicularly, unless it steps on a foodspot.)"
+  [env ^double perc-radius]
+  (fn [x0 y0 x1 y1]
+    (hfl/let [[p q] (dbls env)]
+      (cond (<= (um/distance-2D* x0 y0 p q) perc-radius) [[[p q]] [x0 y0]]
+            (<= (um/distance-2D* x1 y1 p q) perc-radius) [[[p q]] [x1 y1]]
+
+
+
+       (hfl/let [[near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))
+              distance (um/distance-2D* near-x near-y p q)]
+      (if (<= distance perc-radius)
+        [[[p q]] [near-x near-y]]
+        nil))))
+
+(defn make-look-fn
+  "Returns a function that accepts x, y coordinates from two points
+  representing a line segment.  The returned function will checks to see
+  whether env's sole foodspot is within perc-radius of t:qa
+  he line at any
   point.  If so, returns a pair containing the coordinates of the foodspot
   as a pair, and the coordinates of point on the line segment that is
   closest to the foodspot, also as a pair.  (Note that the point

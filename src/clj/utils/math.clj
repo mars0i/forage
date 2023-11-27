@@ -166,6 +166,11 @@
   that are actually vertical, but don't appear so because of float slop."
   1.0)
 
+(defn within-interval
+  [x y p]
+  (and (<= ^double x0 ^double p ^double x1)
+
+
 (defn on-seg?
   "Returns true iff (p,q) is on the line segment from (x0,y0) to (x1,y1),
   inclusive.  All scalars should be doubles."
