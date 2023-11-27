@@ -1,5 +1,6 @@
 (ns forage.core.run
   (:require [clojure.pprint :refer [cl-format]]
+            [tech.v3.dataset :as ds]
             [utils.misc :as misc]
             [utils.csv :as csv]
             [utils.math :as m]
@@ -277,7 +278,8 @@
          path-labels         (when save? (map #(str "path " %) runids))   ; labels for path lengths until found or gave up
          base-filename       (when save? (str (params :dirname) (params :basename) runs-label))
          param-filename      (when save? (str base-filename "params.csv"))
-         data-filename       (when save? (str base-filename "data.csv"))
+         data-filename       (when save? (str base-filename "data.nippy"))
+         csv-data-filename   (when save? (str base-filename "data.csv"))
          base-state-filename (when save? (str base-filename "state") ); for PRNG state files
          sorted-params       (when save? (into (sorted-map) params) ); for writing param file
          param-labels        (when save? (append-labels (concat ["namespace" "runs-label"] (keys sorted-params))))
@@ -297,39 +299,41 @@
      (when rpt? (cl-format true "Performing ~d runs in groups of ~d ...~%" 
                            (* (count walk-fns) walks-per-fn (if num-dirs (inc num-dirs) 1)) ; walk-fns is a map--count is # of MapEntrys
                            walks-per-fn))
-     ;; MAIN LOOP THROUGH EXPERIMENT CONFIGS:
-     (doseq [walk-name (keys walk-fns)  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
+     ;; MAIN LOOP THROUGH WALK-FNS AND INIT-DIRS:
+     ;; Keys are pairs with strings for type of walk, and env.
+     (doseq [[walk-name env-name :as walk-key] (keys walk-fns)  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
        (when rpt? (cl-format true "~{~c~}group ~d [walk-fn ~a, init-dir ~a] ... " nil (swap! iter-num$ inc) walk-name init-dir)  ; ~{~c~} means stuff all chars (~c) in sequence arg here
                   (flush))
        (when (and save? rng) (r/write-from-rng rng (str base-state-filename walk-name "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin")))
 
-       (swap! data$ assoc :walk walk-name) ; TODO IS THIS RIGHT?
-       ;; TODO where do I get the env name?
-
-       (let [walk-fn (walk-fns walk-name) ; remaining arg is initial location [walk-name is a string, so can't be first]
+       (let [walk-fn (walk-fns walk-key) ; remaining arg is initial location [walk-name is a string, so can't be first]
              [n-segments lengths found] (run-and-collect walk-fn init-loc-fn
                                                          (params :foodspot-coords-fn)
                                                          walks-per-fn)
-
-             (swap! data$ update :found conj found)     ; TODO IS THIS RIGHT?
-             (swap! data$ update :length conj lengths)  ; TODO IS THIS RIGHT?
-
              ;; old stats:
              n-found (count (keep identity found))
              total-length (reduce + lengths)
              ;; TODO should maybe go away in the future:
              efficiency (if (zero? total-length) ##Inf (/ n-found total-length))] ; lengths start as doubles and remain so--this is double div
          (when rpt? (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-fn-digits n-found efficiency)) ; walks-per-fn digits makes num found same width
+         ;; New version of data recording:
+         (when save?
+           (swap! data$ update :found into found)
+           (swap! data$ update :length into lengths)
+           (swap! data$ update :walk into (repeat walks-per-fn walk-name))
+           (swap! data$ update :env into (repeat walks-per-fn env-name)))
+         ;; Old version of data recording:
          (swap! found-coords$ conj found)
-         ;; TODO ? THIS IS WHERE I LEAVE BEHIND RELATION BETWEEN FOUND FOODSPOTS AND WALK LENGTHS. Data returned in Clojure, but written to CSV.
          (swap! csvdata$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))
      ;; DONE WITH EXPERIMENTS, NOW WRITE AND RETURN DATA:
-     (when save? (csv/spit-csv data-filename @csvdata$)) ; write out summary data
+     (when save? (ds/write! @data$ data-filename))
+     (when save? (csv/spit-csv csv-data-filename @csvdata$)) ; write out summary data
      (when (and save? rng) (r/write-from-rng rng (str base-state-filename "_end" ".bin"))) ; save PRNG state after all runs are done
      (when rpt? (println " done."))
      {:data @csvdata$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
+(clojure.repl/pst)
 
 (defn levy-experiments
   "DEPRECATED: For new code use walk-experiments.
