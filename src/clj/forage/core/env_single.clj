@@ -61,11 +61,25 @@
   [env]
   [env])
 
-;; Basic idea: near-pt-on-seg is a little bit expensive.
+;(defn- lt [^double l ^double r] (< l r))
+;(defn- gt [^double l ^double r] (> l r))
+
+(defn within-interval
+  "Returns true iff x is in the closed interval [a, b]. a must be <= b. All
+  scalars should be doubles."
+  [a b x]
+  (<= ^double a ^double x ^double b))
+
+;; Basic idea: near-pt-on-seg and distance-2D* are a little bit expensive.
 ;; But a segment can't possibly be near a foodspot if:
 ;;   - no endpoint is within perc radius of the foodspot AND
 ;;   - the foodspot is not inside [x0,x1] or [y0,1y].
 ;; Those are cheaper to test, so test them first.
+;; As a heuristic, just checks that the foodspot is not inside [x0-radius, x1+radius]
+;; or [y0-radius, y1+radius], assuming x0<x1 and y0<y1.  When the segment
+;; isn't horizontal or vertical, there will be a small region that should
+;; not get the expensive tests but will anyway--i.e. the region in the
+;; square of size radiusXradius that is beyond radius from the endpoint.
 (defn new-make-look-fn
   "Returns a function that accepts x, y coordinates from two points
   representing a line segment.  The returned function will checks to see
@@ -81,17 +95,21 @@
   forager only has narrowly focused eyes on the side of its head, and only
   sees perpendicularly, unless it steps on a foodspot.)"
   [env ^double perc-radius]
-  (fn [x0 y0 x1 y1]
-    (hfl/let [[p q] (dbls env)]
-      (cond (<= (um/distance-2D* x0 y0 p q) perc-radius) [[[p q]] [x0 y0]]
-            (<= (um/distance-2D* x1 y1 p q) perc-radius) [[[p q]] [x1 y1]]
-
-
-
-       (hfl/let [[near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))
-              distance (um/distance-2D* near-x near-y p q)]
-      (if (<= distance perc-radius)
-        [[[p q]] [near-x near-y]]
+  (fn [^double x0 ^double y0 ^double x1 ^double y1]
+    (hfl/let [[x-low x-high] (if (< x0 x1)
+                               [(- x0 perc-radius) (+ x1 perc-radius)]
+                               [(- x1 perc-radius) (+ x0 perc-radius)])
+              [y-low y-high] (if (< y0 y1)
+                               [(- y0 perc-radius) (+ y1 perc-radius)]
+                               [(- y1 perc-radius) (+ y0 perc-radius)])
+              [p q] (dbls env)]
+      (if (or (within-interval x-low x-high p)
+              (within-interval y-low y-high q))
+        (hfl/let [[near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))
+                  distance (um/distance-2D* near-x near-y p q)]
+          (if (<= distance perc-radius)
+            [[[p q]] [near-x near-y]]
+            nil))
         nil))))
 
 (defn make-look-fn
