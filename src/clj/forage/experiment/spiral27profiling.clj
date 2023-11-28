@@ -184,6 +184,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Functions that construct composite (and other) walks
 
+(defn mu1-vecs
+  [maxpathlen]
+  (w/vecs-upto-len maxpathlen (more-mu1-vecs)))
+
 (defn mu2-vecs
   [maxpathlen]
   (w/vecs-upto-len maxpathlen (more-mu2-vecs)))
@@ -192,117 +196,117 @@
   [maxpathlen]
   (w/vecs-upto-len maxpathlen (more-mu3-vecs)))
 
-;; composite mu=1.1 and mu=3 walk
-(defn composite-mu1-mu3-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
-                   (apply concat
-                          (interleave (repeatedly more-mu1-vecs)
-                                      (repeatedly more-mu3-vecs)))))
-
-;; composite mu=1.5 and mu=3 walk
-(defn composite-mu15-mu3-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
-                   (apply concat
-                          (interleave (repeatedly more-mu15-vecs)
-                                      (repeatedly more-mu3-vecs)))))
-
-;; composite mu=1.1 and spiral walk
-(defn composite-mu1-spiral-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
-                   (apply concat
-                          (interleave (repeatedly more-mu1-vecs)
-                                      (repeatedly more-spiral-vecs)))))
-
-;; composite mu=1.5 and spiral walk
-(defn composite-mu15-spiral-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
-                   (apply concat
-                          (interleave (repeatedly more-mu15-vecs)
-                                      (repeatedly more-spiral-vecs)))))
-
-;; Doesn't use more-mu2-vecs because that is limited to
-;; examine-segment-len, total.  This extends the walk to maxpathlen.
-(defn mu2-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
-
-(def first-mu2-vecs (mu2-vecs (params :maxpathlen)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Maps whose values are functions that run composite and non-composite 
-;; walks in each of the different environments defined above.
-
-;; NOTE Only using the first four envs (i.e. the first four target distances).
-
-(def fixed-mu2-walk-fns
-  {["mu2" "env0"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 0)) "IGNORED" (w/walk-stops init-loc first-mu2-vecs)))
-   ["mu2" "env1"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 1)) "IGNORED" (w/walk-stops init-loc first-mu2-vecs)))
-   ["mu2" "env2"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 2)) "IGNORED" (w/walk-stops init-loc first-mu2-vecs)))
-   ["mu2" "env3"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 3)) "IGNORED" (w/walk-stops init-loc first-mu2-vecs)))})
-
-(def new-mu2-walk-fns
-  {["mu2" "env0"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-   ["mu2" "env1"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-   ["mu2" "env2"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-   ["mu2" "env3"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))})
-
-
-(defn straight-path [init-loc] [init-loc [(params :maxpathlen) (init-loc 1)]])
-
-(def straight-walk-fns
-  {["straight" "env0"] (fn [init-loc]
-                     ;(print "\nenv:" (envsingles 0) (straight-path init-loc)) ; DEBUG
-                     (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 0)) "IGNORED" (straight-path init-loc)))
-   ["straight" "env1"] (fn [init-loc]
-                     ;(print "\nenv:" (envsingles 1) (straight-path init-loc)) ; DEBUG
-                     (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 1)) "IGNORED" (straight-path init-loc)))
-   ["straight" "env2"] (fn [init-loc]
-                     ;(print "\nenv:" (envsingles 2) (straight-path init-loc)) ; DEBUG
-                     (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 2)) "IGNORED" (straight-path init-loc)))
-   ["straight" "env3"] (fn [init-loc] 
-                     ;(print "\nenv:" (envsingles 3) (straight-path init-loc)) ; DEBUG
-                     (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 3)) "IGNORED" (straight-path init-loc)))
-   ["straight" "env4"] (fn [init-loc]
-                     ;(print "\nenv:" (envsingles 4) (straight-path init-loc)) ; DEBUG
-                     (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 4)) "IGNORED" (straight-path init-loc)))})
-
-
-
-;; FIXME
-;; composite mu=1.1 and mu=3
-(def mu1-mu3-walk-fns
-  {["composite-mu1-mu3" "env0"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
-   ["composite-mu1-mu3" "env1"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
-   ["composite-mu1-mu3" "env2"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
-   ["composite-mu1-mu3" "env3"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))})
-
-;; FIXME
-;; composite mu=1.5 and mu=3
-(def mu15-mu3-walk-fns
-  {["composite-mu15-mu3" "env0"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
-   ["composite-mu15-mu3" "env1"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
-   ["composite-mu15-mu3" "env2"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
-   ["composite-mu15-mu3" "env3"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))})
-
-;; FIXME
-;; composite mu=1.1 and spiral
-(def mu1-spiral-walk-fns
-  {["composite-mu1-spiral" "env0"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
-   ["composite-mu1-spiral" "env1"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
-   ["composite-mu1-spiral" "env2"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
-   ["composite-mu1-spiral" "env3"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))})
-
-;; FIXME
-;; composite mu=1.5 and spiral
-(def mu15-spiral-walk-fns
-  {["composite-mu15-spiral" "env0"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
-   ["composite-mu15-spiral" "env1"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
-   ["composite-mu15-spiral" "env2"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
-   ["composite-mu15-spiral" "env3"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))})
+; ;; composite mu=1.1 and mu=3 walk
+; (defn composite-mu1-mu3-vecs
+;   [maxpathlen]
+;   (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
+;                    (apply concat
+;                           (interleave (repeatedly more-mu1-vecs)
+;                                       (repeatedly more-mu3-vecs)))))
+; 
+; ;; composite mu=1.5 and mu=3 walk
+; (defn composite-mu15-mu3-vecs
+;   [maxpathlen]
+;   (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
+;                    (apply concat
+;                           (interleave (repeatedly more-mu15-vecs)
+;                                       (repeatedly more-mu3-vecs)))))
+; 
+; ;; composite mu=1.1 and spiral walk
+; (defn composite-mu1-spiral-vecs
+;   [maxpathlen]
+;   (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
+;                    (apply concat
+;                           (interleave (repeatedly more-mu1-vecs)
+;                                       (repeatedly more-spiral-vecs)))))
+; 
+; ;; composite mu=1.5 and spiral walk
+; (defn composite-mu15-spiral-vecs
+;   [maxpathlen]
+;   (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
+;                    (apply concat
+;                           (interleave (repeatedly more-mu15-vecs)
+;                                       (repeatedly more-spiral-vecs)))))
+; 
+; ;; Doesn't use more-mu2-vecs because that is limited to
+; ;; examine-segment-len, total.  This extends the walk to maxpathlen.
+; (defn mu2-vecs
+;   [maxpathlen]
+;   (w/vecs-upto-len maxpathlen (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
+; 
+; (def first-mu2-vecs (mu2-vecs (params :maxpathlen)))
+; 
+; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; ;; Maps whose values are functions that run composite and non-composite 
+; ;; walks in each of the different environments defined above.
+; 
+; ;; NOTE Only using the first four envs (i.e. the first four target distances).
+; 
+; (def fixed-mu2-walk-fns
+;   {["mu2" "env0"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 0)) "IGNORED" (w/walk-stops init-loc first-mu2-vecs)))
+;    ["mu2" "env1"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 1)) "IGNORED" (w/walk-stops init-loc first-mu2-vecs)))
+;    ["mu2" "env2"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 2)) "IGNORED" (w/walk-stops init-loc first-mu2-vecs)))
+;    ["mu2" "env3"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 3)) "IGNORED" (w/walk-stops init-loc first-mu2-vecs)))})
+; 
+; (def new-mu2-walk-fns
+;   {["mu2" "env0"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+;    ["mu2" "env1"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+;    ["mu2" "env2"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
+;    ["mu2" "env3"] (fn [init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))})
+; 
+; 
+; (defn straight-path [init-loc] [init-loc [(params :maxpathlen) (init-loc 1)]])
+; 
+; (def straight-walk-fns
+;   {["straight" "env0"] (fn [init-loc]
+;                      ;(print "\nenv:" (envsingles 0) (straight-path init-loc)) ; DEBUG
+;                      (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 0)) "IGNORED" (straight-path init-loc)))
+;    ["straight" "env1"] (fn [init-loc]
+;                      ;(print "\nenv:" (envsingles 1) (straight-path init-loc)) ; DEBUG
+;                      (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 1)) "IGNORED" (straight-path init-loc)))
+;    ["straight" "env2"] (fn [init-loc]
+;                      ;(print "\nenv:" (envsingles 2) (straight-path init-loc)) ; DEBUG
+;                      (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 2)) "IGNORED" (straight-path init-loc)))
+;    ["straight" "env3"] (fn [init-loc] 
+;                      ;(print "\nenv:" (envsingles 3) (straight-path init-loc)) ; DEBUG
+;                      (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 3)) "IGNORED" (straight-path init-loc)))
+;    ["straight" "env4"] (fn [init-loc]
+;                      ;(print "\nenv:" (envsingles 4) (straight-path init-loc)) ; DEBUG
+;                      (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 4)) "IGNORED" (straight-path init-loc)))})
+; 
+; 
+; 
+; ;; FIXME
+; ;; composite mu=1.1 and mu=3
+; (def mu1-mu3-walk-fns
+;   {["composite-mu1-mu3" "env0"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
+;    ["composite-mu1-mu3" "env1"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
+;    ["composite-mu1-mu3" "env2"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))
+;    ["composite-mu1-mu3" "env3"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-mu3-vecs (params :maxpathlen)))))})
+; 
+; ;; FIXME
+; ;; composite mu=1.5 and mu=3
+; (def mu15-mu3-walk-fns
+;   {["composite-mu15-mu3" "env0"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
+;    ["composite-mu15-mu3" "env1"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
+;    ["composite-mu15-mu3" "env2"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))
+;    ["composite-mu15-mu3" "env3"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-mu3-vecs (params :maxpathlen)))))})
+; 
+; ;; FIXME
+; ;; composite mu=1.1 and spiral
+; (def mu1-spiral-walk-fns
+;   {["composite-mu1-spiral" "env0"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
+;    ["composite-mu1-spiral" "env1"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
+;    ["composite-mu1-spiral" "env2"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))
+;    ["composite-mu1-spiral" "env3"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu1-spiral-vecs (params :maxpathlen)))))})
+; 
+; ;; FIXME
+; ;; composite mu=1.5 and spiral
+; (def mu15-spiral-walk-fns
+;   {["composite-mu15-spiral" "env0"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 0)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
+;    ["composite-mu15-spiral" "env1"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 1)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
+;    ["composite-mu15-spiral" "env2"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 2)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))
+;    ["composite-mu15-spiral" "env3"] (fn [init-loc] (ff/foodwalk (make-unbounded-envsingle-look-fn (envsingles 3)) (params :look-eps) (w/walk-stops init-loc (composite-mu15-spiral-vecs (params :maxpathlen)))))})
 
 ;; pure mu=1.5 walks (using my older interface)
 ;; FIXME
@@ -358,15 +362,88 @@
   ;(def rng (r/make-well19937 seed))
   ;(def initial-state (r/get-state rng)) ; only used for some of the tests below
 
-  ;; MU=2
+  ;;;;;;;;;;;;;
+  ;;; MU=1
+
+  ;;; using crit/bench:
+  ;;; env-single/new-make-look-fn: 4.255 ms
+  ;;; env-single/make-look-fn:     4.640 ms
+
+  (do ;; SETUP mu=1 walks
+
+      ;; A different walk for each of the five environments.
+      ;; These are each different because the RNG advances.
+      (def mu1walks [(w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
+                     (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
+                     (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
+                     (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
+                     (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))])
+
+      (println "# of coordinate pairs in walks 0 through 4, respectively:")
+      (prn (map count mu1walks))
+
+      (def walks-per-fn 1)
+  )
+
+  ;; ENV-SINGLE USING NEW NOV 2023 MAKE-WALK-FN:
+  (let [new-env-single-walk-fns {"mu1-env0" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 0)) "IGNORED" (mu1walks 0)))
+                                 "mu1-env1" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 1)) "IGNORED" (mu1walks 1)))
+                                 "mu1-env2" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 2)) "IGNORED" (mu1walks 2)))
+                                 "mu1-env3" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 3)) "IGNORED" (mu1walks 3)))
+                                 "mu1-env4" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 4)) "IGNORED" (mu1walks 4)))}]
+    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_single_NEW_mu1_1each")) new-env-single-walk-fns walks-per-fn seed))))
+
+  ;; ENV-SINGLE USING ORIGINAL MAKE-WALK-FN:
+  ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
+  (let [env-single-walk-fns {"mu1-env0" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 0)) "IGNORED" (mu1walks 0)))
+                             "mu1-env1" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 1)) "IGNORED" (mu1walks 1)))
+                             "mu1-env2" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 2)) "IGNORED" (mu1walks 2)))
+                             "mu1-env3" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 3)) "IGNORED" (mu1walks 3)))
+                             "mu1-env4" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 4)) "IGNORED" (mu1walks 4)))}]
+    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_single_mu1_1each")) env-single-walk-fns walks-per-fn seed))))
+
+  ;; env-minimal
+  ;; note if needed: params s/b/ (update params :foodspot-coords-fn envminimal/foodspot-coords)
+  ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
+  (let [env-minimal-walk-fns {"mu1-env0" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 0)) "IGNORED" (mu1walks 0)))
+                              "mu1-env1" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 1)) "IGNORED" (mu1walks 1)))
+                              "mu1-env2" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 2)) "IGNORED" (mu1walks 2)))
+                              "mu1-env3" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 3)) "IGNORED" (mu1walks 3)))
+                              "mu1-env4" (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 4)) "IGNORED" (mu1walks 4)))}]
+    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_minimal_mu1_1each")) env-minimal-walk-fns walks-per-fn seed))))
+
+  ;; env-mason
+  ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmason/foodspot-coords)
+  ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
+  (let [env-mason-walk-fns {"mu1-env0" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 0)) (params :look-eps) (mu1walks 0)))
+                            "mu1-env1" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 1)) (params :look-eps) (mu1walks 1)))
+                            "mu1-env2" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 2)) (params :look-eps) (mu1walks 2)))
+                            "mu1-env3" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 3)) (params :look-eps) (mu1walks 3)))
+                            "mu1-env4" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 4)) (params :look-eps) (mu1walks 4)))}]
+    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_mason_mu1_1each")) env-mason-walk-fns walks-per-fn seed))))
+
+
+  ;;;;;;;;;;;;;
+  ;;; MU=2
   ;;; For mu=2, according to quick-bench, the fastest search methods, in order are:
   ;;; env-single with new-make-look-fn
   ;;; env-single with old make-look-fn (but the difference from preceding isn't as great as with mu=3)
   ;;; env-minimal (a LOT slower)
   ;;; env-mason (a VERY lot slower)
   ;;; [That last point is due to the fact that there's only one target.
-  ;; With six targets, env-minimal and env-mason almost the same, with env-minimal
-  ;; being slightly faster.]
+  ;;; With six targets, env-minimal and env-mason almost the same, with env-minimal
+  ;;; being slightly faster.]
+  ;;;
+  ;;; BUT BUT BUT:
+  ;;; Full criterium/bench is reporting that the new-make-look-fn and old
+  ;;; make-look-fn have identical performance!
+  ;;;   new env-single 7.13899 ms
+  ;;;   old env-single 7.14275 ms
+  ;;;   env-minimal   11.40635 ms
+  ;;;   env-mason     29.41337 ms
+  ;;; 
+  ;;; (So env-single is 4X faster than env-mason.
+  ;;;  So env-mason is still faster per target with six targets.)
 
   (do ;; SETUP mu=2 walks
 
@@ -383,8 +460,6 @@
 
       (def walks-per-fn 1)
   )
-
-  (clojure.repl/pst)
 
   ;; ENV-SINGLE USING NEW NOV 2023 MAKE-WALK-FN:
   (let [new-env-single-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 0)) "IGNORED" (mu2walks 0)))
@@ -424,8 +499,8 @@
     (time (mybench (fr/walk-experiments (update params :basename #(str % "env_mason_mu2_1each")) env-mason-walk-fns walks-per-fn seed))))
 
 
-  ;;;;;;;;
-  ;; MU=3
+  ;;;;;;;;;;;;;
+  ;;; MU=3
 
   ;;; For mu=3, according to quick-bench, the fastest search methods, in order are:
   ;;; env-single with new-make-look-fn
