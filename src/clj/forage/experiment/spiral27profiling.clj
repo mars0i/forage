@@ -122,6 +122,12 @@
   [env]
   (envsingle/make-look-fn env (params :perc-radius)))
 
+(defn make-unbounded-envsingle-new-look-fn
+  "Make a non-toroidal look-fn from env.  Searches that leave the core env
+  will just continue without success unless they wander back."
+  [env]
+  (envsingle/new-make-look-fn env (params :perc-radius)))
+
 (defn make-unbounded-envminimal-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
@@ -370,6 +376,14 @@
                           "mu2-env4" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-look-fn (envsingles 4)) "IGNORED" (walks 4)))}]
     (time (crit/quick-bench
             (fr/walk-experiments (update params :basename #(str % "env_single_mu2_1each")) new-mu2-walk-fns walks-per-fn seed))))
+
+  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 0)) "IGNORED" (walks 0)))
+                          "mu2-env1" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 1)) "IGNORED" (walks 1)))
+                          "mu2-env2" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 2)) "IGNORED" (walks 2)))
+                          "mu2-env3" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 3)) "IGNORED" (walks 3)))
+                          "mu2-env4" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 4)) "IGNORED" (walks 4)))}]
+    (time (crit/quick-bench
+            (fr/walk-experiments (update params :basename #(str % "env_single_NEW_mu2_1each")) new-mu2-walk-fns walks-per-fn seed))))
 
   ;; env-minimal
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envminimal/foodspot-coords)
