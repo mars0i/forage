@@ -153,8 +153,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MAKE THE EXPERIMENTS
 
-(def seed (r/make-seed))
-(def seed -7370724773351240133)
+;(def seed (r/make-seed))
+;(def seed -7370724773351240133)
+(def seed 550554657766126322)
 (println "Using seed" seed)
 (def rng (r/make-well19937 seed))
 
@@ -353,14 +354,11 @@
   ;; env-single, env-minimal, env-mason.
   ;; An alternative is to use the same walk in each env.
   ;; THIS ONLY WORKS WITH FEW WALKS.  OTHERWISE THE MEMORY OVERHEAD IS TOO MUCH.
+  ;; However, there is no need to reload or reset the PRNG once the walks
+  ;; are stored.
 
-  ;; NOTE that mu2-vecs is defined above using the PRNG defined in the
-  ;; main code in this file.  So the only way to reset and get exactly
-  ;; the same walks is to re-evaluate the file.  At the moment I don't want to pass
-  ;; in PRNG to all of the functions that the following depends on.
-  ;(def seed -7370724773351240133)
-  ;(def rng (r/make-well19937 seed))
-  ;(def initial-state (r/get-state rng)) ; only used for some of the tests below
+  (ns-unmap *ns* 'mu2walks)
+  (ns-unmap *ns* 'mu3walks)
 
   ;;;;;;;;;;;;;
   ;;; MU=1
@@ -370,20 +368,13 @@
   ;;; env-single/make-look-fn:     4.640 ms
 
   (do ;; SETUP mu=1 walks
-
-      ;; A different walk for each of the five environments.
       ;; These are each different because the RNG advances.
       (def mu1walks [(w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))])
-
-      (println "# of coordinate pairs in walks 0 through 4, respectively:")
-      (prn (map count mu1walks))
-
-      (def walks-per-fn 1)
-  )
+      (def walks-per-fn 1))
 
   ;; ENV-SINGLE USING NEW NOV 2023 MAKE-WALK-FN:
   (let [new-env-single-walk-fns {"mu1-env0" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 0)) "IGNORED" (mu1walks 0)))
@@ -445,21 +436,17 @@
   ;;; (So env-single is 4X faster than env-mason.
   ;;;  So env-mason is still faster per target with six targets.)
 
-  (do ;; SETUP mu=2 walks
+  (ns-unmap *ns* 'mu1walks)
+  (ns-unmap *ns* 'mu3walks)
 
-      ;; A different walk for each of the five environments.
+  (do ;; SETUP mu=2 walks
       ;; These are each different because the RNG advances.
       (def mu2walks [(w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))])
-
-      (println "# of coordinate pairs in walks 0 through 4, respectively:")
-      (prn (map count mu2walks))
-
-      (def walks-per-fn 1)
-  )
+      (def walks-per-fn 1))
 
   ;; ENV-SINGLE USING NEW NOV 2023 MAKE-WALK-FN:
   (let [new-env-single-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 0)) "IGNORED" (mu2walks 0)))
@@ -508,21 +495,17 @@
   ;;; env-minimal
   ;;; env-mason
 
-  (do ;; SETUP mu=3 walks
+  (ns-unmap *ns* 'mu1walks)
+  (ns-unmap *ns* 'mu2walks)
 
-      ;; A different walk for each of the five environments.
+  (do ;; SETUP mu=3 walks
       ;; These are each different because the RNG advances.
       (def mu3walks [(w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))])
-
-      (println "# of coordinate pairs in walks 0 through 4, respectively:")
-      (prn (map count mu3walks))
-
-      (def walks-per-fn 1)
-  )
+      (def walks-per-fn 1))
 
   ;; ENV-SINGLE USING NEW NOV 2023 MAKE-WALK-FN:
   (let [new-env-single-walk-fns {"mu3-env0" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 0)) "IGNORED" (mu3walks 0)))
