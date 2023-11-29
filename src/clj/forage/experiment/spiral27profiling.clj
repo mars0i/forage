@@ -520,8 +520,8 @@
                                  "mu3-env4" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 4)) "IGNORED" (mu3walks 4)))}]
     (time 
      (binding [crit/*report-progress* true
-               ;crit/*report-debug* true
-               ;crit/*report-warn* true
+               crit/*report-debug* true
+               crit/*report-warn* true
                ;crit/*warmup-jit-period* 50000000000 ; doesn't work
                crit/*default-benchmark-opts* (assoc crit/*default-benchmark-opts* :warmup-jit-period (* 2 crit/*warmup-jit-period*)) ; does work
               ]
