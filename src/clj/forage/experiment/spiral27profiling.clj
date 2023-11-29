@@ -343,9 +343,11 @@
   (defmacro mybench [expr] `(crit/quick-bench ~expr))
   (defmacro mybench [expr] `(crit/bench ~expr))
   ;; consider wrapping criterium calls in one or more of these:
-  ;(binding [crit/*report-progress* true
-  ;          crit/*report-debug* true
-  ;          crit/*report-warn* true])
+  ; (binding [crit/*report-progress* true]
+  ;           crit/*report-debug* true
+  ;           crit/*report-warn* true
+  ;           crit/*warmup-jit-period* n]
+  ;   (crit/bench (blah blah)))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
   ;; VERSIONS IN WHICH GENERATION OF WALKS IS NOT INCLUDED IN THE TIME
@@ -357,6 +359,7 @@
   ;; However, there is no need to reload or reset the PRNG once the walks
   ;; are stored.
 
+  ;; If I'm done with the other walks, don't clutter up the heap:
   (ns-unmap *ns* 'mu2walks)
   (ns-unmap *ns* 'mu3walks)
 
@@ -436,6 +439,7 @@
   ;;; (So env-single is 4X faster than env-mason.
   ;;;  So env-mason is still faster per target with six targets.)
 
+  ;; If I'm done with the other walks, don't clutter up the heap:
   (ns-unmap *ns* 'mu1walks)
   (ns-unmap *ns* 'mu3walks)
 
@@ -495,6 +499,7 @@
   ;;; env-minimal
   ;;; env-mason
 
+  ;; If I'm done with the other walks, don't clutter up the heap:
   (ns-unmap *ns* 'mu1walks)
   (ns-unmap *ns* 'mu2walks)
 
@@ -513,7 +518,15 @@
                                  "mu3-env2" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 2)) "IGNORED" (mu3walks 2)))
                                  "mu3-env3" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 3)) "IGNORED" (mu3walks 3)))
                                  "mu3-env4" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 4)) "IGNORED" (mu3walks 4)))}]
-    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_single_NEW_mu3_1each")) new-env-single-walk-fns walks-per-fn seed))))
+    (time 
+     (binding [crit/*report-progress* true
+               ;crit/*report-debug* true
+               ;crit/*report-warn* true
+               ;crit/*warmup-jit-period* 50000000000 ; doesn't work
+               crit/*default-benchmark-opts* (assoc crit/*default-benchmark-opts* :warmup-jit-period (* 2 crit/*warmup-jit-period*)) ; does work
+              ]
+       (mybench (fr/walk-experiments (update params :basename #(str % "env_single_NEW_mu3_1each")) new-env-single-walk-fns walks-per-fn seed))
+   )))
 
   ;; ENV-SINGLE USING ORIGINAL MAKE-WALK-FN:
   ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
