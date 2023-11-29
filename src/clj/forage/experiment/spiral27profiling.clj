@@ -24,7 +24,7 @@
 (def targets-per-env 1)
 
 (def homedir (System/getenv "HOME"))
-(def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral25/"))
+(def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral27/"))
 
 (def half-size  10000) ; half the full width of the env
 (def maxpathlen (* 1000 half-size)) ; max length of an entire continuous search path
@@ -45,7 +45,7 @@
              :init-pad            nil ; if truthy, initial loc offset by this in rand dir
              :maxpathlen          maxpathlen
              :trunclen            trunclen
-             :basename            (str default-dirname "spiral25_")
+             :basename            (str default-dirname "spiral27_")
              :look-eps            0.2 ; shouldn't be used
              :foodspot-coords-fn  envsingle/foodspot-coords
              :rpt-to-stdout?       false ; write-experiments writes to stdout only if true
