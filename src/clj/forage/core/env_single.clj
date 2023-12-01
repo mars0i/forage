@@ -80,7 +80,7 @@
 ;; isn't horizontal or vertical, there will be a small region that should
 ;; not get the expensive tests but will anyway--i.e. the region in the
 ;; square of size radiusXradius that is beyond radius from the endpoint.
-(defn new-make-look-fn
+(defn make-look-fn
   "Returns a function that accepts x, y coordinates from two points
   representing a line segment.  The returned function will checks to see
   whether env's sole foodspot is within perc-radius of the line at any
@@ -112,7 +112,7 @@
             nil))
         nil))))
 
-(defn make-look-fn
+(defn make-simple-look-fn
   "Returns a function that accepts x, y coordinates from two points
   representing a line segment.  The returned function will checks to see
   whether env's sole foodspot is within perc-radius of t:qa

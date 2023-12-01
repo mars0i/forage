@@ -120,20 +120,19 @@
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
-  (envsingle/make-look-fn env (params :perc-radius)))
+  (envsingle/make-simple-look-fn env (params :perc-radius)))
 
 (defn make-unbounded-envsingle-new-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
-  (envsingle/new-make-look-fn env (params :perc-radius)))
+  (envsingle/make-look-fn env (params :perc-radius)))
 
 (defn make-unbounded-envminimal-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
   will just continue without success unless they wander back."
   [env]
   (envminimal/make-look-fn env (params :perc-radius)))
-
 
 #_
 (defn make-unbounded-envmason-look-fn
