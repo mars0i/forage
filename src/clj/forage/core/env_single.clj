@@ -9,7 +9,8 @@
             [utils.math :as um]
             [clojure.math :as math :refer [sqrt]]
             [fastmath.core :as fm]
-            [forage.core.food :as f]))
+            [forage.core.food :as f])
+    (:import [clojure.lang IFn$DDDDO]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -94,23 +95,23 @@
   the point at which perception would have been possible.  It's as if the
   forager only has narrowly focused eyes on the side of its head, and only
   sees perpendicularly, unless it steps on a foodspot.)"
-  [env ^double perc-radius]
-  (fn [^double x0 ^double y0 ^double x1 ^double y1]
-    (hfl/let [[x-low x-high] (if (< x0 x1)
-                               [(- x0 perc-radius) (+ x1 perc-radius)]
-                               [(- x1 perc-radius) (+ x0 perc-radius)])
-              [y-low y-high] (if (< y0 y1)
-                               [(- y0 perc-radius) (+ y1 perc-radius)]
-                               [(- y1 perc-radius) (+ y0 perc-radius)])
-              [p q] (dbls env)]
-      (if (or (within-interval x-low x-high p)
-              (within-interval y-low y-high q))
-        (hfl/let [[near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))
-                  distance (um/distance-2D* near-x near-y p q)]
-          (if (<= distance perc-radius)
-            [[[p q]] [near-x near-y]]
-            nil))
-        nil))))
+  ^IFn$DDDDO [env ^double perc-radius]
+  ^IFn$DDDDO (fn [^double x0 ^double y0 ^double x1 ^double y1]
+               (hfl/let [[x-low x-high] (dbls (if (< x0 x1)
+                                                [(- x0 perc-radius) (+ x1 perc-radius)]
+                                                [(- x1 perc-radius) (+ x0 perc-radius)]))
+                         [y-low y-high] (dbls (if (< y0 y1)
+                                                [(- y0 perc-radius) (+ y1 perc-radius)]
+                                                [(- y1 perc-radius) (+ y0 perc-radius)]))
+                         [p q] (dbls env)]
+                 (if (or (within-interval x-low x-high p)
+                         (within-interval y-low y-high q))
+                   (hfl/let [[near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))
+                             distance (um/distance-2D* near-x near-y p q)]
+                     (if (<= distance perc-radius)
+                       [[[p q]] [near-x near-y]]
+                       nil))
+                   nil))))
 
 (defn make-simple-look-fn
   "Returns a function that accepts x, y coordinates from two points
@@ -127,8 +128,8 @@
   the point at which perception would have been possible.  It's as if the
   forager only has narrowly focused eyes on the side of its head, and only
   sees perpendicularly, unless it steps on a foodspot.)"
-  [env ^double perc-radius]
-  (fn [x0 y0 x1 y1]
+  ^IFn$DDDDO [env ^double perc-radius]
+  ^IFn$DDDDO (fn [^double x0 ^double y0 ^double x1 ^double y1]
     (hfl/let [[p q] (dbls env)
               [near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))
               distance (um/distance-2D* near-x near-y p q)]
@@ -140,6 +141,6 @@
 ;; return value is too complex.
 (defn find-in-seg
   "Applies look-fn to x0 y0 x1 y1, ignoring the first argument."
-  [look-fn _ x0 y0 x1 y1]
-  (look-fn x0 y0 x1 y1))
+  [^IFn$DDDDO look-fn _ x0 y0 x1 y1]
+  (.invokePrim look-fn x0 y0 x1 y1))
 
