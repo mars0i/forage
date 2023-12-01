@@ -550,6 +550,14 @@
                             "mu3-env4" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 4)) (params :look-eps) (mu3walks 4)))}]
     (time (mybench (fr/walk-experiments (update params :basename #(str % "env_mason_mu3_1each")) env-mason-walk-fns walks-per-fn seed))))
 
+
+
+  (require '[tech.v3.dataset :as ds])
+  (require '[tablecloth.api :as tc])
+  (def filepath (str default-dirname "spiral27_env_single_mu3_1each" seed "data.nippy"))
+  (defonce yo27 (ds/->dataset filepath))
+  
+
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; ATTEMPT TO PRE-COMPUTE A LARGE NUMBER OF DIFFERENT WALKS
   ;; MAY BE VERY SLOW.
