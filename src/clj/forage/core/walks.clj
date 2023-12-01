@@ -57,41 +57,41 @@
   ;; version is about the same speed as the lazy strategy, but not
   ;; faster.
 
-#_
-(defn make-n-levy-vecs
-  [dir-dist len-dist low high n]
-  (when (neg? n) (throw (Exception. (str "make-n-levy-vecs: length of sequence can't be negative: n =" n))))
-  (loop [acc [], i n]
-    (if (zero? i)
-      acc
-      (recur (conj acc [(r/next-radian dir-dist) (r/next-double len-dist low high)])
-             (dec i)))))
+  #_
+  (defn make-n-levy-vecs
+    [dir-dist len-dist low high n]
+    (when (neg? n) (throw (Exception. (str "make-n-levy-vecs: length of sequence can't be negative: n =" n))))
+    (loop [acc [], i n]
+      (if (zero? i)
+        acc
+        (recur (conj acc [(r/next-radian dir-dist) (r/next-double len-dist low high)])
+               (dec i)))))
 
-;; This is SLOWER than the loop-recur version (which is slower than
-;; doall'ing the lazy version output):
-#_
-(defn make-n-levy-vecs
-  [dir-dist len-dist low high n]
-  (let [dblpairs (make-array Double/TYPE n 2)]
-    (dotimes [i n]
-      (aset-double dblpairs i 0 (r/next-radian dir-dist))
-      (aset-double dblpairs i 1 (r/next-double len-dist low high)))
-    dblpairs))
+  ;; This is SLOWER than the loop-recur version (which is slower than
+  ;; doall'ing the lazy version output):
+  #_
+  (defn make-n-levy-vecs
+    [dir-dist len-dist low high n]
+    (let [dblpairs (make-array Double/TYPE n 2)]
+      (dotimes [i n]
+        (aset-double dblpairs i 0 (r/next-radian dir-dist))
+        (aset-double dblpairs i 1 (r/next-double len-dist low high)))
+      dblpairs))
 
-;; This takes about the same amount of time as the lazy approach, and
-;; is slightly faster if you remove the partition call (but then it's
-;; not doing the right thing).
-#_
-(defn make-n-levy-vecs
-  [dir-dist len-dist low high n]
-  (let [^double n n
-        dblpairs (double-array (* n 2))]
-    (dotimes [i n]
-      (let [k (* 2 i)
-            k+ (inc k)]
-        (aset-double dblpairs k  (r/next-radian dir-dist))
-        (aset-double dblpairs k+ (r/next-double len-dist low high))))
-    (partition n 2 dblpairs)))
+  ;; This takes about the same amount of time as the lazy approach, and
+  ;; is slightly faster if you remove the partition call (but then it's
+  ;; not doing the right thing).
+  #_
+  (defn make-n-levy-vecs
+    [dir-dist len-dist low high n]
+    (let [^double n n
+          dblpairs (double-array (* n 2))]
+      (dotimes [i n]
+        (let [k (* 2 i)
+              k+ (inc k)]
+          (aset-double dblpairs k  (r/next-radian dir-dist))
+          (aset-double dblpairs k+ (r/next-double len-dist low high))))
+      (partition n 2 dblpairs)))
 
 
   ;; Test that make-levy-vecs and make-n-levy-vecs produce the same result:
