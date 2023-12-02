@@ -451,7 +451,7 @@
                      (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
                      (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))])
-      (def walks-per-fn 1))
+      (def walks-per-fn 4))
 
   ;; ENV-SINGLE USING NEW NOV 2023 MAKE-WALK-FN:
   (let [new-env-single-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 0)) "IGNORED" (mu2walks 0)))
@@ -490,6 +490,14 @@
                             "mu2-env4" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 4)) (params :look-eps) (mu2walks 4)))}]
     (time (mybench (fr/walk-experiments (update params :basename #(str % "env_mason_mu2_1each")) env-mason-walk-fns walks-per-fn seed))))
 
+
+  (require '[tech.v3.dataset :as ds])
+  (def filepath (str default-dirname "spiral27_env_single_mu2_1each" seed "data.nippy"))
+  (def yo27 (ds/->dataset filepath))
+  
+  (ds/descriptive-stats yo27)
+
+  (require '[tablecloth.api :as tc])
 
   ;;;;;;;;;;;;;
   ;;; MU=3
@@ -549,14 +557,6 @@
                             "mu3-env3" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 3)) (params :look-eps) (mu3walks 3)))
                             "mu3-env4" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 4)) (params :look-eps) (mu3walks 4)))}]
     (time (mybench (fr/walk-experiments (update params :basename #(str % "env_mason_mu3_1each")) env-mason-walk-fns walks-per-fn seed))))
-
-
-
-  (require '[tech.v3.dataset :as ds])
-  (require '[tablecloth.api :as tc])
-  (def filepath (str default-dirname "spiral27_env_single_mu3_1each" seed "data.nippy"))
-  (defonce yo27 (ds/->dataset filepath))
-  
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; ATTEMPT TO PRE-COMPUTE A LARGE NUMBER OF DIFFERENT WALKS
