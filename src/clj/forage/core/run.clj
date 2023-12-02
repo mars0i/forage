@@ -301,6 +301,7 @@
                            walks-per-fn))
      ;; MAIN LOOP THROUGH WALK-FNS AND INIT-DIRS:
      ;; Keys are pairs with strings for type of walk, and env.
+     (prn (@data$ :found)) ; DEBUG
      (doseq [[walk-name env-name :as walk-key] (keys walk-fns)  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
        (when rpt? (cl-format true "~{~c~}group ~d [walk-fn ~a, init-dir ~a] ... " nil (swap! iter-num$ inc) walk-name init-dir)  ; ~{~c~} means stuff all chars (~c) in sequence arg here
@@ -323,6 +324,7 @@
            (swap! data$ update :length into lengths)
            (swap! data$ update :walk into (repeat walks-per-fn walk-name))
            (swap! data$ update :env into (repeat walks-per-fn env-name)))
+         (prn (@data$ :found)) ; DEBUG
          ;; Old version of data recording:
          (swap! found-coords$ conj found)
          (swap! csvdata$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))
