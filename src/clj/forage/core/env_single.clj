@@ -106,6 +106,7 @@
                          [p q] (dbls env)]
                  (if (or (within-interval x-low x-high p)
                          (within-interval y-low y-high q))
+                   ;; Based on make-simple-look-fn:
                    (hfl/let [[near-x near-y] (dbls (um/near-pt-on-seg x0 y0 x1 y1 p q))
                              distance (um/distance-2D* near-x near-y p q)]
                      (if (<= distance perc-radius)
@@ -116,8 +117,7 @@
 (defn make-simple-look-fn
   "Returns a function that accepts x, y coordinates from two points
   representing a line segment.  The returned function will checks to see
-  whether env's sole foodspot is within perc-radius of t:qa
-  he line at any
+  whether env's sole foodspot is within perc-radius of the line at any
   point.  If so, returns a pair containing the coordinates of the foodspot
   as a pair, and the coordinates of point on the line segment that is
   closest to the foodspot, also as a pair.  (Note that the point
