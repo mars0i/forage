@@ -319,7 +319,7 @@
          (when rpt? (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-fn-digits n-found efficiency)) ; walks-per-fn digits makes num found same width
          ;; New version of data recording:
          (when save?
-           (swap! data$ update :found into found)
+           (swap! data$ update :found into found)  ;; FIXME NOT RIGHT
            (swap! data$ update :length into lengths)
            (swap! data$ update :walk into (repeat walks-per-fn walk-name))
            (swap! data$ update :env into (repeat walks-per-fn env-name)))
@@ -327,7 +327,7 @@
          (swap! found-coords$ conj found)
          (swap! csvdata$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))
      ;; DONE WITH EXPERIMENTS, NOW WRITE AND RETURN DATA:
-     (when save? (ds/write! @data$ data-filename))
+     (when save? (ds/write! (ds/->dataset @data$) data-filename))
      (when save? (csv/spit-csv csv-data-filename @csvdata$)) ; write out summary data
      (when (and save? rng) (r/write-from-rng rng (str base-state-filename "_end" ".bin"))) ; save PRNG state after all runs are done
      (when rpt? (println " done."))
