@@ -444,14 +444,15 @@
   (ns-unmap *ns* 'mu1walks)
   (ns-unmap *ns* 'mu3walks)
 
-  (do ;; SETUP mu=2 walks
-      ;; These are each different because the RNG advances.
-      (defonce mu2walks [(w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                         (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                         (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                         (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                         (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))])
-      (def walks-per-fn 10))
+  ;; SETUP mu=2 walks
+  ;; These are each different because the RNG advances.
+  (defonce mu2walks [(w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                     (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                     (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                     (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                     (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))])
+
+  (def walks-per-fn 1)
 
   ;; ENV-SINGLE USING NEW NOV 2023 MAKE-WALK-FN:
   (let [new-env-single-walk-fns {["mu2" "env0"] (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 0)) "IGNORED" (mu2walks 0)))
@@ -461,9 +462,9 @@
                                  ["mu2" "env4"] (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 4)) "IGNORED" (mu2walks 4)))
                                  }]
     (time 
-      ;(mybench 
-        (fr/walk-experiments (update params :basename #(str % "env_single_NEW_mu2_1each")) new-env-single-walk-fns walks-per-fn seed)
-      ;)
+      (mybench 
+      ;(def outdata
+        (fr/walk-experiments (update params :basename #(str % "env_single_NEW_mu2_1each")) new-env-single-walk-fns walks-per-fn seed))
     ))
 
   ;; ENV-SINGLE USING ORIGINAL MAKE-WALK-FN:
@@ -497,9 +498,10 @@
 
 
   (require '[tech.v3.dataset :as ds])
-  (def filepath (str default-dirname "spiral27_env_single_mu2_1each" seed "data.nippy"))
+  (def filepath (str default-dirname "spiral27_env_single_NEW_mu2_1each" seed "data.nippy"))
   (def yo27 (ds/->dataset filepath))
   (ds/descriptive-stats yo27)
+  (ds/print-all yo27)
 
   (yo27 :found)
 
