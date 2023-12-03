@@ -18,6 +18,5 @@
 
 (comment
   (def ndmat (make-mat :ndarray size))
-  (clojure.repl/pst)
   (def psmat (make-mat :persistent-vector size))
 )

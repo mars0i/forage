@@ -347,7 +347,6 @@
 
 
 (comment
-  (use 'clojure.repl) ; for pst
 
   (def scale 5)
 

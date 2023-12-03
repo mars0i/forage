@@ -481,8 +481,6 @@
 
 
 (comment
-  (use 'clojure.repl) ; for pst
-  (clojure.repl/pst)
 
   (def size 50)
   (def e (make-env size))

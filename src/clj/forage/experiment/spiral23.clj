@@ -320,8 +320,6 @@
     (time (fr/walk-experiments (update params :basename #(str % "straight"))
                                straight-walk-fns 100 seed)))
 
-  (clojure.repl/pst)
-
   (def walks-per-fn 1000)
   ;; With 100 walks-per-fn, the following each took max of 10 mins, for a
   ;; total about an hour on my MBA.  The MBP should be about twice as fast.

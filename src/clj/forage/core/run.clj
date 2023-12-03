@@ -337,8 +337,6 @@
      (when rpt? (println " done."))
      {:data @csvdata$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
-(clojure.repl/pst)
-
 (defn levy-experiments
   "DEPRECATED: For new code use walk-experiments.
 

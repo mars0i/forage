@@ -271,8 +271,6 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; EXAMINE, CONFIGURE:
 
-  (clojure.repl/pst)
-
   ;; WHAT DO THESE WALKS LOOK LIKE?
   (require '[forage.viz.hanami :as h])
   (require '[oz.core :as oz])

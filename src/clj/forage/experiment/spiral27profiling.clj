@@ -654,8 +654,6 @@
           ["mu2" "env3"] (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
       (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 10 seed)))))
 
-  (clojure.repl/pst)
-
   ;; TODO NOTE I SHOULD REPLACE walks/find-in-seg WITH NUERNBER'S VERSION.
   ;; THAT SHOULD SPEED THIS UP A LITTLE.
   ;; env-mason
@@ -670,9 +668,6 @@
       (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 10 seed)))))
 
   (def fixed-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) fixed-mu2-walk-fns 10 seed)))
-
-
-  (clojure.repl/pst)
 
   ;(crit/quick-bench ; will run at least 60 iterations
   (time

@@ -30,7 +30,6 @@
   (tc/groups->seq (-> DS
                       (tc/group-by [:V4])
                       (tc/aggregate {:yo #(reduce + (% :V2))})))
-  (clojure.repl/pst)
 
 
  ; grouped dataset with two rows from each

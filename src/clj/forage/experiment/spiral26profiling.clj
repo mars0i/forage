@@ -264,7 +264,6 @@
                                          :foodspot-coords-fn  env-minimal/foodspot-coords)
                                  new-mu2-walk-fns walks-per-fn seed))))
 
-  (clojure.repl/pst)
 
   ;; env-mason
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmason/foodspot-coords)
@@ -318,7 +317,6 @@
     )
   )
 
-  (clojure.repl/pst)
 
   ;; env-mason
   (let [i$ (atom -1)
@@ -390,7 +388,6 @@
     )
   )
 
-  (clojure.repl/pst)
 
   ;; env-mason
   (let[new-mu2-walk-fns
@@ -434,7 +431,6 @@
           "mu2-env3" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
       (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 10 seed)))))
 
-  (clojure.repl/pst)
 
   ;; env-mason
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmason/foodspot-coords)
