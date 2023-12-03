@@ -132,7 +132,6 @@
   [rng env env-foodspot-coords-fn _]
   (let [coords (first (r/sample-from-coll rng 1
                                           (env-foodspot-coords-fn env)))]
-    ;(println "start of walk:" coords) ; DEBUG
     coords))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -192,7 +191,8 @@
   determine the initial location--the starting point for the walk--that's
   passed as walk-f/n's only argument.  n-walks must be >= 0.
   foodspot-coords-fn is a function that extracts coordinates from foodspots.
-  It's usually defined in the relevant env namespace."
+  It's usually defined in the relevant env namespace, or can be replaced with
+  the identity function if coordinates will be ignored."
   [walk-fn init-loc-fn foodspot-coords-fn n-walks]
   (loop [n n-walks, prev-fw nil, n-segments 0, found [], lengths [] ]
     (if (zero? n)
@@ -301,9 +301,10 @@
                            walks-per-fn))
      ;; MAIN LOOP THROUGH WALK-FNS AND INIT-DIRS:
      ;; Keys are pairs with strings for type of walk, and env.
-     (prn (@data$ :found)) ; DEBUG
+     ;(prn (@data$ :found)) ; DEBUG
      (doseq [[walk-name env-name :as walk-key] (keys walk-fns)  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
+       (prn walk-name env-name walk-key) ; DEBUG
        (when rpt? (cl-format true "~{~c~}group ~d [walk-fn ~a, init-dir ~a] ... " nil (swap! iter-num$ inc) walk-name init-dir)  ; ~{~c~} means stuff all chars (~c) in sequence arg here
                   (flush))
        (when (and save? rng) (r/write-from-rng rng (str base-state-filename walk-name "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin")))
@@ -312,19 +313,21 @@
              [n-segments lengths found] (run-and-collect walk-fn init-loc-fn
                                                          (params :foodspot-coords-fn)
                                                          walks-per-fn)
+             found-counts (map count found)
              ;; old stats:
-             n-found (count (keep identity found))
+             ;n-found (count (keep identity found)) ; OLD VERSION (delete this)
+             n-found (apply + found-counts)
              total-length (reduce + lengths)
              ;; TODO should maybe go away in the future:
              efficiency (if (zero? total-length) ##Inf (/ n-found total-length))] ; lengths start as doubles and remain so--this is double div
          (when rpt? (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-fn-digits n-found efficiency)) ; walks-per-fn digits makes num found same width
          ;; New version of data recording:
          (when save?
-           (swap! data$ update :found into found)  ;; FIXME NOT RIGHT
+           (swap! data$ update :found into found)
            (swap! data$ update :length into lengths)
            (swap! data$ update :walk into (repeat walks-per-fn walk-name))
            (swap! data$ update :env into (repeat walks-per-fn env-name)))
-         (prn (@data$ :found)) ; DEBUG
+         ;(prn n-found (@data$ :found)) ; DEBUG
          ;; Old version of data recording:
          (swap! found-coords$ conj found)
          (swap! csvdata$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))

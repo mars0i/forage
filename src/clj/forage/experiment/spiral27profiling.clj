@@ -152,9 +152,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MAKE THE EXPERIMENTS
 
-;(def seed (r/make-seed))
+(def seed (r/make-seed))
 ;(def seed -7370724773351240133)
-(def seed 550554657766126322)
+;(def seed 550554657766126322)
 (println "Using seed" seed)
 (def rng (r/make-well19937 seed))
 
@@ -373,11 +373,11 @@
 
   (do ;; SETUP mu=1 walks
       ;; These are each different because the RNG advances.
-      (def mu1walks [(w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))])
+      (defonce mu1walks [(w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu1-vecs (params :maxpathlen)))])
       (def walks-per-fn 1))
 
   ;; ENV-SINGLE USING NEW NOV 2023 MAKE-WALK-FN:
@@ -446,21 +446,25 @@
 
   (do ;; SETUP mu=2 walks
       ;; These are each different because the RNG advances.
-      (def mu2walks [(w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))])
-      (def walks-per-fn 1))
+      (defonce mu2walks [(w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))])
+      (def walks-per-fn 10))
 
   ;; ENV-SINGLE USING NEW NOV 2023 MAKE-WALK-FN:
   (let [new-env-single-walk-fns {["mu2" "env0"] (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 0)) "IGNORED" (mu2walks 0)))
-                                 ;["mu2" "env1"] (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 1)) "IGNORED" (mu2walks 1)))
-                                 ;["mu2" "env2"] (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 2)) "IGNORED" (mu2walks 2)))
-                                 ;["mu2" "env3"] (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 3)) "IGNORED" (mu2walks 3)))
-                                 ;["mu2" "env4"] (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 4)) "IGNORED" (mu2walks 4)))
+                                 ["mu2" "env1"] (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 1)) "IGNORED" (mu2walks 1)))
+                                 ["mu2" "env2"] (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 2)) "IGNORED" (mu2walks 2)))
+                                 ["mu2" "env3"] (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 3)) "IGNORED" (mu2walks 3)))
+                                 ["mu2" "env4"] (fn [ignored-init-loc] (ff/foodwalk envsingle/find-in-seg (make-unbounded-envsingle-new-look-fn (envsingles 4)) "IGNORED" (mu2walks 4)))
                                  }]
-    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_single_NEW_mu2_1each")) new-env-single-walk-fns walks-per-fn seed))))
+    (time 
+      ;(mybench 
+        (fr/walk-experiments (update params :basename #(str % "env_single_NEW_mu2_1each")) new-env-single-walk-fns walks-per-fn seed)
+      ;)
+    ))
 
   ;; ENV-SINGLE USING ORIGINAL MAKE-WALK-FN:
   ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
@@ -516,11 +520,11 @@
 
   (do ;; SETUP mu=3 walks
       ;; These are each different because the RNG advances.
-      (def mu3walks [(w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
-                     (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))])
+      (defonce mu3walks [(w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))
+                         (w/walk-stops [half-size half-size] (mu3-vecs (params :maxpathlen)))])
       (def walks-per-fn 1))
 
   ;; ENV-SINGLE USING NEW NOV 2023 MAKE-WALK-FN:
