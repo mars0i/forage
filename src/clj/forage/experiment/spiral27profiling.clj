@@ -155,6 +155,7 @@
 (def seed (r/make-seed))
 ;(def seed -7370724773351240133)
 ;(def seed 550554657766126322)
+(def seed 2943402459420063967)
 (println "Using seed" seed)
 (def rng (r/make-well19937 seed))
 
@@ -343,8 +344,8 @@
   (defmacro mybench [expr] `(crit/quick-bench ~expr))
 
   (defmacro mybench [expr] 
-    `(binding [crit/*default-benchmark-opts* (assoc crit/*default-benchmark-opts* :warmup-jit-period (* 10 crit/*warmup-jit-period*)) ; not: [crit/*warmup-jit-period* (* 2 crit/*warmup-jit-period*)]
-               crit/*report-progress* true
+    `(binding [crit/*default-benchmark-opts* (assoc crit/*default-benchmark-opts* :warmup-jit-period (* 2 crit/*warmup-jit-period*)) ; not: [crit/*warmup-jit-period* (* 2 crit/*warmup-jit-period*)]
+               ;crit/*report-progress* true
                ;crit/*report-debug* true
                ;crit/*report-warn* true
               ]
@@ -370,6 +371,13 @@
   ;;; using crit/bench:
   ;;; env-single/new-make-look-fn: 4.255 ms
   ;;; env-single/make-look-fn:     4.640 ms
+  ;;;
+  ;;; MBA:
+  ;;; With double JIT warmup time (not 10x), using the correct foodspot-coords fn for env-mason:
+  ;;; env-mason 44.94 ms
+  ;;; env-minimal 1.27 ms
+  ;;; new env-single 1.16 ms
+  ;;; old env-single 1.14, 1.27 ms
 
   (do ;; SETUP mu=1 walks
       ;; These are each different because the RNG advances.
@@ -405,7 +413,10 @@
                               ["mu1" "env2"] (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 2)) "IGNORED" (mu1walks 2)))
                               ["mu1" "env3"] (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 3)) "IGNORED" (mu1walks 3)))
                               ["mu1" "env4"] (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 4)) "IGNORED" (mu1walks 4)))}]
-    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_minimal_mu1_1each")) env-minimal-walk-fns walks-per-fn seed))))
+    (time (mybench (fr/walk-experiments (-> params
+                                            (update :basename #(str % "env_minimal_mu1_1each"))
+                                            (assoc :foodspot-coords-fn envminimal/foodspot-coords))
+                                        env-minimal-walk-fns walks-per-fn seed))))
 
   ;; env-mason
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmason/foodspot-coords)
@@ -415,8 +426,10 @@
                             ["mu1" "env2"] (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 2)) (params :look-eps) (mu1walks 2)))
                             ["mu1" "env3"] (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 3)) (params :look-eps) (mu1walks 3)))
                             ["mu1" "env4"] (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 4)) (params :look-eps) (mu1walks 4)))}]
-    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_mason_mu1_1each")) env-mason-walk-fns walks-per-fn seed))))
-
+    (time (mybench (fr/walk-experiments (-> params
+                                            (update :basename #(str % "env_mason_mu1_1each"))
+                                            (assoc :foodspot-coords-fn envmason/foodspot-coords))
+                                        env-mason-walk-fns walks-per-fn seed))))
 
   ;;;;;;;;;;;;;
   ;;; MU=2
@@ -435,10 +448,11 @@
   ;;;   new env-single 7.13899 ms
   ;;;   old env-single 7.14275 ms
   ;;;   env-minimal   11.40635 ms
-  ;;;   env-mason     29.41337 ms
+  ;;;   env-mason     29.41337 ms  ; This version used the wrong foodspot-coords fn; the correct one might be slower.
+  ;;;
+  ;;; Note all tests are with single-target envs.
   ;;; 
-  ;;; (So env-single is 4X faster than env-mason.
-  ;;;  So env-mason is still faster per target with six targets.)
+  ;;; So env-single is 4X faster than env-mason on single targets.
 
   ;; If I'm done with the other walks, don't clutter up the heap:
   (ns-unmap *ns* 'mu1walks)
@@ -484,7 +498,10 @@
                               ["mu2" "env2"] (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 2)) "IGNORED" (mu2walks 2)))
                               ["mu2" "env3"] (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 3)) "IGNORED" (mu2walks 3)))
                               ["mu2" "env4"] (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 4)) "IGNORED" (mu2walks 4)))}]
-    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_minimal_mu2_1each")) env-minimal-walk-fns walks-per-fn seed))))
+    (time (mybench (fr/walk-experiments (-> params
+                                            (update :basename #(str % "env_minimal_mu2_1each"))
+                                            (assoc :foodspot-coords-fn envminimal/foodspot-coords))
+                                        env-minimal-walk-fns walks-per-fn seed))))
 
   ;; env-mason
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmason/foodspot-coords)
@@ -494,7 +511,10 @@
                             ["mu2" "env2"] (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 2)) (params :look-eps) (mu2walks 2)))
                             ["mu2" "env3"] (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 3)) (params :look-eps) (mu2walks 3)))
                             ["mu2" "env4"] (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 4)) (params :look-eps) (mu2walks 4)))}]
-    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_mason_mu2_1each")) env-mason-walk-fns walks-per-fn seed))))
+    (time (mybench (fr/walk-experiments (-> params
+                                            (update :basename #(str % "env_mason_mu2_1each"))
+                                            (assoc :foodspot-coords-fn envmason/foodspot-coords))
+                                        env-mason-walk-fns walks-per-fn seed))))
 
 
   (require '[tech.v3.dataset :as ds])
@@ -554,7 +574,10 @@
                               ["mu3" "env2"] (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 2)) "IGNORED" (mu3walks 2)))
                               ["mu3" "env3"] (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 3)) "IGNORED" (mu3walks 3)))
                               ["mu3" "env4"] (fn [ignored-init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (envminimals 4)) "IGNORED" (mu3walks 4)))}]
-    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_minimal_mu3_1each")) env-minimal-walk-fns walks-per-fn seed))))
+    (time (mybench (fr/walk-experiments (-> params
+                                            (update :basename #(str % "env_minimal_mu3_1each"))
+                                            (assoc :foodspot-coords-fn envminimal/foodspot-coords))
+                                        env-minimal-walk-fns walks-per-fn seed))))
 
   ;; ENV-MASON
   ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmason/foodspot-coords)
@@ -564,12 +587,16 @@
                             ["mu3" "env2"] (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 2)) (params :look-eps) (mu3walks 2)))
                             ["mu3" "env3"] (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 3)) (params :look-eps) (mu3walks 3)))
                             ["mu3" "env4"] (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-unbounded-envmason-look-fn (envmasons 4)) (params :look-eps) (mu3walks 4)))}]
-    (time (mybench (fr/walk-experiments (update params :basename #(str % "env_mason_mu3_1each")) env-mason-walk-fns walks-per-fn seed))))
+    (time (mybench (fr/walk-experiments (-> params
+                                            (update :basename #(str % "env_mason_mu3_1each"))
+                                            (assoc :foodspot-coords-fn envmason/foodspot-coords))
+                                        env-mason-walk-fns walks-per-fn seed))))
+
+
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; ATTEMPT TO PRE-COMPUTE A LARGE NUMBER OF DIFFERENT WALKS
   ;; MAY BE VERY SLOW.
-
 
   (def walks-per-fn 2)
 
