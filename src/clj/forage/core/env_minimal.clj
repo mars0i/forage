@@ -72,7 +72,10 @@
           [fs]
           (recur (rest foodspots)))))))
 
-(def foodspot-coords identity)
+(def foodspot-coords 
+  "Extracts the coordinates from a foodspot. (Since in this env, foodspots
+  are coordinate pairs, this is simply the identity function.)"
+  identity)
 
 (defn env-foodspots
   "Returns a sequence of all foodspots in environment env, or nil
