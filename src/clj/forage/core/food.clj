@@ -2,12 +2,18 @@
 ;; (rectangular) spatial coordinates.
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
 (ns forage.core.food
-  (:require [utils.math :as m]
+  (:require [utils.math :as um]
             [utils.fractal :as uf]
             [utils.misc :as misc]))
 
 
 (declare x-zero? y-zero? either-zero? both-zero?)
+
+(defn shift-point
+  "Shifts the point [x y] to the right by inc-x and up by inc-y (where
+  these last two values may be negative)."
+  [inc-x inc-y [x y]]
+  [(+ x inc-x) (+ y inc-y)])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GRIDS
@@ -222,9 +228,29 @@
   linear search through all foodspots in collection coll."
   [foodspot-coords perc-radius coords]
   (some (fn [foodspot-coord]
-            (if (<= (m/distance-2D coords foodspot-coord) perc-radius)
+            (if (<= (um/distance-2D coords foodspot-coord) perc-radius)
               foodspot-coord))
         foodspot-coords))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; RADIALLY ARRANGED FOODSPOTS
+
+(defn radial-target-coords
+  "Create coordinates for num-targets that are evenly spaced radially
+  around the center of env (i.e. around [half-size, half-size]) at a
+  distance nomin/denom X half-size."
+  [env-size num-targets denom nomin]
+  (let [half-size (double (/ env-size 2))
+        distance-from-zero (* (/ nomin denom) half-size)
+        first-zero-tgt [distance-from-zero 0] ; east from origin--will be shifted later
+        directions (map (fn [n] (* um/pi2 (/ n num-targets)))
+                        (rest (range num-targets))) ; don't divide by zero
+        zero-targets (cons first-zero-tgt
+                           (map (fn [dir] (um/rotate dir first-zero-tgt))
+                                directions))
+        targets (map (partial shift-point half-size half-size)
+                     zero-targets)]
+    targets))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MISC UTILITY FUNCTIONS
