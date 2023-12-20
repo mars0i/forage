@@ -56,12 +56,21 @@
              ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; SETUP
+;; DEFINE SOME ENVIRONMENTS
+;; Each environment has six foodspots at the vertices of an equilateral hexagon.
+;; This approximates searching for a single foodspot, but is more efficient
+;; since one walk has a chance to find any one of the six, but the
+;; probability that such a walk would have found another one is very low.
 
 (def target-coords (mapv (partial f/radial-target-coords (params :env-size) 
                            targets-per-env 5)
                   (range 1 6))) ; five targets at 1/5, 2/5, 3/5, 4/5, 5/5 of distance to border
 
+;; Make the environments, and store them in a vecdtor.
+;; There are 5 envs, with indexes 0 through 4.
+;; (env-minimal seems to be a little more efficient than env-mason for six
+;; foodspots.  With a significantly larger number of foodspots, env-mason
+;; is probably more efficient.)
 (def minimal-envs (mapv envminimal/make-env target-coords))
 ;(def mason-envs (mapv (partial envmason/make-env (params :env-discretization) (params :env-size)) target-coords))
 
@@ -78,9 +87,13 @@
                                            200))
                                minimal-envs))
 
-  (oz/view! (minimal-env-plots 0))
+  (oz/view! (minimal-env-plots 0)) ; there are five envs, with indexes 0 through 4.
 )
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; DEFINE THE LOOK FN
 
 (defn make-unbounded-envminimal-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
@@ -97,8 +110,12 @@
 ;               (envmason/perc-foodspots-exactly env perc-radius x y))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MAKE THE EXPERIMENTS
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; DEFINE THE PRNG
 (def seed (r/make-seed))
 ;(def seed -1645093054649086646)
 (println "Using seed" seed)
@@ -106,35 +123,58 @@
 ;(def rng (r/make-well19937 seed))
 ;(clojure.repl/pst)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Functions that construct component walks
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; DEFINE COMPONENT WALKS
 
-;; Component distributions
+;; Probabilitry distributions for constructing component walks.  The last parameter is the Lévy mu value:
 (def mu1dist (r/make-mrg32k3a-powerlaw rng 1 1.1))
 (def mu15dist (r/make-mrg32k3a-powerlaw rng 1 1.5))
 (def mu2dist (r/make-mrg32k3a-powerlaw rng 1 2))
 (def mu3dist (r/make-mrg32k3a-powerlaw rng 1 3))
-;; I use mu=other values as well, but only using my older levy-experiments interface
+;; I may use mu=other values as well below, but only using my older levy-experiments interface
 
-;; Component walks
-(defn more-mu1-vecs [] 
-  (w/vecs-upto-len explore-segment-len (w/make-levy-vecs rng mu1dist 1 (params :trunclen))))
-(defn more-mu15-vecs [] 
+;; FINITE COMPONENT WALK FUNCTIONS
+;; Note that these are functions, and the random walks are different each time.
+
+;; LOCAL CLOSE EXAMINATION ("exploit") WALKS
+(def spiral (sp/unit-archimedean-spiral-vecs 2 0.1)) ; No need to regenerate this--it should be the same every time.
+
+(defn more-spiral-vecs
+  "Returns a spiral walk of length examine-segment-len."
+  []
+  (w/vecs-upto-len examine-segment-len spiral))
+
+(defn more-mu3-vecs
+  "Returns a random walk with exponent mu=3 of length examine-segment-len."
+  []
+  (w/vecs-upto-len examine-segment-len (w/make-levy-vecs rng mu3dist  1 (params :trunclen))))
+
+;; LONG-RANGE EXPLORATION RANDOM WALKSS:
+(defn more-mu1-vecs 
+  "Returns a random walk with exponent mu=1.1 of length explore-segment-len."
+  []
+  (w/vecs-upto-len explore-segment-len (w/make-levy-vecs rng mu1dist  1 (params :trunclen))))
+
+(defn more-mu15-vecs
+  "Returns a random walk with exponent mu=1.5 of length explore-segment-len."
+  []
   (w/vecs-upto-len explore-segment-len (w/make-levy-vecs rng mu15dist 1 (params :trunclen))))
-(defn more-mu2-vecs [] 
+
+(defn more-mu2-vecs
+  "Returns a random walk with exponent mu=2 of length explore-segment-len."
+  []
   (w/vecs-upto-len explore-segment-len (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
 
-(defn more-mu3-vecs [] 
-  (w/vecs-upto-len examine-segment-len (w/make-levy-vecs rng mu3dist  1 (params :trunclen))))
-(defn more-spiral-vecs []
-  (w/vecs-upto-len examine-segment-len (sp/unit-archimedean-spiral-vecs 2 0.1)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Functions that construct composite (and other) walks
+;; FUNCTIONS FOR CONSTRUCTING FINITE WALKS THAT MAY COMBINE DIFFERENT KINDS OF WALKS
 
+;; Doesn't use more-mu2-vecs because that is limited to
+;; examine-segment-len, total.  This extends the walk to maxpathlen.
 (defn mu2-vecs
   [maxpathlen]
-  (w/vecs-upto-len maxpathlen (more-mu2-vecs)))
+  (w/vecs-upto-len maxpathlen (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
+
+(def first-mu2-vecs (mu2-vecs (params :maxpathlen)))
 
 ;; composite mu=1.1 and mu=3 walk
 (defn composite-mu1-mu3-vecs
@@ -167,14 +207,6 @@
                    (apply concat
                           (interleave (repeatedly more-mu15-vecs)
                                       (repeatedly more-spiral-vecs)))))
-
-;; Doesn't use more-mu2-vecs because that is limited to
-;; examine-segment-len, total.  This extends the walk to maxpathlen.
-(defn mu2-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
-
-(def first-mu2-vecs (mu2-vecs (params :maxpathlen)))
 
 ;; TODO: TEST ME:
 ;; TODO: TEST ME:
