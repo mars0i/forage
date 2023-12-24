@@ -1,7 +1,4 @@
-;; Based on spiral26profiling, which was initially copied from spiral25profiling.clj, which features comparisons
-;; of env-single, env-minimal, and env-mason on single-target envs.
-;; This is similar, but uses six-target envs, as used in spiral24* and
-;; previous "spiral" namespaces.  Thus env-single is not used below.
+;; Experiments comparing composite random and random+spiral walks.
 (ns forage.experiment.spiral28
   (:require ;[criterium.core :as crit]
             ;[clj-async-profiler.core :as prof]
@@ -10,8 +7,8 @@
             [forage.core.food :as f]
             [forage.core.findfood :as ff]
             [forage.core.walks :as w]
-            [forage.core.env-minimal :as envminimal]
-            ;[forage.core.env-mason :as envmason]
+            [forage.core.env-minimal :as envminimal]  ; seems to be a little faster
+            ;[forage.core.env-mason :as envmason]     ;  than env-mason with six-target envs
             [utils.misc :as misc]
             [utils.math :as um]
             [utils.random :as r]
@@ -20,6 +17,10 @@
     ;(:import [clojure.lang IFn$DDO])
     )
 
+;; Based on spiral26profiling, which was initially copied from spiral25profiling.clj, 
+;; which features comparisons of env-single, env-minimal, and env-mason on 
+;; single-target envs. This is similar, but uses six-target envs, as used in spiral24* and
+;; previous "spiral" namespaces.  Thus env-single is not used below.
 
 (set! *warn-on-reflection* true)
 ;(set! *unchecked-math* :warn-on-boxed)
@@ -28,6 +29,7 @@
 
 (def homedir (System/getenv "HOME"))
 (def default-dirname (str homedir "/docs/src/data.foraging/forage/spiral28/"))
+(def basename (str default-dirname "spiral28_"))
 
 (def half-size  10000) ; half the full width of the env
 (def maxpathlen (* 1000 half-size)) ; max length of an entire continuous search path
@@ -40,16 +42,18 @@
 ;; (a) Search starts in a random initial direction
 ;; (b) Search starts exactly from init-loc (e.g. for destructive search)
 (def params (sorted-map ; sort so labels match values
+             :basename            basename
              :perc-radius         1.0  ; distance that an animal can "see" in searching for food
-             :powerlaw-min        1.0
+             :powerlaw-min        1.0  ; parameter to powerlaw random distributions
              :env-size            (* 2 half-size)
-             :env-discretization  5 ; for Continuous2D; see foodspot.clj
              :init-loc-fn         (constantly [half-size half-size])
-             :init-pad            nil ; if truthy, initial loc offset by this in rand dir
+             :init-pad            nil ; if truthy, initial loc offset by this in a random direction
              :maxpathlen          maxpathlen
+             :examine-segment-len examine-segment-len
+             :explore-segment-len explore-segment-len
              :trunclen            trunclen
-             :basename            (str default-dirname "spiral28_")
-             :look-eps            0.2 ; used with env-mason, not with env-minimal
+             ;:env-discretization  5 ; only need for env-mason (for Continuous2D--see foodspot.clj)
+             ;:look-eps            0.2 ; only needed for env-mason, not env-minimal
              :foodspot-coords-fn  envminimal/foodspot-coords
              :rpt-to-stdout?       true ; write-experiments writes to stdout only if true
              :save-to-files?       true ; write-experiments saves summary data to files only if true
@@ -62,6 +66,7 @@
 ;; since one walk has a chance to find any one of the six, but the
 ;; probability that such a walk would have found another one is very low.
 
+;; coordinates of targets/foodspots in different environments
 (def target-coords (mapv (partial f/radial-target-coords (params :env-size) 
                            targets-per-env 5)
                   (range 1 6))) ; five targets at 1/5, 2/5, 3/5, 4/5, 5/5 of distance to border
@@ -109,104 +114,123 @@
 ;    ^IFn$DDO (fn [^double x ^double y]
 ;               (envmason/perc-foodspots-exactly env perc-radius x y))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MAKE THE EXPERIMENTS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DEFINE THE PRNG
 (def seed (r/make-seed))
 ;(def seed -1645093054649086646)
 (println "Using seed" seed)
 (def rng (r/make-mrg32k3a seed))
 ;(def rng (r/make-well19937 seed))
-;(clojure.repl/pst)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; DEFINE COMPONENT WALKS
 
-;; Probabilitry distributions for constructing component walks.  The last parameter is the Lévy mu value:
+;; ------------------------------------------------
+;; PROBABILITY DISTRIBUTIONS FOR CONSTRUCTING RANDOM WALKS
+;; The last parameter is the Lévy mu value:
 (def mu1dist (r/make-mrg32k3a-powerlaw rng 1 1.1))
 (def mu15dist (r/make-mrg32k3a-powerlaw rng 1 1.5))
 (def mu2dist (r/make-mrg32k3a-powerlaw rng 1 2))
 (def mu3dist (r/make-mrg32k3a-powerlaw rng 1 3))
 ;; I may use mu=other values as well below, but only using my older levy-experiments interface
 
-;; FINITE COMPONENT WALK FUNCTIONS
-;; Note that these are functions, and the random walks are different each time.
+;; ------------------------------------------------
+;; THE (INFINITE) SPIRAL WALK
+;; No need to regenerate this--it should be the same every time.
+(def spiral (sp/unit-archimedean-spiral-vecs 2 0.1)) 
+(def spiral-max (w/vecs-upto-len (params :maxpathlen) spiral))
+(def spiral-examine (w/vecs-upto-len (params :examine-segment-len) spiral))
 
-;; LOCAL CLOSE EXAMINATION ("exploit") WALKS
-(def spiral (sp/unit-archimedean-spiral-vecs 2 0.1)) ; No need to regenerate this--it should be the same every time.
+;; ------------------------------------------------
+;; STANDALONE (NON-COMPONENT) WALKS
 
-(defn more-spiral-vecs
-  "Returns a spiral walk of length examine-segment-len."
-  []
-  (w/vecs-upto-len examine-segment-len spiral))
-
-(defn more-mu3-vecs
-  "Returns a random walk with exponent mu=3 of length examine-segment-len."
-  []
-  (w/vecs-upto-len examine-segment-len (w/make-levy-vecs rng mu3dist  1 (params :trunclen))))
-
-;; LONG-RANGE EXPLORATION RANDOM WALKSS:
-(defn more-mu1-vecs 
-  "Returns a random walk with exponent mu=1.1 of length explore-segment-len."
-  []
-  (w/vecs-upto-len explore-segment-len (w/make-levy-vecs rng mu1dist  1 (params :trunclen))))
-
-(defn more-mu15-vecs
-  "Returns a random walk with exponent mu=1.5 of length explore-segment-len."
-  []
-  (w/vecs-upto-len explore-segment-len (w/make-levy-vecs rng mu15dist 1 (params :trunclen))))
-
-(defn more-mu2-vecs
-  "Returns a random walk with exponent mu=2 of length explore-segment-len."
-  []
-  (w/vecs-upto-len explore-segment-len (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; FUNCTIONS FOR CONSTRUCTING FINITE WALKS THAT MAY COMBINE DIFFERENT KINDS OF WALKS
-
-;; Doesn't use more-mu2-vecs because that is limited to
-;; examine-segment-len, total.  This extends the walk to maxpathlen.
 (defn mu2-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
+  "Returns a random walk with exponent mu=2 of length (params :examine-segment-len)."
+  []
+  (w/vecs-upto-len (params :maxpathlen)
+                   (w/make-levy-vecs rng mu2dist 1 (params :trunclen))))
 
-(def first-mu2-vecs (mu2-vecs (params :maxpathlen)))
+(defn spiral-vecs
+  "Returns a spiral walk of length (params :maxpathlen)."
+  []
+  spiral-max)
+
+;; FINITE COMPONENT WALK FUNCTIONS
+;; Note that these are functions, so the *random* walks generated will be 
+;; different each time.  (There's no need to regenerate the spiral walks,
+;; as they are the same except for length.)
+
+;; ------------------------------------------------
+;; LOCAL CLOSE EXAMINATION ("exploit") WALKS
+
+(defn component-spiral-vecs
+  "Returns a spiral walk of length (params :examine-segment-len)."
+  []
+  spiral-examine)
+
+(defn component-mu3-vecs
+  "Returns a random walk with exponent mu=3 of length (params :examine-segment-len)."
+  []
+  (w/vecs-upto-len (params :examine-segment-len) (w/make-levy-vecs rng mu3dist  1 (params :trunclen))))
+
+;; ------------------------------------------------
+;; LONG-RANGE EXPLORATION RANDOM WALKS:
+
+(defn component-mu1-vecs 
+  "Returns a random walk with exponent mu=1.1 of length (params :explore-segment-len)."
+  []
+  (w/vecs-upto-len (params :explore-segment-len) (w/make-levy-vecs rng mu1dist 1 (params :trunclen))))
+
+(defn component-mu15-vecs
+  "Returns a random walk with exponent mu=1.5 of length (params :explore-segment-len)."
+  []
+  (w/vecs-upto-len (params :explore-segment-len) (w/make-levy-vecs rng mu15dist 1 (params :trunclen))))
+
+(defn component-mu2-vecs
+  "Returns a random walk with exponent mu=2 of length (params :explore-segment-len)."
+  []
+  (w/vecs-upto-len (params :explore-segment-len) (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; FUNCTIONS FOR CONSTRUCTING FINITE WALKS THAT COMBINE 
+;; DIFFERENT KINDS OF WALKS
 
 ;; composite mu=1.1 and mu=3 walk
 (defn composite-mu1-mu3-vecs
   [maxpathlen]
   (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
                    (apply concat
-                          (interleave (repeatedly more-mu1-vecs)
-                                      (repeatedly more-mu3-vecs)))))
+                          (interleave (repeatedly component-mu1-vecs)
+                                      (repeatedly component-mu3-vecs)))))
 
 ;; composite mu=1.5 and mu=3 walk
 (defn composite-mu15-mu3-vecs
   [maxpathlen]
   (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
                    (apply concat
-                          (interleave (repeatedly more-mu15-vecs)
-                                      (repeatedly more-mu3-vecs)))))
+                          (interleave (repeatedly component-mu15-vecs)
+                                      (repeatedly component-mu3-vecs)))))
 
 ;; composite mu=1.1 and spiral walk
 (defn composite-mu1-spiral-vecs
   [maxpathlen]
   (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
                    (apply concat
-                          (interleave (repeatedly more-mu1-vecs)
-                                      (repeatedly more-spiral-vecs)))))
+                          (interleave (repeatedly component-mu1-vecs)
+                                      (repeatedly component-spiral-vecs)))))
 
 ;; composite mu=1.5 and spiral walk
 (defn composite-mu15-spiral-vecs
   [maxpathlen]
   (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
                    (apply concat
-                          (interleave (repeatedly more-mu15-vecs)
-                                      (repeatedly more-spiral-vecs)))))
+                          (interleave (repeatedly component-mu15-vecs)
+                                      (repeatedly component-spiral-vecs)))))
 
 ;; TODO: TEST ME:
 ;; TODO: TEST ME:
