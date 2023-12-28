@@ -272,23 +272,12 @@
    ["spiral" "env4"] 'fixme
    })
 
-
-;; HOW TO BEST SUBSET A MAP?
-;; Not this:
-;; (map {"a" 1 "b" 2 "c" 3} ["a" "c"])
-;; Not this:
-;; (keep {:a 1, :b 2, :c 3} ["a" "c"])
-;; Maybe define the original structure as a vec, and then do something like:
-;; (into {} (subvec blah blah))
-;; Not this:
-;; (filter (fn [[k v]] (#{"a" "c"} k)) {"a" 1 "b" 2 "c" 3})
-;; But this is an option:
-;; (into {} (filter (fn [[k v]] (#{"a" "c"} k)) {"a" 1 "b" 2 "c" 3}))
-;; 
-;; Or maybe split it into different maps.
-
 ;; EXAMPLE USAGE:
 ;; (fr/walk-experiments params walk-fns-subset walks-per-fn label-seed)
+;; or more specifically, e.g.:
+;;(fr/walk-experiments params 
+;;                     (into (sorted-map) (select-keys walk-fns [["mu15" "env0"] ["mu15" "env1"] ["mu15" "env2"] ["mu15" "env3"] ["mu15" "env4"]]))
+;;                     walks-per-fn label-seed)
 (def walk-fns
   {
    ;; PURE RANDOM WALKS:
