@@ -1,6 +1,6 @@
 ;; Experiments comparing composite random and random+spiral walks.
 (ns forage.experiment.spiral28
-  (:require ;[criterium.core :as crit]
+  (:require [criterium.core :as crit]
             ;[clj-async-profiler.core :as prof]
             ;[clojure.math :as cmath]
             [forage.core.run :as fr]
@@ -138,6 +138,7 @@
 (def mu1dist (r/make-mrg32k3a-powerlaw rng 1 1.1))
 (def mu15dist (r/make-mrg32k3a-powerlaw rng 1 1.5))
 (def mu2dist (r/make-mrg32k3a-powerlaw rng 1 2))
+(def mu25dist (r/make-mrg32k3a-powerlaw rng 1 2.5))
 (def mu3dist (r/make-mrg32k3a-powerlaw rng 1 3))
 ;; I may use mu=other values as well below, but only using my older levy-experiments interface
 
@@ -151,11 +152,23 @@
 ;; ------------------------------------------------
 ;; STANDALONE (NON-COMPONENT) WALKS
 
+(defn mu15-vecs
+  "Returns a random walk with exponent mu=2 of length (params :examine-segment-len)."
+  []
+  (w/vecs-upto-len (params :maxpathlen)
+                   (w/make-levy-vecs rng mu15dist 1 (params :trunclen))))
+
 (defn mu2-vecs
   "Returns a random walk with exponent mu=2 of length (params :examine-segment-len)."
   []
   (w/vecs-upto-len (params :maxpathlen)
                    (w/make-levy-vecs rng mu2dist 1 (params :trunclen))))
+
+(defn mu25-vecs
+  "Returns a random walk with exponent mu=2 of length (params :examine-segment-len)."
+  []
+  (w/vecs-upto-len (params :maxpathlen)
+                   (w/make-levy-vecs rng mu25dist 1 (params :trunclen))))
 
 (defn spiral-vecs
   "Returns a spiral walk of length (params :maxpathlen)."
@@ -234,17 +247,72 @@
                           (interleave (repeatedly component-mu15-vecs)
                                       (repeatedly component-spiral-vecs)))))
 
-;; TODO: TEST ME:
-;; TODO: TEST ME:
-(defn straight-path [init-loc] [init-loc [(params :maxpathlen) (init-loc 1)]])
+(comment
 
-(def straight-walk-fns
-  {"straight-env0" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (look-fns 0) "IGNORED" (straight-path init-loc)))
-   "straight-env1" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (look-fns 1) "IGNORED" (straight-path init-loc)))
-   "straight-env2" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (look-fns 2) "IGNORED" (straight-path init-loc)))
-   "straight-env3" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (look-fns 3) "IGNORED" (straight-path init-loc)))
-   "straight-env4" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (look-fns 4) "IGNORED" (straight-path init-loc)))})
+  ;; PURE SPIRAL WALKS
+  ;; Separate these from other walks because they only need to run once each.
+  (def spiral-max-walk-fns
+    {
+     ["spiral" "env0"] 'fixme
+     ["spiral" "env1"] 'fixme
+     ["spiral" "env2"] 'fixme
+     ["spiral" "env3"] 'fixme
+     ["spiral" "env4"] 'fixme
+     })
 
+  (def walk-fns
+    {
+     ;; PURE RANDOM WALKS:
+
+     ["mu15" "env0"] 'fixme
+     ["mu15" "env1"] 'fixme
+     ["mu15" "env2"] 'fixme
+     ["mu15" "env3"] 'fixme
+     ["mu15" "env4"] 'fixme
+
+     ["mu2" "env0"] 'fixme
+     ["mu2" "env1"] 'fixme
+     ["mu2" "env2"] 'fixme
+     ["mu2" "env3"] 'fixme
+     ["mu2" "env4"] 'fixme
+
+     ["mu25" "env0"] 'fixme
+     ["mu25" "env1"] 'fixme
+     ["mu25" "env2"] 'fixme
+     ["mu25" "env3"] 'fixme
+     ["mu25" "env4"] 'fixme
+
+     ;; COMPOSITE RANDOM WALKS:
+
+     ["mu1-mu3" "env0"] 'fixme
+     ["mu1-mu3" "env1"] 'fixme
+     ["mu1-mu3" "env2"] 'fixme
+     ["mu1-mu3" "env3"] 'fixme
+     ["mu1-mu3" "env4"] 'fixme
+
+     ["mu15-mu3" "env0"] 'fixme
+     ["mu15-mu3" "env1"] 'fixme
+     ["mu15-mu3" "env2"] 'fixme
+     ["mu15-mu3" "env3"] 'fixme
+     ["mu15-mu3" "env4"] 'fixme
+
+     ;; COMPOSITE RANDOM-SPIRAL WALKS:
+
+     ["mu1-spiral" "env0"] 'fixme
+     ["mu1-spiral" "env1"] 'fixme
+     ["mu1-spiral" "env2"] 'fixme
+     ["mu1-spiral" "env3"] 'fixme
+     ["mu1-spiral" "env4"] 'fixme
+
+     ["mu15-spiral" "env0"] 'fixme
+     ["mu15-spiral" "env1"] 'fixme
+     ["mu15-spiral" "env2"] 'fixme
+     ["mu15-spiral" "env3"] 'fixme
+     ["mu15-spiral" "env4"] 'fixme
+
+     })
+
+)
 
 (comment
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
