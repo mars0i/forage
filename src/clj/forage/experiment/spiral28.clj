@@ -98,7 +98,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; DEFINE THE LOOK FN
+;; DEFINE THE LOOK FNS
 
 (defn make-unbounded-envminimal-look-fn
   "Make a non-toroidal look-fn from env.  Searches that leave the core env
@@ -113,6 +113,8 @@
 ;  (let [^double perc-radius (params :perc-radius)]
 ;    ^IFn$DDO (fn [^double x ^double y]
 ;               (envmason/perc-foodspots-exactly env perc-radius x y))))
+
+(def look-fns (mapv make-unbounded-envminimal-look-fn minimal-envs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MAKE THE EXPERIMENTS
@@ -235,12 +237,13 @@
 ;; TODO: TEST ME:
 ;; TODO: TEST ME:
 (defn straight-path [init-loc] [init-loc [(params :maxpathlen) (init-loc 1)]])
+
 (def straight-walk-fns
-  {"straight-env0" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 0)) "IGNORED" (straight-path init-loc)))
-   "straight-env1" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 1)) "IGNORED" (straight-path init-loc)))
-   "straight-env2" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 2)) "IGNORED" (straight-path init-loc)))
-   "straight-env3" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 3)) "IGNORED" (straight-path init-loc)))
-   "straight-env4" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (make-unbounded-envminimal-look-fn (minimal-envs 4)) "IGNORED" (straight-path init-loc)))})
+  {"straight-env0" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (look-fns 0) "IGNORED" (straight-path init-loc)))
+   "straight-env1" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (look-fns 1) "IGNORED" (straight-path init-loc)))
+   "straight-env2" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (look-fns 2) "IGNORED" (straight-path init-loc)))
+   "straight-env3" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (look-fns 3) "IGNORED" (straight-path init-loc)))
+   "straight-env4" (fn [init-loc] (ff/foodwalk envminimal/find-in-seg (look-fns 4) "IGNORED" (straight-path init-loc)))})
 
 
 (comment
