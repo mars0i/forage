@@ -272,12 +272,32 @@
    ["spiral" "env4"] 'fixme
    })
 
-;; EXAMPLE USAGE:
-;; (fr/walk-experiments params walk-fns-subset walks-per-fn label-seed)
-;; or more specifically, e.g.:
-;;(fr/walk-experiments params 
-;;                     (into (sorted-map) (select-keys walk-fns [["mu15" "env0"] ["mu15" "env1"] ["mu15" "env2"] ["mu15" "env3"] ["mu15" "env4"]]))
-;;                     walks-per-fn label-seed)
+(comment
+  ;; EXAMPLE USAGE of walk-fns below:
+  (fr/walk-experiments params walk-fns-subset walks-per-fn label-seed)
+  ;; or more specifically, e.g.:
+  (def some-walks (select-keys walk-fns
+                                     [["mu15" "env0"] ["mu15" "env1"] ["mu15" "env2"]
+                                      ["mu15" "env3"] ["mu15" "env4"]]))
+  ;; or to make sure they appear in order:
+  (def some-walks (into (sorted-map)
+                        (select-keys walk-fns
+                                     [["mu2" "env0"] ["mu2" "env1"] ["mu2" "env2"]
+                                      ["mu2" "env3"] ["mu2" "env4"]])))
+  ;; (Due to Clojure's flexible map implementations, they'll probably be in
+  ;; order if the result is small, but maybe not if it's too large.)
+
+  (def walks-per-fn 2)
+  ;; And then:
+  (fr/walk-experiments params some-walks walks-per-fn seed)
+
+  ;; tests
+  (require '[tech.v3.dataset :as ds] '[tech.v3.dataset.print :as dsp])
+  (def nippyname (str basename "4327107315357745082data.nippy"))
+  (def data (ds/->dataset nippyname))
+  (ds/descriptive-stats data)
+)
+
 (def walk-fns
   {
    ;; PURE RANDOM WALKS:
