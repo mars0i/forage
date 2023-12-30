@@ -12,16 +12,45 @@
 (set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
-;; NOTE Advantages of starting with mathematical vectors (direction,
-;; length) pairs over coordinates (x, y location pairs) are:
+;; NOTE ON RANDOM WALK TERMINOLOGY AND TYPES:
+;; 
+;; There are two kinds of random sequences of pairs of reals below.
+;; sequences of "vectors", and sequences of "walk stops" or coordinates.
+;;
+;; By "vector", I mean a mathematical vector specified by a direction
+;; in radians and a length.  Sometimes I refer to these as "mathematical
+;; vectors" to distinguish them from Clojure vectors, i.e. one kind
+;; of Clojure sequential data structure.  (Thus we can make a Clojure
+;; vector of "mathematical" vectors.)
+;;
+;; A walk stop is a pair of coordinates representing a location that is
+;; an endpoint of a line segment that is a component of a (usually random)
+;; walk.  It's the location where an animal "stops" and might turn in a new
+;; direction.
+;;
+;; A sequences of stops can be constructed from an initial location (a
+;; coordinate pair) and a sequence of mathematical vectors.  The stops
+;; after the first one are the result of adding each vector to the
+;; preceding stop.
+;;
+;; Advantages of starting with mathematical vectors (direction,
+;; length) pairs over stops/coordinates (x, y location pairs) are:
+;;
 ;;   - It's easier to calculate overall length, since the second element
 ;;     of every pair is already a length.
-;;   - It's easier to paste walks together to make composite walks.
-;;     If you start with sequences of coordinates, you have to shift
-;;     them all with the value of the last point in the previous walk
-;;     in the sequence.  If you start from math-vectors, you can just
-;;     concatenate the sequences of vectors for the different subwalks,
-;;     and then create the coordinate pair sequences as you normally would.
+;;
+;;   - It's easier to paste different kinds of walks together to make 
+;;     composite walks. (If you start with sequences of coordinates, you 
+;;     have to shift them all with the value of the last point in the 
+;;     previous walk in the sequence.  If you start from math-vectors,
+;;     you can just concatenate the sequences of vectors for the different
+;;     subwalks, and then create the coordinate pair sequences as you 
+;;     normally would.)
+;;
+;; [btw this is a place where a statically typed language would be
+;; beneficial, since in Clojure it's easy to mix up the two kinds of
+;; coordinates.  Umm, I suppose I could define records or tagged maps
+;; or something like that to kludge it in Clojure.]
 
 (defn step-vector-fn
   "Returns a function of no arguments that returns a random mathematical 
