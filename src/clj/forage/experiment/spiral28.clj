@@ -126,7 +126,7 @@
   resulting function calls findfood/foodwalk with envmin/find-in-seg
   and look-fn, and constructs a walk from the mathematical vectors in
   the finite sequence vecs."
-  [look-fn vecs]
+  [look-fn vecs] ; FIXME this is causing the vecs to be evalled during this call rather than each time the returned fn is run (?)
   (fn [init-loc]
     (ff/foodwalk envmin/find-in-seg
                  look-fn
