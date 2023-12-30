@@ -120,11 +120,21 @@
   wander back.)"
   (mapv make-envmin-look-fn envs))
 
-(defn walk-find 
-  "Defined as (partial ff/foodwalk envmin/find-in-seg)), to avoid repeating
-  this phrase over and over."
-  [look-fn stop-walk]
-  (ff/foodwalk envmin/find-in-seg look-fn :ignored-eps stop-walk))
+(defn make-walk-fn
+  "Create a walk function of an initial location. This function can be
+  passed to run/walk-experiments and then run/run-and-collect.  The
+  resulting function calls findfood/foodwalk with envmin/find-in-seg
+  and look-fn, and constructs a walk from the mathematical vectors in
+  the finite sequence vecs."
+  [look-fn vecs]
+  (fn [init-loc]
+    (ff/foodwalk envmin/find-in-seg
+                 look-fn
+                 :ignored-eps
+                 (w/walk-stops init-loc vecs))))
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; MAKE THE EXPERIMENTS
@@ -167,20 +177,20 @@
 
 (defn mu15-vecs
   "Returns a random walk with exponent mu=2 of length (params :maxpathlen)."
-  []
-  (w/vecs-upto-len (params :maxpathlen)
+  [maxpathlen]
+  (w/vecs-upto-len maxpathlen
                    (w/make-levy-vecs rng mu15dist 1 (params :trunclen))))
 
 (defn mu2-vecs
   "Returns a random walk with exponent mu=2 of length (params :maxpathlen)."
-  []
-  (w/vecs-upto-len (params :maxpathlen)
+  [maxpathlen]
+  (w/vecs-upto-len maxpathlen
                    (w/make-levy-vecs rng mu2dist 1 (params :trunclen))))
 
 (defn mu25-vecs
   "Returns a random walk with exponent mu=2 of length (params :maxpathlen)."
-  []
-  (w/vecs-upto-len (params :maxpathlen)
+  [maxpathlen]
+  (w/vecs-upto-len maxpathlen
                    (w/make-levy-vecs rng mu25dist 1 (params :trunclen))))
 
 (defn spiral-vecs
@@ -305,57 +315,61 @@
   (take 45 (w/walk-stops [half-size half-size] (mu15-vecs)))
 )
 
+
+;; FIXME I think that with this setup, rather than in the previous version,
+;; I'm generating the random walks once during the evaluation of defs, and never again.
+;; This is suggested by who long it's taking to eval the file.
 (def walk-fns
-  {
-   ;; PURE RANDOM WALKS:
+  (let [maxpathlen (params :maxpathlen)]
+    {;; PURE RANDOM WALKS:
 
-   ["mu15" "env0"] (fn [init-loc] (walk-find (look-fns 0) (w/walk-stops init-loc (mu15-vecs))))
-   ["mu15" "env1"] (fn [init-loc] (walk-find (look-fns 1) (w/walk-stops init-loc (mu15-vecs))))
-   ["mu15" "env2"] (fn [init-loc] (walk-find (look-fns 2) (w/walk-stops init-loc (mu15-vecs))))
-   ["mu15" "env3"] (fn [init-loc] (walk-find (look-fns 3) (w/walk-stops init-loc (mu15-vecs))))
-   ["mu15" "env4"] (fn [init-loc] (walk-find (look-fns 4) (w/walk-stops init-loc (mu15-vecs))))
+     ["mu15" "env0"] (make-walk-fn (look-fns 0) (mu15-vecs maxpathlen))
+     ["mu15" "env1"] (make-walk-fn (look-fns 1) (mu15-vecs maxpathlen))
+     ["mu15" "env2"] (make-walk-fn (look-fns 2) (mu15-vecs maxpathlen))
+     ["mu15" "env3"] (make-walk-fn (look-fns 3) (mu15-vecs maxpathlen))
+     ["mu15" "env4"] (make-walk-fn (look-fns 4) (mu15-vecs maxpathlen))
 
-   ["mu2" "env0"] (fn [init-loc] (walk-find (look-fns 0) (w/walk-stops init-loc (mu2-vecs))))
-   ["mu2" "env1"] (fn [init-loc] (walk-find (look-fns 1) (w/walk-stops init-loc (mu2-vecs))))
-   ["mu2" "env2"] (fn [init-loc] (walk-find (look-fns 2) (w/walk-stops init-loc (mu2-vecs))))
-   ["mu2" "env3"] (fn [init-loc] (walk-find (look-fns 3) (w/walk-stops init-loc (mu2-vecs))))
-   ["mu2" "env4"] (fn [init-loc] (walk-find (look-fns 4) (w/walk-stops init-loc (mu2-vecs))))
+     ["mu2"  "env0"] (make-walk-fn (look-fns 0) (mu2-vecs maxpathlen))
+     ["mu2"  "env1"] (make-walk-fn (look-fns 1) (mu2-vecs maxpathlen))
+     ["mu2"  "env2"] (make-walk-fn (look-fns 2) (mu2-vecs maxpathlen))
+     ["mu2"  "env3"] (make-walk-fn (look-fns 3) (mu2-vecs maxpathlen))
+     ["mu2"  "env4"] (make-walk-fn (look-fns 4) (mu2-vecs maxpathlen))
 
-   ["mu25" "env0"] (fn [init-loc] (walk-find (look-fns 0) (w/walk-stops init-loc (mu25-vecs))))
-   ["mu25" "env1"] (fn [init-loc] (walk-find (look-fns 1) (w/walk-stops init-loc (mu25-vecs))))
-   ["mu25" "env2"] (fn [init-loc] (walk-find (look-fns 2) (w/walk-stops init-loc (mu25-vecs))))
-   ["mu25" "env3"] (fn [init-loc] (walk-find (look-fns 3) (w/walk-stops init-loc (mu25-vecs))))
-   ["mu25" "env4"] (fn [init-loc] (walk-find (look-fns 4) (w/walk-stops init-loc (mu25-vecs))))
+     ["mu25" "env0"] (make-walk-fn (look-fns 0) (mu25-vecs maxpathlen))
+     ["mu25" "env1"] (make-walk-fn (look-fns 1) (mu25-vecs maxpathlen))
+     ["mu25" "env2"] (make-walk-fn (look-fns 2) (mu25-vecs maxpathlen))
+     ["mu25" "env3"] (make-walk-fn (look-fns 3) (mu25-vecs maxpathlen))
+     ["mu25" "env4"] (make-walk-fn (look-fns 4) (mu25-vecs maxpathlen))
 
-   ;; COMPOSITE RANDOM WALKS:
+     ;; COMPOSITE RANDOM WALKS:
 
-   ["mu1-mu3" "env0"] (fn [init-loc] (walk-find (look-fns 0) (w/walk-stops init-loc (composite-mu1-mu3-vecs))))
-   ["mu1-mu3" "env1"] (fn [init-loc] (walk-find (look-fns 1) (w/walk-stops init-loc (composite-mu1-mu3-vecs))))
-   ["mu1-mu3" "env2"] (fn [init-loc] (walk-find (look-fns 2) (w/walk-stops init-loc (composite-mu1-mu3-vecs))))
-   ["mu1-mu3" "env3"] (fn [init-loc] (walk-find (look-fns 3) (w/walk-stops init-loc (composite-mu1-mu3-vecs))))
-   ["mu1-mu3" "env4"] (fn [init-loc] (walk-find (look-fns 4) (w/walk-stops init-loc (composite-mu1-mu3-vecs))))
+     ["mu1-mu3" "env0"] (make-walk-fn (look-fns 0) (composite-mu1-mu3-vecs maxpathlen))
+     ["mu1-mu3" "env1"] (make-walk-fn (look-fns 1) (composite-mu1-mu3-vecs maxpathlen))
+     ["mu1-mu3" "env2"] (make-walk-fn (look-fns 2) (composite-mu1-mu3-vecs maxpathlen))
+     ["mu1-mu3" "env3"] (make-walk-fn (look-fns 3) (composite-mu1-mu3-vecs maxpathlen))
+     ["mu1-mu3" "env4"] (make-walk-fn (look-fns 4) (composite-mu1-mu3-vecs maxpathlen))
 
-   ["mu15-mu3" "env0"] (fn [init-loc] (walk-find (look-fns 0) (w/walk-stops init-loc (composite-mu15-mu3-vecs))))
-   ["mu15-mu3" "env1"] (fn [init-loc] (walk-find (look-fns 1) (w/walk-stops init-loc (composite-mu15-mu3-vecs))))
-   ["mu15-mu3" "env2"] (fn [init-loc] (walk-find (look-fns 2) (w/walk-stops init-loc (composite-mu15-mu3-vecs))))
-   ["mu15-mu3" "env3"] (fn [init-loc] (walk-find (look-fns 3) (w/walk-stops init-loc (composite-mu15-mu3-vecs))))
-   ["mu15-mu3" "env4"] (fn [init-loc] (walk-find (look-fns 4) (w/walk-stops init-loc (composite-mu15-mu3-vecs))))
+     ["mu15-mu3" "env0"] (make-walk-fn (look-fns 0) (composite-mu15-mu3-vecs maxpathlen))
+     ["mu15-mu3" "env1"] (make-walk-fn (look-fns 1) (composite-mu15-mu3-vecs maxpathlen))
+     ["mu15-mu3" "env2"] (make-walk-fn (look-fns 2) (composite-mu15-mu3-vecs maxpathlen))
+     ["mu15-mu3" "env3"] (make-walk-fn (look-fns 3) (composite-mu15-mu3-vecs maxpathlen))
+     ["mu15-mu3" "env4"] (make-walk-fn (look-fns 4) (composite-mu15-mu3-vecs maxpathlen))
 
-   ;; COMPOSITE RANDOM-SPIRAL WALKS:
+     ;; COMPOSITE RANDOM-SPIRAL WALKS:
 
-   ["mu1-spiral" "env0"] (fn [init-loc] (walk-find (look-fns 0) (w/walk-stops init-loc (composite-mu1-spiral-vecs))))
-   ["mu1-spiral" "env1"] (fn [init-loc] (walk-find (look-fns 1) (w/walk-stops init-loc (composite-mu1-spiral-vecs))))
-   ["mu1-spiral" "env2"] (fn [init-loc] (walk-find (look-fns 2) (w/walk-stops init-loc (composite-mu1-spiral-vecs))))
-   ["mu1-spiral" "env3"] (fn [init-loc] (walk-find (look-fns 3) (w/walk-stops init-loc (composite-mu1-spiral-vecs))))
-   ["mu1-spiral" "env4"] (fn [init-loc] (walk-find (look-fns 4) (w/walk-stops init-loc (composite-mu1-spiral-vecs))))
+     ["mu1-spiral" "env0"] (make-walk-fn (look-fns 0) (composite-mu1-spiral-vecs maxpathlen))
+     ["mu1-spiral" "env1"] (make-walk-fn (look-fns 1) (composite-mu1-spiral-vecs maxpathlen))
+     ["mu1-spiral" "env2"] (make-walk-fn (look-fns 2) (composite-mu1-spiral-vecs maxpathlen))
+     ["mu1-spiral" "env3"] (make-walk-fn (look-fns 3) (composite-mu1-spiral-vecs maxpathlen))
+     ["mu1-spiral" "env4"] (make-walk-fn (look-fns 4) (composite-mu1-spiral-vecs maxpathlen))
 
-   ["mu15-spiral" "env0"] (fn [init-loc] (walk-find (look-fns 0) (w/walk-stops init-loc (composite-mu15-spiral-vecs))))
-   ["mu15-spiral" "env1"] (fn [init-loc] (walk-find (look-fns 1) (w/walk-stops init-loc (composite-mu15-spiral-vecs))))
-   ["mu15-spiral" "env2"] (fn [init-loc] (walk-find (look-fns 2) (w/walk-stops init-loc (composite-mu15-spiral-vecs))))
-   ["mu15-spiral" "env3"] (fn [init-loc] (walk-find (look-fns 3) (w/walk-stops init-loc (composite-mu15-spiral-vecs))))
-   ["mu15-spiral" "env4"] (fn [init-loc] (walk-find (look-fns 4) (w/walk-stops init-loc (composite-mu15-spiral-vecs))))
+     ["mu15-spiral" "env0"] (make-walk-fn (look-fns 0) (composite-mu15-spiral-vecs maxpathlen))
+     ["mu15-spiral" "env1"] (make-walk-fn (look-fns 1) (composite-mu15-spiral-vecs maxpathlen))
+     ["mu15-spiral" "env2"] (make-walk-fn (look-fns 2) (composite-mu15-spiral-vecs maxpathlen))
+     ["mu15-spiral" "env3"] (make-walk-fn (look-fns 3) (composite-mu15-spiral-vecs maxpathlen))
+     ["mu15-spiral" "env4"] (make-walk-fn (look-fns 4) (composite-mu15-spiral-vecs maxpathlen))
 
-   })
+    }))
 
 (comment
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
