@@ -206,6 +206,10 @@
                              nil))
                (conj lengths (ff/path-until-found-length fw)))))))
 
+(defn bool-to-int
+  "Returns 1 if x is truthy, or 0 if it's falsey."
+  [x]
+  (if x 1 0))
 
 ;; NEW, GENERALIZED VERSION OF leyv-experiments.
 ;; Generalized for any kind of walk, not just Levy walks.
@@ -305,10 +309,8 @@
                            walks-per-fn))
      ;; MAIN LOOP THROUGH WALK-FNS AND INIT-DIRS:
      ;; Keys are pairs with strings for type of walk, and env.
-     ;(prn (@data$ :found)) ; DEBUG
      (doseq [[walk-name env-name :as walk-key] (keys walk-fns)  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
-       ;(prn walk-name env-name walk-key) ; DEBUG
        (when rpt? (cl-format true "~{~c~}group ~d [walk-fn ~a, init-dir ~a] ... " nil (swap! iter-num$ inc) walk-name init-dir)  ; ~{~c~} means stuff all chars (~c) in sequence arg here
                   (flush))
        (when (and save? rng) (r/write-from-rng rng (str base-state-filename walk-name "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin")))
@@ -317,27 +319,25 @@
              [n-segments lengths found] (run-and-collect walk-fn init-loc-fn
                                                          (params :foodspot-coords-fn)
                                                          walks-per-fn)
-             found-counts (map count found)
-             ;; old stats:
+             found-counts (map bool-to-int found)
              n-found (apply + found-counts) ; old version: n-found (count (keep identity found))
              total-length (reduce + lengths)
              ;; TODO should maybe go away in the future:
              efficiency (if (zero? total-length) ##Inf (/ n-found total-length))] ; lengths start as doubles and remain so--this is double div
          (when rpt? (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-fn-digits n-found efficiency)) ; walks-per-fn digits makes num found same width
-         ;; New version of data recording:
          (when save?
            (swap! data$ update :found into found-counts)
            (swap! data$ update :length into lengths)
            (swap! data$ update :walk into (repeat walks-per-fn walk-name))
            (swap! data$ update :env into (repeat walks-per-fn env-name)))
-         ;(prn n-found (@data$ :found)) ; DEBUG
          ;; Old version of data recording:
          (swap! found-coords$ conj found)
          (swap! csvdata$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))
      ;; DONE WITH EXPERIMENTS, NOW WRITE AND RETURN DATA:
-     (when save? (ds/write! (ds/->dataset @data$) data-filename))
-     (when save? (csv/spit-csv csv-data-filename @csvdata$)) ; write out summary data
-     (when (and save? rng) (r/write-from-rng rng (str base-state-filename "_end" ".bin"))) ; save PRNG state after all runs are done
+     (when save?; write out summary data
+       (ds/write! (ds/->dataset @data$) data-filename)
+       (csv/spit-csv csv-data-filename @csvdata$)
+       (when rng (r/write-from-rng rng (str base-state-filename "_end" ".bin"))))  ; save PRNG state after all runs are done
      (when rpt? (println " done."))
      {:data @csvdata$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
