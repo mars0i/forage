@@ -295,7 +295,7 @@
                                                            (cons (str "\"" runs-label "\"") ; keep Excel from making it a float
                                                                  (vals sorted-params)))))
          ;; Old data stru [formerly data$] for writing simple csv table [TODO: may go away in future]:
-         csvdata$ (atom (when save? (append-labels (into ["initial dir" "walk-fn" "segments"
+         csvdata$ (atom (when save? (append-labels (into ["initial dir" "walk-fn" "env-name" "segments"
                                                        "found" "efficency" "total path len"]
                                                       path-labels))))
          data$ (atom (when save? {:env nil :walk nil :length  [] :found []})) ; start with a dataset instead of map?
@@ -326,13 +326,13 @@
              efficiency (if (zero? total-length) ##Inf (/ n-found total-length))] ; lengths start as doubles and remain so--this is double div
          (when rpt? (cl-format true "num found = ~vd, efficiency = ~f\n" walks-per-fn-digits n-found efficiency)) ; walks-per-fn digits makes num found same width
          (when save?
-           (swap! data$ update :found into found-counts)
+           (swap! data$ update :found into found-counts) ; FIXME These are in reverse order of env
            (swap! data$ update :length into lengths)
            (swap! data$ update :walk into (repeat walks-per-fn walk-name))
-           (swap! data$ update :env into (repeat walks-per-fn env-name)))
+           (swap! data$ update :env into (repeat walks-per-fn env-name)))  ; FIXME These are in reverse order of found
          ;; Old version of data recording:
          (swap! found-coords$ conj found)
-         (swap! csvdata$ conj (into [init-dir walk-name n-segments n-found efficiency total-length] lengths))))
+         (swap! csvdata$ conj (into [init-dir walk-name env-name n-segments n-found efficiency total-length] lengths))))
      ;; DONE WITH EXPERIMENTS, NOW WRITE AND RETURN DATA:
      (when save?; write out summary data
        (ds/write! (ds/->dataset @data$) data-filename)
@@ -340,6 +340,17 @@
        (when rng (r/write-from-rng rng (str base-state-filename "_end" ".bin"))))  ; save PRNG state after all runs are done
      (when rpt? (println " done."))
      {:data @csvdata$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
+
+(comment
+  (def yo (atom {:env [] :found []}))
+  (swap! yo update :found into (range 0 3))
+  (swap! yo update :env into (repeat 3 "env0"))
+  (swap! yo update :found into (range 3 6))
+  (swap! yo update :env into (repeat 3 "env1"))
+  (swap! yo update :found into (range 6 9))
+  (swap! yo update :env into (repeat 3 "env2"))
+  (deref yo)
+)
 
 (defn levy-experiments
   "DEPRECATED: For new code use walk-experiments.
