@@ -287,9 +287,6 @@
 
 
 
-;; FIXME Something is wrong: The env4 spiral walk is finding *two* foodspots.
-;; That shouldn't happen.
-;; (The others are finding none, which makes sense.)
 ;; PURE SPIRAL WALKS
 ;; Separate these from other walks because they only need to run once each.
 ;; EXAMPLE USAGE:
@@ -364,15 +361,12 @@
     }))
 
 (comment
-  (def walks-per-fn 20)
+  (def walks-per-fn 4)
 
 
   (def yo (fr/walk-experiments params 
-                               (select-keys spiral-walk-fns [["spiral" "env0"]])
+                               spiral-walk-fns ; (select-keys spiral-walk-fns [["spiral" "env0"]])
                                walks-per-fn seed))
-
-  (def ya [[12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0]])
-  (count ya)
 
   (def some-walks
     ;(into (sorted-map) ; this line is optional; in large submaps, the experiments might not be in order.
