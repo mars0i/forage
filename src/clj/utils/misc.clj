@@ -1,7 +1,8 @@
 (ns utils.misc
-  (:require [criterium.core :as crit]
+  ;(:require ;[criterium.core :as crit]
             ;[clj-async-profiler.core :as prof]
-  ))
+  ;)
+  )
 
 (defn set-pp-width 
   "Sets width for pretty-printing with pprint and pp."

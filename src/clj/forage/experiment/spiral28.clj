@@ -1,6 +1,6 @@
 ;; Experiments comparing composite random and random+spiral walks.
 (ns forage.experiment.spiral28
-  (:require [criterium.core :as crit]
+  (:require ;[criterium.core :as crit]
             ;[clj-async-profiler.core :as prof]
             ;[clojure.math :as cmath]
             [forage.core.run :as fr]
@@ -120,18 +120,19 @@
   wander back.)"
   (mapv make-envmin-look-fn envs))
 
-(defn make-walk-fn
-  "Create a walk function of an initial location. This function can be
+(defn make-foodwalk-fn
+  "Create a walk function expects an initial location, a coordinate pair, and
+  returns a sequence of walk-stops . This function can be
   passed to run/walk-experiments and then run/run-and-collect.  The
   resulting function calls findfood/foodwalk with envmin/find-in-seg
   and look-fn, and constructs a walk from the mathematical vectors in
   the finite sequence vecs."
-  [look-fn vecs] ; FIXME this is causing the vecs to be evalled during this call rather than each time the returned fn is run (?)
+  [look-fn vecs-gen maxlen] ; FIXME this is causing the vecs to be evalled during this call rather than each time the returned fn is run (?)
   (fn [init-loc]
     (ff/foodwalk envmin/find-in-seg
                  look-fn
                  :ignored-eps
-                 (w/walk-stops init-loc vecs))))
+                 (w/walk-stops init-loc (vecs-gen maxlen)))))
 
 
 
@@ -175,25 +176,25 @@
 ;; ------------------------------------------------
 ;; STANDALONE (NON-COMPONENT) WALKS
 
-(defn mu15-vecs
-  "Returns a random walk with exponent mu=2 of length (params :maxpathlen)."
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen
+(defn mu15-vecs-gen
+  "Returns a random walk with exponent mu=2 of length maxlen."
+  [maxlen]
+  (w/vecs-upto-len maxlen
                    (w/make-levy-vecs rng mu15dist 1 (params :trunclen))))
 
-(defn mu2-vecs
-  "Returns a random walk with exponent mu=2 of length (params :maxpathlen)."
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen
+(defn mu2-vecs-gen
+  "Returns a random walk with exponent mu=2 of length maxlen."
+  [maxlen]
+  (w/vecs-upto-len maxlen
                    (w/make-levy-vecs rng mu2dist 1 (params :trunclen))))
 
-(defn mu25-vecs
-  "Returns a random walk with exponent mu=2 of length (params :maxpathlen)."
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen
+(defn mu25-vecs-gen
+  "Returns a random walk with exponent mu=2 of length maxlen."
+  [maxlen]
+  (w/vecs-upto-len maxlen
                    (w/make-levy-vecs rng mu25dist 1 (params :trunclen))))
 
-(defn spiral-vecs
+(defn spiral-vecs-gen
   "Returns a spiral walk of length (params :maxpathlen)."
   []
   spiral-max)
@@ -206,12 +207,12 @@
 ;; ------------------------------------------------
 ;; LOCAL CLOSE EXAMINATION ("exploit") WALKS
 
-(defn component-spiral-vecs
+(defn component-spiral-vecs-gen
   "Returns a spiral walk of length (params :examine-segment-len)."
   []
   spiral-examine)
 
-(defn component-mu3-vecs
+(defn component-mu3-vecs-gen
   "Returns a random walk with exponent mu=3 of length (params :examine-segment-len)."
   []
   (w/vecs-upto-len (params :examine-segment-len) (w/make-levy-vecs rng mu3dist  1 (params :trunclen))))
@@ -219,17 +220,17 @@
 ;; ------------------------------------------------
 ;; LONG-RANGE EXPLORATION RANDOM WALKS:
 
-(defn component-mu1-vecs 
+(defn component-mu1-vecs-gen 
   "Returns a random walk with exponent mu=1.1 of length (params :explore-segment-len)."
   []
   (w/vecs-upto-len (params :explore-segment-len) (w/make-levy-vecs rng mu1dist 1 (params :trunclen))))
 
-(defn component-mu15-vecs
+(defn component-mu15-vecs-gen
   "Returns a random walk with exponent mu=1.5 of length (params :explore-segment-len)."
   []
   (w/vecs-upto-len (params :explore-segment-len) (w/make-levy-vecs rng mu15dist 1 (params :trunclen))))
 
-(defn component-mu2-vecs
+(defn component-mu2-vecs-gen
   "Returns a random walk with exponent mu=2 of length (params :explore-segment-len)."
   []
   (w/vecs-upto-len (params :explore-segment-len) (w/make-levy-vecs rng mu2dist  1 (params :trunclen))))
@@ -239,33 +240,33 @@
 ;; DIFFERENT KINDS OF WALKS
 
 ;; composite mu=1.1 and mu=3 walk
-(defn composite-mu1-mu3-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
+(defn composite-mu1-mu3-vecs-gen
+  [maxlen]
+  (w/vecs-upto-len maxlen ; vecs-upto-len is eager, so whatever it takes will be realized
                    (apply concat
                           (interleave (repeatedly component-mu1-vecs)
                                       (repeatedly component-mu3-vecs)))))
 
 ;; composite mu=1.5 and mu=3 walk
-(defn composite-mu15-mu3-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
+(defn composite-mu15-mu3-vecs-gen
+  [maxlen]
+  (w/vecs-upto-len maxlen ; vecs-upto-len is eager, so whatever it takes will be realized
                    (apply concat
                           (interleave (repeatedly component-mu15-vecs)
                                       (repeatedly component-mu3-vecs)))))
 
 ;; composite mu=1.1 and spiral walk
-(defn composite-mu1-spiral-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
+(defn composite-mu1-spiral-vecs-gen
+  [maxlen]
+  (w/vecs-upto-len maxlen ; vecs-upto-len is eager, so whatever it takes will be realized
                    (apply concat
                           (interleave (repeatedly component-mu1-vecs)
                                       (repeatedly component-spiral-vecs)))))
 
 ;; composite mu=1.5 and spiral walk
-(defn composite-mu15-spiral-vecs
-  [maxpathlen]
-  (w/vecs-upto-len maxpathlen ; vecs-upto-len is eager, so whatever it takes will be realized
+(defn composite-mu15-spiral-vecs-gen
+  [maxlen]
+  (w/vecs-upto-len maxlen ; vecs-upto-len is eager, so whatever it takes will be realized
                    (apply concat
                           (interleave (repeatedly component-mu15-vecs)
                                       (repeatedly component-spiral-vecs)))))
@@ -311,63 +312,67 @@
   (def data (ds/->dataset nippyname))
   (ds/descriptive-stats data)
 
-  (take 15 (mu15-vecs))
-  (take 45 (w/walk-stops [half-size half-size] (mu15-vecs)))
 )
 
 
-;; FIXME I think that with this setup, rather than in the previous version,
-;; I'm generating the random walks once during the evaluation of defs, and never again.
-;; This is suggested by who long it's taking to eval the file.
+;; NOTE We pass a mathematical vector generating *function* to make-foodwalk-fn, 
+;; not a sequence of vectors.  The function will be called in the function
+;; returned by by make-foodwalk-fn, and the resulting sequence of vectors will
+;; be turned into stop coordinates by walks/walk-stops. That way, every time 
+;; the walk fn is called in run/run-and-collect, it will have a new random 
+;; sequence of stops.  If instead we evaluated the vector generating
+;; function as it was passed to make-foodwalk-fn, or passed the sequence of
+;; vectors itself, every call to the walk fn would use the same sequence
+;; of walk stops.
 (def walk-fns
   (let [maxpathlen (params :maxpathlen)]
     {;; PURE RANDOM WALKS:
 
-     ["mu15" "env0"] (make-walk-fn (look-fns 0) (mu15-vecs maxpathlen))
-     ["mu15" "env1"] (make-walk-fn (look-fns 1) (mu15-vecs maxpathlen))
-     ["mu15" "env2"] (make-walk-fn (look-fns 2) (mu15-vecs maxpathlen))
-     ["mu15" "env3"] (make-walk-fn (look-fns 3) (mu15-vecs maxpathlen))
-     ["mu15" "env4"] (make-walk-fn (look-fns 4) (mu15-vecs maxpathlen))
+     ["mu15" "env0"] (make-foodwalk-fn (look-fns 0) mu15-vecs-gen maxpathlen)
+     ["mu15" "env1"] (make-foodwalk-fn (look-fns 1) mu15-vecs-gen maxpathlen)
+     ["mu15" "env2"] (make-foodwalk-fn (look-fns 2) mu15-vecs-gen maxpathlen)
+     ["mu15" "env3"] (make-foodwalk-fn (look-fns 3) mu15-vecs-gen maxpathlen)
+     ["mu15" "env4"] (make-foodwalk-fn (look-fns 4) mu15-vecs-gen maxpathlen)
 
-     ["mu2"  "env0"] (make-walk-fn (look-fns 0) (mu2-vecs maxpathlen))
-     ["mu2"  "env1"] (make-walk-fn (look-fns 1) (mu2-vecs maxpathlen))
-     ["mu2"  "env2"] (make-walk-fn (look-fns 2) (mu2-vecs maxpathlen))
-     ["mu2"  "env3"] (make-walk-fn (look-fns 3) (mu2-vecs maxpathlen))
-     ["mu2"  "env4"] (make-walk-fn (look-fns 4) (mu2-vecs maxpathlen))
+     ["mu2"  "env0"] (make-foodwalk-fn (look-fns 0) mu2-vecs-gen maxpathlen)
+     ["mu2"  "env1"] (make-foodwalk-fn (look-fns 1) mu2-vecs-gen maxpathlen)
+     ["mu2"  "env2"] (make-foodwalk-fn (look-fns 2) mu2-vecs-gen maxpathlen)
+     ["mu2"  "env3"] (make-foodwalk-fn (look-fns 3) mu2-vecs-gen maxpathlen)
+     ["mu2"  "env4"] (make-foodwalk-fn (look-fns 4) mu2-vecs-gen maxpathlen)
 
-     ["mu25" "env0"] (make-walk-fn (look-fns 0) (mu25-vecs maxpathlen))
-     ["mu25" "env1"] (make-walk-fn (look-fns 1) (mu25-vecs maxpathlen))
-     ["mu25" "env2"] (make-walk-fn (look-fns 2) (mu25-vecs maxpathlen))
-     ["mu25" "env3"] (make-walk-fn (look-fns 3) (mu25-vecs maxpathlen))
-     ["mu25" "env4"] (make-walk-fn (look-fns 4) (mu25-vecs maxpathlen))
+     ["mu25" "env0"] (make-foodwalk-fn (look-fns 0) mu25-vecs-gen maxpathlen)
+     ["mu25" "env1"] (make-foodwalk-fn (look-fns 1) mu25-vecs-gen maxpathlen)
+     ["mu25" "env2"] (make-foodwalk-fn (look-fns 2) mu25-vecs-gen maxpathlen)
+     ["mu25" "env3"] (make-foodwalk-fn (look-fns 3) mu25-vecs-gen maxpathlen)
+     ["mu25" "env4"] (make-foodwalk-fn (look-fns 4) mu25-vecs-gen maxpathlen)
 
      ;; COMPOSITE RANDOM WALKS:
 
-     ["mu1-mu3" "env0"] (make-walk-fn (look-fns 0) (composite-mu1-mu3-vecs maxpathlen))
-     ["mu1-mu3" "env1"] (make-walk-fn (look-fns 1) (composite-mu1-mu3-vecs maxpathlen))
-     ["mu1-mu3" "env2"] (make-walk-fn (look-fns 2) (composite-mu1-mu3-vecs maxpathlen))
-     ["mu1-mu3" "env3"] (make-walk-fn (look-fns 3) (composite-mu1-mu3-vecs maxpathlen))
-     ["mu1-mu3" "env4"] (make-walk-fn (look-fns 4) (composite-mu1-mu3-vecs maxpathlen))
+     ["mu1-mu3" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu1-mu3-vecs-gen maxpathlen)
+     ["mu1-mu3" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu1-mu3-vecs-gen maxpathlen)
+     ["mu1-mu3" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu1-mu3-vecs-gen maxpathlen)
+     ["mu1-mu3" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu1-mu3-vecs-gen maxpathlen)
+     ["mu1-mu3" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu1-mu3-vecs-gen maxpathlen)
 
-     ["mu15-mu3" "env0"] (make-walk-fn (look-fns 0) (composite-mu15-mu3-vecs maxpathlen))
-     ["mu15-mu3" "env1"] (make-walk-fn (look-fns 1) (composite-mu15-mu3-vecs maxpathlen))
-     ["mu15-mu3" "env2"] (make-walk-fn (look-fns 2) (composite-mu15-mu3-vecs maxpathlen))
-     ["mu15-mu3" "env3"] (make-walk-fn (look-fns 3) (composite-mu15-mu3-vecs maxpathlen))
-     ["mu15-mu3" "env4"] (make-walk-fn (look-fns 4) (composite-mu15-mu3-vecs maxpathlen))
+     ["mu15-mu3" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu15-mu3-vecs-gen maxpathlen)
+     ["mu15-mu3" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu15-mu3-vecs-gen maxpathlen)
+     ["mu15-mu3" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu15-mu3-vecs-gen maxpathlen)
+     ["mu15-mu3" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu15-mu3-vecs-gen maxpathlen)
+     ["mu15-mu3" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu15-mu3-vecs-gen maxpathlen)
 
      ;; COMPOSITE RANDOM-SPIRAL WALKS:
 
-     ["mu1-spiral" "env0"] (make-walk-fn (look-fns 0) (composite-mu1-spiral-vecs maxpathlen))
-     ["mu1-spiral" "env1"] (make-walk-fn (look-fns 1) (composite-mu1-spiral-vecs maxpathlen))
-     ["mu1-spiral" "env2"] (make-walk-fn (look-fns 2) (composite-mu1-spiral-vecs maxpathlen))
-     ["mu1-spiral" "env3"] (make-walk-fn (look-fns 3) (composite-mu1-spiral-vecs maxpathlen))
-     ["mu1-spiral" "env4"] (make-walk-fn (look-fns 4) (composite-mu1-spiral-vecs maxpathlen))
+     ["mu1-spiral" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu1-spiral-vecs-gen maxpathlen)
+     ["mu1-spiral" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu1-spiral-vecs-gen maxpathlen)
+     ["mu1-spiral" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu1-spiral-vecs-gen maxpathlen)
+     ["mu1-spiral" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu1-spiral-vecs-gen maxpathlen)
+     ["mu1-spiral" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu1-spiral-vecs-gen maxpathlen)
 
-     ["mu15-spiral" "env0"] (make-walk-fn (look-fns 0) (composite-mu15-spiral-vecs maxpathlen))
-     ["mu15-spiral" "env1"] (make-walk-fn (look-fns 1) (composite-mu15-spiral-vecs maxpathlen))
-     ["mu15-spiral" "env2"] (make-walk-fn (look-fns 2) (composite-mu15-spiral-vecs maxpathlen))
-     ["mu15-spiral" "env3"] (make-walk-fn (look-fns 3) (composite-mu15-spiral-vecs maxpathlen))
-     ["mu15-spiral" "env4"] (make-walk-fn (look-fns 4) (composite-mu15-spiral-vecs maxpathlen))
+     ["mu15-spiral" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu15-spiral-vecs-gen maxpathlen)
+     ["mu15-spiral" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu15-spiral-vecs-gen maxpathlen)
+     ["mu15-spiral" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu15-spiral-vecs-gen maxpathlen)
+     ["mu15-spiral" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu15-spiral-vecs-gen maxpathlen)
+     ["mu15-spiral" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu15-spiral-vecs-gen maxpathlen)
 
     }))
 
