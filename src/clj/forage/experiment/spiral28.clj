@@ -206,20 +206,17 @@
 (defn mu15-vecs-gen
   "Returns a random walk with exponent mu=2 of length (params :maxpathlen)."
   []
-  (w/vecs-upto-len (params :maxpathlen)
-                   (w/make-levy-vecs rng mu15dist 1 (params :trunclen))))
+  (w/vecs-upto-len (params :maxpathlen) (w/make-levy-vecs rng mu15dist 1 (params :trunclen))))
 
 (defn mu2-vecs-gen
   "Returns a random walk with exponent mu=2 of length (params :maxpathlen)."
   []
-  (w/vecs-upto-len (params :maxpathlen)
-                   (w/make-levy-vecs rng mu2dist 1 (params :trunclen))))
+  (w/vecs-upto-len (params :maxpathlen) (w/make-levy-vecs rng mu2dist 1 (params :trunclen))))
 
 (defn mu25-vecs-gen
   "Returns a random walk with exponent mu=2 of length (params :maxpathlen)."
   []
-  (w/vecs-upto-len (params :maxpathlen)
-                   (w/make-levy-vecs rng mu25dist 1 (params :trunclen))))
+  (w/vecs-upto-len (params :maxpathlen) (w/make-levy-vecs rng mu25dist 1 (params :trunclen))))
 
 ;; FINITE COMPONENT WALK FUNCTIONS
 ;; Note that these are functions, so the *random* walks generated will be 
@@ -367,18 +364,26 @@
     }))
 
 (comment
-  (def walks-per-fn 1)
+  (def walks-per-fn 20)
 
-  (def yo (fr/walk-experiments params spiral-walk-fns walks-per-fn seed))
+
+  (def yo (fr/walk-experiments params 
+                               (select-keys spiral-walk-fns [["spiral" "env0"]])
+                               walks-per-fn seed))
+
+  (def ya [[12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0] [12000.0 10000.0]])
+  (count ya)
 
   (def some-walks
     ;(into (sorted-map) ; this line is optional; in large submaps, the experiments might not be in order.
           (select-keys random-walk-fns
                        [
-                        ["mu15" "env0"]
-                        ["mu15" "env3"]
+                        ;["mu15" "env0"]
+                        ;["mu15" "env3"]
+                        ["mu2" "env0"]
                         ["mu2" "env1"]
                         ["mu2" "env2"]
+                        ["mu2" "env3"]
                         ["mu2" "env4"]
                        ]))
   ;)
@@ -388,10 +393,13 @@
 
   ;; tests
   (require '[tech.v3.dataset :as ds])
-  (require '[tech.v3.dataset.print :as dsp])
+  ;(require '[tech.v3.dataset.print :as dsp])
+  ;(require '[tablecloth.api :as tc])
+  (require '[forage.core.techmlds :as ft])
   (def nippyname (str basename seed "data.nippy"))
   (def data (ds/->dataset nippyname))
   (ds/descriptive-stats data)
+  (ft/prall data)
 )
 
 
