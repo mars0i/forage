@@ -364,9 +364,9 @@
   (def walks-per-fn 4)
 
 
-  (def yo (fr/walk-experiments params 
-                               spiral-walk-fns ; (select-keys spiral-walk-fns [["spiral" "env0"]])
-                               walks-per-fn seed))
+  (def yospiral (fr/walk-experiments params 
+                                     spiral-walk-fns ; (select-keys spiral-walk-fns [["spiral" "env0"]])
+                                     walks-per-fn seed))
 
   (def some-walks
     ;(into (sorted-map) ; this line is optional; in large submaps, the experiments might not be in order.
@@ -391,7 +391,7 @@
   ;(require '[tablecloth.api :as tc])
   (require '[forage.core.techmlds :as ft])
   (def nippyname (str basename seed "data.nippy"))
-  (def data (ds/->dataset nippyname))
+  (def data (ds/->dataset nippyname)) ; read from file automatically created earlier
   (ds/descriptive-stats data)
   (ft/prall data)
 )
