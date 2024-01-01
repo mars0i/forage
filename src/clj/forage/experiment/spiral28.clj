@@ -309,331 +309,127 @@
 ;; vectors itself, every call to the walk fn would use the same sequence
 ;; of walk stops.
 (def random-walk-fns
-  (let [maxpathlen (params :maxpathlen)]
-    {;; PURE RANDOM WALKS:
+  (sorted-map ; won't necess be the order below, but better than letting Clojure's default map structures decide.
 
-     ["mu15" "env0"] (make-foodwalk-fn (look-fns 0) mu15-vecs-gen)
-     ["mu15" "env1"] (make-foodwalk-fn (look-fns 1) mu15-vecs-gen)
-     ["mu15" "env2"] (make-foodwalk-fn (look-fns 2) mu15-vecs-gen)
-     ["mu15" "env3"] (make-foodwalk-fn (look-fns 3) mu15-vecs-gen)
-     ["mu15" "env4"] (make-foodwalk-fn (look-fns 4) mu15-vecs-gen)
+    ;; PURE RANDOM WALKS:
 
-     ["mu2"  "env0"] (make-foodwalk-fn (look-fns 0) mu2-vecs-gen)
-     ["mu2"  "env1"] (make-foodwalk-fn (look-fns 1) mu2-vecs-gen)
-     ["mu2"  "env2"] (make-foodwalk-fn (look-fns 2) mu2-vecs-gen)
-     ["mu2"  "env3"] (make-foodwalk-fn (look-fns 3) mu2-vecs-gen)
-     ["mu2"  "env4"] (make-foodwalk-fn (look-fns 4) mu2-vecs-gen)
+    ["mu15" "env0"] (make-foodwalk-fn (look-fns 0) mu15-vecs-gen)
+    ["mu15" "env1"] (make-foodwalk-fn (look-fns 1) mu15-vecs-gen)
+    ["mu15" "env2"] (make-foodwalk-fn (look-fns 2) mu15-vecs-gen)
+    ["mu15" "env3"] (make-foodwalk-fn (look-fns 3) mu15-vecs-gen)
+    ["mu15" "env4"] (make-foodwalk-fn (look-fns 4) mu15-vecs-gen)
 
-     ["mu25" "env0"] (make-foodwalk-fn (look-fns 0) mu25-vecs-gen)
-     ["mu25" "env1"] (make-foodwalk-fn (look-fns 1) mu25-vecs-gen)
-     ["mu25" "env2"] (make-foodwalk-fn (look-fns 2) mu25-vecs-gen)
-     ["mu25" "env3"] (make-foodwalk-fn (look-fns 3) mu25-vecs-gen)
-     ["mu25" "env4"] (make-foodwalk-fn (look-fns 4) mu25-vecs-gen)
+    ["mu2"  "env0"] (make-foodwalk-fn (look-fns 0) mu2-vecs-gen)
+    ["mu2"  "env1"] (make-foodwalk-fn (look-fns 1) mu2-vecs-gen)
+    ["mu2"  "env2"] (make-foodwalk-fn (look-fns 2) mu2-vecs-gen)
+    ["mu2"  "env3"] (make-foodwalk-fn (look-fns 3) mu2-vecs-gen)
+    ["mu2"  "env4"] (make-foodwalk-fn (look-fns 4) mu2-vecs-gen)
 
-     ;; COMPOSITE RANDOM-RANDOM WALKS:
+    ["mu25" "env0"] (make-foodwalk-fn (look-fns 0) mu25-vecs-gen)
+    ["mu25" "env1"] (make-foodwalk-fn (look-fns 1) mu25-vecs-gen)
+    ["mu25" "env2"] (make-foodwalk-fn (look-fns 2) mu25-vecs-gen)
+    ["mu25" "env3"] (make-foodwalk-fn (look-fns 3) mu25-vecs-gen)
+    ["mu25" "env4"] (make-foodwalk-fn (look-fns 4) mu25-vecs-gen)
 
-     ["mu1-mu3" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu1-mu3-vecs-gen)
-     ["mu1-mu3" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu1-mu3-vecs-gen)
-     ["mu1-mu3" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu1-mu3-vecs-gen)
-     ["mu1-mu3" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu1-mu3-vecs-gen)
-     ["mu1-mu3" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu1-mu3-vecs-gen)
+    ;; COMPOSITE RANDOM-RANDOM WALKS:
 
-     ["mu15-mu3" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu15-mu3-vecs-gen)
-     ["mu15-mu3" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu15-mu3-vecs-gen)
-     ["mu15-mu3" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu15-mu3-vecs-gen)
-     ["mu15-mu3" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu15-mu3-vecs-gen)
-     ["mu15-mu3" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu15-mu3-vecs-gen)
+    ["mu1-mu3" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu1-mu3-vecs-gen)
+    ["mu1-mu3" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu1-mu3-vecs-gen)
+    ["mu1-mu3" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu1-mu3-vecs-gen)
+    ["mu1-mu3" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu1-mu3-vecs-gen)
+    ["mu1-mu3" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu1-mu3-vecs-gen)
 
-     ;; COMPOSITE RANDOM-SPIRAL WALKS:
+    ["mu15-mu3" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu15-mu3-vecs-gen)
+    ["mu15-mu3" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu15-mu3-vecs-gen)
+    ["mu15-mu3" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu15-mu3-vecs-gen)
+    ["mu15-mu3" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu15-mu3-vecs-gen)
+    ["mu15-mu3" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu15-mu3-vecs-gen)
 
-     ["mu1-spiral" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu1-spiral-vecs-gen)
-     ["mu1-spiral" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu1-spiral-vecs-gen)
-     ["mu1-spiral" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu1-spiral-vecs-gen)
-     ["mu1-spiral" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu1-spiral-vecs-gen)
-     ["mu1-spiral" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu1-spiral-vecs-gen)
+    ;; COMPOSITE RANDOM-SPIRAL WALKS:
 
-     ["mu15-spiral" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu15-spiral-vecs-gen)
-     ["mu15-spiral" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu15-spiral-vecs-gen)
-     ["mu15-spiral" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu15-spiral-vecs-gen)
-     ["mu15-spiral" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu15-spiral-vecs-gen)
-     ["mu15-spiral" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu15-spiral-vecs-gen)
+    ["mu1-spiral" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu1-spiral-vecs-gen)
+    ["mu1-spiral" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu1-spiral-vecs-gen)
+    ["mu1-spiral" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu1-spiral-vecs-gen)
+    ["mu1-spiral" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu1-spiral-vecs-gen)
+    ["mu1-spiral" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu1-spiral-vecs-gen)
 
-    }))
-
-(comment
-  (def walks-per-fn 4)
-
-
-  (def yospiral (fr/walk-experiments params 
-                                     spiral-walk-fns ; (select-keys spiral-walk-fns [["spiral" "env0"]])
-                                     walks-per-fn seed))
-
-  (def some-walks
-    ;(into (sorted-map) ; this line is optional; in large submaps, the experiments might not be in order.
-          (select-keys random-walk-fns
-                       [
-                        ;["mu15" "env0"]
-                        ;["mu15" "env3"]
-                        ["mu2" "env0"]
-                        ["mu2" "env1"]
-                        ["mu2" "env2"]
-                        ["mu2" "env3"]
-                        ["mu2" "env4"]
-                       ]))
-  ;)
-
-  ;; And then:
-  (fr/walk-experiments params some-walks walks-per-fn seed)
-
-  ;; tests
-  (require '[tech.v3.dataset :as ds])
-  ;(require '[tech.v3.dataset.print :as dsp])
-  ;(require '[tablecloth.api :as tc])
-  (require '[forage.core.techmlds :as ft])
-  (def nippyname (str basename seed "data.nippy"))
-  (def data (ds/->dataset nippyname)) ; read from file automatically created earlier
-  (ds/descriptive-stats data)
-  (ft/prall data)
-)
+    ["mu15-spiral" "env0"] (make-foodwalk-fn (look-fns 0) composite-mu15-spiral-vecs-gen)
+    ["mu15-spiral" "env1"] (make-foodwalk-fn (look-fns 1) composite-mu15-spiral-vecs-gen)
+    ["mu15-spiral" "env2"] (make-foodwalk-fn (look-fns 2) composite-mu15-spiral-vecs-gen)
+    ["mu15-spiral" "env3"] (make-foodwalk-fn (look-fns 3) composite-mu15-spiral-vecs-gen)
+    ["mu15-spiral" "env4"] (make-foodwalk-fn (look-fns 4) composite-mu15-spiral-vecs-gen)
+  ))
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; TESTS
+;; EXPERIMENTS
 
 (comment
+  (require 'utils.misc)
+  (utils.misc/set-pp-width 100)
 
-  (def straight-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "straight")) straight-walk-fns 10000 seed)))
+  (def walks-per-fn 10)
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; VERSIONS IN WHICH GENERATION OF WALKS IS NOT INCLUDED IN THE TIME,
-  ;; A *DIFFERENT* WALK IS USED IN EACH ENV.
-  ;; HOWEVER, THE SAME SERIES OF WALKS IS USED IN EACH ENV TYPE, i.e.
-  ;; env-single, env-minimal, env-mason.
-  ;; (An alternative is to use the same walk in each env.)
+  (def some-walks
+    (into (sorted-map) ; this line is optional; in large submaps, the experiments might not be in order.
+          (select-keys random-walk-fns
+                       [;; PURE RANDOM WALKS:
 
-  (do ;; SETUP
+                        ;["mu15" "env0"]
+                        ;["mu15" "env1"]
+                        ;["mu15" "env2"]
+                        ;["mu15" "env3"]
+                        ;["mu15" "env4"]
 
-      ;; NOTE that mu2-vecs is defined above using the PRNG defined in the
-      ;; main code in this file.  So the only way to reset and get exactly
-      ;; the same walks is to re-evaluate the file.  At the moment I don't want to pass
-      ;; in PRNG to all of the functions that the following depends on.
-      ;(def seed -7370724773351240133)
-      ;(def rng (r/make-well19937 seed))
-      ;(def initial-state (r/get-state rng)) ; only used for some of the tests below
+                        ["mu2"  "env0"]
+                        ["mu2"  "env1"]
+                        ["mu2"  "env2"]
+                        ["mu2"  "env3"]
+                        ["mu2"  "env4"]
 
-      ;; A different walk for each of the five environments.
-      ;; These are each different because the RNG advances.
-      (def walks [(w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                  (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                  (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                  (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))
-                  (w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))])
+                        ;["mu25" "env0"]
+                        ;["mu25" "env1"]
+                        ;["mu25" "env2"]
+                        ;["mu25" "env3"]
+                        ;["mu25" "env4"]
 
-      (println "# of coordinate pairs in walks 0 through 4, respectively:")
-      (prn (map count walks))
+                        ;; COMPOSITE RANDOM-RANDOM WALKS:
 
-      (def walks-per-fn 1)
-  )
+                        ;["mu1-mu3" "env0"]
+                        ;["mu1-mu3" "env1"]
+                        ;["mu1-mu3" "env2"]
+                        ;["mu1-mu3" "env3"]
+                        ;["mu1-mu3" "env4"]
 
-  ;; consider wrapping criterium calls in one or more of these:
-  ;(binding [crit/*report-progress* true
-  ;          crit/*report-debug* true
-  ;          crit/*report-warn* true])
+                        ;["mu15-mu3" "env0"]
+                        ;["mu15-mu3" "env1"]
+                        ;["mu15-mu3" "env2"]
+                        ;["mu15-mu3" "env3"]
+                        ;["mu15-mu3" "env4"]
 
-  ;; env-minimal
-  ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmin/foodspot-coords)
-  ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
-  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 0)) "IGNORED" (walks 0)))
-                          "mu2-env1" (fn [ignored-init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 1)) "IGNORED" (walks 1)))
-                          "mu2-env2" (fn [ignored-init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 2)) "IGNORED" (walks 2)))
-                          "mu2-env3" (fn [ignored-init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 3)) "IGNORED" (walks 3)))
-                          "mu2-env4" (fn [ignored-init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 4)) "IGNORED" (walks 4)))}]
-    (time (crit/quick-bench
-            (fr/walk-experiments (update params
-                                         :basename #(str % "env_minimal_mu2_1each")
-                                         :foodspot-coords-fn  env-minimal/foodspot-coords)
-                                 new-mu2-walk-fns walks-per-fn seed))))
+                        ;; COMPOSITE RANDOM-SPIRAL WALKS:
 
+                        ;["mu1-spiral" "env0"]
+                        ;["mu1-spiral" "env1"]
+                        ;["mu1-spiral" "env2"]
+                        ;["mu1-spiral" "env3"]
+                        ;["mu1-spiral" "env4"]
 
-  ;; env-mason
-  ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmas/foodspot-coords)
-  ;(r/set-state rng initial-state) ; not needed since walks are pre-generated
-  (let [new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 0)) (params :look-eps) (walks 0)))
-                          "mu2-env1" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 1)) (params :look-eps) (walks 1)))
-                          "mu2-env2" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 2)) (params :look-eps) (walks 2)))
-                          "mu2-env3" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 3)) (params :look-eps) (walks 3)))
-                          "mu2-env4" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 4)) (params :look-eps) (walks 4)))}]
-    (time (crit/quick-bench
-            (fr/walk-experiments (update params
-                                         :basename #(str % "env_mason_mu2_1each")
-                                         :foodspot-coords-fn  env-mason/foodspot-coords)
-                                 new-mu2-walk-fns walks-per-fn seed))))
+                        ["mu15-spiral" "env0"]
+                        ["mu15-spiral" "env1"]
+                        ["mu15-spiral" "env2"]
+                        ["mu15-spiral" "env3"]
+                        ["mu15-spiral" "env4"]
+                       ])))
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; ATTEMPT TO PRE-COMPUTE A LARGE NUMBER OF DIFFERENT WALKS
-  ;; SETUP MAY BE VERY SLOW.
+  (def result (time (fr/walk-experiments params some-walks walks-per-fn seed)))
 
-  ;; Create a different walk for each env in run.  So if the number of 5-env runs = walks-per-fn, 
-  ;; every time there is a walk through an env, it will be different (unless you repeat the whole
-  ;; process, e.g. during benchmarking.)
-
-  (def walks-per-fn 10) ;; On MBP setting walks-per-fn to 5 to create 25 walks takes aobut 15 seconds.
-
-  (defn make-walks 
-    "Returns a lazy sequence of (5 X walks-per-fn) [fully realized] walks."
-    [walks-per-fn]
-    (repeatedly (* 5 walks-per-fn)
-                #(w/walk-stops [half-size half-size] (mu2-vecs (params :maxpathlen)))))
-
-  ;; This vector of walks can be reused in different tests below. (Should be a vector to index into it efficiently.)
-  (def walks (time (vec (make-walks walks-per-fn))))
-
-  ;; env-minimal
-  (let [i$ (atom -1)
-        next-walk! #(walks (swap! i$ inc))
-        new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 0)) "IGNORED" (next-walk!)))
-                          "mu2-env1" (fn [ignored-init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 1)) "IGNORED" (next-walk!)))
-                          "mu2-env2" (fn [ignored-init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 2)) "IGNORED" (next-walk!)))
-                          "mu2-env3" (fn [ignored-init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 3)) "IGNORED" (next-walk!)))
-                          "mu2-env4" (fn [ignored-init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 4)) "IGNORED" (next-walk!)))}]
-    (time
-      ;(crit/quick-bench
-      (def result-minimal
-        (-> params
-            (assoc :foodspot-coords-fn  envmin/foodspot-coords)
-            (update :basename #(str % "env_minimal_mu2_" walks-per-fn "each"))
-            (fr/walk-experiments new-mu2-walk-fns walks-per-fn seed))
-      )
-    )
-  )
-
-
-  ;; env-mason
-  (let [i$ (atom -1)
-        next-walk! #(walks (swap! i$ inc))
-        new-mu2-walk-fns {"mu2-env0" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 0)) (params :look-eps) (next-walk!)))
-                          "mu2-env1" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 1)) (params :look-eps) (next-walk!)))
-                          "mu2-env2" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 2)) (params :look-eps) (next-walk!)))
-                          "mu2-env3" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 3)) (params :look-eps) (next-walk!)))
-                          "mu2-env4" (fn [ignored-init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 4)) (params :look-eps) (next-walk!)))}]
-    (time
-      ;(crit/quick-bench
-      (def result-mason
-        (-> params
-            (assoc :foodspot-coords-fn  envmas/foodspot-coords)
-            (update :basename #(str % "env_mason_mu2_" walks-per-fn "each"))
-            (fr/walk-experiments new-mu2-walk-fns walks-per-fn seed))
-      )
-    )
-  )
-
-
-  (= result-mason result-minimal)
-  ;; With seed = -8260641786968384627, and 10 runs per env, there is one
-  ;; target found, in path 6 in env0.  The path length until finding the
-  ;; foodspot is not identical in the two env types, but it's close:
-  ;;    env-mason: 120904.28057527842
-  ;;    env-minimal: 120905.21856515628
-  ;; Maybe that makes sense given that env-mason is checking very 0.2
-  ;; steps, and then checking from the first endpoint of the little
-  ;; subsegment (unless the angle of the segment is such that the endpoints
-  ;; are swapped).  While env-minimal should be finding the precise closest
-  ;; point to the total step segment.  Note though that even that is an
-  ;; approximation, because in practice, the animal should be able to see
-  ;; the foodspot a little bit before that closest point.  This is
-  ;; especially true with larger perceptual raddi.  So despite the
-  ;; precision of env-minimal (and env-single), they don't give one
-  ;; the correct finding location.  For large perc-radius, env-mason
-  ;; should be closer to correct.
-
-
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; VERSIONS IN WHICH GENERATION OF WALKS IS INCLUDED IN THE TIME
-  ;; Note that in this case a *different* walk is used in each env
-  ;; because mu2-vecs ultimately calls make-levy-vecs with an 
-  ;; updated rng state. HOWEVER, the same series of walks is
-  ;; (supposed to be at least) used in each env type, i.e.
-  ;; env-minimal, env-mason.
- 
-  (def walks-per-fn 20)
-
-  ;; NOTE It's not enough to reset the PRNG to a known state here.  You
-  ;; have to revaluate this whole file WITH THE SAME SEED; I think parts of 
-  ;; the code in the file uses random numbers in code outside of comments when first run.
-  (let [new-mu2-walk-fns
-        {"mu2-env0" (fn [init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-         "mu2-env1" (fn [init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-         "mu2-env2" (fn [init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-         "mu2-env3" (fn [init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-         "mu2-env4" (fn [init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 4)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
-    (time
-      ;(crit/quick-bench
-      (def result-minimal
-        (-> params
-            (assoc :foodspot-coords-fn  envmin/foodspot-coords)
-            (update :basename #(str % "env_minimal_mu2_" walks-per-fn "each"))
-            (fr/walk-experiments new-mu2-walk-fns walks-per-fn seed))
-      )
-    )
-  )
-
-
-  ;; env-mason
-  (let[new-mu2-walk-fns
-       {"mu2-env0" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 0)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-        "mu2-env1" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 1)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-        "mu2-env2" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 2)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-        "mu2-env3" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 3)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-        "mu2-env4" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 4)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
-    (time
-      ;(crit/quick-bench
-      (def result-mason
-        (-> params
-            (assoc :foodspot-coords-fn  envmas/foodspot-coords)
-            (update :basename #(str % "env_mason_mu2_" walks-per-fn "each"))
-            (fr/walk-experiments new-mu2-walk-fns walks-per-fn seed))
-      )
-    )
-  )
-
-
-  ;; Quick test: did the two env types find the same foodspots?
-  (= (result-mason :found-coords) (result-minimal :found-coords))
-  (= (result-mason :data) (result-minimal :data))
-
-
-
-
-)
-
-
-(comment
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; OLD/OBSOLETE
-  
-  (do
-    (r/set-state rng initial-state)
-    (let [new-mu2-walk-fns
-         {"mu2-env0" (fn [init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 0)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env1" (fn [init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 1)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env2" (fn [init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 2)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env3" (fn [init-loc] (ff/foodwalk envmin/find-in-seg (make-envmin-look-fn (envs 3)) "IGNORED" (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
-      (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 10 seed)))))
-
-
-  ;; env-mason
-  ;; note if needed: params s/b/ (update params :foodspot-coords-fn envmas/foodspot-coords)
-  (do
-    (r/set-state rng initial-state)
-    (let[new-mu2-walk-fns
-         {"mu2-env0" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 0)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env1" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 1)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env2" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 2)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))
-          "mu2-env3" (fn [init-loc] (ff/foodwalk ff/find-in-seg (make-envmas-look-fn (mason-envs 3)) (params :look-eps) (w/walk-stops init-loc (mu2-vecs (params :maxpathlen)))))}]
-      (def new-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) new-mu2-walk-fns 10 seed)))))
-
-  (def fixed-mu2-data-and-rng (time (fr/walk-experiments (update params :basename #(str % "new-mu2")) fixed-mu2-walk-fns 10 seed)))
+  (require '[tech.v3.dataset :as ds])
+  (require '[forage.core.techmlds :as ft])
+  (def nippyname (str basename seed "data.nippy"))
+  (def data (ds/->dataset nippyname)) ; read from file automatically created earlier
+  (ft/prall data)
+  (ds/descriptive-stats data)
 
 )
