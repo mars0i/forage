@@ -298,7 +298,7 @@
          csvdata$ (atom (when save? (append-labels (into ["initial dir" "walk-fn" "env-name" "segments"
                                                        "found" "efficency" "total path len"]
                                                       path-labels))))
-         data$ (atom (when save? {:env nil :walk nil :length  [] :found []})) ; start with a dataset instead of map?
+         data$ (atom (when save? {:env [] :walk [] :length  [] :found []})) ; empty colls must be either all vector or all list-ey.
          found-coords$ (atom [])
          iter-num$ (atom 0)
          walks-per-fn-digits (m/count-decimal-digits walks-per-fn)] ; passed to cl-format to format found foodspot count
