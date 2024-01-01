@@ -270,6 +270,7 @@
   ([params walk-fns walks-per-fn runs-label]
    (walk-experiments params walk-fns walks-per-fn runs-label nil))
   ([params walk-fns walks-per-fn runs-label rng]
+
    (let [num-dirs (params :num-dirs)
          init-dirs (if num-dirs
                      (mapv (partial * (/ (* m/pi (params :max-frac)) num-dirs))
@@ -302,16 +303,20 @@
          found-coords$ (atom [])
          iter-num$ (atom 0)
          walks-per-fn-digits (m/count-decimal-digits walks-per-fn)] ; passed to cl-format to format found foodspot count
-     (when save? (csv/spit-csv param-filename param-data)) ; write out fixed parameters
-     (when (and save? rng) (r/write-from-rng rng (str base-state-filename "_start" ".bin"))) ; save PRNG state before runs performed
+     (when save?
+       (csv/spit-csv param-filename param-data) ; write out fixed parameters
+       (when rng
+         (r/write-from-rng rng (str base-state-filename "_start" ".bin")))) ; save PRNG state before runs performed
      (when rpt? (cl-format true "Performing ~d runs in groups of ~d ...~%" 
                            (* (count walk-fns) walks-per-fn (if num-dirs (inc num-dirs) 1)) ; walk-fns is a map--count is # of MapEntrys
                            walks-per-fn))
+
      ;; MAIN LOOP THROUGH WALK-FNS AND INIT-DIRS:
      ;; Keys are pairs with strings for type of walk, and env.
      (doseq [[walk-name env-name :as walk-key] (keys walk-fns)  ; doseq and swap! rather than for to avoid lazy chunking of PRNG
              init-dir init-dirs]
-       (when rpt? (cl-format true "~{~c~}group ~d [walk-fn ~a, init-dir ~a] ... " nil (swap! iter-num$ inc) walk-name init-dir)  ; ~{~c~} means stuff all chars (~c) in sequence arg here
+       (when rpt? (cl-format true "~{~c~}group ~d [walk ~a, env ~a, init-dir ~a] ... "  ; ~{~c~} means stuff all chars (~c) in sequence arg here
+                             nil (swap! iter-num$ inc) walk-name env-name init-dir) 
                   (flush))
        (when (and save? rng) (r/write-from-rng rng (str base-state-filename walk-name "_dir" (if init-dir (double-to-dotless init-dir) "Rand") ".bin")))
 
@@ -333,6 +338,7 @@
          ;; Old version of data recording:
          (swap! found-coords$ conj found)
          (swap! csvdata$ conj (into [init-dir walk-name env-name n-segments n-found efficiency total-length] lengths))))
+
      ;; DONE WITH EXPERIMENTS, NOW WRITE AND RETURN DATA:
      (when save?; write out summary data
        (ds/write! (ds/->dataset @data$) data-filename)
@@ -341,16 +347,6 @@
      (when rpt? (println " done."))
      {:data @csvdata$ :found-coords @found-coords$ :rng rng}))) ; data is not very large; should be OK to return it.
 
-(comment
-  (def yo (atom {:env [] :found []}))
-  (swap! yo update :found into (range 0 3))
-  (swap! yo update :env into (repeat 3 "env0"))
-  (swap! yo update :found into (range 3 6))
-  (swap! yo update :env into (repeat 3 "env1"))
-  (swap! yo update :found into (range 6 9))
-  (swap! yo update :env into (repeat 3 "env2"))
-  (deref yo)
-)
 
 (defn levy-experiments
   "DEPRECATED: For new code use walk-experiments.
