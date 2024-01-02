@@ -76,24 +76,10 @@
 ;; (env-minimal seems to be a little more efficient than env-mason for six
 ;; foodspots.  With a significantly larger number of foodspots, env-mason
 ;; is probably more efficient.)
+;; SEE BELOW FOR COMMENTED CODE DISPLAYING THE ENVS.
 (def envs (mapv envmin/make-env target-coords))
 ;(def mason-envs (mapv (partial envmas/make-env (params :env-discretization) (params :env-size)) target-coords))
 
-(comment
-  ;; Visually check that envs are as intended
-  (require '[forage.viz.hanami :as h])
-  (require '[oz.core :as oz])
-  (oz/start-server!)
-
-  (def minimal-env-plots (mapv (fn [env] (h/vega-food-plot 
-                                           (map h/make-foodspot (envmin/env-foodspot-coords env))
-                                           (params :env-size)
-                                           600
-                                           200))
-                               envs))
-
-  (oz/view! (minimal-env-plots 0)) ; there are five envs, with indexes 0 through 4.
-)
 
 
 
@@ -132,7 +118,7 @@
 ;; of walk stops.
 
 (defn make-foodwalk-fn
-  "Create a walk function expects an initial location, a coordinate pair,
+  "Create a walk function expects an initial location--a coordinate pair--
   and returns a sequence of walk-stops . This function can be passed to
   run/walk-experiments and then run/run-and-collect.  The resulting
   function calls findfood/foodwalk with envmin/find-in-seg and look-fn, 
@@ -303,6 +289,32 @@
               ["spiral" "env2"] (make-foodwalk-fn (look-fns 2) spiral-vecs-gen)
               ["spiral" "env3"] (make-foodwalk-fn (look-fns 3) spiral-vecs-gen)
               ["spiral" "env4"] (make-foodwalk-fn (look-fns 4) spiral-vecs-gen)))
+
+(comment
+  ;; Visually check that envs are as intended
+  (require '[forage.viz.hanami :as h])
+  (require '[oz.core :as oz])
+  (oz/start-server!)
+
+  (def minimal-env-plots (mapv (fn [env] (h/vega-food-plot 
+                                           (map h/make-foodspot (envmin/env-foodspot-coords env))
+                                           (params :env-size)
+                                           600
+                                           200))
+                               envs))
+
+  (oz/view! (minimal-env-plots 0)) ; there are five envs, with indexes 0 through 4.
+
+  (def spiral-walk-result ((spiral-walk-fns ["spiral" "env0"]) ((params :init-loc-fn))))
+
+  ;; FIXME NEXT LINE FAILS BECAUSE hanami fns get env size from env, which
+  ;; is assumed to be an env-mason.  But my env-minimal envs *have no
+  ;; sizes* at present.  Neither do env-single envs.
+  (def plot (h/vega-didcould-envwalk-plot (envs 0) 600 1 100 spiral-walk-result))
+
+
+)
+
 
 
 ;; NOTE We pass a mathematical vector generating *function* to make-foodwalk-fn, 
