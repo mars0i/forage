@@ -378,6 +378,7 @@
 ;; EXPERIMENTS
 
 (comment
+  ;; doesn't seem to do anything
   (require 'utils.misc)
   (utils.misc/set-pp-width 100)
 
@@ -434,7 +435,6 @@
                        ])))
 
   (def walks-per-fn 10)
-
   (def result (time (fr/walk-experiments params some-walks walks-per-fn seed)))
 
   (require '[tech.v3.dataset :as ds])
@@ -445,5 +445,11 @@
   (def data (ds/->dataset nippyname)) ; read from file automatically created earlier
   (ft/prall data)
   (ds/descriptive-stats data)
+
+  (def spiral-result (time (fr/walk-experiments params spiral-walk-fns 1 seed)))
+  (def spiral-seed 6605747748945559656)
+  (def spiralnippyname (str basename spiral-seed "data.nippy"))
+  (def spiral-data (ds/->dataset spiralnippyname))
+  (ft/prall spiral-data)
 
 )
