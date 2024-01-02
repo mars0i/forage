@@ -203,8 +203,9 @@
 ;; ------------------------------------------------
 ;; STANDALONE (NON-COMPONENT) WALKS
 
+
 (defn mu15-vecs-gen
-  "Returns a random walk with exponent mu=2 of length (params :maxpathlen)."
+  "Returns a random walk with exponent mu=1.5 of length (params :maxpathlen)."
   []
   (w/vecs-upto-len (params :maxpathlen) (w/make-levy-vecs rng mu15dist 1 (params :trunclen))))
 
@@ -214,9 +215,14 @@
   (w/vecs-upto-len (params :maxpathlen) (w/make-levy-vecs rng mu2dist 1 (params :trunclen))))
 
 (defn mu25-vecs-gen
-  "Returns a random walk with exponent mu=2 of length (params :maxpathlen)."
+  "Returns a random walk with exponent mu=2.5 of length (params :maxpathlen)."
   []
   (w/vecs-upto-len (params :maxpathlen) (w/make-levy-vecs rng mu25dist 1 (params :trunclen))))
+
+(defn mu3-vecs-gen
+  "Returns a random walk with exponent mu=3 of length (params :maxpathlen)."
+  []
+  (w/vecs-upto-len (params :maxpathlen) (w/make-levy-vecs rng mu3dist 1 (params :trunclen))))
 
 ;; FINITE COMPONENT WALK FUNCTIONS
 ;; Note that these are functions, so the *random* walks generated will be 
@@ -330,6 +336,12 @@
     ["mu25" "env2"] (make-foodwalk-fn (look-fns 2) mu25-vecs-gen)
     ["mu25" "env3"] (make-foodwalk-fn (look-fns 3) mu25-vecs-gen)
     ["mu25" "env4"] (make-foodwalk-fn (look-fns 4) mu25-vecs-gen)
+
+    ["mu3"  "env0"] (make-foodwalk-fn (look-fns 0) mu3-vecs-gen)
+    ["mu3"  "env1"] (make-foodwalk-fn (look-fns 1) mu3-vecs-gen)
+    ["mu3"  "env2"] (make-foodwalk-fn (look-fns 2) mu3-vecs-gen)
+    ["mu3"  "env3"] (make-foodwalk-fn (look-fns 3) mu3-vecs-gen)
+    ["mu3"  "env4"] (make-foodwalk-fn (look-fns 4) mu3-vecs-gen)
 
     ;; COMPOSITE RANDOM-RANDOM WALKS:
 
