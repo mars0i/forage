@@ -318,7 +318,7 @@
 ;; TODO add a nice header
 (defn vega-didcould-envwalk-plot
   "Simple plot that plots whatever foodspots are in env and then plots
-  foodwalks and their hypothetical extensions. path.  (Note that
+  foodwalks and their hypothetical extensions. (Note that
   stroke-width uses Vega-Lite units, whereas display-radius uses units
   based on simulation values.)"
   [env plot-dim stroke-width display-radius foodwalks]
