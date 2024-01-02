@@ -439,6 +439,8 @@
 
   (require '[tech.v3.dataset :as ds])
   (require '[forage.core.techmlds :as ft])
+  (def prev-seed seed)
+  (def prev-seed 892177989826665365)
   (def nippyname (str basename seed "data.nippy"))
   (def data (ds/->dataset nippyname)) ; read from file automatically created earlier
   (ft/prall data)
