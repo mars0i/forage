@@ -446,6 +446,8 @@
                         ["mu15-spiral" "env4"]
                        ])))
 
+  ;; TESTING:
+
   (def walks-per-fn 10)
   (def result (time (fr/walk-experiments params some-walks walks-per-fn seed)))
 
@@ -463,5 +465,64 @@
   (def spiralnippyname (str basename spiral-seed "data.nippy"))
   (def spiral-data (ds/->dataset spiralnippyname))
   (ft/prall spiral-data)
+
+
+  ;; ACTUAL EXPERIMENT:
+
+  (let [walks-per-fn 10000
+        some-walks (into (sorted-map) ; this line is optional; in large submaps, the experiments might not be in order.
+                         (select-keys random-walk-fns
+                                      [;; PURE RANDOM WALKS:
+
+                                       ["mu15" "env0"]
+                                       ["mu15" "env1"]
+                                       ["mu15" "env2"]
+                                       ["mu15" "env3"]
+                                       ["mu15" "env4"]
+
+                                       ; ["mu2"  "env0"]
+                                       ; ["mu2"  "env1"]
+                                       ; ["mu2"  "env2"]
+                                       ; ["mu2"  "env3"]
+                                       ; ["mu2"  "env4"]
+
+                                       ; ["mu25" "env0"]
+                                       ; ["mu25" "env1"]
+                                       ; ["mu25" "env2"]
+                                       ; ["mu25" "env3"]
+                                       ; ["mu25" "env4"]
+
+                                       ;; COMPOSITE RANDOM-RANDOM WALKS:
+
+                                       ; ["mu1-mu3" "env0"]
+                                       ; ["mu1-mu3" "env1"]
+                                       ; ["mu1-mu3" "env2"]
+                                       ; ["mu1-mu3" "env3"]
+                                       ; ["mu1-mu3" "env4"]
+
+                                       ; ["mu15-mu3" "env0"]
+                                       ; ["mu15-mu3" "env1"]
+                                       ; ["mu15-mu3" "env2"]
+                                       ; ["mu15-mu3" "env3"]
+                                       ; ["mu15-mu3" "env4"]
+
+                                       ;; COMPOSITE RANDOM-SPIRAL WALKS:
+
+                                       ; ["mu1-spiral" "env0"]
+                                       ; ["mu1-spiral" "env1"]
+                                       ; ["mu1-spiral" "env2"]
+                                       ; ["mu1-spiral" "env3"]
+                                       ; ["mu1-spiral" "env4"]
+
+                                       ; ["mu15-spiral" "env0"]
+                                       ; ["mu15-spiral" "env1"]
+                                       ; ["mu15-spiral" "env2"]
+                                       ; ["mu15-spiral" "env3"]
+                                       ; ["mu15-spiral" "env4"]
+                                      ]))]
+    (println "seed:" seed)
+    (def mu15-result (time (fr/walk-experiments (update params :basename str "_mu15_")
+                                                some-walks walks-per-fn seed))))
+
 
 )
