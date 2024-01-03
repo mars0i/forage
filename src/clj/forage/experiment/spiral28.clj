@@ -390,9 +390,8 @@
 ;; EXPERIMENTS
 
 (comment
-  ;; doesn't seem to do anything
-  (require 'utils.misc)
-  (utils.misc/set-pp-width 100)
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; TESTING:
 
   (def some-walks
     (into (sorted-map) ; this line is optional; in large submaps, the experiments might not be in order.
@@ -416,6 +415,12 @@
                         ["mu25" "env2"]
                         ["mu25" "env3"]
                         ["mu25" "env4"]
+
+                        ["mu3"  "env0"]
+                        ["mu3"  "env1"]
+                        ["mu3"  "env2"]
+                        ["mu3"  "env3"]
+                        ["mu3"  "env4"]
 
                         ;; COMPOSITE RANDOM-RANDOM WALKS:
 
@@ -446,8 +451,6 @@
                         ["mu15-spiral" "env4"]
                        ])))
 
-  ;; TESTING:
-
   (def walks-per-fn 10)
   (def result (time (fr/walk-experiments params some-walks walks-per-fn seed)))
 
@@ -467,30 +470,43 @@
   (ft/prall spiral-data)
 
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; ACTUAL EXPERIMENT:
 
   (let [walks-per-fn 10000
         some-walks (into (sorted-map) ; this line is optional; in large submaps, the experiments might not be in order.
                          (select-keys random-walk-fns
-                                      [;; PURE RANDOM WALKS:
-
-                                       ["mu15" "env0"]
+                                      [["mu15" "env0"]
                                        ["mu15" "env1"]
                                        ["mu15" "env2"]
                                        ["mu15" "env3"]
-                                       ["mu15" "env4"]
+                                       ["mu15" "env4"]]))]
+    (println "seed:" seed)
+    (def mu15-result (time (fr/walk-experiments (update params :basename str "_mu15_")
+                                                some-walks walks-per-fn seed))))
+    ;; elapsed time: (/ 8953262.365402 1000 60 60) = 2.49 hrs
 
-                                       ; ["mu2"  "env0"]
-                                       ; ["mu2"  "env1"]
-                                       ; ["mu2"  "env2"]
-                                       ; ["mu2"  "env3"]
-                                       ; ["mu2"  "env4"]
 
-                                       ; ["mu25" "env0"]
-                                       ; ["mu25" "env1"]
-                                       ; ["mu25" "env2"]
-                                       ; ["mu25" "env3"]
-                                       ; ["mu25" "env4"]
+  (let [walks-per-fn 10000
+        some-walks (into (sorted-map)
+                         (select-keys random-walk-fns
+                                      [["mu2"  "env0"]
+                                       ["mu2"  "env1"]
+                                       ["mu2"  "env2"]
+                                       ["mu2"  "env3"]
+                                       ["mu2"  "env4"]
+
+                                       ["mu25" "env0"]
+                                       ["mu25" "env1"]
+                                       ["mu25" "env2"]
+                                       ["mu25" "env3"]
+                                       ["mu25" "env4"]
+
+                                       ; ["mu3"  "env0"]
+                                       ; ["mu3"  "env1"]
+                                       ; ["mu3"  "env2"]
+                                       ; ["mu3"  "env3"]
+                                       ; ["mu3"  "env4"]
 
                                        ;; COMPOSITE RANDOM-RANDOM WALKS:
 
@@ -521,8 +537,8 @@
                                        ; ["mu15-spiral" "env4"]
                                       ]))]
     (println "seed:" seed)
-    (def mu15-result (time (fr/walk-experiments (update params :basename str "_mu15_")
-                                                some-walks walks-per-fn seed))))
+    (def mu2mu25-result (time (fr/walk-experiments (update params :basename str "_mu2mu25_")
+                                                   some-walks walks-per-fn seed))))
 
 
 )
