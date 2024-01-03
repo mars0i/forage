@@ -32,30 +32,35 @@
 ;; targets in the environment.  For many targets, env-mason is likely
 ;; to be faster.
 
-;; TODO: Is there a reason to use a Java array rather than a Clojure vector
-;; for the foodspots?  Maybe I should make that change.
+;; ALSO NOTE for the sake of inner-loop efficiency, these envs have no size 
+;; by default.  That is how make-env creates them.  When it's necessary
+;; for an env to have a size, wrap it with make-sized-env.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ENVIRONMENT THAT CONSISTS OF A COLLECTION of COORDINATE PAIRS.
 
-#_
-(defn make-env
-  "Make an environment that consists of a vector of Java array pairs of
-  doubles representing foodspots. coords should be a sequence of x,y pairs
-  of numbers."
-  [coords]
-  (mapv double-array coords))
-
 ;; ENV AS A SINGLE SEQUENCE OF COORDINATES, ALTERNATING X AND Y:
 (defn make-env
-  "Make an environment that consists of a single Java array with
+  "Make an environment that consists of a single Ja1o1s1 1o1r1s1s1o1l1 1eva array with
   alternating x an y coordinstes representing foodspots. coords should be a
-  sequence of x,y pairs of numbers."
+  sequence of x,y pairs of numbers.  The basic minimal env has no size.
+  Size can be built in by using make-sized-env, or by building a size
+  parameter into a look fn, e.g. for a toroidal environment."
   ^doubles [coords]
   (double-array (apply concat coords)))
 
+(defn make-sized-env
+  "Creates an env wrapped in a map: the env array itself, which should be
+  created using the make-env function, is the value of :env, while a size
+  integer is the value of :size."
+  [env size]
+  {:env env
+   :size size})
+
 (comment
-  (map class (make-env (list '(1 2) [13.0 45.7] (range 2))))
+  (def e (make-env (list '(1 2) [13.0 45.7] (range 2))))
+  (class e)
+  (instance? (Class/forName "[D") {})
 )
 
 ;; less slow
@@ -85,13 +90,21 @@
 
 (defn env-foodspot-coords
   "Returns a collection of coordinate pairs of all foodspots in environment
-  env, or nil if there are none."
+  env, or nil if there are none.  Works either with basic minimal envs or sized
+  envs (by testing whether the argument is a map, in which case it's assumed to be
+  a sized env)."
   [env]
-  (mapv vec (partition 2 env)))
+  (let [e (if (map? e) (e :env) e)]
+    (mapv vec (partition 2 e))))
+
+(defn env-size
+  "Returns the size of a sized-env."
+  [sized-env]
+  (sized-env :size))
 
 (comment
   (map class
-       (env-foodspot-coords (make-multiple-foodspot-env (list '(1 2) [13.0 45.7] (range 2))))
+       (env-foodspot-coords (make-env (list '(1 2) [13.0 45.7] (range 2))))
   )
 )
 
