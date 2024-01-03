@@ -540,5 +540,7 @@
     (def mu2mu25-result (time (fr/walk-experiments (update params :basename str "_mu2mu25_")
                                                    some-walks walks-per-fn seed))))
 
+    ;; TODO TODO TODO: Add rng as additional arg to walk-experiments so that the
+    ;; state can be saved between nrepl sessions.
 
 )
