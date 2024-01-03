@@ -94,7 +94,7 @@
   envs (by testing whether the argument is a map, in which case it's assumed to be
   a sized env)."
   [env]
-  (let [e (if (map? e) (e :env) e)]
+  (let [e (if (map? env) (env :env) env)]
     (mapv vec (partition 2 e))))
 
 (defn env-size
