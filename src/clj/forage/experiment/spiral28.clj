@@ -298,20 +298,21 @@
 
   (def minimal-env-plots (mapv (fn [env] (h/vega-food-plot 
                                            (map h/make-foodspot (envmin/env-foodspot-coords env))
-                                           (params :env-size)
+                                           1000 ; (params :env-size)
                                            600
-                                           200))
+                                           20))
                                envs))
 
   (oz/view! (minimal-env-plots 0)) ; there are five envs, with indexes 0 through 4.
 
   (def spiral-walk-result ((spiral-walk-fns ["spiral" "env0"]) ((params :init-loc-fn))))
 
-  ;; FIXME NEXT LINE FAILS BECAUSE hanami fns get env size from env, which
-  ;; is assumed to be an env-mason.  But my env-minimal envs *have no
-  ;; sizes* at present.  Neither do env-single envs.
-  (def plot (h/vega-didcould-envwalk-plot (envs 0) 600 1 100 spiral-walk-result))
+  (def plot (h/vega-didcould-envwalk-plot 
+              (envmin/make-sized-env (envs 0) (params :env-size))
+              600 1 100 
+              (map (partial h/add-point-labels "spiral") spiral-walk-result)))
 
+  (oz/view! plot)
 
 )
 
