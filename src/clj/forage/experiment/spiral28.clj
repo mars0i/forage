@@ -314,17 +314,21 @@
   (def plot (h/vega-didcould-envwalk-plot 
               (envmin/make-sized-env (envs 0) (params :env-size))
               600 1 100 
-              (map (partial h/add-point-labels "spiral") spiral-walk-result)))
+              [spiral-walk-result]))
 
   (require '[forage.core.env-mason :as envmas])
   (def masonenv0 (envmas/make-env 5 (params :env-size) (target-coords 0)))
-  ;; env-mason version DOESN'T WORK EITHER:
+  (def masonenv1 (envmas/make-env 5 (params :env-size) (target-coords 1)))
+  (def masonenv2 (envmas/make-env 5 (params :env-size) (target-coords 2)))
+  ;; env-mason version:
   (def plot (h/vega-didcould-envwalk-plot 
-              masonenv0
-              600 10 1000 
-              (map (partial h/add-point-labels "spiral") spiral-walk-result)))
+              masonenv2
+              600 1 50
+              [spiral-walk-result]))
 
   (oz/view! plot)
+
+  (clojure.repl/pst)
 
 )
 
