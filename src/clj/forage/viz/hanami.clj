@@ -312,8 +312,8 @@
   foodwalk and its extension walk beyond the found food."
   [plot-dim data-dim stroke-width foodwalk]
   (let [[food did couldve] foodwalk]
-    [(vega-walk-plot plot-dim data-dim stroke-width (add-walk-labels "could've" couldve)) ; may be empty if didn't find food
-     (vega-walk-plot plot-dim data-dim stroke-width (add-walk-labels "did" did))]))
+    [(vega-walk-plot plot-dim data-dim stroke-width (order-walk-with-labels "could've" couldve)) ; may be empty if didn't find food
+     (vega-walk-plot plot-dim data-dim stroke-width (order-walk-with-labels "did" did))]))
 
 ;; TODO add a nice header
 (defn vega-didcould-envwalk-plot
