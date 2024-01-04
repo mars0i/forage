@@ -307,9 +307,21 @@
 
   (def spiral-walk-result ((spiral-walk-fns ["spiral" "env0"]) ((params :init-loc-fn))))
 
+  (def spiral-walk-vega-coords (map (partial h/add-point-labels "spiral") spiral-walk-result))
+  
+
+  ;; env-minimum version DOESN'T WORK:
   (def plot (h/vega-didcould-envwalk-plot 
               (envmin/make-sized-env (envs 0) (params :env-size))
               600 1 100 
+              (map (partial h/add-point-labels "spiral") spiral-walk-result)))
+
+  (require '[forage.core.env-mason :as envmas])
+  (def masonenv0 (envmas/make-env 5 (params :env-size) (target-coords 0)))
+  ;; env-mason version DOESN'T WORK EITHER:
+  (def plot (h/vega-didcould-envwalk-plot 
+              masonenv0
+              600 10 1000 
               (map (partial h/add-point-labels "spiral") spiral-walk-result)))
 
   (oz/view! plot)
@@ -334,8 +346,7 @@
 
     ["mu15" "env0"] (make-foodwalk-fn (look-fns 0) mu15-vecs-gen)
     ["mu15" "env1"] (make-foodwalk-fn (look-fns 1) mu15-vecs-gen)
-    ["mu15" "env2"] (make-foodwalk-fn (look-fns 2) mu15-vecs-gen)
-    ["mu15" "env3"] (make-foodwalk-fn (look-fns 3) mu15-vecs-gen)
+    ["mu15" "env2"] (make-foodwalk-fn (look-fns 2) mu15-vecs-gen) ["mu15" "env3"] (make-foodwalk-fn (look-fns 3) mu15-vecs-gen)
     ["mu15" "env4"] (make-foodwalk-fn (look-fns 4) mu15-vecs-gen)
 
     ["mu2"  "env0"] (make-foodwalk-fn (look-fns 0) mu2-vecs-gen)
