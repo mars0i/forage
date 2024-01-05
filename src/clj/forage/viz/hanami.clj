@@ -274,7 +274,7 @@
   of 1 is the perc-radius of a forager."
   [env plot-dim display-radius & {:keys [extra-pts]}]
   (let [food (add-point-labels "food" (env/env-foodspot-coords env))
-        food (if extra-pts (concat food extra-pts))]
+        food (if extra-pts (concat food extra-pts) food)]
     (vega-food-plot food
                     (env/env-size env)
                     plot-dim
