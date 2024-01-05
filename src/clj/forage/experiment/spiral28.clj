@@ -305,7 +305,9 @@
 
   (oz/view! (minimal-env-plots 0)) ; there are five envs, with indexes 0 through 4.
 
-  (def spiral-walk-result ((spiral-walk-fns ["spiral" "env0"]) ((params :init-loc-fn))))
+  (def spiral-walk-result0 ((spiral-walk-fns ["spiral" "env0"]) ((params :init-loc-fn))))
+  (def spiral-walk-result1 ((spiral-walk-fns ["spiral" "env1"]) ((params :init-loc-fn))))
+  (def spiral-walk-result2 ((spiral-walk-fns ["spiral" "env2"]) ((params :init-loc-fn))))
 
   (def spiral-walk-vega-coords (map (partial h/add-point-labels "spiral") spiral-walk-result))
   
@@ -316,19 +318,24 @@
               600 1 100 
               [spiral-walk-result]))
 
+  ;; Kludge to display plot of search using both env-minimal and env-mason
   (require '[forage.core.env-mason :as envmas])
   (def masonenv0 (envmas/make-env 5 (params :env-size) (target-coords 0)))
   (def masonenv1 (envmas/make-env 5 (params :env-size) (target-coords 1)))
   (def masonenv2 (envmas/make-env 5 (params :env-size) (target-coords 2)))
-  ;; env-mason version:
+  (envmas/env-foodspot-coords masonenv2)
+  ;; Partial env-mason version: env-mason env, but result is from
+  ;; env-minimal:
   (def plot (h/vega-didcould-envwalk-plot 
-              masonenv2
-              600 1 50
-              [spiral-walk-result]))
+              masonenv0
+              600 0.01 200
+              [spiral-walk-result0]
+              :foodspots-on-top? true))
 
   (oz/view! plot)
 
-  (clojure.repl/pst)
+  (first spiral-walk-result0)
+
 
 )
 
