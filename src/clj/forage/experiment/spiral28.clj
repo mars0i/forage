@@ -329,8 +329,7 @@
   (def plot (h/vega-didcould-envwalk-plot 
               masonenv0
               600 0.01 200
-              [spiral-walk-result0]
-              :foodspots-on-top? true))
+              [spiral-walk-result0]))
 
   (oz/view! plot)
 
