@@ -324,14 +324,21 @@
   (def masonenv1 (envmas/make-env 5 (params :env-size) (target-coords 1)))
   (def masonenv2 (envmas/make-env 5 (params :env-size) (target-coords 2)))
   (envmas/env-foodspot-coords masonenv2)
-  ;; Partial env-mason version: env-mason env, but result is from
-  ;; env-minimal:
-  (def plot (h/vega-didcould-envwalk-plot 
-              masonenv0
-              600 0.01 200
-              [spiral-walk-result0]))
+  ;; Partial env-mason version: env-mason env, but result is from env-minimal:
+  ;; env0:
+  (def plot0 (h/vega-didcould-envwalk-plot 
+               masonenv0
+               600 0.01 200
+               [spiral-walk-result0]))
 
-  (oz/view! plot)
+  ;; env1:
+  (def plot1 (h/vega-didcould-envwalk-plot 
+               masonenv1
+               600 0.01 200
+               [spiral-walk-result1]))
+
+  (oz/view! plot0)
+  (oz/view! plot1)
 
   (first spiral-walk-result0)
 
