@@ -573,3 +573,16 @@
     ;; state can be saved between nrepl sessions.
 
 )
+
+;; To be used as a main run function.
+;; Current verson only does one combination of walk type and environment.
+;; cf. this example https://kozieiev.com/blog/clojure-cli-tools-deps-deps-edn-guide:
+;;     clj -X core/print-args :key1 value1 :key2 value2
+(defn run-random-walks
+  [{walk-str :walk env-str :env walks-per-fn :n}] ; to be parsed from command line
+  (let [run-identifier (str "_" walk-str "_" env-str "_" walks-per-fn "per_")
+        params (update params :basename str run-identifier)
+        some-walks (select-keys random-walk-fns [[walk-str env-str]])]
+    (println "seed:" seed "walk:" walk-str "env:" env-str "walks-per-fn:" walks-per-fn)
+    (time (fr/walk-experiments params some-walks walks-per-fn seed rng))))
+  
