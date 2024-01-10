@@ -578,11 +578,33 @@
 ;; Current verson only does one combination of walk type and environment.
 ;; cf. this example https://kozieiev.com/blog/clojure-cli-tools-deps-deps-edn-guide:
 ;;     clj -X core/print-args :key1 value1 :key2 value2
+;; Maybe like this?
+;; clj -M:production -X forage.experiment.spiral28/run-random-walks :walk "mu15" :env "env0" :walks-per-fn 10
+;; Well that doesn't work, but this does:
+;; clj -X forage.experiment.spiral28/run-random-walks :walk '"mu15"' :env '"env0"' :walks-per-fn 10
+;; Note the double quotes. Otherwise what's in Clojure will be symbols.
+;; Maybe run them through the `name` function.
+;; OK, made that change, so now this works:
+;; clj -X forage.experiment.spiral28/run-random-walks :walk mu15 :env env0 :walks-per-fn 10
+;; I think this is the way to use the production config:
+;; clj -X:production forage.experiment.spiral28/run-random-walks :walk mu15 :env env0 :walks-per-fn 10
+;;
 (defn run-random-walks
-  [{walk-str :walk env-str :env walks-per-fn :n}] ; to be parsed from command line
-  (let [run-identifier (str "_" walk-str "_" env-str "_" walks-per-fn "per_")
+  [{walk-sym :walk env-sym :env walks-per-fn :walks-per-fn}] ; to be parsed from command line
+  (let [walk-str (name walk-sym) ; non-numeric strings on commandline become symbols unless you quote quotations in them.
+        env-str (name env-sym)
+        run-identifier (str "_" walk-str "_" env-str "_" walks-per-fn "per_") ; we could use the symbols here, but not below.
         params (update params :basename str run-identifier)
-        some-walks (select-keys random-walk-fns [[walk-str env-str]])]
+        some-walks (select-keys random-walk-fns [[walk-str env-str]])] ; Here we need the strings.
     (println "seed:" seed "walk:" walk-str "env:" env-str "walks-per-fn:" walks-per-fn)
     (time (fr/walk-experiments params some-walks walks-per-fn seed rng))))
   
+(comment
+  (run-random-walks {:walk "mu15" :env "env0" :walks-per-fn 10})
+  (clojure.repl/pst)
+
+
+  (def spiralnippyname (str basename FIXME "data.nippy"))
+  (def spiral-data (ds/->dataset spiralnippyname))
+  (ft/prall spiral-data)
+)
