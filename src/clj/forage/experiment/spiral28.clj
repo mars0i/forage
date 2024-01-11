@@ -589,6 +589,7 @@
 ;; I think this is the way to use the production config:
 ;; clj -X:production forage.experiment.spiral28/run-random-walks :walk mu15 :env env0 :walks-per-fn 10
 ;;
+;; TODO ?  Allow setting seed.
 (defn run-random-walks
   [{walk-sym :walk env-sym :env walks-per-fn :walks-per-fn}] ; to be parsed from command line
   (let [walk-str (name walk-sym) ; non-numeric strings on commandline become symbols unless you quote quotations in them.
@@ -596,7 +597,7 @@
         run-identifier (str "_" walk-str "_" env-str "_" walks-per-fn "per_") ; we could use the symbols here, but not below.
         params (update params :basename str run-identifier)
         some-walks (select-keys random-walk-fns [[walk-str env-str]])] ; Here we need the strings.
-    (println "seed:" seed "walk:" walk-str "env:" env-str "walks-per-fn:" walks-per-fn)
+    (println "walk:" walk-str "env:" env-str "walks-per-fn:" walks-per-fn)
     (time (fr/walk-experiments params some-walks walks-per-fn seed rng))))
   
 (comment
