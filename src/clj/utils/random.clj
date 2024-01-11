@@ -94,9 +94,30 @@
     (+ t h)))
 
 (defn make-seed
-  "Return a long constructed by an Apache Commons method."
+  "Return a long constructed by an Apache Commons RandomSource/createLong
+  method, which is reasonably thought to produce uniform random numbers.
+  (Comments near source for make-seed explain where the seed comes from.)"
   []
   (RandomSource/createLong))
+;; To see where Apache 1.5's RandomSource/createLong() comes from, see:
+;; docs: https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/RandomSource.html#createLong()
+;; source: https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/src-html/org/apache/commons/rng/simple/RandomSource.html#line.1018
+;; public static long createLong() {
+;;    return SeedFactory.createLong();
+;; }
+;; seed factory doc: https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/org/apache/commons/rng/simple/internal/SeedFactory.html
+;; source:
+;; https://commons.apache.org/proper/commons-rng/commons-rng-simple/apidocs/src-html/org/apache/commons/rng/simple/internal/SeedFactory.html#line.110
+;; Then go to line 47ff to see that it uses an xoroshiro1024++, seeded by a
+;; SplitMix64 that is seeded by a java.security.SecureRandom genator, where
+;; the SplitMix64 output is checked to make sure that it has no zeros longs
+;; in its seed array, because xoroshiro generators apparently have a zeroland 
+;; problem.  The check for zero longs occurs in the method ensureNonZero on
+;; line 407 (end of source file).  If a position in the long array is = 0,
+;; the code endureNonZero loops until SplitMix64 produces a nonzero value,
+;; and uses that instead of the zero.
+;; (I don't know what the SecureRandom generator is doing, but I trust it--whatever
+;; Java is doing there ought to be plenty good.)
 
 (defn set-seed
   "Resets the seed of rng to seed.  Apparently doesn't work with Apache 1.5 RNGs."
