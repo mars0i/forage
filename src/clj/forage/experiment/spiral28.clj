@@ -516,6 +516,11 @@
     ;; elapsed time: (/ 8953262.365402 1000 60 60) = 2.49 hrs
 
 
+  ;; For 28 configurations and 10K runs each, with max 10^11 numbers per
+  ;; run, I'd need this much storage space:
+  (def b (* 4 (* 28 (Math/pow 10 15))))
+  (/ b 1000 1000 1000 1000 1000) ;=> 112 petabytes
+
   (let [walks-per-fn 10000
         some-walks (into (sorted-map)
                          (select-keys random-walk-fns
