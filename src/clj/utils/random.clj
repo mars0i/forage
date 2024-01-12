@@ -25,6 +25,7 @@
   (:require ;[clojure.math.numeric-tower :as nt] ; now using clojure.math/pow instead of nt/expt see https://clojureverse.org/t/article-blog-post-etc-about-clojure-math-vs-numeric-tower/9805/6?u=mars0i
             [clojure.math :as math]
             [clojure.java.io :as io]
+            [utils.math :as um]
             [fastmath.core :as fm]))
 
 ;(set! *warn-on-reflection* true)
@@ -42,6 +43,32 @@
 ;; *might* not be OK).  All of the WELL generators, including 1024a, have
 ;; a long enough period, but MRG32k3a is a better generator, as well as 
 ;; being faster.
+
+(defn vigna-log-prob
+  "Returns the log base 2 of (nums-per-run^2 runs)/period, which is
+  Sebastiano Vigna's estimate of the probability of overlap of random
+  sequences of length nums-per-run in runs number of experiments, using a
+  generator with the given period, on the assumption that the initial seed
+  is chosen with uniform probability.  log-period should be the log base 2
+  of the period.  The result should be, ideally, a negative number with
+  large absolute value, indicating that the probability of overlap is very
+  small. (See Vigna's \"On the probability of overlap of random
+  subsequences of pseudorandom number generators\", _Information Processing
+  Letters_ 2020,
+  https://www.sciencedirect.com/science/article/abs/pii/S0020019020300260.)"
+  [nums-per-run runs log-period]
+  (let [log-len (um/log2 nums-per-run)    ; log 2 of number L of runs
+        log-runs-sq (* 2 (um/log2 runs))] ; log 2 of square of number n of runs
+    (- (+ log-len log-runs-sq)
+       log-period)))
+
+(comment
+  (def spiral28-vigna (partial vigna-log-prob 100000000000 28))
+  ;; MRG32k3a:
+  (spiral28-vigna 191) ;=> -9.999999998003778E10
+  ;; i.e. about 1/2^10000000000
+)
+
 
 (comment
   (def rng (make-well19937 42))
@@ -293,7 +320,6 @@
   ;; So the PRNG differences are getting washed out by the rest of the
   ;; computation.  (But I think MRG32k3a is still better than the WELL 
   ;; generators.)
-
 )
 
 
