@@ -14,6 +14,9 @@
                  ;[generateme/fastmath "2.1.9-SNAPSHOT"]
                  [generateme/fastmath "2.2.2-SNAPSHOT"]
                  [com.cnuernber/ham-fisted "2.010"]
+                 ; [org.jcuda/jcuda-natives "11.8.0"]
+                 ; [org.jcuda/jcublas-natives "11.8.0"]
+                 ; [uncomplicate/neanderthal "0.46.0"]
                  [org.flatland/ordered "1.15.10"] ; for ordered-set
                  [net.mikera/core.matrix "0.63.0"]
                  [aerial.hanami "0.17.0"]

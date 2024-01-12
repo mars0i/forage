@@ -8,6 +8,9 @@
         org.apache.commons/commons-rng-sampling {:mvn/version "1.5"}
         generateme/fastmath {:mvn/version "2.2.2-SNAPSHOT"} ; adds rint with scale arg
         com.cnuernber/ham-fisted {:mvn/version "2.010"}
+        ; org.jcuda/jcuda-natives {:mvn/version "11.8.0"}
+        ; org.jcuda/jcublas-natives {:mvn/version "11.8.0"}
+        ; uncomplicate/neanderthal {:mvn/version "0.46.0"}
         org.flatland/ordered {:mvn/version "1.15.10"} ; for ordered-set
         net.mikera/core.matrix {:mvn/version "0.63.0"}
         aerial.hanami/aerial.hanami {:mvn/version "0.17.0"}
