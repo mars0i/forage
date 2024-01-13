@@ -16,7 +16,8 @@
                  [com.cnuernber/ham-fisted "2.010"]
                  ; [org.jcuda/jcuda-natives "11.8.0"]
                  ; [org.jcuda/jcublas-natives "11.8.0"]
-                 ; [uncomplicate/neanderthal "0.46.0"]
+                 [org.bytedeco/mkl-platform-redist “2020.3-1.5.4”] 
+                 [uncomplicate/neanderthal "0.46.0"]
                  [org.flatland/ordered "1.15.10"] ; for ordered-set
                  [net.mikera/core.matrix "0.63.0"]
                  [aerial.hanami "0.17.0"]
