@@ -67,6 +67,14 @@
   ;; MRG32k3a:
   (spiral28-vigna 191) ;=> -9.999999998003778E10
   ;; i.e. about 1/2^10000000000
+
+
+  (require '[uncomplicate.neanderthal.random :as nrandom])
+  (require '[uncomplicate.neanderthal.internal.cpp.mkl.factory :as nfact])
+  (require '[uncomplicate.neanderthal.internal.host.mkl :as nmkl])
+  (require '[uncomplicate.neanderthal.native :as nnative])
+
+
 )
 
 
