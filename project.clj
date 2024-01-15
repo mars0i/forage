@@ -10,17 +10,15 @@
                  [org.apache.commons/commons-rng-simple "1.5"] ; libs because of nonoverlapping features
                  [org.apache.commons/commons-rng-client-api "1.5"]
                  [org.apache.commons/commons-rng-sampling "1.5"]
-                 ;[generateme/fastmath "2.1.8"]
-                 ;[generateme/fastmath "2.1.9-SNAPSHOT"]
                  [generateme/fastmath "2.2.2-SNAPSHOT"]
                  [com.cnuernber/ham-fisted "2.010"]
-                 ; [org.jcuda/jcuda-natives "11.8.0"]
-                 ; [org.jcuda/jcublas-natives "11.8.0"]
-                 ;[org.bytedeco/mkl-platform-redist “2020.3-1.5.4”] 
+                 [org.jcuda/jcuda-natives "11.8.0"]
+                 [org.jcuda/jcublas-natives "11.8.0"]
+                 ;[uncomplicate/neanderthal "0.37.0"]
+                 [uncomplicate/neanderthal "0.43.0"]
                  ;[uncomplicate/neanderthal "0.46.0"]
-                 [org.bytedeco/mkl-platform-redist "2021.1-1.5.5"] 
-                 ;[uncomplicate/neanderthal "0.43.0"]
-                 [uncomplicate/neanderthal "0.37.0"]
+                 ;[org.bytedeco/mkl-platform-redist “2020.3-1.5.4”] 
+                 ;[org.bytedeco/mkl-platform-redist "2021.1-1.5.5"] 
                  ;; Later versions of neanderthal give me errors similar to this one:
                  ;;   Could not find artifact org.jcuda:jcuda-natives:jar:apple-x86_64:11.0.0 in central (https://repo1.maven.org/maven2/)
                  ;;   Could not find artifact org.jcuda:jcuda-natives:jar:apple-x86_64:11.0.0 in clojars (https://repo.clojars.org/)

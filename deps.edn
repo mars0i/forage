@@ -8,13 +8,17 @@
         org.apache.commons/commons-rng-sampling {:mvn/version "1.5"}
         generateme/fastmath {:mvn/version "2.2.2-SNAPSHOT"} ; adds rint with scale arg
         com.cnuernber/ham-fisted {:mvn/version "2.010"}
+        ;; See https://clojurians.zulipchat.com/#narrow/stream/151168-clojure/topic/Chunked.20repeatedly.20function.3F/near/412732737
+        ;;     https://clojurians.zulipchat.com/#narrow/stream/151168-clojure/topic/Chunked.20repeatedly.20function.3F/near/412733223
+        ;;     https://drive.google.com/file/d/1kSLB9ReaF137_XtvN5XswzgFYJHREEOQ/view
+        ;;     https://github.com/uncomplicate/neanderthal/issues/119
         org.jcuda/jcuda-natives {:mvn/version "11.8.0"}
         org.jcuda/jcublas-natives {:mvn/version "11.8.0"}
-        ; [org.bytedeco/mkl-platform-redist “2020.3-1.5.4”] 
-        ; uncomplicate/neanderthal {:mvn/version "0.46.0"}
-        org.bytedeco/mkl-platform-redist {:mvn/version "2021.1-1.5.5"}
+        ;uncomplicate/neanderthal {:mvn/version "0.46.0"}
         ;uncomplicate/neanderthal {:mvn/version "0.43.0"}
         uncomplicate/neanderthal {:mvn/version "0.37.0"}
+        ; [org.bytedeco/mkl-platform-redist “2020.3-1.5.4”] 
+        org.bytedeco/mkl-platform-redist {:mvn/version "2021.1-1.5.5"}
         ;; Later versions of neanderthal give me errors similar to this one:
         ;;   Could not find artifact org.jcuda:jcuda-natives:jar:apple-x86_64:11.0.0 in central (https://repo1.maven.org/maven2/)
         ;;   Could not find artifact org.jcuda:jcuda-natives:jar:apple-x86_64:11.0.0 in clojars (https://repo.clojars.org/)
