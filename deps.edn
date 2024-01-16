@@ -12,13 +12,15 @@
         ;;     https://clojurians.zulipchat.com/#narrow/stream/151168-clojure/topic/Chunked.20repeatedly.20function.3F/near/412733223
         ;;     https://drive.google.com/file/d/1kSLB9ReaF137_XtvN5XswzgFYJHREEOQ/view
         ;;     https://github.com/uncomplicate/neanderthal/issues/119
-        org.jcuda/jcuda-natives {:mvn/version "11.8.0"}
-        org.jcuda/jcublas-natives {:mvn/version "11.8.0"}
-        ;uncomplicate/neanderthal {:mvn/version "0.46.0"}
-        ;uncomplicate/neanderthal {:mvn/version "0.43.0"}
-        uncomplicate/neanderthal {:mvn/version "0.37.0"}
+        ;org.jcuda/jcuda-natives {:mvn/version "11.8.0"}
+        ;org.jcuda/jcublas-natives {:mvn/version "11.8.0"}
+        ;uncomplicate/neanderthal {:mvn/version "0.46.0"
+        ;                          :exclusions [org.jcuda/jcuda-natives org.jcuda/jcublas-natives]}
+        uncomplicate/neanderthal {:mvn/version "0.43.0"
+                                  :exclusions [org.jcuda/jcuda-natives org.jcuda/jcublas-natives]}
+        ;uncomplicate/neanderthal {:mvn/version "0.37.0"}
         ; [org.bytedeco/mkl-platform-redist “2020.3-1.5.4”] 
-        org.bytedeco/mkl-platform-redist {:mvn/version "2021.1-1.5.5"}
+        ;org.bytedeco/mkl-platform-redist {:mvn/version "2021.1-1.5.5"}
         ;; Later versions of neanderthal give me errors similar to this one:
         ;;   Could not find artifact org.jcuda:jcuda-natives:jar:apple-x86_64:11.0.0 in central (https://repo1.maven.org/maven2/)
         ;;   Could not find artifact org.jcuda:jcuda-natives:jar:apple-x86_64:11.0.0 in clojars (https://repo.clojars.org/)
@@ -40,7 +42,9 @@
         }
  :aliases {:nrepl-server {:extra-deps {nrepl/nrepl {:mvn/version "1.0.0"} ; see note above
                                        cider/cider-nrepl {:mvn/version "0.29.0"}}
-                          :main-opts  ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}
+                          :main-opts  ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]
+                          :jvm-opts ["-Dclojure.compiler.direct-linking=true"] ; for neanderthal with Java >= 9
+                          }
            :production {:jvm-opts ["-Xms4g"  ; initial heap
                                    "-Xmx20g" ; max heap
                                    "-Xss1g"  ; max per-thread stack size (s/b smaller?)

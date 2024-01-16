@@ -12,11 +12,11 @@
                  [org.apache.commons/commons-rng-sampling "1.5"]
                  [generateme/fastmath "2.2.2-SNAPSHOT"]
                  [com.cnuernber/ham-fisted "2.010"]
-                 [org.jcuda/jcuda-natives "11.8.0"]
-                 [org.jcuda/jcublas-natives "11.8.0"]
+                 ;[org.jcuda/jcuda-natives "11.8.0"]
+                 ;[org.jcuda/jcublas-natives "11.8.0"]
                  ;[uncomplicate/neanderthal "0.37.0"]
-                 [uncomplicate/neanderthal "0.43.0"]
-                 ;[uncomplicate/neanderthal "0.46.0"]
+                 ;[uncomplicate/neanderthal "0.43.0"]
+                 [uncomplicate/neanderthal "0.46.0" :exclusions [org.jcuda/jcuda-natives org.jcuda/jcublas-natives]]
                  ;[org.bytedeco/mkl-platform-redist “2020.3-1.5.4”] 
                  ;[org.bytedeco/mkl-platform-redist "2021.1-1.5.5"] 
                  ;; Later versions of neanderthal give me errors similar to this one:
@@ -44,6 +44,7 @@
 
   :source-paths ["src/clj"]
   :java-source-paths ["src/java"] ; such sources will be compiled; apparently there's no analog in deps.edn
+  :jvm-opts ["-Dclojure.compiler.direct-linking=true"] ; for Neanderthal with Java >= 9
 
   ; :plugins [[cider/cider-nrepl "0.24.0"]] ; FOR CONJURE
 

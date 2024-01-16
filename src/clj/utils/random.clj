@@ -69,10 +69,11 @@
   ;; i.e. about 1/2^10000000000
 
 
+  (require '[uncomplicate.neanderthal.core :as ncore])
+  (require '[uncomplicate.neanderthal.native :as nnative])
   (require '[uncomplicate.neanderthal.random :as nrandom])
   (require '[uncomplicate.neanderthal.internal.cpp.mkl.factory :as nfact])
   (require '[uncomplicate.neanderthal.internal.host.mkl :as nmkl])
-  (require '[uncomplicate.neanderthal.native :as nnative])
 
 
 )
