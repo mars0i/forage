@@ -68,17 +68,29 @@
   (spiral28-vigna 191) ;=> -9.999999998003778E10
   ;; i.e. about 1/2^10000000000
 
+  (spiral28-vigna 128) ;=> -81.8440811121238
+  ;; i.e. about 1/2^82
+  ;; (which is way small, but not like MRG32k3a)
 
   (require '[uncomplicate.neanderthal.core :as ncore])
   (require '[uncomplicate.neanderthal.native :as nnative])
   (require '[uncomplicate.neanderthal.random :as nrand])
 
-  (def rng (nrand/rng-state ...))
+  (def fact (nnative/factory-by-type :double))
+  (def rng (nrand/rng-state fact 42))
+  ;; all at once:
+  (def rng (nrand/rng-state (nnative/factory-by-type :double) 42))
 
-  (def randvec (nnative/dv 1000000))
-  (nrand/rand-uniform! randvec)
-  (ncore/entry randvec 1)
-  (def cvec (into [] randvec))
+  (def randvec (nnative/dv 1000000)) ; make a Neanderthal vector
+  (nrand/rand-uniform! rng randvec)  ; populate the Neanderthal vector with random numbers
+  (ncore/entry randvec 999999) ; index into the Neanderthal vector
+  (class randvec)
+  (take 20 randvec) ; it works with take 
+  (first randvec) ; and first and second
+  (randvec 999999) ; you can use map-style indexing
+  ;; but not nth !
+
+  (def cvec (into [] randvec)) ; convert into a Clojure vector
 
 )
 
