@@ -81,16 +81,18 @@
   ;; all at once:
   (def rng (nrand/rng-state (nnative/factory-by-type :double) 42))
 
-  (def randvec (nnative/dv 1000000)) ; make a Neanderthal vector
+  (def randvec (nnative/dv 1000000)) ; make a Neanderthal vector for a million doubles
   (nrand/rand-uniform! rng randvec)  ; populate the Neanderthal vector with random numbers
   (ncore/entry randvec 999999) ; index into the Neanderthal vector
   (class randvec)
-  (take 20 randvec) ; it works with take 
-  (first randvec) ; and first and second
-  (randvec 999999) ; you can use map-style indexing
-  ;; but not nth !
-
-  (def cvec (into [] randvec)) ; convert into a Clojure vector
+  (take 20 randvec) ; it works with take, producing a lazy seq
+  (drop (- 1000000 20) randvec) ; the result is a lazy seq. Feels slow.
+  (first randvec) ; and first and second work
+  (nth randvec 0) ; nth fails, howewver 
+  (randvec 999999) ; you can use map-style indexing though, and it's fast
+  (def cvec (into [] randvec)) ; converts into a Clojure vector
+  (nth cvec 0) ; then nth works, of course
+  (nth cvec 999999) ; and is pretty fast, but feels slower than Neanderthal, as you might expect
 
 )
 
