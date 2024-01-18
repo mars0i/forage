@@ -63,36 +63,71 @@
        log-period)))
 
 (comment
+  ;; Estimate of probability of overlap for my spiral28 experiments
+  ;; if I use a different seed for each walk and env configuration.
+  ;; (There happen to be 28 of them, but that's not why it's called
+  ;; spiral28.)
   (def spiral28-vigna (partial vigna-log-prob 100000000000 28))
   ;; MRG32k3a:
   (spiral28-vigna 191) ;=> -9.999999998003778E10
   ;; i.e. about 1/2^10000000000
 
-  (spiral28-vigna 128) ;=> -81.8440811121238
-  ;; i.e. about 1/2^82
-  ;; (which is way small, but not like MRG32k3a)
-
   (require '[uncomplicate.neanderthal.core :as ncore])
-  (require '[uncomplicate.neanderthal.native :as nnative])
+  (require '[uncomplicate.neanderthal.native :as nnative]) ; native, i.e. what my CPU provides, rather than a GPU which needs e.g. CUDA.
   (require '[uncomplicate.neanderthal.random :as nrand])
 
-  (def fact (nnative/factory-by-type :double))
-  (def rng (nrand/rng-state fact 42))
-  ;; all at once:
-  (def rng (nrand/rng-state (nnative/factory-by-type :double) 42))
+  ;; cf https://dragan.rocks/articles/19/Billion-random-numbers-blink-eye-Clojure
+  ;;   Including this comment:
+  ;;   "The next step is a billion entries. I'll create two
+  ;;   vectors of 500 million entries each, which together takes
+  ;;   a billion. The reason I'm doing this instead of one
+  ;;   vector, is that each entry takes 4 bytes, so a billion
+  ;;   entries requires 4GBs of bytes. Java (and Intel MKL)
+  ;;   buffers are indexed with integers, and the largest integer
+  ;;   is 2147483647."
+  ;;
+  ;; Also:
+  ;;   "I won't bother you again other than stating that
+  ;;   Neanderthal uses Philox and/or ARS5 RNG which is much,
+  ;;   much, better than the stuff you get from the built-in
+  ;;   rand."
+  
+  ;; I figured out that Neanderthal uses ARS5 in MKL.  This has a 128-bit state.
+  ;; Estimate of probability of overlap for my spiral28 experiments
+  ;; if I use a different seed for each walk and env configuration.
+  (spiral28-vigna 128) ;=> -81.8440811121238
+  ;; i.e. about 1/2^82
+  ;; (which is way small--small enough--though not miniscule like MRG32k3a)
+  ;;
+  ;; Note however, that I think ARS5 is counter-based, so I actually could
+  ;; fast-forward and guarantee that there is no overlap.
 
-  (def randvec (nnative/dv 1000000)) ; make a Neanderthal vector for a million doubles
+  ;; Using floats, i.e. 32-bit:
+  ;; I think they idea of a factory is that it makes numbers or allocates
+  ;; space in the way appropriate for the CPU ("native") or for a GPU (e.g. CUDA):
+  (def rng (nrand/rng-state (nnative/factory-by-type :float) 42))
+  ;; Or like this, using an existing factory:
+  (def rng (nrand/rng-state nnative/native-float 42))
+  (def randvec (nnative/fv 500000000)) ; length 500 million is OK, but much more is an error.
+  (def randvec (nnative/fv   1000000)) ; make a Neanderthal vector for a million floats
   (nrand/rand-uniform! rng randvec)  ; populate the Neanderthal vector with random numbers
   (ncore/entry randvec 999999) ; index into the Neanderthal vector
   (class randvec)
   (take 20 randvec) ; it works with take, producing a lazy seq
   (drop (- 1000000 20) randvec) ; the result is a lazy seq. Feels slow.
   (first randvec) ; and first and second work
-  (nth randvec 0) ; nth fails, howewver 
+  (nth randvec 0) ; nth generates an error, howewver 
+  (get randvec 999999) ; get doesn't error, but you get back a nil
   (randvec 999999) ; you can use map-style indexing though, and it's fast
   (def cvec (into [] randvec)) ; converts into a Clojure vector
   (nth cvec 0) ; then nth works, of course
   (nth cvec 999999) ; and is pretty fast, but feels slower than Neanderthal, as you might expect
+
+  ;; using doubles, i.e. 64-bit, though the random numbers are probably just 32-bit:
+  (def rng (nrand/rng-state (nnative/factory-by-type :double) 42))
+  (def randvec (nnative/dv 260000000)) ; length 260 million is OK, but much more is an error.
+  (def randvec (nnative/dv   1000000)) ; make a Neanderthal vector for a million doubles
+  (nrand/rand-uniform! rng randvec)  ; populate the Neanderthal vector with random numbers
 
 )
 
