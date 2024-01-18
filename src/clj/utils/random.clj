@@ -71,10 +71,14 @@
 
   (require '[uncomplicate.neanderthal.core :as ncore])
   (require '[uncomplicate.neanderthal.native :as nnative])
-  (require '[uncomplicate.neanderthal.random :as nrandom])
-  (require '[uncomplicate.neanderthal.internal.cpp.mkl.factory :as nfact])
-  (require '[uncomplicate.neanderthal.internal.host.mkl :as nmkl])
+  (require '[uncomplicate.neanderthal.random :as nrand])
 
+  (def rng (nrand/rng-state ...))
+
+  (def randvec (nnative/dv 1000000))
+  (nrand/rand-uniform! randvec)
+  (ncore/entry randvec 1)
+  (def cvec (into [] randvec))
 
 )
 
@@ -272,19 +276,24 @@
   ;; though, where WELL 44497b was faster than WELL 19937c.
   (time
     (let [seed (make-seed)
-          rng44497 (make-well44497 seed)
-          rng19937 (make-well19937 seed)
-          rng1024  (make-well1024 seed)
-          rngMRG   (make-mrg32k3a seed)]
+          ;rng44497 (make-well44497 seed)
+          ;rng19937 (make-well19937 seed)
+          ;rng1024  (make-well1024 seed)
+          rngMRG   (make-mrg32k3a seed)
+         ]
       (println "seed =" seed)
-      (println "WELL44497b:")
-      (time (crit/bench (next-double rng44497)))
-      (println "WELL19937c:")
-      (time (crit/bench (next-double rng19937)))
-      (println "WELL1024a:")
-      (time (crit/bench (next-double rng1024)))
+      ;(println "WELL44497b:")
+      ;(time (crit/bench (next-double rng44497)))
+      ;(println "WELL19937c:")
+      ;(time (crit/bench (next-double rng19937)))
+      ;(println "WELL1024a:")
+      ;(time (crit/bench (next-double rng1024)))
       (println "MRG32k3a:")
-      (time (crit/bench (next-double rngMRG)))))
+      (time (crit/bench (next-double rngMRG))))
+  )
+
+    (def rng (make-mrg32k3a 42))
+    (def xs (doall (take 1000000 (repeatedly #(next-double rng)))))
 )
 
 (comment
