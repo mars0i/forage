@@ -10,7 +10,7 @@
                  [org.apache.commons/commons-rng-simple "1.5"] ; libs because of nonoverlapping features
                  [org.apache.commons/commons-rng-client-api "1.5"]
                  [org.apache.commons/commons-rng-sampling "1.5"]
-                 [generateme/fastmath "2.2.2-SNAPSHOT"]
+                 [generateme/fastmath "2.3.0"]
                  [com.cnuernber/ham-fisted "2.010"]
                  ;[org.jcuda/jcuda-natives "11.8.0"]
                  ;[org.jcuda/jcublas-natives "11.8.0"]
