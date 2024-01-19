@@ -19,11 +19,6 @@
                  [uncomplicate/neanderthal "0.46.0" :exclusions [org.jcuda/jcuda-natives org.jcuda/jcublas-natives]]
                  ;[org.bytedeco/mkl-platform-redist “2020.3-1.5.4”] 
                  ;[org.bytedeco/mkl-platform-redist "2021.1-1.5.5"] 
-                 ;; Later versions of neanderthal give me errors similar to this one:
-                 ;;   Could not find artifact org.jcuda:jcuda-natives:jar:apple-x86_64:11.0.0 in central (https://repo1.maven.org/maven2/)
-                 ;;   Could not find artifact org.jcuda:jcuda-natives:jar:apple-x86_64:11.0.0 in clojars (https://repo.clojars.org/)
-                 ;;   Could not find artifact org.jcuda:jcublas-natives:jar:apple-x86_64:11.0.0 in central (https://repo1.maven.org/maven2/)
-                 ;;   Could not find artifact org.jcuda:jcublas-natives:jar:apple-x86_64:11.0.0 in clojars (https://repo.clojars.org/)
                  [org.flatland/ordered "1.15.10"] ; for ordered-set
                  [net.mikera/core.matrix "0.63.0"]
                  [aerial.hanami "0.17.0"]

@@ -14,19 +14,13 @@
         ;;     https://github.com/uncomplicate/neanderthal/issues/119
         ;org.jcuda/jcuda-natives {:mvn/version "11.8.0"}
         ;org.jcuda/jcublas-natives {:mvn/version "11.8.0"}
-        uncomplicate/neanderthal {:mvn/version "0.46.0"
-                                  :exclusions [org.jcuda/jcuda-natives org.jcuda/jcublas-natives]}
+        ;uncomplicate/neanderthal {:mvn/version "0.37.0"}
         ;uncomplicate/neanderthal {:mvn/version "0.43.0"
         ;                          :exclusions [org.jcuda/jcuda-natives org.jcuda/jcublas-natives]}
-        ;uncomplicate/neanderthal {:mvn/version "0.37.0"}
-        ; org.bytedeco/mkl-platform-redist {:mvn/version "2020.1-1.5.3"} 
+        uncomplicate/neanderthal {:mvn/version "0.46.0" :exclusions [org.jcuda/jcuda-natives org.jcuda/jcublas-natives]}
+        ;org.bytedeco/mkl-platform-redist {:mvn/version "2020.1-1.5.3"} 
         ;org.bytedeco/mkl-platform-redist {:mvn/version "2020.3-1.5.4"} 
-        org.bytedeco/mkl-platform-redist {:mvn/version "2021.1-1.5.5"}
-        ;; Later versions of neanderthal give me errors similar to this one:
-        ;;   Could not find artifact org.jcuda:jcuda-natives:jar:apple-x86_64:11.0.0 in central (https://repo1.maven.org/maven2/)
-        ;;   Could not find artifact org.jcuda:jcuda-natives:jar:apple-x86_64:11.0.0 in clojars (https://repo.clojars.org/)
-        ;;   Could not find artifact org.jcuda:jcublas-natives:jar:apple-x86_64:11.0.0 in central (https://repo1.maven.org/maven2/)
-        ;;   Could not find artifact org.jcuda:jcublas-natives:jar:apple-x86_64:11.0.0 in clojars (https://repo.clojars.org/)
+        ;org.bytedeco/mkl-platform-redist {:mvn/version "2021.1-1.5.5"}
         org.flatland/ordered {:mvn/version "1.15.10"} ; for ordered-set
         net.mikera/core.matrix {:mvn/version "0.63.0"}
         aerial.hanami/aerial.hanami {:mvn/version "0.17.0"}
