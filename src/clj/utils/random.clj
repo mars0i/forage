@@ -93,23 +93,23 @@
   ;;   rand."
   
   ;; I figured out that Neanderthal uses ARS5 in MKL.  This has a 128-bit state.
+  ;; According to this page, the period is 2^130: https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-vector-statistics-notes/2021-1/ars5.html
   ;; Estimate of probability of overlap for my spiral28 experiments
   ;; if I use a different seed for each walk and env configuration.
-  (spiral28-vigna 128) ;=> -81.8440811121238
-  ;; i.e. about 1/2^82
+  (spiral28-vigna 130) ;=> -83.8440811121238
+  ;; i.e. about 1/2^84
   ;; (which is way small--small enough--though not miniscule like MRG32k3a)
   ;;
   ;; Note however, that I think ARS5 is counter-based, so I actually could
   ;; fast-forward and guarantee that there is no overlap.
 
-  ;; Using floats, i.e. 32-bit:
   ;; I think they idea of a factory is that it makes numbers or allocates
   ;; space in the way appropriate for the CPU ("native") or for a GPU (e.g. CUDA):
-  (def rng (nrand/rng-state (nnative/factory-by-type :float) 42))
+  (def rng (nrand/rng-state (nnative/factory-by-type :double) 42))
   ;; Or like this, using an existing factory:
-  (def rng (nrand/rng-state nnative/native-float 42))
-  (def randvec (nnative/fv 500000000)) ; length 500 million is OK, but much more is an error.
-  (def randvec (nnative/fv   1000000)) ; make a Neanderthal vector for a million floats
+  (def rng (nrand/rng-state nnative/native-double 42))
+  (def randvec (nnative/dv 250000000)) ; length 250 million is OK, but much more is an error.
+  (def randvec (nnative/dv   1000000)) ; make a Neanderthal vector for a million floats
   (time (nrand/rand-uniform! rng randvec))  ; populate the Neanderthal vector with random numbers
   (ncore/entry randvec 999999) ; index into the Neanderthal vector
   (class randvec)
@@ -306,9 +306,7 @@
 (comment
   (require '[criterium.core :as crit])
 
-  (require '[uncomplicate.neanderthal.core :as ncore])
-  (require '[uncomplicate.neanderthal.native :as nnative]) ; native, i.e. what my CPU provides, rather than a GPU which needs e.g. CUDA.
-  (require '[uncomplicate.neanderthal.random :as nrand])
+  ;; COMPARISON OF DIFFERENT JAVA PRNGS:
 
   (def rng19937 (make-well19937 seed))
   (time (crit/bench (next-double rng19937)))
@@ -345,34 +343,44 @@
       (time (crit/bench (next-double rngMRG))))
   )
 
+
+  ;; COMPARISON OF MRG32K3A WITH NEANDERTHAL/MKL'S ARS5:
+  (require '[uncomplicate.neanderthal.core :as ncore])
+  (require '[uncomplicate.neanderthal.native :as nnative]) ; native, i.e. what my CPU provides, rather than a GPU which needs e.g. CUDA.
+  (require '[uncomplicate.neanderthal.random :as nrand])
+
   ;; What if we make Neanderthal's random-uniform! fill a singleton vector?
-  ;; Then Vigna's MRG32k3a beats Neanderthal/MKL's ARS5:
-  (def nvec1 (nnative/fv 1))
+  ;; Then Vigna's MRG32k3a beats Neanderthal/MKL's ARS5 by bar:
+  (def nvec1 (nnative/dv 1))
   (time (let [seed (make-seed)
               rngMRG   (make-mrg32k3a seed)
-              rngARS5  (nrand/rng-state nnative/native-float seed)]
+              rngARS5  (nrand/rng-state nnative/native-double seed)]
       (println "MRG32k3a:")
-      (time (crit/quick-bench (next-double rngMRG))) ; 11 ns
+      (time (crit/quick-bench (next-double rngMRG))) ; MPB quick-bench 8 ns, 10 ns
       (println "Neanderthal/MKL ARS5:")
-      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1))))) ;; 77 ns
+      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1))))) ; MPB quick-bench 111 ns, 108 ns
 
-  ;; Now let's try it with a million numbers.  Note Neanderthal will fill
-  ;; a Neanderthal vector, while MRG32k3a numbers will be thrown away
-  ;; immediately (and optimized away??).
-  ;; MRG32k3a wins again!!
+  ;; Now let's try it with a million numbers at once.  Note Neanderthal will fill
+  ;; a Neanderthal vector, while the MRG32k3a numbers below will be thrown away immediately.
   (defn millionize
     [rng]
     (dotimes [_ 1000000]
       (next-double rng)))
   ; (time (millionize (make-mrg32k3a 42)))
-  (def nvec1M (nnative/fv 1000000))
+  (def nvec1M (nnative/dv 1000000))
   (time (let [seed (make-seed)
               rngMRG   (make-mrg32k3a seed)
-              rngARS5  (nrand/rng-state nnative/native-float seed)]
+              rngARS5  (nrand/rng-state nnative/native-double seed)]
       (println "MRG32k3a:")
-      (time (crit/quick-bench (millionize rngMRG))) ; 99 μs
+      (time (crit/quick-bench (millionize rngMRG))) ; MBP quick-bench 6 ms.  Note that's milliseconds.
       (println "\nNeanderthal/MKL ARS5:")
-      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1M))))) ; 359 μs
+      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1M))))) ; MBP quick-bench 277 μs. Microseconds.
+  ;; A microsecond is 1/1000 of a millisecond, so the ratio is 6000/277 = 21.66, i.e. Neanderthal is 20X faster.
+  
+
+  
+
+
 
   ;; Oh wait, I've using both doubles and floats.  ??
   (defn millionize!
@@ -381,14 +389,14 @@
       (aset array i (next-double rng))))
   (def ra (double-array 1000000))
   ;(time (millionize! (make-mrg32k3a 42) ra)) ; ohh... this is really slow.
-  (def nvec1M (nnative/fv 1000000))
+  (def nvec1M (nnative/dv 1000000))
   (time (let [seed (make-seed)
               rngMRG   (make-mrg32k3a seed)
-              rngARS5  (nrand/rng-state nnative/native-float seed)]
+              rngARS5  (nrand/rng-state nnative/native-double seed)]
       (println "MRG32k3a:")
       (time (crit/quick-bench (millionize! rngMRG ra)))
       (println "\nNeanderthal/MKL ARS5:")
-      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1M))))) ; 359 μs
+      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1M)))))
 
 )
 
