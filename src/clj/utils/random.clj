@@ -110,7 +110,7 @@
   (def rng (nrand/rng-state nnative/native-float 42))
   (def randvec (nnative/fv 500000000)) ; length 500 million is OK, but much more is an error.
   (def randvec (nnative/fv   1000000)) ; make a Neanderthal vector for a million floats
-  (nrand/rand-uniform! rng randvec)  ; populate the Neanderthal vector with random numbers
+  (time (nrand/rand-uniform! rng randvec))  ; populate the Neanderthal vector with random numbers
   (ncore/entry randvec 999999) ; index into the Neanderthal vector
   (class randvec)
   (take 20 randvec) ; it works with take, producing a lazy seq
@@ -306,6 +306,10 @@
 (comment
   (require '[criterium.core :as crit])
 
+  (require '[uncomplicate.neanderthal.core :as ncore])
+  (require '[uncomplicate.neanderthal.native :as nnative]) ; native, i.e. what my CPU provides, rather than a GPU which needs e.g. CUDA.
+  (require '[uncomplicate.neanderthal.random :as nrand])
+
   (def rng19937 (make-well19937 seed))
   (time (crit/bench (next-double rng19937)))
   ; Is there a cost to indirection through another function, and a protocol?
@@ -341,8 +345,51 @@
       (time (crit/bench (next-double rngMRG))))
   )
 
-    (def rng (make-mrg32k3a 42))
-    (def xs (doall (take 1000000 (repeatedly #(next-double rng)))))
+  ;; What if we make Neanderthal's random-uniform! fill a singleton vector?
+  ;; Then Vigna's MRG32k3a beats Neanderthal/MKL's ARS5:
+  (def nvec1 (nnative/fv 1))
+  (time (let [seed (make-seed)
+              rngMRG   (make-mrg32k3a seed)
+              rngARS5  (nrand/rng-state nnative/native-float seed)]
+      (println "MRG32k3a:")
+      (time (crit/quick-bench (next-double rngMRG))) ; 11 ns
+      (println "Neanderthal/MKL ARS5:")
+      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1))))) ;; 77 ns
+
+  ;; Now let's try it with a million numbers.  Note Neanderthal will fill
+  ;; a Neanderthal vector, while MRG32k3a numbers will be thrown away
+  ;; immediately (and optimized away??).
+  ;; MRG32k3a wins again!!
+  (defn millionize
+    [rng]
+    (dotimes [_ 1000000]
+      (next-double rng)))
+  ; (time (millionize (make-mrg32k3a 42)))
+  (def nvec1M (nnative/fv 1000000))
+  (time (let [seed (make-seed)
+              rngMRG   (make-mrg32k3a seed)
+              rngARS5  (nrand/rng-state nnative/native-float seed)]
+      (println "MRG32k3a:")
+      (time (crit/quick-bench (millionize rngMRG))) ; 99 μs
+      (println "\nNeanderthal/MKL ARS5:")
+      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1M))))) ; 359 μs
+
+  ;; Oh wait, I've using both doubles and floats.  ??
+  (defn millionize!
+    [rng array]
+    (dotimes [i 1000000]
+      (aset array i (next-double rng))))
+  (def ra (double-array 1000000))
+  ;(time (millionize! (make-mrg32k3a 42) ra)) ; ohh... this is really slow.
+  (def nvec1M (nnative/fv 1000000))
+  (time (let [seed (make-seed)
+              rngMRG   (make-mrg32k3a seed)
+              rngARS5  (nrand/rng-state nnative/native-float seed)]
+      (println "MRG32k3a:")
+      (time (crit/quick-bench (millionize! rngMRG ra)))
+      (println "\nNeanderthal/MKL ARS5:")
+      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1M))))) ; 359 μs
+
 )
 
 (comment
