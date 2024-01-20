@@ -51,7 +51,9 @@
 
 (def ln math/log) ; alias so I don't have to remember whether log is ln or is arbitrary base
 (defn log-to-base [base x] (/ (math/log x) (math/log base))) ; don't use ln--confuses compiler optimization
-(def log2 (partial log-to-base 2))
+
+(def ^:const +ln2+ (math/log 2))
+(defn log2 ^double [x] (/ (math/log x) +ln2+)) ; don't use ln--confuses compiler optimization
 
 
 (defn rotate
