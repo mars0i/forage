@@ -61,7 +61,7 @@
   subsequences of pseudorandom number generators\", _Information Processing
   Letters_ 2020,
   https://www.sciencedirect.com/science/article/abs/pii/S0020019020300260.)"
-  [nums-per-run runs log-period]
+  [^long nums-per-run ^long runs ^long log-period]
   (let [log-len (um/log2 nums-per-run)    ; log 2 of number L of runs
         log-runs-sq (* 2 (um/log2 runs))] ; log 2 of square of number n of runs
     (- (+ log-len log-runs-sq)
@@ -311,18 +311,41 @@
      rng)))
 
 (defrecord NeanderRNG [size-1 buf rng prev-index$])
-
 (defn make-neander-ars5
-  ([bufsize] (make-neander-ars5 bufsize (make-seed)))
-  ([bufsize seed] (let [i$ (atom -1)
-                        buf (nnative/dv bufsize)
-                        rng (nrand/rng-state nnative/native-double seed)]
-                    (nrand/rand-uniform! rng buf)
-                    (->NeanderRNG (dec bufsize) buf rng i$))))
+  ([^long bufsize] (make-neander-ars5 bufsize (make-seed)))
+  ([^long bufsize seed] (let [i$ (atom -1)
+                              buf (nnative/dv bufsize)
+                              rng (nrand/rng-state nnative/native-double seed)]
+                          (nrand/rand-uniform! rng buf)
+                          (->NeanderRNG (dec bufsize) buf rng i$))))
 
-(comment
-  (def rng (make-neander-ars5 1000 42))
-)
+;; Let's try it with deftype instead of defrecord
+(deftype NeanderRNGtype [size-1 buf rng prev-index$])
+(defn make-neander-ars5-type
+  ([^long bufsize] (make-neander-ars5-type bufsize (make-seed)))
+  ([^long bufsize seed] (let [i$ (atom -1)
+                              buf (nnative/dv bufsize)
+                              rng (nrand/rng-state nnative/native-double seed)]
+                          (nrand/rand-uniform! rng buf)
+                          (->NeanderRNGtype (dec bufsize) buf rng i$))))
+
+(defprotocol IndexSetter
+  (set-index [this i])
+  (get-index [this]))
+
+;; Let's try it with mutable deftype:
+(deftype NeanderRNGmut [size-1 buf rng ^:volatile-mutable index] ; ^:unsynchronized-mutable makes set! generate an error.  Why?
+  IndexSetter
+  (set-index [this i] (set! index i))
+  (get-index [this] index))
+
+
+(defn make-neander-ars5-mut
+  ([^long bufsize] (make-neander-ars5-mut bufsize (make-seed)))
+  ([^long bufsize seed] (let [buf (nnative/dv bufsize)
+                              rng (nrand/rng-state nnative/native-double seed)]
+                          (nrand/rand-uniform! rng buf)
+                          (->NeanderRNGmut (dec bufsize) buf rng -1))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -385,11 +408,11 @@
     (dotimes [_ 1000000]
       (next-double rng)))
   ; (time (millionize (make-mrg32k3a 42)))
-  (defn millionize!
-    [rng array]
-    (dotimes [i 1000000]
-      (aset array i (next-double rng))))
-  (def ra (double-array 1000000))
+  ;(defn millionize!
+  ;  [rng array]
+  ;  (dotimes [i 1000000]
+  ;    (aset array i (next-double rng))))
+  ;(def ra (double-array 1000000))
   ;(time (millionize! (make-mrg32k3a 42) ra)) ; ohh... this is really slow.
 
   (def nvec1M (nnative/dv 1000000))
@@ -397,13 +420,19 @@
   (time (let [seed (make-seed)
               rngMRG   (make-mrg32k3a seed)
               rngARS5raw  (nrand/rng-state nnative/native-double seed)  ; two copies of the same PRNG
-              rngARS5prot (make-neander-ars5 1000001 seed)] ; i.e. with the same seed, but one uses the protocol interface
+              rngARS5prot (make-neander-ars5 1000001 seed) ; i.e. with the same seed, but one uses the protocol interface
+              rngARS5type (make-neander-ars5-type 1000001 seed) ; same as preceding but deftype not defrecord
+              rngARS5mut (make-neander-ars5-mut 1000001 seed)] ; same as preceding but mutable deftype
       (println "MRG32k3a:")
       (time (crit/quick-bench (millionize rngMRG))) ; MBP quick-bench 6 ms, 6 ms, 7 ms, 10 ms.  Note that's milliseconds.
       (println "\nNeanderthal/MKL ARS5 raw:")
       (time (crit/quick-bench (nrand/rand-uniform! rngARS5raw nvec1M))) ; MBP quick-bench 277 μs, 314 μs, 305 μs, 309 μs. Microseconds.
-      (println "\nNeanderthal/MKL ARS5 with protocol")
+      (println "\nNeanderthal/MKL ARS5 with protocol with defrecord:")
       (time (crit/quick-bench (millionize rngARS5prot))) ; MBP quick-bench 39 ms, 38 ms 40 ms. Wow. That's about 5X slower than rngMRG.
+      (println "\nNeanderthal/MKL ARS5 with protocol with deftype:")
+      (time (crit/quick-bench (millionize rngARS5type))) ; same as defrecord
+      (println "\nNeanderthal/MKL ARS5 with protocol with mutable deftype:")
+      (time (crit/quick-bench (millionize rngARS5mut))) ; humongously slow: 5 *seconds* on MBA
    ))
   ;; A microsecond is 1/1000 of a millisecond, so the ratio is 6000/277 = 21.66, i.e. raw Neanderthal is 20X faster.
 
@@ -771,7 +800,45 @@
          (nrand/rand-uniform! (:rng this) buf)) ; (prn buf) ; DEBUG
        (buf (swap! prev-index$ cc/inc))))
     ([this ^double low ^double high]
-     (loop [x (next-double this)]
+     (loop [^double x (next-double this)]
+       (if (and (<= x high) (>= x low))
+         x
+         (recur (next-double this))))))
+  (write-from-rng [this filename]
+    "write-from-rng unimplemented for NeanderRNG\n")
+  (read-to-rng [this filename]
+    "read-from-rng unimplemented for NeanderRNG\n")
+
+  NeanderRNGtype
+  (next-double
+    ([this]
+     (let [prev-index$ (.prev-index$ this)
+           buf (.buf this)] ; (prn @prev-index$) ; DEBUG
+       (when (= @prev-index$ (.size-1 this)) ; (println "reloading") ; DEBUG
+         (reset! prev-index$ -1)
+         (nrand/rand-uniform! (.rng this) buf)) ; (prn buf) ; DEBUG
+       (buf (swap! prev-index$ cc/inc))))
+    ([this ^double low ^double high]
+     (loop [^double x (next-double this)]
+       (if (and (<= x high) (>= x low))
+         x
+         (recur (next-double this))))))
+  (write-from-rng [this filename]
+    "write-from-rng unimplemented for NeanderRNG\n")
+  (read-to-rng [this filename]
+    "read-from-rng unimplemented for NeanderRNG\n")
+
+  NeanderRNGmut
+  (next-double
+    ([this]
+     (let [buf (.buf this)] ; (prn index) ; DEBUG
+       (when (= (get-index this) (.size-1 this)) ; (println "reloading") ; DEBUG
+         (set-index this -1)
+         (nrand/rand-uniform! (.rng this) buf)) ; refill vector of random numbers
+       (set-index this (inc (get-index this)))
+       (buf (get-index this))))
+    ([this ^double low ^double high]
+     (loop [^double x (next-double this)]
        (if (and (<= x high) (>= x low))
          x
          (recur (next-double this))))))
@@ -857,13 +924,13 @@
 
 (defn density
   "Return the density at x according to (Apache Commons Math3) distribution dist."
-  [dist x]
+  [^ParetoDistribution dist x]
   (.density dist x))
 
 (defn probability
   "Return the probability that a value from Apache Commons Math3 dist falls
   within (low,high]."
-  [dist low high]
+  [^ParetoDistribution dist low high]
    (.probability dist low high))
 
 ;; FIXME
@@ -879,7 +946,7 @@
   its previous value, while low and high each must be = to their previous
   values."
   (let [memo$ (atom {})]
-    (fn [dist ^double low ^double high ^double x]
+    (fn [^ParetoDistribution dist ^double low ^double high ^double x]
       (cond (<= x low) 0.0  ; Or throw exception? Return nil?
             (> x high) 1.0
             :else (let [args [dist low high]
@@ -924,17 +991,8 @@
   "Returns num-samples elements randomly selected without replacement from
   collection xs.  NOTE creates a Java ArrayList, which might possibly add
   overhead if this is done often on small collections."
-  [rng num-samples xs]
+  [rng num-samples ^java.util.Collection xs]
   (ListSampler/sample rng (ArrayList. xs) num-samples))
-
-(comment
-  (def rng (make-well19937 42))
-  (def al (ArrayList. (range 10)))
-  (ListSampler/sample rng (range 42) 4)
-  (def asample (sample-from-coll rng 4 (range 100)))
-  (class asample)
-  (nth asample 2)
-)
 
 ;; cf. clojure.core.shuffle, which uses a similar idea:
 ;; https://github.com/clojure/clojure/blob/clojure-1.10.1/src/clj/clojure/core.clj#L7274
@@ -945,7 +1003,7 @@
   "Given a random number generator rng and a collection xs, returns a
   collection (a java.util.ArrayList) in which the' elements have been
   randomly shuffled."
-  [^UniformRandomProvider rng xs]
+  [^UniformRandomProvider rng ^java.util.Collection xs]
   (let [al (ArrayList. xs)] ; new java.util.ArrayList will be shuffled in place
     (ListSampler/shuffle rng al) ; returns nil, but al is now shuffled
     al)) ; a java.util.ArrayList can be passed to nth, seq, etc.
