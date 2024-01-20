@@ -292,24 +292,6 @@
      (flush44497 rng)
      rng))) 
 
-(defrecord NeanderRNG [size-1 buf rng prev-index$])
-
-(defn make-ars5
-  ([]
-   (make-ars5 10000))
-  ([bufsize]
-   (make-ars5 bufsize (make-seed)))
-  ([bufsize seed]
-   (let [i$ (atom -1)
-         buf (nnative/dv bufsize)
-         rng (nrand/rng-state nnative/native-double seed)]
-     (nrand/rand-uniform! rng buf)
-     (->NeanderRNG (dec bufsize) buf rng i$))))
-
-(comment
-  (def rng (make-ars5 1000 42))
-)
-
 
 ;; On whether to flush the initial state:
 ;; Vigna's documentation and implmentation of MRG32k3a doesn't say anything
@@ -328,6 +310,23 @@
      (flush32k3a rng)
      rng)))
 
+(defrecord NeanderRNG [size-1 buf rng prev-index$])
+
+(defn make-neander-ars5
+  ([bufsize] (make-neander-ars5 bufsize (make-seed)))
+  ([bufsize seed] (let [i$ (atom -1)
+                        buf (nnative/dv bufsize)
+                        rng (nrand/rng-state nnative/native-double seed)]
+                    (nrand/rand-uniform! rng buf)
+                    (->NeanderRNG (dec bufsize) buf rng i$))))
+
+(comment
+  (def rng (make-neander-ars5 1000 42))
+)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; BENCHMARKING DIFFERENT PRNGS
 (comment
   (require '[criterium.core :as crit])
 
@@ -368,13 +367,7 @@
       (time (crit/bench (next-double rngMRG))))
   )
 
-
-  ;; COMPARISON OF MRG32K3A WITH NEANDERTHAL/MKL'S ARS5:
-  ;(require '[uncomplicate.neanderthal.core :as ncore])
-  ;(require '[uncomplicate.neanderthal.native :as nnative]) ; native, i.e. what my CPU provides, rather than a GPU which needs e.g. CUDA.
-  ;(require '[uncomplicate.neanderthal.random :as nrand])
-
-  ;; What if we make Neanderthal's random-uniform! fill a singleton vector?
+  ;; What if we make Neanderthal's random-uniform! fill a SINGLETON VECTOR?
   ;; Then Vigna's MRG32k3a beats Neanderthal/MKL's ARS5 by bar:
   (def nvec1 (nnative/dv 1))
   (time (let [seed (make-seed)
@@ -385,48 +378,41 @@
       (println "Neanderthal/MKL ARS5:")
       (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1))))) ; MPB quick-bench 111 ns, 108 ns
 
-  ;; Now let's try it with a million numbers at once.  Note Neanderthal will fill
+  ;; Now let's TRY IT WITH A MILLION NUMBERS AT ONCE.  Note Neanderthal will fill
   ;; a Neanderthal vector, while the MRG32k3a numbers below will be thrown away immediately.
   (defn millionize
     [rng]
     (dotimes [_ 1000000]
       (next-double rng)))
   ; (time (millionize (make-mrg32k3a 42)))
-  (def nvec1M (nnative/dv 1000000))
-  (time (let [seed (make-seed)
-              rngMRG   (make-mrg32k3a seed)
-              rngARS5  (nrand/rng-state nnative/native-double seed)]
-      (println "MRG32k3a:")
-      (time (crit/quick-bench (millionize rngMRG))) ; MBP quick-bench 6 ms.  Note that's milliseconds.
-      (println "\nNeanderthal/MKL ARS5:")
-      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1M))))) ; MBP quick-bench 277 μs. Microseconds.
-  ;; A microsecond is 1/1000 of a millisecond, so the ratio is 6000/277 = 21.66, i.e. Neanderthal is 20X faster.
-  
-
-  
-
-
-
-  ;; Oh wait, I've using both doubles and floats.  ??
   (defn millionize!
     [rng array]
     (dotimes [i 1000000]
       (aset array i (next-double rng))))
   (def ra (double-array 1000000))
   ;(time (millionize! (make-mrg32k3a 42) ra)) ; ohh... this is really slow.
+
   (def nvec1M (nnative/dv 1000000))
+
   (time (let [seed (make-seed)
               rngMRG   (make-mrg32k3a seed)
-              rngARS5  (nrand/rng-state nnative/native-double seed)]
+              rngARS5raw  (nrand/rng-state nnative/native-double seed)  ; two copies of the same PRNG
+              rngARS5prot (make-neander-ars5 1000001 seed)] ; i.e. with the same seed, but one uses the protocol interface
       (println "MRG32k3a:")
-      (time (crit/quick-bench (millionize! rngMRG ra)))
-      (println "\nNeanderthal/MKL ARS5:")
-      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1M)))))
+      (time (crit/quick-bench (millionize rngMRG))) ; MBP quick-bench 6 ms, 6 ms, 7 ms.  Note that's milliseconds.
+      (println "\nNeanderthal/MKL ARS5 raw:")
+      (time (crit/quick-bench (nrand/rand-uniform! rngARS5raw nvec1M))) ; MBP quick-bench 277 μs, 314 μs, 305 μs. Microseconds.
+      (println "\nNeanderthal/MKL ARS5 with protocol")
+      (time (crit/quick-bench (millionize rngARS5prot))) ; MBP quick-bench 39 ms, 38 ms. Wow. That's about 6X slower than rngMRG.
+   ))
+  ;; A microsecond is 1/1000 of a millisecond, so the ratio is 6000/277 = 21.66, i.e. raw Neanderthal is 20X faster.
 
 )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; BENCHMARKING PRNGs IN WALK GENERATION
 (comment
-  ;; These are speed comparisons of PRNGs for walk generation.
 
   (require '[criterium.core :as crit])
   (require '[forage.core.walks :as w])
