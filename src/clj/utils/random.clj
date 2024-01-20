@@ -23,6 +23,7 @@
             ByteArrayInputStream  ObjectInputStream  FileInputStream]
            [java.util ArrayList])
   (:require ;[clojure.math.numeric-tower :as nt] ; now using clojure.math/pow instead of nt/expt see https://clojureverse.org/t/article-blog-post-etc-about-clojure-math-vs-numeric-tower/9805/6?u=mars0i
+            [clojure.core :as cc] ; to override use functions that fastmath replaced with macros
             [clojure.math :as math]
             [clojure.java.io :as io]
             [utils.math :as um]
@@ -121,6 +122,7 @@
   (drop (- 1000000 20) randvec) ; the result is a lazy seq. Feels slow.
   (first randvec) ; and first and second work
   (nth randvec 0) ; nth generates an error, howewver 
+  (ncore/entry randvec 999999) ; built-in Neanderthal access method
   (get randvec 999999) ; get doesn't error, but you get back a nil
   (randvec 999999) ; you can use map-style indexing though, and it's fast
   (def cvec (into [] randvec)) ; converts into a Clojure vector
@@ -290,20 +292,23 @@
      (flush44497 rng)
      rng))) 
 
+(defrecord NeanderRNG [size-1 buf rng prev-index$])
+
 (defn make-ars5
   ([]
    (make-ars5 10000))
   ([bufsize]
    (make-ars5 bufsize (make-seed)))
   ([bufsize seed]
-   (let [i$ (atom 0)
+   (let [i$ (atom -1)
          buf (nnative/dv bufsize)
          rng (nrand/rng-state nnative/native-double seed)]
      (nrand/rand-uniform! rng buf)
-     ;; Do I need an actual class here for extend-protocol to attach to?
-     {:rng rng :buf buf :index i$}
-     'now-what?
-   )))
+     (->NeanderRNG (dec bufsize) buf rng i$))))
+
+(comment
+  (def rng (make-ars5 1000 42))
+)
 
 
 ;; On whether to flush the initial state:
@@ -769,10 +774,34 @@
     (write-mrg32k3a-state filename (get-state this)))
   (read-to-rng [this filename]
     (set-state this (read-mrg32k3a-state filename)))
+
+  NeanderRNG
+  (next-double
+    ([this]
+     (let [prev-index$ (:prev-index$ this)
+           buf (:buf this)] ; (prn @prev-index$) ; DEBUG
+       (when (= @prev-index$ (:size-1 this)) ; (println "reloading") ; DEBUG
+         (reset! prev-index$ -1)
+         (nrand/rand-uniform! (:rng this) buf)) ; (prn buf) ; DEBUG
+       (buf (swap! prev-index$ cc/inc))))
+    ([this ^double low ^double high]
+     (loop [x (next-double this)]
+       (if (and (<= x high) (>= x low))
+         x
+         (recur (next-double this))))))
+  (write-from-rng [this filename]
+    "write-from-rng unimplemented for NeanderRNG\n")
+  (read-to-rng [this filename]
+    "read-from-rng unimplemented for NeanderRNG\n")
+
 )
 
 
 (comment
+  (def ars5 (make-ars5 5 42))
+  (next-double ars5)
+  (next-double ars5 0.3 0.5)
+
   (def well1 (make-well44497))
   (write-from-rng well1 "yowell.bin")
   (take 8 (repeatedly #(next-double well1)))
