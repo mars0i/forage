@@ -399,11 +399,11 @@
               rngARS5raw  (nrand/rng-state nnative/native-double seed)  ; two copies of the same PRNG
               rngARS5prot (make-neander-ars5 1000001 seed)] ; i.e. with the same seed, but one uses the protocol interface
       (println "MRG32k3a:")
-      (time (crit/quick-bench (millionize rngMRG))) ; MBP quick-bench 6 ms, 6 ms, 7 ms.  Note that's milliseconds.
+      (time (crit/quick-bench (millionize rngMRG))) ; MBP quick-bench 6 ms, 6 ms, 7 ms, 10 ms.  Note that's milliseconds.
       (println "\nNeanderthal/MKL ARS5 raw:")
-      (time (crit/quick-bench (nrand/rand-uniform! rngARS5raw nvec1M))) ; MBP quick-bench 277 μs, 314 μs, 305 μs. Microseconds.
+      (time (crit/quick-bench (nrand/rand-uniform! rngARS5raw nvec1M))) ; MBP quick-bench 277 μs, 314 μs, 305 μs, 309 μs. Microseconds.
       (println "\nNeanderthal/MKL ARS5 with protocol")
-      (time (crit/quick-bench (millionize rngARS5prot))) ; MBP quick-bench 39 ms, 38 ms. Wow. That's about 6X slower than rngMRG.
+      (time (crit/quick-bench (millionize rngARS5prot))) ; MBP quick-bench 39 ms, 38 ms 40 ms. Wow. That's about 5X slower than rngMRG.
    ))
   ;; A microsecond is 1/1000 of a millisecond, so the ratio is 6000/277 = 21.66, i.e. raw Neanderthal is 20X faster.
 
