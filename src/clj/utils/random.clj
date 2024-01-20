@@ -26,7 +26,11 @@
             [clojure.math :as math]
             [clojure.java.io :as io]
             [utils.math :as um]
-            [fastmath.core :as fm]))
+            [fastmath.core :as fm]
+            [uncomplicate.neanderthal
+             [core :as ncore]
+             [native :as nnative]
+             [random :as nrand]]))
 
 ;(set! *warn-on-reflection* true)
 ;(set! *unchecked-math* :warn-on-boxed)
@@ -286,6 +290,22 @@
      (flush44497 rng)
      rng))) 
 
+(defn make-ars5
+  ([]
+   (make-ars5 10000))
+  ([bufsize]
+   (make-ars5 bufsize (make-seed)))
+  ([bufsize seed]
+   (let [i$ (atom 0)
+         buf (nnative/dv bufsize)
+         rng (nrand/rng-state nnative/native-double seed)]
+     (nrand/rand-uniform! rng buf)
+     ;; Do I need an actual class here for extend-protocol to attach to?
+     {:rng rng :buf buf :index i$}
+     'now-what?
+   )))
+
+
 ;; On whether to flush the initial state:
 ;; Vigna's documentation and implmentation of MRG32k3a doesn't say anything
 ;; about flushing the initial state.  I don't think L'Ecuyer does either,
@@ -345,9 +365,9 @@
 
 
   ;; COMPARISON OF MRG32K3A WITH NEANDERTHAL/MKL'S ARS5:
-  (require '[uncomplicate.neanderthal.core :as ncore])
-  (require '[uncomplicate.neanderthal.native :as nnative]) ; native, i.e. what my CPU provides, rather than a GPU which needs e.g. CUDA.
-  (require '[uncomplicate.neanderthal.random :as nrand])
+  ;(require '[uncomplicate.neanderthal.core :as ncore])
+  ;(require '[uncomplicate.neanderthal.native :as nnative]) ; native, i.e. what my CPU provides, rather than a GPU which needs e.g. CUDA.
+  ;(require '[uncomplicate.neanderthal.random :as nrand])
 
   ;; What if we make Neanderthal's random-uniform! fill a singleton vector?
   ;; Then Vigna's MRG32k3a beats Neanderthal/MKL's ARS5 by bar:
