@@ -348,143 +348,6 @@
                           (->NeanderRNGmut (dec bufsize) buf rng -1))))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; BENCHMARKING DIFFERENT PRNGS
-(comment
-  (require '[criterium.core :as crit])
-
-  ;; COMPARISON OF DIFFERENT JAVA PRNGS:
-
-  (def rng19937 (make-well19937 seed))
-  (time (crit/bench (next-double rng19937)))
-  ; Is there a cost to indirection through another function, and a protocol?
-  (def rng19937 (make-well19937 seed)) ; reset the seed
-  (time (crit/bench (.nextDouble rng19937)))
-  ;; NO, in fact going through the protocol vastly improves the speed (by
-  ;; about 5X or 6X !).
-  ;; The efficiency of next-double can be recovered using the explicit 
-  ;; .nextDouble by type-hinting the call *right here*, but using
-  ;; apparently next-double removes that need.
-
-
-  ;; The following are roughly in order of descreasting average time, i.e.
-  ;; increasing speed.  The improvement is incremental from one to the
-  ;; next.  MRG32k3a (11ns) is twice as fast as WELL 44497 (23ns), and 
-  ;; about 60% faster than WELL 1024 (18ns).  There was one run of it,
-  ;; though, where WELL 44497b was faster than WELL 19937c.
-  (time
-    (let [seed (make-seed)
-          ;rng44497 (make-well44497 seed)
-          ;rng19937 (make-well19937 seed)
-          ;rng1024  (make-well1024 seed)
-          rngMRG   (make-mrg32k3a seed)
-         ]
-      (println "seed =" seed)
-      ;(println "WELL44497b:")
-      ;(time (crit/bench (next-double rng44497)))
-      ;(println "WELL19937c:")
-      ;(time (crit/bench (next-double rng19937)))
-      ;(println "WELL1024a:")
-      ;(time (crit/bench (next-double rng1024)))
-      (println "MRG32k3a:")
-      (time (crit/bench (next-double rngMRG))))
-  )
-
-  ;; What if we make Neanderthal's random-uniform! fill a SINGLETON VECTOR?
-  ;; Then Vigna's MRG32k3a beats Neanderthal/MKL's ARS5 by bar:
-  (def nvec1 (nnative/dv 1))
-  (time (let [seed (make-seed)
-              rngMRG   (make-mrg32k3a seed)
-              rngARS5  (nrand/rng-state nnative/native-double seed)]
-      (println "MRG32k3a:")
-      (time (crit/quick-bench (next-double rngMRG))) ; MPB quick-bench 8 ns, 10 ns
-      (println "Neanderthal/MKL ARS5:")
-      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1))))) ; MPB quick-bench 111 ns, 108 ns
-
-  ;; Now let's TRY IT WITH A MILLION NUMBERS AT ONCE.  Note Neanderthal will fill
-  ;; a Neanderthal vector, while the MRG32k3a numbers below will be thrown away immediately.
-  (defn millionize
-    [rng]
-    (dotimes [_ 1000000]
-      (next-double rng)))
-  ; (time (millionize (make-mrg32k3a 42)))
-  ;(defn millionize!
-  ;  [rng array]
-  ;  (dotimes [i 1000000]
-  ;    (aset array i (next-double rng))))
-  ;(def ra (double-array 1000000))
-  ;(time (millionize! (make-mrg32k3a 42) ra)) ; ohh... this is really slow.
-
-  (def nvec1M (nnative/dv 1000000))
-
-  (time (let [seed (make-seed)
-              rngMRG   (make-mrg32k3a seed)
-              rngARS5raw  (nrand/rng-state nnative/native-double seed)  ; two copies of the same PRNG
-              rngARS5prot (make-neander-ars5 1000001 seed) ; i.e. with the same seed, but one uses the protocol interface
-              rngARS5type (make-neander-ars5-type 1000001 seed) ; same as preceding but deftype not defrecord
-              rngARS5mut (make-neander-ars5-mut 1000001 seed)] ; same as preceding but mutable deftype
-      (println "MRG32k3a:")
-      (time (crit/quick-bench (millionize rngMRG))) ; MBP quick-bench 6 ms, 6 ms, 7 ms, 10 ms.  Note that's milliseconds.
-      (println "\nNeanderthal/MKL ARS5 raw:")
-      (time (crit/quick-bench (nrand/rand-uniform! rngARS5raw nvec1M))) ; MBP quick-bench 277 μs, 314 μs, 305 μs, 309 μs. Microseconds.
-      (println "\nNeanderthal/MKL ARS5 with protocol with defrecord:")
-      (time (crit/quick-bench (millionize rngARS5prot))) ; MBP quick-bench 39 ms, 38 ms 40 ms. Wow. That's about 5X slower than rngMRG.
-      (println "\nNeanderthal/MKL ARS5 with protocol with deftype:")
-      (time (crit/quick-bench (millionize rngARS5type))) ; same as defrecord
-      (println "\nNeanderthal/MKL ARS5 with protocol with mutable deftype:")
-      (time (crit/quick-bench (millionize rngARS5mut))) ; humongously slow: 5 *seconds* on MBA
-   ))
-  ;; A microsecond is 1/1000 of a millisecond, so the ratio is 6000/277 = 21.66, i.e. raw Neanderthal is 20X faster.
-
-)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; BENCHMARKING PRNGs IN WALK GENERATION
-(comment
-
-  (require '[criterium.core :as crit])
-  (require '[forage.core.walks :as w])
-
-  (def seed (r/make-seed))
-  (def rng19937 (r/make-well19937 seed))
-  (def rng1024  (r/make-well1024 seed))
-  (def rngmrg   (r/make-mrg32k3a seed))
-
-  (def pow19937 (r/make-powerlaw rng19937 1 2))
-  (def pow1024 (r/make-powerlaw rng1024 1 2))
-  (def powmrg (r/make-mrg32k3a-powerlaw rngmrg 1 2))
-
-  (def stepfn19937 (w/step-vector-fn rng19937 pow19937 1 25000))
-  (def stepfn1024 (w/step-vector-fn rng1024 pow1024 1 25000))
-  (def stepfnmrg (w/step-vector-fn rngmrg powmrg 1 25000))
-
-                                    ; Two bench runs each:
-  (time (crit/bench (stepfn19937))) ; 82 ns, 79 ns
-  (time (crit/bench (stepfn1024)))  ; 71 ns, 75 ns
-  (time (crit/bench (stepfnmrg)))   ; 54 ns, 57 ns
-  ;;  i.e. Well19937 takes 40-50% longer relative to MRG32k3a
-  ;;  i.e. Well1024 takes 30% longer relative to MRG32k3a
-
-  (def mu2_19937 (w/make-levy-vecs rng19937 pow19937 1 25000))
-  (def mu2_1024 (w/make-levy-vecs rng1024 pow1024 1 25000))
-  (def mu2_mrg (w/make-levy-vecs rngmrg powmrg 1 25000))
-
-  (time (crit/quick-bench (doall (take 25000 mu2_19937)))) ; 1.37 ms
-  (time (crit/quick-bench (doall (take 25000 mu2_1024))))  ; 1.42 ms
-  (time (crit/quick-bench (doall (take 25000 mu2_mrg))))   ; 1.39 ms
-
-  (time (crit/bench (doall (take 25000 mu2_19937)))) ; 1.40 ms, 1.39 ms
-  (time (crit/bench (doall (take 25000 mu2_1024))))  ; 1.26 ms, 1.34 ms
-  (time (crit/bench (doall (take 25000 mu2_mrg))))   ; 1.17 ms, ; 1.35 ms
-  ;; So Well19937 takes about 20% longer than MRG32k3a, sometimes.
-  ;; But they are clearly comparable, at least.
-  ;; So the PRNG differences are getting washed out by the rest of the
-  ;; computation.  (But I think MRG32k3a is still better than the WELL 
-  ;; generators.)
-)
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FUNCTIONS FOR SAVING/RESTORING PRNG STATE
 
@@ -1052,3 +915,159 @@
     ;; now use indexes to rearrange sequence:
     (reduce (fn [acc i] (cons (xs-vec i) acc))
             nil idxs))) ; re nil see fun fact above
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; BENCHMARKING DIFFERENT PRNGS
+(comment
+  (require '[criterium.core :as crit])
+
+  ;; COMPARISON OF DIFFERENT JAVA PRNGS:
+
+  (def rng19937 (make-well19937 seed))
+  (time (crit/bench (next-double rng19937)))
+  ; Is there a cost to indirection through another function, and a protocol?
+  (def rng19937 (make-well19937 seed)) ; reset the seed
+  (time (crit/bench (.nextDouble rng19937)))
+  ;; NO, in fact going through the protocol vastly improves the speed (by
+  ;; about 5X or 6X !).
+  ;; The efficiency of next-double can be recovered using the explicit 
+  ;; .nextDouble by type-hinting the call *right here*, but using
+  ;; apparently next-double removes that need.
+
+
+  ;; The following are roughly in order of descreasting average time, i.e.
+  ;; increasing speed.  The improvement is incremental from one to the
+  ;; next.  MRG32k3a (11ns) is twice as fast as WELL 44497 (23ns), and 
+  ;; about 60% faster than WELL 1024 (18ns).  There was one run of it,
+  ;; though, where WELL 44497b was faster than WELL 19937c.
+  (time
+    (let [seed (make-seed)
+          ;rng44497 (make-well44497 seed)
+          ;rng19937 (make-well19937 seed)
+          ;rng1024  (make-well1024 seed)
+          rngMRG   (make-mrg32k3a seed)
+         ]
+      (println "seed =" seed)
+      ;(println "WELL44497b:")
+      ;(time (crit/bench (next-double rng44497)))
+      ;(println "WELL19937c:")
+      ;(time (crit/bench (next-double rng19937)))
+      ;(println "WELL1024a:")
+      ;(time (crit/bench (next-double rng1024)))
+      (println "MRG32k3a:")
+      (time (crit/bench (next-double rngMRG))))
+  )
+
+  ;; What if we make Neanderthal's random-uniform! fill a SINGLETON VECTOR?
+  ;; Then Vigna's MRG32k3a beats Neanderthal/MKL's ARS5 by bar:
+  (def nvec1 (nnative/dv 1))
+  (time (let [seed (make-seed)
+              rngMRG   (make-mrg32k3a seed)
+              rngARS5  (nrand/rng-state nnative/native-double seed)]
+      (println "MRG32k3a:")
+      (time (crit/quick-bench (next-double rngMRG))) ; MPB quick-bench 8 ns, 10 ns
+      (println "Neanderthal/MKL ARS5:")
+      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1))))) ; MPB quick-bench 111 ns, 108 ns
+
+  ;; Now let's TRY IT WITH A MILLION NUMBERS AT ONCE.  Note Neanderthal will fill
+  ;; a Neanderthal vector, while the MRG32k3a numbers below will be thrown away immediately.
+  (defn millionize
+    [rng]
+    (dotimes [_ 1000000]
+      (next-double rng)))
+  ; (time (millionize (make-mrg32k3a 42)))
+  ;(defn millionize!
+  ;  [rng array]
+  ;  (dotimes [i 1000000]
+  ;    (aset array i (next-double rng))))
+  ;(def ra (double-array 1000000))
+  ;(time (millionize! (make-mrg32k3a 42) ra)) ; ohh... this is really slow.
+
+  (def nvec1M (nnative/dv 1000000))
+
+  (time (let [seed (make-seed)
+              rngMRG   (make-mrg32k3a seed)
+              rngARS5raw  (nrand/rng-state nnative/native-double seed)  ; two copies of the same PRNG
+              rngARS5prot (make-neander-ars5 1000001 seed) ; i.e. with the same seed, but one uses the protocol interface
+              rngARS5type (make-neander-ars5-type 1000001 seed) ; same as preceding but deftype not defrecord
+              rngARS5mut (make-neander-ars5-mut 1000001 seed)] ; same as preceding but mutable deftype
+      (println "MRG32k3a:")
+      (time (crit/quick-bench (millionize rngMRG))) ; MBP quick-bench 6 ms, 6 ms, 7 ms, 10 ms.  Note that's milliseconds.
+      (println "\nNeanderthal/MKL ARS5 raw:")
+      (time (crit/quick-bench (nrand/rand-uniform! rngARS5raw nvec1M))) ; MBP quick-bench 277 μs, 314 μs, 305 μs, 309 μs. Microseconds.
+      (println "\nNeanderthal/MKL ARS5 with protocol with defrecord:")
+      (time (crit/quick-bench (millionize rngARS5prot))) ; MBP quick-bench 39 ms, 38 ms 40 ms. Wow. That's about 5X slower than rngMRG.
+      (println "\nNeanderthal/MKL ARS5 with protocol with deftype:")
+      (time (crit/quick-bench (millionize rngARS5type))) ; same as defrecord
+      (println "\nNeanderthal/MKL ARS5 with protocol with mutable deftype:")
+      (time (crit/quick-bench (millionize rngARS5mut))) ; humongously slow: 5 *seconds* on MBA
+   ))
+  ;; A microsecond is 1/1000 of a millisecond, so the ratio is 6000/277 = 21.66, i.e. raw Neanderthal is 20X faster.
+
+
+  (def seed (make-seed))
+
+  (def rngMRG (make-mrg32k3a seed))
+  (def rngARS5raw  (nrand/rng-state nnative/native-double seed))
+
+  (def mrgs100K (doall (repeatedly 100000 #(next-double rngMRG))))
+  (def nvec100K (nnative/dv 100000))
+  (nrand/rand-uniform! rngARS5raw nvec100K)
+
+  (time (crit/quick-bench (into [] mrgs100K)))
+  (time (crit/quick-bench (into [] nvec100K)))
+
+  (time (crit/quick-bench (into () mrgs100K)))
+  (time (crit/quick-bench (into () nvec100K)))
+
+  (time (crit/quick-bench (into (range 1) nvec100K)))
+
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; BENCHMARKING PRNGs IN WALK GENERATION
+(comment
+
+  (require ')
+  (require '[forage.core.walks :as w])
+
+  (def seed (r/make-seed))
+  (def rng19937 (r/make-well19937 seed))
+  (def rng1024  (r/make-well1024 seed))
+  (def rngmrg   (r/make-mrg32k3a seed))
+
+  (def pow19937 (r/make-powerlaw rng19937 1 2))
+  (def pow1024 (r/make-powerlaw rng1024 1 2))
+  (def powmrg (r/make-mrg32k3a-powerlaw rngmrg 1 2))
+
+  (def stepfn19937 (w/step-vector-fn rng19937 pow19937 1 25000))
+  (def stepfn1024 (w/step-vector-fn rng1024 pow1024 1 25000))
+  (def stepfnmrg (w/step-vector-fn rngmrg powmrg 1 25000))
+
+                                    ; Two bench runs each:
+  (time (crit/bench (stepfn19937))) ; 82 ns, 79 ns
+  (time (crit/bench (stepfn1024)))  ; 71 ns, 75 ns
+  (time (crit/bench (stepfnmrg)))   ; 54 ns, 57 ns
+  ;;  i.e. Well19937 takes 40-50% longer relative to MRG32k3a
+  ;;  i.e. Well1024 takes 30% longer relative to MRG32k3a
+
+  (def mu2_19937 (w/make-levy-vecs rng19937 pow19937 1 25000))
+  (def mu2_1024 (w/make-levy-vecs rng1024 pow1024 1 25000))
+  (def mu2_mrg (w/make-levy-vecs rngmrg powmrg 1 25000))
+
+  (time (crit/quick-bench (doall (take 25000 mu2_19937)))) ; 1.37 ms
+  (time (crit/quick-bench (doall (take 25000 mu2_1024))))  ; 1.42 ms
+  (time (crit/quick-bench (doall (take 25000 mu2_mrg))))   ; 1.39 ms
+
+  (time (crit/bench (doall (take 25000 mu2_19937)))) ; 1.40 ms, 1.39 ms
+  (time (crit/bench (doall (take 25000 mu2_1024))))  ; 1.26 ms, 1.34 ms
+  (time (crit/bench (doall (take 25000 mu2_mrg))))   ; 1.17 ms, ; 1.35 ms
+  ;; So Well19937 takes about 20% longer than MRG32k3a, sometimes.
+  ;; But they are clearly comparable, at least.
+  ;; So the PRNG differences are getting washed out by the rest of the
+  ;; computation.  (But I think MRG32k3a is still better than the WELL 
+  ;; generators.)
+)
+
