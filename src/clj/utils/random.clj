@@ -77,36 +77,7 @@
   (spiral28-vigna 191) ;=> -9.999999998003778E10
   ;; i.e. about 1/2^10000000000
 
-  (require '[uncomplicate.neanderthal.core :as ncore])
-  (require '[uncomplicate.neanderthal.native :as nnative]) ; native, i.e. what my CPU provides, rather than a GPU which needs e.g. CUDA.
-  (require '[uncomplicate.neanderthal.random :as nrand])
-
   ;; cf https://dragan.rocks/articles/19/Billion-random-numbers-blink-eye-Clojure
-  ;;   Including this comment:
-  ;;   "The next step is a billion entries. I'll create two
-  ;;   vectors of 500 million entries each, which together takes
-  ;;   a billion. The reason I'm doing this instead of one
-  ;;   vector, is that each entry takes 4 bytes, so a billion
-  ;;   entries requires 4GBs of bytes. Java (and Intel MKL)
-  ;;   buffers are indexed with integers, and the largest integer
-  ;;   is 2147483647."
-  ;;
-  ;; Also:
-  ;;   "I won't bother you again other than stating that
-  ;;   Neanderthal uses Philox and/or ARS5 RNG which is much,
-  ;;   much, better than the stuff you get from the built-in
-  ;;   rand."
-  
-  ;; I figured out that Neanderthal uses ARS5 in MKL.  This has a 128-bit state.
-  ;; According to this page, the period is 2^130: https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-vector-statistics-notes/2021-1/ars5.html
-  ;; Estimate of probability of overlap for my spiral28 experiments
-  ;; if I use a different seed for each walk and env configuration.
-  (spiral28-vigna 130) ;=> -83.8440811121238
-  ;; i.e. about 1/2^84
-  ;; (which is way small--small enough--though not miniscule like MRG32k3a)
-  ;;
-  ;; Note however, that I think ARS5 is counter-based, so I actually could
-  ;; fast-forward and guarantee that there is no overlap.
 
   ;; I think they idea of a factory is that it makes numbers or allocates
   ;; space in the way appropriate for the CPU ("native") or for a GPU (e.g. CUDA):
@@ -115,10 +86,16 @@
   (def rng (nrand/rng-state nnative/native-double 42))
   (def randvec (nnative/dv 250000000)) ; length 250 million is OK, but much more is an error.
   (def randvec (nnative/dv   1000000)) ; make a Neanderthal vector for a million floats
+  (def randvec (nnative/dv   100000)) ; make a Neanderthal vector for a 100K floats
   (time (nrand/rand-uniform! rng randvec))  ; populate the Neanderthal vector with random numbers
   (ncore/entry randvec 999999) ; index into the Neanderthal vector
   (class randvec)
-  (take 20 randvec) ; it works with take, producing a lazy seq
+  (class (take 20 randvec))
+  (class (take 20 randvec))
+  (realized? (take 20 randvec))
+  (realized? (drop 20 randvec))
+  (def k (time (doall (take 20 randvec))))
+  (def k (time (doall (take 20 randvec))))
   (drop (- 1000000 20) randvec) ; the result is a lazy seq. Feels slow.
   (first randvec) ; and first and second work
   (nth randvec 0) ; nth generates an error, howewver 
@@ -129,11 +106,36 @@
   (nth cvec 0) ; then nth works, of course
   (nth cvec 999999) ; and is pretty fast, but feels slower than Neanderthal, as you might expect
 
-  ;; using doubles, i.e. 64-bit, though the random numbers are probably just 32-bit:
-  (def rng (nrand/rng-state (nnative/factory-by-type :double) 42))
-  (def randvec (nnative/dv 260000000)) ; length 260 million is OK, but much more is an error.
-  (def randvec (nnative/dv   1000000)) ; make a Neanderthal vector for a million doubles
-  (nrand/rand-uniform! rng randvec)  ; populate the Neanderthal vector with random numbers
+  ;; The vector returned by rand-uniform! is the same one given as input:
+  (def randvec (nnative/dv 1000000))
+  (def nvec (nrand/rand-uniform! rng randvec))
+  (identical? nvec randvec)
+
+  (nvec) ; if you call the vector with no arguments, it returns its length (a misfeature imo)
+
+  ;; Wondering if rather than keeping track of a pointer to decide
+  ;; When I need to generate more numbers for a walk, I can just catch
+  ;; the exception and then regenerate.  Is that faster?
+  (def nvec (nrand/rand-uniform! rng (nnative/dv 5))) ;; an option is to define the vector inline
+  (nvec 5) ; error
+  (clojure.repl/pst)
+  (try (nvec 5) (catch clojure.lang.ExceptionInfo e (nrand/rand-uniform! rng nvec)))
+  (try (nvec 5) (catch clojure.lang.ExceptionInfo e (prn e)))
+  (try (nvec 5)
+       (catch clojure.lang.ExceptionInfo e 
+         (let [data (ex-data e)
+               i (:i data)
+               dim (:dim data)]
+           (if (and i dim) ; other exceptions probably don't have these
+             (if (>= i dim)
+               "RESTART"
+               (throw e))
+             (throw e)))))
+
+  ;; UNFORTUNATELY, THIS DOESN'T WORK WITH take:
+  (take 10 nvec) ; no error--just returns whatever is available.  Ack!
+
+
 
 )
 
