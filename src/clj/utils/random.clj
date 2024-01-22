@@ -29,12 +29,12 @@
             [utils.math :as um]
             [fastmath.core :as fm]
             [uncomplicate.neanderthal
-             [core :as ncore]
-             [native :as nnative]
-             [random :as nrand]]))
+             [core :as nc]
+             [native :as nn]
+             [random :as nr]]))
 
-;(set! *warn-on-reflection* true)
-;(set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
 ;; I started using a newer Apache Commons version, 1.4 and 1.5, because it
@@ -82,14 +82,15 @@
   ;; I think they idea of a factory is that it makes numbers or allocates
   ;; space in the way appropriate for the CPU ("native") or for a GPU (e.g. CUDA):
   ;; Using an existing factory:
-  (def rng (nrand/rng-state nnative/native-double 42))
-  (def randvec (nnative/dv 250000000)) ; length 250 million is OK, but much more is an error.
-  (def randvec (nnative/dv   1000000)) ; make a Neanderthal vector for a million floats
-  (def randvec (nnative/dv   100000)) ; make a Neanderthal vector for a 100K floats
-  (time (nrand/rand-uniform! rng randvec))  ; populate the Neanderthal vector with random numbers
+  (def rng (nr/rng-state nn/native-double (make-seed)))
+
+  (def randvec (nn/dv 250000000)) ; length 250 million is OK, but much more is an error.
+  (def randvec (nn/dv   1000000)) ; make a Neanderthal vector for a million floats
+  (def randvec (nn/dv   100000)) ; make a Neanderthal vector for a 100K floats
+  (time (nr/rand-uniform! rng randvec))  ; populate the Neanderthal vector with random numbers
 
   ;; Simple illustrations:
-  (ncore/entry randvec 999999) ; index into the Neanderthal vector
+  (nc/entry randvec 999999) ; index into the Neanderthal vector
   (class randvec)
   (class (take 20 randvec))
   (realized? (drop 20 randvec))
@@ -98,7 +99,7 @@
 
   (first randvec) ; and first and second work
   (nth randvec 0) ; nth generates an error, howewver 
-  (ncore/entry randvec 999999) ; built-in Neanderthal access method
+  (nc/entry randvec 999999) ; built-in Neanderthal access method
   (get randvec 999999) ; get doesn't error, but you get back a nil
   (randvec 999999) ; you can use map-style indexing though, and it's fast
 
@@ -106,22 +107,22 @@
   (vec nvec) ; doesn't work
 
   ;; The vector returned by rand-uniform! is the same one given as input:
-  (def randvec (nnative/dv 1000000))
-  (def nvec (nrand/rand-uniform! rng randvec))
+  (def randvec (nn/dv 1000000))
+  (def nvec (nr/rand-uniform! rng randvec))
   (identical? nvec randvec)
 
   (nvec) ; if you call the vector with no arguments, it returns its length (a misfeature imo)
 
-  (def nvec (nrand/rand-uniform! rng (nnative/dv 20)))
+  (def nvec (nr/rand-uniform! rng (nn/dv 20)))
   (vec nvec)
 
   ;; Wondering if rather than keeping track of a pointer to decide
   ;; When I need to generate more numbers for a walk, I can just catch
   ;; the exception and then regenerate.  Is that faster?
-  (def nvec (nrand/rand-uniform! rng (nnative/dv 5))) ;; an option is to define the vector inline
+  (def nvec (nr/rand-uniform! rng (nn/dv 5))) ;; an option is to define the vector inline
   (nvec 5) ; error
   (clojure.repl/pst)
-  (try (nvec 5) (catch clojure.lang.ExceptionInfo e (nrand/rand-uniform! rng nvec)))
+  (try (nvec 5) (catch clojure.lang.ExceptionInfo e (nr/rand-uniform! rng nvec)))
   (try (nvec 5) (catch clojure.lang.ExceptionInfo e (prn e)))
   (try (nvec 5)
        (catch clojure.lang.ExceptionInfo e 
@@ -139,23 +140,33 @@
 
 
   ;; Wondering if rather than keeping track of a pointer to decide
-  (def nvec (nrand/rand-uniform! rng (nnative/dv 20)))
+  (def nvec (nr/rand-uniform! rng (nn/dv 20)))
   (into [] nvec)
-  (ncore/subvector nvec 0 5)
-  (ncore/subvector nvec 5 5)
-  (ncore/subvector nvec 15 5)
-  (ncore/subvector nvec 16 5) ; throws ExceptionInfo
+  (nc/subvector nvec 0 5)
+  (nc/subvector nvec 5 5)
+  (nc/subvector nvec 15 5)
+  (nc/subvector nvec 16 5) ; throws ExceptionInfo
 
-  ;; The data here is kind of informative:
-  ;; {:k 16, :l 5, :k+l 21, :dim 20}
-  (try (ncore/subvector nvec 16 5)
-       (catch clojure.lang.ExceptionInfo e
-         (prn (ex-data e))))
+  ;; What I want is that if I've used up numbers 0 through m, and I want
+  ;; n numbers, where m+n > length of vector, I copy or use the remaining
+  ;; numbers m through n-1, and then have new numbers in 0 through m-1.
+  ;; And in m through n-1.
+  ;; So a simple way to do this, if n < len of vector is
+  ;; (a) copy numbers m through len-1 to front of vector.
+  ;; (b) refill the rest of the vector.
+  ;;
+  ;; Alternatively, I could construct the output sequence using the end
+  ;; of the Neanderthal vector, then refill it, and use the beginning.
+  ;; But that's more complicated.  The method above means that there's
+  ;; a uniform extraction method.  Depends on the cost of copying and 
+  ;; maintaining pointers.
+  ;;
+  ;; (Note though that since ARS5 is counter-based, maybe it doesn't
+  ;; matter if I just throw numbers out and use new ones.)
 
-  ;; TODO is this actually what I want??
-  ;; Neanderthal's copy! can't be used to copy from a vector to itself because
+  ;; NOTE Neanderthal's copy! can't be used to copy from a vector to itself because
   ;; there's an explicit test for identity in the source code.  So this won't
-  ;; work: (ncore/copy! nv nv to-shift-start num-to-shift 0).  However, subvector
+  ;; work: (nc/copy! nv nv to-shift-start num-to-shift 0).  However, subvector
   ;; lets you provide side-effects on a vector via a window onto it.
   (defn shift-and-refill
     "Copies last num-to-shift elements of Neanderthal vector nv to the
@@ -163,22 +174,29 @@
     random numbers from rng."
     [rng nv num-to-shift]
     (let [len (nv) ; returns length of nv
-          to-shift-start (- len num-to-shift)] ;; assume num-to-shift < n for now FIXME
+          ;; len = num-to-shift + num-used
+          num-used (- len num-to-shift)] ;; assume num-to-shift < n for now FIXME
       ;; Copy last rand numbers to the front:
-      (nc/copy! (nc/subvector nv to-shift-start num-to-shift)
+      (nc/copy! (nc/subvector nv num-used num-to-shift)
                 (nc/subvector nv 0 num-to-shift))
       ;; Replace the ones that were copied:
-      (nrand/rand-uniform! rng (ncore/subvector nv to-shift-start num-to-shift))
+      (nr/rand-uniform! rng (nc/subvector nv num-to-shift num-used))
       nv))
 
-  (def nvec (nrand/rand-uniform! rng (nnative/dv 12)))
+  (def nvec (nr/rand-uniform! rng (nn/dv 8)))
   (into [] nvec)
-  (shift-and-refill rng nvec 5)
+  (shift-and-refill rng nvec 6)
 
   ;; TODO: Use try/catch to extract the data from trying to subvector
   ;; too far into a random vector, and if so, then shift and refill it.
   ;; Assumption: the overshoot is small.  If it's much of the vector,
   ;; this might keep happening on every pull.
+
+  ;; The data here is kind of informative:
+  ;; {:k 16, :l 5, :k+l 21, :dim 20}
+  (try (nc/subvector nvec 16 5)
+       (catch clojure.lang.ExceptionInfo e
+         (prn (ex-data e))))
 
 )
 
@@ -359,9 +377,9 @@
 (defn make-neander-ars5
   ([^long bufsize] (make-neander-ars5 bufsize (make-seed)))
   ([^long bufsize seed] (let [i$ (atom -1)
-                              buf (nnative/dv bufsize)
-                              rng (nrand/rng-state nnative/native-double seed)]
-                          (nrand/rand-uniform! rng buf)
+                              buf (nn/dv bufsize)
+                              rng (nr/rng-state nn/native-double seed)]
+                          (nr/rand-uniform! rng buf)
                           (->NeanderRNG (dec bufsize) buf rng i$))))
 
 ;; Let's try it with deftype instead of defrecord
@@ -369,14 +387,14 @@
 (defn make-neander-ars5-type
   ([^long bufsize] (make-neander-ars5-type bufsize (make-seed)))
   ([^long bufsize seed] (let [i$ (atom -1)
-                              buf (nnative/dv bufsize)
-                              rng (nrand/rng-state nnative/native-double seed)]
-                          (nrand/rand-uniform! rng buf)
+                              buf (nn/dv bufsize)
+                              rng (nr/rng-state nn/native-double seed)]
+                          (nr/rand-uniform! rng buf)
                           (->NeanderRNGtype (dec bufsize) buf rng i$))))
 
 (defprotocol IndexSetter
   (set-index [this i])
-  (get-index [this]))
+  (get-index ^long [this]))
 
 ;; Let's try it with mutable deftype:
 (deftype NeanderRNGmut [size-1 buf rng ^:volatile-mutable index] ; ^:unsynchronized-mutable makes set! generate an error.  Why?
@@ -387,9 +405,9 @@
 
 (defn make-neander-ars5-mut
   ([^long bufsize] (make-neander-ars5-mut bufsize (make-seed)))
-  ([^long bufsize seed] (let [buf (nnative/dv bufsize)
-                              rng (nrand/rng-state nnative/native-double seed)]
-                          (nrand/rand-uniform! rng buf)
+  ([^long bufsize seed] (let [buf (nn/dv bufsize)
+                              rng (nr/rng-state nn/native-double seed)]
+                          (nr/rand-uniform! rng buf)
                           (->NeanderRNGmut (dec bufsize) buf rng -1))))
 
 
@@ -705,7 +723,7 @@
            buf (:buf this)] ; (prn @prev-index$) ; DEBUG
        (when (= @prev-index$ (:size-1 this)) ; (println "reloading") ; DEBUG
          (reset! prev-index$ -1)
-         (nrand/rand-uniform! (:rng this) buf)) ; (prn buf) ; DEBUG
+         (nr/rand-uniform! (:rng this) buf)) ; (prn buf) ; DEBUG
        (buf (swap! prev-index$ cc/inc))))
     ([this ^double low ^double high]
      (loop [^double x (next-double this)]
@@ -724,7 +742,7 @@
            buf (.buf this)] ; (prn @prev-index$) ; DEBUG
        (when (= @prev-index$ (.size-1 this)) ; (println "reloading") ; DEBUG
          (reset! prev-index$ -1)
-         (nrand/rand-uniform! (.rng this) buf)) ; (prn buf) ; DEBUG
+         (nr/rand-uniform! (.rng this) buf)) ; (prn buf) ; DEBUG
        (buf (swap! prev-index$ cc/inc))))
     ([this ^double low ^double high]
      (loop [^double x (next-double this)]
@@ -742,7 +760,7 @@
      (let [buf (.buf this)] ; (prn index) ; DEBUG
        (when (= (get-index this) (.size-1 this)) ; (println "reloading") ; DEBUG
          (set-index this -1)
-         (nrand/rand-uniform! (.rng this) buf)) ; refill vector of random numbers
+         (nr/rand-uniform! (.rng this) buf)) ; refill vector of random numbers
        (set-index this (inc (get-index this)))
        (buf (get-index this))))
     ([this ^double low ^double high]
@@ -1006,14 +1024,14 @@
 
   ;; What if we make Neanderthal's random-uniform! fill a SINGLETON VECTOR?
   ;; Then Vigna's MRG32k3a beats Neanderthal/MKL's ARS5 by bar:
-  (def nvec1 (nnative/dv 1))
+  (def nvec1 (nn/dv 1))
   (time (let [seed (make-seed)
               rngMRG   (make-mrg32k3a seed)
-              rngARS5  (nrand/rng-state nnative/native-double seed)]
+              rngARS5  (nr/rng-state nn/native-double seed)]
       (println "MRG32k3a:")
       (time (crit/quick-bench (next-double rngMRG))) ; MPB quick-bench 8 ns, 10 ns
       (println "Neanderthal/MKL ARS5:")
-      (time (crit/quick-bench (nrand/rand-uniform! rngARS5 nvec1))))) ; MPB quick-bench 111 ns, 108 ns
+      (time (crit/quick-bench (nr/rand-uniform! rngARS5 nvec1))))) ; MPB quick-bench 111 ns, 108 ns
 
   ;; Now let's TRY IT WITH A MILLION NUMBERS AT ONCE.  Note Neanderthal will fill
   ;; a Neanderthal vector, while the MRG32k3a numbers below will be thrown away immediately.
@@ -1029,18 +1047,18 @@
   ;(def ra (double-array 1000000))
   ;(time (millionize! (make-mrg32k3a 42) ra)) ; ohh... this is really slow.
 
-  (def nvec1M (nnative/dv 1000000))
+  (def nvec1M (nn/dv 1000000))
 
   (time (let [seed (make-seed)
               rngMRG   (make-mrg32k3a seed)
-              rngARS5raw  (nrand/rng-state nnative/native-double seed)  ; two copies of the same PRNG
+              rngARS5raw  (nr/rng-state nn/native-double seed)  ; two copies of the same PRNG
               rngARS5prot (make-neander-ars5 1000001 seed) ; i.e. with the same seed, but one uses the protocol interface
               rngARS5type (make-neander-ars5-type 1000001 seed) ; same as preceding but deftype not defrecord
               rngARS5mut (make-neander-ars5-mut 1000001 seed)] ; same as preceding but mutable deftype
       (println "MRG32k3a:")
       (time (crit/quick-bench (millionize rngMRG))) ; MBP quick-bench 6 ms, 6 ms, 7 ms, 10 ms.  Note that's milliseconds.
       (println "\nNeanderthal/MKL ARS5 raw:")
-      (time (crit/quick-bench (nrand/rand-uniform! rngARS5raw nvec1M))) ; MBP quick-bench 277 μs, 314 μs, 305 μs, 309 μs. Microseconds.
+      (time (crit/quick-bench (nr/rand-uniform! rngARS5raw nvec1M))) ; MBP quick-bench 277 μs, 314 μs, 305 μs, 309 μs. Microseconds.
       (println "\nNeanderthal/MKL ARS5 with protocol with defrecord:")
       (time (crit/quick-bench (millionize rngARS5prot))) ; MBP quick-bench 39 ms, 38 ms 40 ms. Wow. That's about 5X slower than rngMRG.
       (println "\nNeanderthal/MKL ARS5 with protocol with deftype:")
@@ -1054,11 +1072,11 @@
   (def seed (make-seed))
 
   (def rngMRG (make-mrg32k3a seed))
-  (def rngARS5raw  (nrand/rng-state nnative/native-double seed))
+  (def rngARS5raw  (nr/rng-state nn/native-double seed))
 
   (def mrgs100K (doall (repeatedly 100000 #(next-double rngMRG))))
-  (def nvec100K (nnative/dv 100000))
-  (nrand/rand-uniform! rngARS5raw nvec100K)
+  (def nvec100K (nn/dv 100000))
+  (nr/rand-uniform! rngARS5raw nvec100K)
 
   (time (crit/quick-bench (into [] mrgs100K)))
   (time (crit/quick-bench (into [] nvec100K)))
