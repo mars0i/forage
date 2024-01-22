@@ -33,8 +33,8 @@
              [native :as nn]
              [random :as nr]]))
 
-(set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
 ;; I started using a newer Apache Commons version, 1.4 and 1.5, because it
@@ -183,6 +183,7 @@
       (nr/rand-uniform! rng (nc/subvector nv num-to-shift num-used))
       nv))
 
+  (def rng (nr/rng-state nn/native-double (make-seed)))
   (def nvec (nr/rand-uniform! rng (nn/dv 8)))
   (into [] nvec)
   (shift-and-refill rng nvec 6)
@@ -192,11 +193,15 @@
   ;; Assumption: the overshoot is small.  If it's much of the vector,
   ;; this might keep happening on every pull.
 
+  ;; DOES THIS WORK?
   ;; The data here is kind of informative:
   ;; {:k 16, :l 5, :k+l 21, :dim 20}
-  (try (nc/subvector nvec 16 5)
+  (try (nc/subvector nvec 6 5)
        (catch clojure.lang.ExceptionInfo e
-         (prn (ex-data e))))
+         (let [{:keys [k l k+l dim]} (ex-data e)]
+           (if (and k l k+l dim (< k dim))
+             (shift-and-refill rng nvec (- dim k)) ; maybe pass dim rather than calling (nv)
+             (throw e)))))
 
 )
 
