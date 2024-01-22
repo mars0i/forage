@@ -81,30 +81,29 @@
 
   ;; I think they idea of a factory is that it makes numbers or allocates
   ;; space in the way appropriate for the CPU ("native") or for a GPU (e.g. CUDA):
-  (def rng (nrand/rng-state (nnative/factory-by-type :double) 42))
-  ;; Or like this, using an existing factory:
+  ;; Using an existing factory:
   (def rng (nrand/rng-state nnative/native-double 42))
   (def randvec (nnative/dv 250000000)) ; length 250 million is OK, but much more is an error.
   (def randvec (nnative/dv   1000000)) ; make a Neanderthal vector for a million floats
   (def randvec (nnative/dv   100000)) ; make a Neanderthal vector for a 100K floats
   (time (nrand/rand-uniform! rng randvec))  ; populate the Neanderthal vector with random numbers
+
+  ;; Simple illustrations:
   (ncore/entry randvec 999999) ; index into the Neanderthal vector
   (class randvec)
   (class (take 20 randvec))
-  (class (take 20 randvec))
-  (realized? (take 20 randvec))
   (realized? (drop 20 randvec))
   (def k (time (doall (take 20 randvec))))
-  (def k (time (doall (take 20 randvec))))
   (drop (- 1000000 20) randvec) ; the result is a lazy seq. Feels slow.
+
   (first randvec) ; and first and second work
   (nth randvec 0) ; nth generates an error, howewver 
   (ncore/entry randvec 999999) ; built-in Neanderthal access method
   (get randvec 999999) ; get doesn't error, but you get back a nil
   (randvec 999999) ; you can use map-style indexing though, and it's fast
+
   (def cvec (into [] randvec)) ; converts into a Clojure vector
-  (nth cvec 0) ; then nth works, of course
-  (nth cvec 999999) ; and is pretty fast, but feels slower than Neanderthal, as you might expect
+  (vec nvec) ; doesn't work
 
   ;; The vector returned by rand-uniform! is the same one given as input:
   (def randvec (nnative/dv 1000000))
@@ -112,6 +111,9 @@
   (identical? nvec randvec)
 
   (nvec) ; if you call the vector with no arguments, it returns its length (a misfeature imo)
+
+  (def nvec (nrand/rand-uniform! rng (nnative/dv 20)))
+  (vec nvec)
 
   ;; Wondering if rather than keeping track of a pointer to decide
   ;; When I need to generate more numbers for a walk, I can just catch
@@ -133,9 +135,50 @@
              (throw e)))))
 
   ;; UNFORTUNATELY, THIS DOESN'T WORK WITH take:
-  (take 10 nvec) ; no error--just returns whatever is available.  Ack!
+  (take 10 nvec) ; if > 10 entries no error--just returns whatever is available.  Ack!
 
 
+  ;; Wondering if rather than keeping track of a pointer to decide
+  (def nvec (nrand/rand-uniform! rng (nnative/dv 20)))
+  (into [] nvec)
+  (ncore/subvector nvec 0 5)
+  (ncore/subvector nvec 5 5)
+  (ncore/subvector nvec 15 5)
+  (ncore/subvector nvec 16 5) ; throws ExceptionInfo
+
+  ;; The data here is kind of informative:
+  ;; {:k 16, :l 5, :k+l 21, :dim 20}
+  (try (ncore/subvector nvec 16 5)
+       (catch clojure.lang.ExceptionInfo e
+         (prn (ex-data e))))
+
+  ;; TODO is this actually what I want??
+  ;; Neanderthal's copy! can't be used to copy from a vector to itself because
+  ;; there's an explicit test for identity in the source code.  So this won't
+  ;; work: (ncore/copy! nv nv to-shift-start num-to-shift 0).  However, subvector
+  ;; lets you provide side-effects on a vector via a window onto it.
+  (defn shift-and-refill
+    "Copies last num-to-shift elements of Neanderthal vector nv to the
+    beginning of the vector, and replaces the copied elements by fresh
+    random numbers from rng."
+    [rng nv num-to-shift]
+    (let [len (nv) ; returns length of nv
+          to-shift-start (- len num-to-shift)] ;; assume num-to-shift < n for now FIXME
+      ;; Copy last rand numbers to the front:
+      (nc/copy! (nc/subvector nv to-shift-start num-to-shift)
+                (nc/subvector nv 0 num-to-shift))
+      ;; Replace the ones that were copied:
+      (nrand/rand-uniform! rng (ncore/subvector nv to-shift-start num-to-shift))
+      nv))
+
+  (def nvec (nrand/rand-uniform! rng (nnative/dv 12)))
+  (into [] nvec)
+  (shift-and-refill rng nvec 5)
+
+  ;; TODO: Use try/catch to extract the data from trying to subvector
+  ;; too far into a random vector, and if so, then shift and refill it.
+  ;; Assumption: the overshoot is small.  If it's much of the vector,
+  ;; this might keep happening on every pull.
 
 )
 
@@ -1032,7 +1075,6 @@
 ;; BENCHMARKING PRNGs IN WALK GENERATION
 (comment
 
-  (require ')
   (require '[forage.core.walks :as w])
 
   (def seed (r/make-seed))
