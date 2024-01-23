@@ -47,8 +47,7 @@
 ;; explains why MRG32k3a has a long enough period for me (while SplitMix 
 ;; *might* not be OK).  All of the WELL generators, including 1024a, have
 ;; a long enough period, but MRG32k3a is a better generator, as well as 
-;; being faster.
-
+;; being faster.  This function automates the calculates in that file.
 (defn vigna-log-prob
   "Returns the log base 2 of (nums-per-run^2 runs)/period, which is
   Sebastiano Vigna's estimate of the probability of overlap of random
@@ -76,7 +75,9 @@
   ;; MRG32k3a:
   (spiral28-vigna 191) ;=> -9.999999998003778E10
   ;; i.e. about 1/2^10000000000
-
+  ;; ARS5 in Neanderthal:
+  (spiral28-vigna 130) ;=> -83.8440811121238
+  ;; i.e. about 1/2^84
   ;; cf https://dragan.rocks/articles/19/Billion-random-numbers-blink-eye-Clojure
 
   ;; I think they idea of a factory is that it makes numbers or allocates
@@ -168,7 +169,7 @@
   ;; there's an explicit test for identity in the source code.  So this won't
   ;; work: (nc/copy! nv nv to-shift-start num-to-shift 0).  However, subvector
   ;; lets you provide side-effects on a vector via a window onto it.
-  (defn shift-and-refill
+  (defn shift-and-refill!
     "Copies last num-to-shift elements of Neanderthal vector nv to the
     beginning of the vector, and replaces the copied elements by fresh
     random numbers from rng."
@@ -196,12 +197,45 @@
   ;; DOES THIS WORK?
   ;; The data here is kind of informative:
   ;; {:k 16, :l 5, :k+l 21, :dim 20}
-  (try (nc/subvector nvec 6 5)
-       (catch clojure.lang.ExceptionInfo e
-         (let [{:keys [k l k+l dim]} (ex-data e)]
-           (if (and k l k+l dim (< k dim))
-             (shift-and-refill rng nvec (- dim k)) ; maybe pass dim rather than calling (nv)
-             (throw e)))))
+  ;(try (nc/subvector nvec 6 5)
+  ;     (catch clojure.lang.ExceptionInfo e
+  ;       (let [{:keys [k l k+l dim]} (ex-data e)] ; start index, length, sum, veclen
+  ;         (if (and k l k+l dim (< k dim)) ; is this the exception we want?
+  ;           (shift-and-refill! rng nvec (- dim k)) ; maybe pass dim rather than calling (nv)
+  ;           (throw e)))))
+
+  (defn make-nums
+    [rng buflen]
+    {:rng rng
+     :buflen buflen
+     :buf (nr/rand-uniform! rng (nn/dv buflen))
+     :startnum$ (atom 0)})
+
+  (defn take-rand!
+    [n nums]
+    (let [{:keys [rng buf buflen startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
+          startnum @startnum$]
+      (prn startnum) ; DEBUG
+      (if (> n buflen)
+        (throw (Exception. (str "take-rand: quantity of numbers requested, " n
+                              ", is > length of random numbers buffer, " buflen ".")))
+        (try (reset! startnum$ (if (= n buflen)
+                                 0 ; NO HAVE TO REFILL HERE
+                                 (+ startnum n)))
+             (nc/subvector buf startnum n)
+             (catch clojure.lang.ExceptionInfo e  ; thrown if startnum+n is larger than buflen
+               (let [{:keys [k l k+l dim]} (ex-data e)] ; k=startnum, length=n, sum, dim=buflen
+                 (if (and k l k+l dim (< k dim)) ; make sure it's the right kind of exception
+                   (do 
+                     (shift-and-refill! rng buf (- dim k)) ; or use buflen and startnum
+                     (reset! startnum$ 0) ; go back to beg of buf
+                     (take-rand! n nums)) ; try again with updated nums structure
+                   (throw e)))))))) ; if it was a different kind of exception, pass it on
+
+  (def mynums (make-nums rng 100))
+
+  (take-rand! 100 mynums)
+
 
 )
 
