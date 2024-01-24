@@ -167,6 +167,35 @@
 ;           (shift-and-refill! rng nvec (- dim k)) ; maybe pass dim rather than calling (nv)
 ;           (throw e)))))
 
+;; ALGORITHM NOTES
+;; If desired number n of randnums is < (buflen - startnum), then the
+;; desired numbers are available in the buffer.
+;;    Make the numbers from startnum to (startnum+n-1) available.
+;;    Update startnum to startnum+n.
+;; If the n = (buflen - startnum), 
+;;    Make the numbers from startnum to buflen-1 available.
+;;    Refill the entire buffer.
+;;       But the timing has to be right--must let caller get the numbers
+;;       before it's refilled.  So maybe refill it on the next call.
+;;    Update startnum to 0.
+;;       Can I make this the rule: When startnum=0, refill the buffer.
+;; If the n > (buflen - startnum) and n < buflen (or <= ?)
+;; Strategy 1:
+;;    Copy nums in [startnum, buflen-1] to beginning of buffer.
+;;    Fill in the locations copied from with new numbers.
+;;    Update startnum to 0.
+;;    Start over.
+;; Strategy 2:
+;;    Somehow make a concatenated temporary buffer or something
+;;    containing nums from [startnum, buflen-1],
+;;    and then refill the entire vector
+;;    and then the second part of the temporary buffer contains 
+;;    numbers from [0, n - (buflen - startnum)] = [0, n + startnum - buflen].
+;; If n > buflen, maybe make this an error.
+
+;; enough already left
+  buf buflen 
+
 ;; NOTE Neanderthal's copy! can't be used to copy from a vector to itself because
 ;; there's an explicit test for identity in the source code.  So this won't
 ;; work: (nc/copy! nv nv to-shift-start num-to-shift 0).  However, subvector
