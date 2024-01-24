@@ -41,6 +41,19 @@
 ;; allowed saving internal state of a PRNG.  However, some functions
 ;; might only be available in 3.6.1.
 
+(comment
+  (def rng (make-well19937 42))
+  (class rng)
+  (isa? Well19937c AbstractWell)
+  (isa? Well19937c UniformRandomProvider)
+  (isa? Well19937c org.apache.commons.rng.core.BaseProvider)
+  (isa? Well19937c org.apache.commons.rng.core.source32.IntProvider)
+  (def state (.getStateInternal rng)) ; fails
+  (class state)
+  (.setStateInternal rng state)
+  (.nextDouble rng)
+)
+
 
 ;; NOTE
 ;; I have notes in a file named howManyRandomNumbersDoIneed.md that
@@ -117,141 +130,114 @@
   (def nvec (nr/rand-uniform! rng (nn/dv 20)))
   (vec nvec)
 
-  ;; Wondering if rather than keeping track of a pointer to decide
-  ;; When I need to generate more numbers for a walk, I can just catch
-  ;; the exception and then regenerate.  Is that faster?
-  (def nvec (nr/rand-uniform! rng (nn/dv 5))) ;; an option is to define the vector inline
-  (nvec 5) ; error
-  (clojure.repl/pst)
-  (try (nvec 5) (catch clojure.lang.ExceptionInfo e (nr/rand-uniform! rng nvec)))
-  (try (nvec 5) (catch clojure.lang.ExceptionInfo e (prn e)))
-  (try (nvec 5)
-       (catch clojure.lang.ExceptionInfo e 
-         (let [data (ex-data e)
-               i (:i data)
-               dim (:dim data)]
-           (if (and i dim) ; other exceptions probably don't have these
-             (if (>= i dim)
-               "RESTART"
-               (throw e))
-             (throw e)))))
-
   ;; UNFORTUNATELY, THIS DOESN'T WORK WITH take:
   (take 10 nvec) ; if > 10 entries no error--just returns whatever is available.  Ack!
 
+)
 
-  ;; Wondering if rather than keeping track of a pointer to decide
-  (def nvec (nr/rand-uniform! rng (nn/dv 20)))
-  (into [] nvec)
-  (nc/subvector nvec 0 5)
-  (nc/subvector nvec 5 5)
-  (nc/subvector nvec 15 5)
-  (nc/subvector nvec 16 5) ; throws ExceptionInfo
+;; What I want is that if I've used up numbers 0 through m, and I want
+;; n numbers, where m+n > length of vector, I copy or use the remaining
+;; numbers m through n-1, and then have new numbers in 0 through m-1.
+;; And in m through n-1.
+;; So a simple way to do this, if n < len of vector is
+;; (a) copy numbers m through len-1 to front of vector.
+;; (b) refill the rest of the vector.
+;;
+;; Alternatively, I could construct the output sequence using the end
+;; of the Neanderthal vector, then refill it, and use the beginning.
+;; But that's more complicated.  The method above means that there's
+;; a uniform extraction method.  Depends on the cost of copying and 
+;; maintaining pointers.
+;;
+;; (Note though that since ARS5 is counter-based, maybe it doesn't
+;; matter if I just throw numbers out and use new ones.)
 
-  ;; What I want is that if I've used up numbers 0 through m, and I want
-  ;; n numbers, where m+n > length of vector, I copy or use the remaining
-  ;; numbers m through n-1, and then have new numbers in 0 through m-1.
-  ;; And in m through n-1.
-  ;; So a simple way to do this, if n < len of vector is
-  ;; (a) copy numbers m through len-1 to front of vector.
-  ;; (b) refill the rest of the vector.
-  ;;
-  ;; Alternatively, I could construct the output sequence using the end
-  ;; of the Neanderthal vector, then refill it, and use the beginning.
-  ;; But that's more complicated.  The method above means that there's
-  ;; a uniform extraction method.  Depends on the cost of copying and 
-  ;; maintaining pointers.
-  ;;
-  ;; (Note though that since ARS5 is counter-based, maybe it doesn't
-  ;; matter if I just throw numbers out and use new ones.)
+;; TODO: Use try/catch to extract the data from trying to subvector
+;; too far into a random vector, and if so, then shift and refill it.
+;; Assumption: the overshoot is small.  If it's much of the vector,
+;; this might keep happening on every pull.
 
-  ;; NOTE Neanderthal's copy! can't be used to copy from a vector to itself because
-  ;; there's an explicit test for identity in the source code.  So this won't
-  ;; work: (nc/copy! nv nv to-shift-start num-to-shift 0).  However, subvector
-  ;; lets you provide side-effects on a vector via a window onto it.
-  (defn shift-and-refill!
-    "Copies last num-to-shift elements of Neanderthal vector nv to the
-    beginning of the vector, and replaces the copied elements by fresh
-    random numbers from rng."
-    [rng nv num-to-shift]
-    (let [len (nv) ; returns length of nv
-          ;; len = num-to-shift + num-used
-          num-used (- len num-to-shift)] ;; assume num-to-shift < n for now FIXME
-      ;; Copy last rand numbers to the front:
-      (nc/copy! (nc/subvector nv num-used num-to-shift)
-                (nc/subvector nv 0 num-to-shift))
-      ;; Replace the ones that were copied:
-      (nr/rand-uniform! rng (nc/subvector nv num-to-shift num-used))
-      nv))
+;; DOES THIS WORK?
+;; The data here is kind of informative:
+;; {:k 16, :l 5, :k+l 21, :dim 20}
+;(try (nc/subvector nvec 6 5)
+;     (catch clojure.lang.ExceptionInfo e
+;       (let [{:keys [k l k+l dim]} (ex-data e)] ; start index, length, sum, veclen
+;         (if (and k l k+l dim (< k dim)) ; is this the exception we want?
+;           (shift-and-refill! rng nvec (- dim k)) ; maybe pass dim rather than calling (nv)
+;           (throw e)))))
 
+;; NOTE Neanderthal's copy! can't be used to copy from a vector to itself because
+;; there's an explicit test for identity in the source code.  So this won't
+;; work: (nc/copy! nv nv to-shift-start num-to-shift 0).  However, subvector
+;; lets you provide side-effects on a vector via a window onto it.
+(defn shift-and-refill!
+  "Copies last num-to-shift elements of Neanderthal vector nv to the
+  beginning of the vector, and replaces the copied elements by fresh
+  random numbers from rng."
+  [rng nv num-to-shift]
+  (let [len (nv) ; returns length of nv
+        ;; len = num-to-shift + num-used
+        num-used (- len num-to-shift)] ;; assume num-to-shift < n for now FIXME
+    ;; Copy last rand numbers to the front:
+    (nc/copy! (nc/subvector nv num-used num-to-shift)
+              (nc/subvector nv 0 num-to-shift))
+    ;; Replace the ones that were copied:
+    (nr/rand-uniform! rng (nc/subvector nv num-to-shift num-used))
+    nv))
+
+(comment
   (def rng (nr/rng-state nn/native-double (make-seed)))
   (def nvec (nr/rand-uniform! rng (nn/dv 8)))
   (into [] nvec)
-  (shift-and-refill rng nvec 6)
-
-  ;; TODO: Use try/catch to extract the data from trying to subvector
-  ;; too far into a random vector, and if so, then shift and refill it.
-  ;; Assumption: the overshoot is small.  If it's much of the vector,
-  ;; this might keep happening on every pull.
-
-  ;; DOES THIS WORK?
-  ;; The data here is kind of informative:
-  ;; {:k 16, :l 5, :k+l 21, :dim 20}
-  ;(try (nc/subvector nvec 6 5)
-  ;     (catch clojure.lang.ExceptionInfo e
-  ;       (let [{:keys [k l k+l dim]} (ex-data e)] ; start index, length, sum, veclen
-  ;         (if (and k l k+l dim (< k dim)) ; is this the exception we want?
-  ;           (shift-and-refill! rng nvec (- dim k)) ; maybe pass dim rather than calling (nv)
-  ;           (throw e)))))
-
-  (defn make-nums
-    [rng buflen]
-    {:rng rng
-     :buflen buflen
-     :buf (nr/rand-uniform! rng (nn/dv buflen))
-     :startnum$ (atom 0)})
-
-  (defn take-rand!
-    [n nums]
-    (let [{:keys [rng buf buflen startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
-          startnum @startnum$]
-      (prn startnum) ; DEBUG
-      (if (> n buflen)
-        (throw (Exception. (str "take-rand: quantity of numbers requested, " n
-                              ", is > length of random numbers buffer, " buflen ".")))
-        (try (reset! startnum$ (if (= n buflen)
-                                 0 ; NO HAVE TO REFILL HERE
-                                 (+ startnum n)))
-             (nc/subvector buf startnum n)
-             (catch clojure.lang.ExceptionInfo e  ; thrown if startnum+n is larger than buflen
-               (let [{:keys [k l k+l dim]} (ex-data e)] ; k=startnum, length=n, sum, dim=buflen
-                 (if (and k l k+l dim (< k dim)) ; make sure it's the right kind of exception
-                   (do 
-                     (shift-and-refill! rng buf (- dim k)) ; or use buflen and startnum
-                     (reset! startnum$ 0) ; go back to beg of buf
-                     (take-rand! n nums)) ; try again with updated nums structure
-                   (throw e)))))))) ; if it was a different kind of exception, pass it on
-
-  (def mynums (make-nums rng 100))
-
-  (take-rand! 100 mynums)
-
+  (shift-and-refill! rng nvec 1) ; shifts last one to top, refills the remaining spots
+  (shift-and-refill! rng nvec 2) ; shifts last two to top, refills the remaining spots
+  (shift-and-refill! rng nvec 4) ; shifts last four to top, refills the remaining four spots
+  (shift-and-refill! rng nvec 6) ; shifts last six to top, refills the remaining two spots
+  (shift-and-refill! rng nvec 8) ; makes no change. I guess if you shift all 8 to top, that's no change.
+  (shift-and-refill! rng nvec 0) ; repopulates the whole vector -- is that what should happen?
+  ;; I think that's right (?) since when you do this, it means you took the
+  ;; whole vector and there were none left.
+  ;; Remember that shift-and-refill! is only intended for the case when you
+  ;; want to take too many.  take-rand! below calls it when the caller
+  ;; wants more numbers than are left.  It's not called when it wants fewer
+  ;; numbers.  I guess you could also call it when caller wants all the numbers.
+  ;; Because that's another situation in which repopulation is needed.
 
 )
 
+(defn make-nums
+  [rng buflen]
+  {:rng rng
+   :buflen buflen
+   :buf (nr/rand-uniform! rng (nn/dv buflen))
+   :startnum$ (atom 0)})
+
+(defn take-rand!
+  [n nums]
+  (let [{:keys [rng buf buflen startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
+        startnum @startnum$
+        endnum (+ startnum n)]
+    ;(prn startnum) ; DEBUG
+    (if (> n buflen)
+      (throw (Exception. (str "take-rand: quantity of numbers requested, " n
+                              ", is > length of random numbers buffer, " buflen ".")))
+      (try (reset! startnum$ endnum) ; will be replaced if necess
+           (nc/subvector buf startnum n)
+           (catch clojure.lang.ExceptionInfo e  ; thrown if startnum+n is larger than buflen
+             (let [{:keys [k l k+l dim]} (ex-data e)] ; k=startnum, length=n, sum, dim=buflen
+               (if (and k l k+l dim (< k dim)) ; make sure it's the right kind of exception
+                 (do 
+                   (shift-and-refill! rng buf (- dim k)) ; or use buflen and startnum
+                   (reset! startnum$ 0) ; go back to beg of buf
+                   (take-rand! n nums)) ; try again with updated nums structure
+                 (throw e)))))))) ; if it was a different kind of exception, pass it on
 
 (comment
-  (def rng (make-well19937 42))
-  (class rng)
-  (isa? Well19937c AbstractWell)
-  (isa? Well19937c UniformRandomProvider)
-  (isa? Well19937c org.apache.commons.rng.core.BaseProvider)
-  (isa? Well19937c org.apache.commons.rng.core.source32.IntProvider)
-  (def state (.getStateInternal rng)) ; fails
-  (class state)
-  (.setStateInternal rng state)
-  (.nextDouble rng)
+  (def mynums (make-nums rng 100))
+  (take-rand! 100 mynums)
 )
+
 
 ;; (These are mostly wrappers for Java library stuff, and in some cases
 ;; one could just as easily use the Java methods directly with
