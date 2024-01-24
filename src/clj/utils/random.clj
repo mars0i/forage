@@ -193,8 +193,16 @@
 ;;    numbers from [0, n - (buflen - startnum)] = [0, n + startnum - buflen].
 ;; If n > buflen, maybe make this an error.
 
-;; enough already left
-  buf buflen 
+;; ALG v2:
+;; Initially set pointer startnum to buflen, i.e. one past end of buffer.
+;; Whenever pointer is past end of buffer, refill, and reset pointer to 0.
+;; Then read from new pointer loc.
+;; When pointer + n < buflen, read nums from pointerloc and increment pointer.
+;; When pointer + n >= buflen,
+;;  copy, refill, set pointer to pointer + n, as always.
+;;  But NO not working
+;;  start over.
+
 
 ;; NOTE Neanderthal's copy! can't be used to copy from a vector to itself because
 ;; there's an explicit test for identity in the source code.  So this won't
