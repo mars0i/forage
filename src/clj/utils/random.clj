@@ -243,14 +243,27 @@
 
 )
 
+;; An option is to not store the buflen since I can get it from Neanderthal
+;; easily using: (buf)
 (defn make-nums
   [rng buflen]
   {:rng rng
-   :buflen buflen
-   :buf (nr/rand-uniform! rng (nn/dv buflen))
-   :startnum$ (atom 0)})
+   :len buflen
+   :buf (nn/dv buflen)        ; see NeadnerthalRandonmNumbers1.md, Algorithm A.
+   :startnum$ (atom buflen)}) ; see NeadnerthalRandonmNumbers1.md, Algorithm A.
 
+;; FIXME generating Neanderthal errors about buf size being too small.
 (defn take-rand!
+  [n nums]
+  (let [{:keys [rng buf len startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
+        startnum @startnum$]
+    (when (> n len) (throw (Exception. (str "Requested number of random numbers, " n " is larger than buf size, " len))))
+    (when (> (+ startnum n) len)
+      (shift-and-refill! rng buf (- len startnum)))
+    (swap! startnum$ cc/+ n) ; since now startnum + n is < len, this will not be > len
+    (nc/subvector buf startnum n)))
+
+(defn old-take-rand!
   [n nums]
   (let [{:keys [rng buf buflen startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
         startnum @startnum$
@@ -271,8 +284,9 @@
                  (throw e)))))))) ; if it was a different kind of exception, pass it on
 
 (comment
+  (def rng (nr/rng-state nn/native-double (make-seed)))
   (def mynums (make-nums rng 100))
-  (take-rand! 100 mynums)
+  (take-rand! 20 mynums)
 )
 
 
