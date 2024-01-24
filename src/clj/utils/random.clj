@@ -212,16 +212,20 @@
   "Copies last num-to-shift elements of Neanderthal vector nv to the
   beginning of the vector, and replaces the copied elements by fresh
   random numbers from rng."
-  [rng nv num-to-shift]
-  (let [len (nv) ; returns length of nv
+  [rng nv len num-used]
+  (let [;len (nv) ; returns length of nv
         ;; len = num-to-shift + num-used
-        num-used (- len num-to-shift)] ;; assume num-to-shift < n for now FIXME
+        num-to-shift (- len num-used)] ;; assume num-to-shift < n for now FIXME
     ;; Copy last rand numbers to the front:
     (nc/copy! (nc/subvector nv num-used num-to-shift)
               (nc/subvector nv 0 num-to-shift))
+    (println "Copied") ; DEBUG
     ;; Replace the ones that were copied:
     (nr/rand-uniform! rng (nc/subvector nv num-to-shift num-used))
+    (println "refilled.") ; DEBUG
     nv))
+
+;; (len - ( len - startnum)) = (len - len + startnum) = startnum
 
 (comment
   (def rng (nr/rng-state nn/native-double (make-seed)))
@@ -257,11 +261,23 @@
   [n nums]
   (let [{:keys [rng buf len startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
         startnum @startnum$]
+    (prn rng buf len startnum) ; DEBUG
     (when (> n len) (throw (Exception. (str "Requested number of random numbers, " n " is larger than buf size, " len))))
     (when (> (+ startnum n) len)
-      (shift-and-refill! rng buf (- len startnum)))
-    (swap! startnum$ cc/+ n) ; since now startnum + n is < len, this will not be > len
-    (nc/subvector buf startnum n)))
+      (println "shifting:") ; DEBUG
+      (shift-and-refill! rng buf len startnum)
+      (reset! startnum$ 0)) ; Do I really want to pass this info imperatively in an atom?
+    (println "@startnum$ =" @startnum$) ; dEBUG
+    (let [newnums (nc/subvector buf @startnum$ n)] ; ack more imperative
+      (swap! startnum$ cc/+ n) ; since now startnum + n is < len, this will not be > len
+      (println "returning subvector. startnum =" startnum "@startnum$ = " @startnum$) ; DEBUG
+      newnums)))
+
+(comment
+  (def rng (nr/rng-state nn/native-double (make-seed)))
+  (def mynums (make-nums rng 100))
+  (take-rand! 15 mynums)
+)
 
 (defn old-take-rand!
   [n nums]
@@ -282,12 +298,6 @@
                    (reset! startnum$ 0) ; go back to beg of buf
                    (take-rand! n nums)) ; try again with updated nums structure
                  (throw e)))))))) ; if it was a different kind of exception, pass it on
-
-(comment
-  (def rng (nr/rng-state nn/native-double (make-seed)))
-  (def mynums (make-nums rng 100))
-  (take-rand! 20 mynums)
-)
 
 
 ;; (These are mostly wrappers for Java library stuff, and in some cases
