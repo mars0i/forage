@@ -147,56 +147,6 @@
   (into [] (:buf mynums))
 )
 
-(comment
-  (defn slightly-newer-take-rand!
-    [n nums]
-    (let [{:keys [rng buf len startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
-          startnum @startnum$]
-      (when (> n len) (throw (Exception. (str "Requested number of random numbers, " n ", is larger than buf size, " len "."))))
-      (let [[new-nums new-startnum] (if (> (+ startnum n) len)
-                                      (do (shift-and-refill! rng buf len startnum)
-                                          [(nc/subvector buf 0 n) 0])
-                                      [(nc/subvector buf startnum n) startnum])]
-        (reset! startnum$ (+ new-startnum n)) ; since now startnum + n is < len, this will not be > len
-        new-nums)))
-
-  (defn not-so-old-take-rand!
-    [n nums]
-    (let [{:keys [rng buf len startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
-          startnum @startnum$]
-      (println "len:" len "startnum:" startnum) ; DEBUG
-      (when (> n len) (throw (Exception. (str "Requested number of random numbers, " n ", is larger than buf size, " len "."))))
-      (when (> (+ startnum n) len)
-        (println "shifting:") ; DEBUG
-        (shift-and-refill! rng buf len startnum)
-        (reset! startnum$ 0)) ; Do I really want to pass this info imperatively in an atom?
-      (println "@startnum$ =" @startnum$) ; DEBUG
-      (let [newnums (nc/subvector buf @startnum$ n)] ; ack more imperative
-        (swap! startnum$ cc/+ n) ; since now startnum + n is < len, this will not be > len
-        (println "returning subvector. startnum =" startnum "@startnum$ = " @startnum$) ; DEBUG
-        newnums)))
-
-  (defn old-take-rand!
-    [n nums]
-    (let [{:keys [rng buf buflen startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
-          startnum @startnum$
-          endnum (+ startnum n)]
-      ;(prn startnum) ; DEBUG
-      (if (> n buflen)
-        (throw (Exception. (str "take-rand: quantity of numbers requested, " n
-                                ", is > length of random numbers buffer, " buflen ".")))
-        (try (reset! startnum$ endnum) ; will be replaced if necess
-             (nc/subvector buf startnum n)
-             (catch clojure.lang.ExceptionInfo e  ; thrown if startnum+n is larger than buflen
-               (let [{:keys [k l k+l dim]} (ex-data e)] ; k=startnum, length=n, sum, dim=buflen
-                 (if (and k l k+l dim (< k dim)) ; make sure it's the right kind of exception
-                   (do 
-                     (shift-and-refill! rng buf (- dim k)) ; or use buflen and startnum
-                     (reset! startnum$ 0) ; go back to beg of buf
-                     (take-rand! n nums)) ; try again with updated nums structure
-                   (throw e)))))))) ; if it was a different kind of exception, pass it on
-
-)
 
 ;; (These are mostly wrappers for Java library stuff, and in some cases
 ;; one could just as easily use the Java methods directly with
