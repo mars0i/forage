@@ -34,8 +34,8 @@
              [native :as nn]
              [random :as nr]]))
 
-(set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
 ;; I started using a newer Apache Commons version, 1.4 and 1.5, because it
@@ -93,125 +93,18 @@
   (spiral28-vigna 130) ;=> -83.8440811121238
   ;; i.e. about 1/2^84
   ;; cf https://dragan.rocks/articles/19/Billion-random-numbers-blink-eye-Clojure
-
-  ;; I think they idea of a factory is that it makes numbers or allocates
-  ;; space in the way appropriate for the CPU ("native") or for a GPU (e.g. CUDA):
-  ;; Using an existing factory:
-  (def rng (nr/rng-state nn/native-double (make-seed)))
-
-  (def randvec (nn/dv 250000000)) ; length 250 million is OK, but much more is an error.
-  (def randvec (nn/dv   1000000)) ; make a Neanderthal vector for a million floats
-  (def randvec (nn/dv   100000)) ; make a Neanderthal vector for a 100K floats
-  (time (nr/rand-uniform! rng randvec))  ; populate the Neanderthal vector with random numbers
-
-  ;; Simple illustrations:
-  (nc/entry randvec 999999) ; index into the Neanderthal vector
-  (class randvec)
-  (class (take 20 randvec))
-  (realized? (drop 20 randvec))
-  (def k (time (doall (take 20 randvec))))
-  (drop (- 1000000 20) randvec) ; the result is a lazy seq. Feels slow.
-
-  (first randvec) ; and first and second work
-  (nth randvec 0) ; nth generates an error, howewver 
-  (nc/entry randvec 999999) ; built-in Neanderthal access method
-  (get randvec 999999) ; get doesn't error, but you get back a nil
-  (randvec 999999) ; you can use map-style indexing though, and it's fast
-
-  (def cvec (into [] randvec)) ; converts into a Clojure vector
-  (vec nvec) ; doesn't work
-
-  ;; The vector returned by rand-uniform! is the same one given as input:
-  (def randvec (nn/dv 1000000))
-  (def nvec (nr/rand-uniform! rng randvec))
-  (identical? nvec randvec)
-
-  (nvec) ; if you call the vector with no arguments, it returns its length (a misfeature imo)
-
-  (def nvec (nr/rand-uniform! rng (nn/dv 20)))
-  (vec nvec)
-
-  ;; UNFORTUNATELY, THIS DOESN'T WORK WITH take:
-  (take 10 nvec) ; if > 10 entries no error--just returns whatever is available.  Ack!
-
 )
 
-;; What I want is that if I've used up numbers 0 through m, and I want
-;; n numbers, where m+n > length of vector, I copy or use the remaining
-;; numbers m through n-1, and then have new numbers in 0 through m-1.
-;; And in m through n-1.
-;; So a simple way to do this, if n < len of vector is
-;; (a) copy numbers m through len-1 to front of vector.
-;; (b) refill the rest of the vector.
-;;
-;; Alternatively, I could construct the output sequence using the end
-;; of the Neanderthal vector, then refill it, and use the beginning.
-;; But that's more complicated.  The method above means that there's
-;; a uniform extraction method.  Depends on the cost of copying and 
-;; maintaining pointers.
-;;
-;; (Note though that since ARS5 is counter-based, maybe it doesn't
-;; matter if I just throw numbers out and use new ones.)
-
-;; TODO: Use try/catch to extract the data from trying to subvector
-;; too far into a random vector, and if so, then shift and refill it.
-;; Assumption: the overshoot is small.  If it's much of the vector,
-;; this might keep happening on every pull.
-
-;; DOES THIS WORK?
-;; The data here is kind of informative:
-;; {:k 16, :l 5, :k+l 21, :dim 20}
-;(try (nc/subvector nvec 6 5)
-;     (catch clojure.lang.ExceptionInfo e
-;       (let [{:keys [k l k+l dim]} (ex-data e)] ; start index, length, sum, veclen
-;         (if (and k l k+l dim (< k dim)) ; is this the exception we want?
-;           (shift-and-refill! rng nvec (- dim k)) ; maybe pass dim rather than calling (nv)
-;           (throw e)))))
-
-;; ALGORITHM NOTES
-;; If desired number n of randnums is < (buflen - startnum), then the
-;; desired numbers are available in the buffer.
-;;    Make the numbers from startnum to (startnum+n-1) available.
-;;    Update startnum to startnum+n.
-;; If the n = (buflen - startnum), 
-;;    Make the numbers from startnum to buflen-1 available.
-;;    Refill the entire buffer.
-;;       But the timing has to be right--must let caller get the numbers
-;;       before it's refilled.  So maybe refill it on the next call.
-;;    Update startnum to 0.
-;;       Can I make this the rule: When startnum=0, refill the buffer.
-;; If the n > (buflen - startnum) and n < buflen (or <= ?)
-;; Strategy 1:
-;;    Copy nums in [startnum, buflen-1] to beginning of buffer.
-;;    Fill in the locations copied from with new numbers.
-;;    Update startnum to 0.
-;;    Start over.
-;; Strategy 2:
-;;    Somehow make a concatenated temporary buffer or something
-;;    containing nums from [startnum, buflen-1],
-;;    and then refill the entire vector
-;;    and then the second part of the temporary buffer contains 
-;;    numbers from [0, n - (buflen - startnum)] = [0, n + startnum - buflen].
-;; If n > buflen, maybe make this an error.
-
-;; ALG v2:
-;; Initially set pointer startnum to buflen, i.e. one past end of buffer.
-;; Whenever pointer is past end of buffer, refill, and reset pointer to 0.
-;; Then read from new pointer loc.
-;; When pointer + n < buflen, read nums from pointerloc and increment pointer.
-;; When pointer + n >= buflen,
-;;  copy, refill, set pointer to pointer + n, as always.
-;;  But NO not working
-;;  start over.
-
+;; SEE tips/neanderthal.clj for examples of how to do things with 
+;; Neanderthal random number generating.
 
 ;; An option is to not store the buflen since I can get it from Neanderthal easily using: (buf)
 (defn make-nums
   [rng buflen]
   {:rng rng
    :len buflen
-   :buf (nn/dv buflen)        ; see NeadnerthalRandonmNumbers1.md, Algorithm A.
-   :startnum$ (atom buflen)}) ; see NeadnerthalRandonmNumbers1.md, Algorithm A.
+   :buf (nn/dv buflen)        ; Generate the random numbers later; see NeadnerthalRandonmNumbers1.md, Algorithm A.
+   :startnum$ (atom buflen)}) ; Read index starts one past end of buffer; see NeadnerthalRandonmNumbers1.md, Algorithm A.
 
 ;; Neanderthal's copy! can't be used to copy from a vector to itself because
 ;; there's an explicit test for identity in the source code.  So this won't
@@ -228,20 +121,22 @@
     (nr/rand-uniform! rng (nc/subvector nv num-to-shift num-used)) ;; replace nums that were copied
     nv))
 
-;; see NeadnerthalRandonmNumbers1.md, Algorithm A.
+;; See NeadnerthalRandonmNumbers1.md, Algorithm A.
+;; When number of randnums needed is > buflen, an option would be to
+;; call this repeatedly until enough numbers have been generated.
 (defn take-rand!
   "Returns n unused random numbers from a random numbers structure
   originally generated by make-nums."
   [^long n nums]
-  (let [{:keys [rng buf ^long len startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
+  (let [{:keys [buf ^long len startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
         ^long startnum @startnum$]
     (when (> n len) (throw (Exception. (str "Requested number of random numbers, " n ", is larger than buf size, " len "."))))
     (let [new-startnum (if (<= (+ startnum n) len)
-                         startnum
-                         (do (shift-and-refill! rng buf len startnum)
-                             (println "take-rand! called shift-and-refill! with startnum" startnum) ; DEBUG
-                             0))]
-      (println "startnum =" startnum "new-startnum =" new-startnum "next startnum =" (+ new-startnum n)) ; DEBUG
+                         startnum ; we can just pull the next n numbers from buffer
+                         (do (shift-and-refill! (:rng nums) buf len startnum) ; need to stuff more numbers after the unused ones
+                             ;(println "take-rand! called shift-and-refill! with startnum" startnum) ; DEBUG
+                             0))] ; now the unused numbers from end are at front
+      ;(println "startnum =" startnum "new-startnum =" new-startnum "next startnum =" (+ new-startnum n)) ; DEBUG
       (reset! startnum$ (+ new-startnum n)) ; since now startnum + n is < len, this will not be > len
       (nc/subvector buf new-startnum n))))
 
