@@ -130,7 +130,7 @@
   [^long n nums]
   (let [{:keys [buf ^long len startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
         ^long startnum @startnum$]
-    (when (> n len) (throw (Exception. (str "Requested number of random numbers, " n ", is larger than buf size, " len "."))))
+    (when (> n len) (throw (Exception. (str "take-rand!: requested number of random numbers, " n ", is larger than buf size, " len "."))))
     (let [new-startnum (if (<= (+ startnum n) len)
                          startnum ; we can just pull the next n numbers from buffer
                          (do (shift-and-refill! (:rng nums) buf len startnum) ; need to stuff more numbers after the unused ones
