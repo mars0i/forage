@@ -213,42 +213,17 @@
   beginning of the vector, and replaces the copied elements by fresh
   random numbers from rng."
   [rng nv len num-used]
-  (let [;len (nv) ; returns length of nv
-        ;; len = num-to-shift + num-used
-        num-to-shift (- len num-used)] ;; assume num-to-shift < n for now FIXME
+  (let [num-to-shift (- len num-used)] ;; assume num-to-shift < n for now FIXME
     ;; Copy last rand numbers to the front:
     (nc/copy! (nc/subvector nv num-used num-to-shift)
               (nc/subvector nv 0 num-to-shift))
-    (println "Copied") ; DEBUG
+    (println "Copied" num-to-shift "nums") ; DEBUG
     ;; Replace the ones that were copied:
     (nr/rand-uniform! rng (nc/subvector nv num-to-shift num-used))
     (println "refilled.") ; DEBUG
     nv))
 
-;; (len - ( len - startnum)) = (len - len + startnum) = startnum
-
-(comment
-  (def rng (nr/rng-state nn/native-double (make-seed)))
-  (def nvec (nr/rand-uniform! rng (nn/dv 8)))
-  (into [] nvec)
-  (shift-and-refill! rng nvec 1) ; shifts last one to top, refills the remaining spots
-  (shift-and-refill! rng nvec 2) ; shifts last two to top, refills the remaining spots
-  (shift-and-refill! rng nvec 4) ; shifts last four to top, refills the remaining four spots
-  (shift-and-refill! rng nvec 6) ; shifts last six to top, refills the remaining two spots
-  (shift-and-refill! rng nvec 8) ; makes no change. I guess if you shift all 8 to top, that's no change.
-  (shift-and-refill! rng nvec 0) ; repopulates the whole vector -- is that what should happen?
-  ;; I think that's right (?) since when you do this, it means you took the
-  ;; whole vector and there were none left.
-  ;; Remember that shift-and-refill! is only intended for the case when you
-  ;; want to take too many.  take-rand! below calls it when the caller
-  ;; wants more numbers than are left.  It's not called when it wants fewer
-  ;; numbers.  I guess you could also call it when caller wants all the numbers.
-  ;; Because that's another situation in which repopulation is needed.
-
-)
-
-;; An option is to not store the buflen since I can get it from Neanderthal
-;; easily using: (buf)
+;; An option is to not store the buflen since I can get it from Neanderthal easily using: (buf)
 (defn make-nums
   [rng buflen]
   {:rng rng
@@ -256,18 +231,17 @@
    :buf (nn/dv buflen)        ; see NeadnerthalRandonmNumbers1.md, Algorithm A.
    :startnum$ (atom buflen)}) ; see NeadnerthalRandonmNumbers1.md, Algorithm A.
 
-;; FIXME generating Neanderthal errors about buf size being too small.
 (defn take-rand!
   [n nums]
   (let [{:keys [rng buf len startnum$]} nums ; nums is structure with Neandertal vec of rand nums and an index
         startnum @startnum$]
-    (prn rng buf len startnum) ; DEBUG
-    (when (> n len) (throw (Exception. (str "Requested number of random numbers, " n " is larger than buf size, " len))))
+    (println "len:" len "startnum:" startnum) ; DEBUG
+    (when (> n len) (throw (Exception. (str "Requested number of random numbers, " n ", is larger than buf size, " len "."))))
     (when (> (+ startnum n) len)
       (println "shifting:") ; DEBUG
       (shift-and-refill! rng buf len startnum)
       (reset! startnum$ 0)) ; Do I really want to pass this info imperatively in an atom?
-    (println "@startnum$ =" @startnum$) ; dEBUG
+    (println "@startnum$ =" @startnum$) ; DEBUG
     (let [newnums (nc/subvector buf @startnum$ n)] ; ack more imperative
       (swap! startnum$ cc/+ n) ; since now startnum + n is < len, this will not be > len
       (println "returning subvector. startnum =" startnum "@startnum$ = " @startnum$) ; DEBUG
@@ -276,7 +250,7 @@
 (comment
   (def rng (nr/rng-state nn/native-double (make-seed)))
   (def mynums (make-nums rng 100))
-  (take-rand! 15 mynums)
+  (take-rand! 100 mynums)
 )
 
 (defn old-take-rand!
