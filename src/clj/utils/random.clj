@@ -42,19 +42,6 @@
 ;; allowed saving internal state of a PRNG.  However, some functions
 ;; might only be available in 3.6.1.
 
-(comment
-  (def rng (make-well19937 42))
-  (class rng)
-  (isa? Well19937c AbstractWell)
-  (isa? Well19937c UniformRandomProvider)
-  (isa? Well19937c org.apache.commons.rng.core.BaseProvider)
-  (isa? Well19937c org.apache.commons.rng.core.source32.IntProvider)
-  (def state (.getStateInternal rng)) ; fails
-  (class state)
-  (.setStateInternal rng state)
-  (.nextDouble rng)
-)
-
 
 ;; NOTE
 ;; I have notes in a file named howManyRandomNumbersDoIneed.md that
@@ -136,19 +123,15 @@
       ;(println "nexti =" nexti "new-nexti =" new-nexti "next nexti =" (+ new-nexti n)) ; DEBUG
       (nc/subvector buf new-nexti n))))
 
-
 (comment
-  ; old call: (shift-and-refill! (:rng nums) buf nexti dist-to-end) ; need to stuff more numbers after the unused ones
-  ; old def:
-  (defn shift-and-refill!
-    "Copies last elements after num-used from Neanderthal vector nv to the
-    beginning of the vector, and replaces the copied elements by fresh
-    random numbers from rng."
-    [rng nv ^long num-used ^long num-to-shift]
-    (nc/copy! (nc/subvector nv num-used num-to-shift) ; copy last rand numbers
-              (nc/subvector nv 0 num-to-shift))       ; to the front
-    (nr/rand-uniform! rng (nc/subvector nv num-to-shift num-used)) ;; replace nums that were copied
-    nv)
+  (def nums (make-nums (nr/rng-state nn/native-double 102) 20))
+  (take-rand 4 nums) ; uncomplicate.neanderthal.internal.host.buffer_block.RealBlockVector
+  (vec (take-rand 4 nums)) ; fails
+  (take 4 (take-rand 4 nums)) ; clojure.lang.LazySeq
+  (into [] (take-rand 4 nums))  ; clojure.lang.PersistentVector
+  (map inc (take-rand 4 nums)) ; clojure.lang.LazySeq
+  (mapv inc (take-rand 4 nums))  ; clojure.lang.PersistentVector
+  (for [x (take-rand 4 nums)] x) ; clojure.lang.LazySeq
 )
 
 
