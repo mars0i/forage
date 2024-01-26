@@ -486,6 +486,16 @@
   parameter k and shape parameter alpha. (For what I call a powerlaw
   distribution with parameter mu, mu = alpha + 1, or alpha = mu - 1.)"
   [^double k ^double alpha ^double x]
+  (println "k:" k "alpha:" alpha "x:" x)
+  (println "div:" (/ k x) "pow:" (fm/pow (/ k x) alpha)) ; DEBUG
+  (- 1 (fm/pow (/ k x) alpha)))
+
+(defn old-pareto
+  "Given a value x from a uniformly distributed random number generator,
+  returns a value from a pareto distribution with min-value (\"scale\")
+  parameter k and shape parameter alpha. (For what I call a powerlaw
+  distribution with parameter mu, mu = alpha + 1, or alpha = mu - 1.)"
+  [^double k ^double alpha ^double x]
   (- 1 (/ (fm/pow k alpha)
           (fm/pow x alpha))))
 
@@ -1086,7 +1096,7 @@
               mrgrng (make-mrg32k3a seed)
               mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
               ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
-              ars5pows (mapv (partial pareto 1 1) (take-rand hundredK ars5nums))] ; alpha = 1 means mu = 2
+              ars5pows (mapv (partial pareto 1 2) (take-rand 10 ars5nums))] ; alpha = 1 means mu = 2
           (prn (take 10 ars5pows)) ; check (FIXME WHY ARE THESE NEGATIVE?)
           (println "\nNeanderthal/MKL ARS5:")
           (time (crit/quick-bench (take-rand hundredK ars5pows))) ; 
@@ -1101,7 +1111,7 @@
 
 ;; BENCHMARKING PRNGs IN WALK GENERATION
 (comment
-
+  (require '[criterium.core :as crit])
   (require '[forage.core.walks :as w])
 
   (def seed (make-seed))
@@ -1148,16 +1158,5 @@
   (def ninetyK 90000)
   (def hundredK 100000)
   (def million 1000000)
-
-  (time (let [seed (make-seed)
-              mrgrng (make-mrg32k3a seed)
-              mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
-              ars5nums (make-nums (nr/rng-state nn/native-double seed) ninetyK)
-              ars5pow (mapv (partial pareto 1 1) ars5nums)]
-          (println "\nNeanderthal/MKL ARS5:")
-          (time (crit/quick-bench (take-rand hundredK ars5pow))) ; 
-          (println "MRG32k3a:")
-          (time (crit/quick-bench (doall (repeatedly hundredK #(next-double mrgpow)))))
-  ))
 
 )
