@@ -124,14 +124,19 @@
       (nc/subvector buf new-nexti n))))
 
 (comment
+  ;; Usage examplesl
   (def nums (make-nums (nr/rng-state nn/native-double 102) 20))
   (take-rand 4 nums) ; uncomplicate.neanderthal.internal.host.buffer_block.RealBlockVector
-  (vec (take-rand 4 nums)) ; fails
   (take 4 (take-rand 4 nums)) ; clojure.lang.LazySeq
-  (into [] (take-rand 4 nums))  ; clojure.lang.PersistentVector
   (map inc (take-rand 4 nums)) ; clojure.lang.LazySeq
-  (mapv inc (take-rand 4 nums))  ; clojure.lang.PersistentVector
   (for [x (take-rand 4 nums)] x) ; clojure.lang.LazySeq
+  (vec (take-rand 4 nums)) ; fails
+  (into [] (take-rand 4 nums))  ; clojure.lang.PersistentVector
+  (mapv inc (take-rand 4 nums))  ; clojure.lang.PersistentVector
+  (cons 1.0 (take-rand 4 nums)) ; clojure.lang.Cons
+  (rest (cons 1.0 (take-rand 4 nums))) ; clojure.lang.LazySeq
+  (next (cons 1.0 (take-rand 4 nums))) ; clojure.lang.Cons
+  (conj (take-rand 4 nums) 1.0) ; fails
 )
 
 
