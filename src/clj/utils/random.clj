@@ -481,11 +481,9 @@
   (def yo (ParetoDistribution.  1.0 1.0)) ; uses a Well19937c: https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/distribution/ParetoDistribution.html#ParetoDistribution(double,%20double)
   (.sample yo)
   (next-double yo) ; fails
-
   (next-double wellpareto)
   (def wps (repeatedly #(next-double wellpareto)))
   (take 100 wps)
-
   ;; The output doesn't look right. Where are the large values?
   (def mrg (make-mrg32k3a 1234))
   (def mrgpareto (make-mrg32k3a-pareto mrg 1.0 1.0))
@@ -495,9 +493,10 @@
 )
 
 (defn pareto
-  "Given a value x from a uniformly distributed random number
-  generator, returns a value from a pareto distribution with
-  min-value (\"scale\") parameter k and shape parameter alpha."
+  "Given a value x from a uniformly distributed random number generator,
+  returns a value from a pareto distribution with min-value (\"scale\")
+  parameter k and shape parameter alpha. (For what I call a powerlaw
+  distribution with parameter mu, mu = alpha + 1, or alpha = mu - 1.)"
   [^double k ^double alpha ^double x]
   (- 1 (/ (fm/pow k alpha)
           (fm/pow x alpha))))
@@ -1082,15 +1081,30 @@
               nums100K (make-nums (nr/rng-state nn/native-double seed) hundredK)
               nums1M (make-nums (nr/rng-state nn/native-double seed) million)]
 
-          (time (crit/quick-bench (take-rand hundredK nums100K))) ; 40, 43 μs
-          (time (crit/quick-bench (take-rand hundredK nums1M)))   ; 49, 50, 53 μs
+          (time (crit/quick-bench (take-rand hundredK nums100K))) ; MBA 40, 43 μs; MBP 31 μs 
+          (time (crit/quick-bench (take-rand hundredK nums1M)))   ; MBA 49, 50, 53 μs; MBP 31 μs 
 
-          (time (crit/quick-bench (take-rand million nums1M))) ; 520 μs
+          (time (crit/quick-bench (take-rand million nums1M))) ; MBA 520 μs; MBP 314 μs 
   ))
   ;; REMARKS:
-  ;; Interesting that the second one is slower than the first. That's not what I expected.
+  ;; Interesting that the second one is slower than the first on the MBA. That's not what I expected.
   ;; I don't know why.  Hmm.  Maybe it's about caching??  The third seems analogous.
+  ;; But on the MBP they are the same.  That's consistent with the caching hypothesis.
 
+
+  ;; WHAT IS THE EFFECT OF DERIVING POWER-LAW NUMBERS FROM ARS5 IN A
+  ;; SIMPLISTIC MANNER?
+  (time (let [seed (make-seed)
+              mrgrng (make-mrg32k3a seed)
+              mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
+              ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
+              ars5pows (mapv (partial pareto 1 1) (take-rand hundredK ars5nums))] ; alpha = 1 means mu = 2
+          (prn (take 10 ars5pows)) ; check (FIXME WHY ARE THESE NEGATIVE?)
+          (println "\nNeanderthal/MKL ARS5:")
+          (time (crit/quick-bench (take-rand hundredK ars5pows))) ; 
+          (println "MRG32k3a:")
+          (time (crit/quick-bench (doall (repeatedly hundredK #(next-double mrgpow)))))
+  ))
 
 
 )
@@ -1102,14 +1116,14 @@
 
   (require '[forage.core.walks :as w])
 
-  (def seed (r/make-seed))
-  (def rng19937 (r/make-well19937 seed))
-  (def rng1024  (r/make-well1024 seed))
-  (def rngmrg   (r/make-mrg32k3a seed))
+  (def seed (make-seed))
+  (def rng19937 (make-well19937 seed))
+  (def rng1024  (make-well1024 seed))
+  (def rngmrg   (make-mrg32k3a seed))
 
-  (def pow19937 (r/make-powerlaw rng19937 1 2))
-  (def pow1024 (r/make-powerlaw rng1024 1 2))
-  (def powmrg (r/make-mrg32k3a-powerlaw rngmrg 1 2))
+  (def pow19937 (make-powerlaw rng19937 1 2))
+  (def pow1024 (make-powerlaw rng1024 1 2))
+  (def powmrg (make-mrg32k3a-powerlaw rngmrg 1 2))
 
   (def stepfn19937 (w/step-vector-fn rng19937 pow19937 1 25000))
   (def stepfn1024 (w/step-vector-fn rng1024 pow1024 1 25000))
@@ -1138,50 +1152,24 @@
   ;; So the PRNG differences are getting washed out by the rest of the
   ;; computation.  (But I think MRG32k3a is still better than the WELL 
   ;; generators.)
+
+  (def twentyK 20000)
+  (def thirtyK 30000)
+  (def fortyK 40000)
+  (def fiftyK 50000)
+  (def ninetyK 90000)
+  (def hundredK 100000)
+  (def million 1000000)
+
+  (time (let [seed (make-seed)
+              mrgrng (make-mrg32k3a seed)
+              mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
+              ars5nums (make-nums (nr/rng-state nn/native-double seed) ninetyK)
+              ars5pow (mapv (partial pareto 1 1) ars5nums)]
+          (println "\nNeanderthal/MKL ARS5:")
+          (time (crit/quick-bench (take-rand hundredK ars5pow))) ; 
+          (println "MRG32k3a:")
+          (time (crit/quick-bench (doall (repeatedly hundredK #(next-double mrgpow)))))
+  ))
+
 )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; BENCHMARKING PRNGs IN WALK GENERATION
-(comment
-
-  (require '[forage.core.walks :as w])
-
-  (def seed (r/make-seed))
-  (def rng19937 (r/make-well19937 seed))
-  (def rng1024  (r/make-well1024 seed))
-  (def rngmrg   (r/make-mrg32k3a seed))
-
-  (def pow19937 (r/make-powerlaw rng19937 1 2))
-  (def pow1024 (r/make-powerlaw rng1024 1 2))
-  (def powmrg (r/make-mrg32k3a-powerlaw rngmrg 1 2))
-
-  (def stepfn19937 (w/step-vector-fn rng19937 pow19937 1 25000))
-  (def stepfn1024 (w/step-vector-fn rng1024 pow1024 1 25000))
-  (def stepfnmrg (w/step-vector-fn rngmrg powmrg 1 25000))
-
-                                    ; Two bench runs each:
-  (time (crit/bench (stepfn19937))) ; 82 ns, 79 ns
-  (time (crit/bench (stepfn1024)))  ; 71 ns, 75 ns
-  (time (crit/bench (stepfnmrg)))   ; 54 ns, 57 ns
-  ;;  i.e. Well19937 takes 40-50% longer relative to MRG32k3a
-  ;;  i.e. Well1024 takes 30% longer relative to MRG32k3a
-
-  (def mu2_19937 (w/make-levy-vecs rng19937 pow19937 1 25000))
-  (def mu2_1024 (w/make-levy-vecs rng1024 pow1024 1 25000))
-  (def mu2_mrg (w/make-levy-vecs rngmrg powmrg 1 25000))
-
-  (time (crit/quick-bench (doall (take 25000 mu2_19937)))) ; 1.37 ms
-  (time (crit/quick-bench (doall (take 25000 mu2_1024))))  ; 1.42 ms
-  (time (crit/quick-bench (doall (take 25000 mu2_mrg))))   ; 1.39 ms
-
-  (time (crit/bench (doall (take 25000 mu2_19937)))) ; 1.40 ms, 1.39 ms
-  (time (crit/bench (doall (take 25000 mu2_1024))))  ; 1.26 ms, 1.34 ms
-  (time (crit/bench (doall (take 25000 mu2_mrg))))   ; 1.17 ms, ; 1.35 ms
-  ;; So Well19937 takes about 20% longer than MRG32k3a, sometimes.
-  ;; But they are clearly comparable, at least.
-  ;; So the PRNG differences are getting washed out by the rest of the
-  ;; computation.  (But I think MRG32k3a is still better than the WELL 
-  ;; generators.)
-)
-
