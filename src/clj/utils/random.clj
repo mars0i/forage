@@ -104,15 +104,16 @@
 ;; See NeadnerthalRandonmNumbers1.md, Algorithm A.
 ;; When number of randnums needed is > buflen, an option would be to
 ;; call this repeatedly until enough numbers have been generated.
-(defn take-rand
-  "Returns n unused random numbers from a random numbers structure nums
-  created by make-nums.  New random numbers will be created to refill the
-  buffer in nums as needed.  n must be <= length len of the buffer in nums."
+(defn take-rand!
+  "Returns a Neanderthal vector containing n unused random numbers from a
+  random numbers structure nums created by make-nums.  New random numbers
+  will be created to refill the buffer in nums as needed.  n must be <=
+  length len of the buffer in nums."
   [^long n nums]
   (let [{:keys [buf ^long len nexti$]} nums ; nums is structure with Neandertal vec of rand numbers in a buffer buf of length len and an index nexti
         ^long nexti @nexti$
         dist-to-end (- len nexti)]
-    (when (> n len) (throw (Exception. (str "take-rand!: requested number of random numbers, " n ", is larger than buf size, " len "."))))
+    (when (> n len) (throw (Exception. (str "take-rand!!: requested number of random numbers, " n ", is larger than buf size, " len "."))))
     (let [new-nexti (if (<= n dist-to-end)
                       nexti ; we can just pull the next n numbers from buffer
                       (do (nc/copy! (nc/subvector buf nexti dist-to-end) ; copy last rand numbers
@@ -125,19 +126,23 @@
       (nc/subvector buf new-nexti n))))
 
 (comment
-  ;; Usage examplesl
-  (def nums (make-nums (nr/rng-state nn/native-double 102) 20))
-  (take-rand 4 nums) ; uncomplicate.neanderthal.internal.host.buffer_block.RealBlockVector
-  (take 4 (take-rand 4 nums)) ; clojure.lang.LazySeq
-  (map inc (take-rand 4 nums)) ; clojure.lang.LazySeq
-  (for [x (take-rand 4 nums)] x) ; clojure.lang.LazySeq
-  (vec (take-rand 4 nums)) ; fails
-  (into [] (take-rand 4 nums))  ; clojure.lang.PersistentVector
-  (mapv inc (take-rand 4 nums))  ; clojure.lang.PersistentVector
-  (cons 1.0 (take-rand 4 nums)) ; clojure.lang.Cons
-  (rest (cons 1.0 (take-rand 4 nums))) ; clojure.lang.LazySeq
-  (next (cons 1.0 (take-rand 4 nums))) ; clojure.lang.Cons
-  (conj (take-rand 4 nums) 1.0) ; fails
+  ;; Usage examples:
+  (def nums (make-nums (nr/rng-state nn/native-double 101) 200)) ; nums is a Clojure map
+  (:buf nums)        ; uncomplicate.neanderthal.internal.host.buffer_block.RealBlockVector
+  (take-rand! 4 nums) ; uncomplicate.neanderthal.internal.host.buffer_block.RealBlockVector
+  (take 4 (take-rand! 4 nums))    ; clojure.lang.LazySeq
+  (map inc (take-rand! 4 nums))    ; clojure.lang.LazySeq
+  (for [x (take-rand! 4 nums)] x) ; clojure.lang.LazySeq
+  (vec (take-rand! 4 nums)) ; fails
+  (into [] (take-rand! 4 nums))  ; clojure.lang.PersistentVector
+  (mapv inc (take-rand! 4 nums)) ; clojure.lang.PersistentVector
+  (cons 1.0 (take-rand! 4 nums))        ; clojure.lang.Cons
+  (next (cons 1.0 (take-rand! 4 nums))) ; clojure.lang.Cons
+  (rest (cons 1.0 (take-rand! 4 nums))) ; clojure.lang.LazySeq
+  (conj (take-rand! 4 nums) 1.0) ; fails
+
+  (take-rand! 6 nums)
+
 )
 
 
@@ -1037,7 +1042,7 @@
               mrgrng   (make-mrg32k3a seed)
               ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)]
           (println "\nNeanderthal/MKL ARS5:")
-          (time (crit/quick-bench (take-rand hundredK ars5nums))) ; MBA 37, 38, 43, 47 μs (microsecs)
+          (time (crit/quick-bench (take-rand! hundredK ars5nums))) ; MBA 37, 38, 43, 47 μs (microsecs)
           (println "MRG32k3a doall repeatedly:")
           (time (crit/quick-bench (doall (repeatedly hundredK #(next-double mrgrng))))) ; MBA 11, 12 ms (millisecs)
           (println "MRG32k3a vec repeatedly:")
@@ -1058,19 +1063,19 @@
   ;; Since 20K maps evenly into 100K, taking 20K repeatedly from a 100K
   ;; buffer causes no copying, though it does cause refilling.
   ;; But taking 20K repeatedly from a 50K buffer causes copying as well
-  ;; as refilling. (See definition of take-rand.)
+  ;; as refilling. (See definition of take-rand!.)
   (time (let [seed (make-seed)
               nums50K (make-nums (nr/rng-state nn/native-double seed) fiftyK)
               nums100K (make-nums (nr/rng-state nn/native-double seed) hundredK)]
 
-          (time (crit/quick-bench (take-rand twentyK nums50K)))  ; 11, 12 μs
-          (time (crit/quick-bench (take-rand twentyK nums100K))) ; 7.5, 8 μs
+          (time (crit/quick-bench (take-rand! twentyK nums50K)))  ; 11, 12 μs
+          (time (crit/quick-bench (take-rand! twentyK nums100K))) ; 7.5, 8 μs
 
-          (time (crit/quick-bench (take-rand thirtyK nums50K)))  ; 19, 20 μs
-          (time (crit/quick-bench (take-rand thirtyK nums100K))) ; 15, 16 μs
+          (time (crit/quick-bench (take-rand! thirtyK nums50K)))  ; 19, 20 μs
+          (time (crit/quick-bench (take-rand! thirtyK nums100K))) ; 15, 16 μs
 
-          (time (crit/quick-bench (take-rand fortyK nums50K)))   ; 23 μs
-          (time (crit/quick-bench (take-rand fortyK nums100K)))  ; 23, 24 μs
+          (time (crit/quick-bench (take-rand! fortyK nums50K)))   ; 23 μs
+          (time (crit/quick-bench (take-rand! fortyK nums100K)))  ; 23, 24 μs
   ))
   ;; REMARKS:
   ;; Taking more numbers *should* take more time in quick-bench, and this
@@ -1084,10 +1089,10 @@
               nums100K (make-nums (nr/rng-state nn/native-double seed) hundredK)
               nums1M (make-nums (nr/rng-state nn/native-double seed) million)]
 
-          (time (crit/quick-bench (take-rand hundredK nums100K))) ; MBA 40, 43 μs; MBP 31 μs 
-          (time (crit/quick-bench (take-rand hundredK nums1M)))   ; MBA 49, 50, 53 μs; MBP 31 μs 
+          (time (crit/quick-bench (take-rand! hundredK nums100K))) ; MBA 40, 43 μs; MBP 31 μs 
+          (time (crit/quick-bench (take-rand! hundredK nums1M)))   ; MBA 49, 50, 53 μs; MBP 31 μs 
 
-          (time (crit/quick-bench (take-rand million nums1M))) ; MBA 520 μs; MBP 314 μs 
+          (time (crit/quick-bench (take-rand! million nums1M))) ; MBA 520 μs; MBP 314 μs 
   ))
   ;; REMARKS:
   ;; Interesting that the second one is slower than the first on the MBA. That's not what I expected.
@@ -1106,9 +1111,9 @@
           (time (crit/quick-bench (doall (repeatedly hundredK #(next-double mrgpow)))))
           (println "\nNeanderthal/MKL ARS5:")
           (time (crit/quick-bench (mapv (partial uniform-to-pareto-precalc 1 1) ; 1/2 as fast as MRG32k3a version
-                                        (take-rand hundredK ars5nums))))
+                                        (take-rand! hundredK ars5nums))))
           (time (crit/quick-bench (mapv (fn [x] (uniform-to-pareto-precalc 1 1 x)) ; maybe slightly faster
-                                        (take-rand hundredK ars5nums)))) ; Can I do one of thoes IFn inline tricks?
+                                        (take-rand! hundredK ars5nums)))) ; Can I do one of thoes IFn inline tricks?
           ;; --> CAN I USE NEANDERTHAL'S FLUOKITTEN MAP INSTEAD?
   ))
 
