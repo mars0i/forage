@@ -32,7 +32,8 @@
             [uncomplicate.neanderthal
              [core :as nc]
              [native :as nn]
-             [random :as nr]]))
+             [random :as nr]]
+            [uncomplicate.fluokitten.core :as nfc]))
 
 ;(set! *warn-on-reflection* true)
 ;(set! *unchecked-math* :warn-on-boxed)
