@@ -33,7 +33,7 @@
              [core :as nc]
              [native :as nn]
              [random :as nr]]
-            [uncomplicate.fluokitten.core :as nfc]))
+            [uncomplicate.fluokitten.core :as fc]))
 
 ;(set! *warn-on-reflection* true)
 ;(set! *unchecked-math* :warn-on-boxed)
@@ -141,7 +141,23 @@
   (rest (cons 1.0 (take-rand! 4 nums))) ; clojure.lang.LazySeq
   (conj (take-rand! 4 nums) 1.0) ; fails
 
-  (take-rand! 6 nums)
+  ;; Fluokitten's fmap vs fmap! :
+
+  (def nums (make-nums (nr/rng-state nn/native-double 22) 11))
+  (into [] (:buf nums)) ; all zeros
+  (def fiveunif1 (take-rand! 5 nums))
+  (into [] (:buf nums)) ; now all random, with first five 
+  (into [] fiveunif1)   ; also in fiveunif1
+  (def fivepareto1 (fc/fmap (partial uniform-to-pareto-precalc 1 1) fiveunif1))
+  (into [] fivepareto1) ; fiveunif1 and (:buf nums) are unchanged: fmap is purely functional
+
+  (def fiveunif2 (take-rand! 5 nums)) ; gets next five numbers from (:buf nums)
+  (into [] fiveunif2)
+  (into [] (:buf nums)) ; buf is unchanged at this point
+  (def fivepareto2 (fc/fmap! (partial uniform-to-pareto-precalc 1 1) fiveunif2))
+  (into [] fivepareto2) 
+  (into [] fiveunif2)   ; now has those Pareto-distributed numbers as well, because fmap! modifies (:buf nums)
+  (into [] (:buf nums)) ; numbers 5 through 9 are now the Pareto-distributed numbers in fivepareto2
 
 )
 
