@@ -480,21 +480,19 @@
   (take 200 ps)
 )
 
-;; FIXME
-;; THIS CAN'T BE RIGHT.  WHEN alpha = 1, I.E mu = 2, and k=1, IT CAN ONLY RETURN
-;; NUMBERS IN [0,1], BECAUSE THE FORMULA HERE REDUCES TO 1 - x.
+;; Based on Hörmann, Leydold, and Derflinger, _Automatic Nonuniform Random
+;; Variate Generation_ p. 15.
 (defn uniform-to-pareto-precalc
   "Given a value x from a uniformly distributed random number generator,
   returns a value from a pareto distribution based on min-value (\"scale\")
-  parameter k and shape parameter alpha. However, rather than passing k,
-  this function expects k^alpha.  This allows calculating this constant
+  parameter k and shape parameter alpha. However, rather than passing alpha,
+  this function expects 1/alpha.  This allows calculating this constant
   once so that it can be used repeatedly in a partial'ed application. (For
   what I call a powerlaw distribution with parameter mu, mu = alpha + 1, or
   alpha = mu - 1.)"
-  [^double k-to-alpha ^double alpha ^double x]
-  (fm/pow (/ (- 1 x)
-             k-to-alpha)
-          alpha))
+  [^double k ^double alpha-reciprocal ^double x]
+  (/ k (fm/pow (- 1 x)
+               alpha-reciprocal)))
 
 (defn uniform-to-pareto
   "Given a value x from a uniformly distributed random number generator,
@@ -502,7 +500,7 @@
   parameter k and shape parameter alpha. (For what I call a powerlaw
   distribution with parameter mu, mu = alpha + 1, or alpha = mu - 1.)"
   [^double k ^double alpha ^double x]
-  (uniform-to-pareto (fm/pow k alpha) alpha x))
+  (uniform-to-pareto-precalc k (/ alpha) x))
 
 
 ;; TODO put this stuff into a protocol??
@@ -1101,16 +1099,16 @@
   (time (let [seed (make-seed)
               mrgrng (make-mrg32k3a seed)
               mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
-              ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
-              ;; sanity check:
-              tennums (take-rand 10 ars5nums)
-              ars5pows (mapv (partial uniform-to-pareto-precalc 1 1) tennums)] ; alpha = 1 means mu = 2
-          (prn (take 10 tennums)) ; sanity check
-          (prn (take 10 ars5pows)) ; sanity check
-          (println "\nNeanderthal/MKL ARS5:")
-          (time (crit/quick-bench (take-rand hundredK ars5pows))) ; 
+              ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)]
+          ;(prn (take 10 ars5pows)) ; sanity check
           (println "MRG32k3a:")
           (time (crit/quick-bench (doall (repeatedly hundredK #(next-double mrgpow)))))
+          (println "\nNeanderthal/MKL ARS5:")
+          (time (crit/quick-bench (mapv (partial uniform-to-pareto-precalc 1 1) ; 1/2 as fast as MRG32k3a version
+                                        (take-rand hundredK ars5nums))))
+          (time (crit/quick-bench (mapv (fn [x] (uniform-to-pareto-precalc 1 1 x)) ; maybe slightly faster
+                                        (take-rand hundredK ars5nums)))) ; Can I do one of thoes IFn inline tricks?
+          ;; --> CAN I USE NEANDERTHAL'S FLUOKITTEN MAP INSTEAD?
   ))
 
 
