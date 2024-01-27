@@ -480,24 +480,30 @@
   (take 200 ps)
 )
 
-(defn pareto
+;; FIXME
+;; THIS CAN'T BE RIGHT.  WHEN alpha = 1, I.E mu = 2, and k=1, IT CAN ONLY RETURN
+;; NUMBERS IN [0,1], BECAUSE THE FORMULA HERE REDUCES TO 1 - x.
+(defn uniform-to-pareto-precalc
   "Given a value x from a uniformly distributed random number generator,
-  returns a value from a pareto distribution with min-value (\"scale\")
-  parameter k and shape parameter alpha. (For what I call a powerlaw
-  distribution with parameter mu, mu = alpha + 1, or alpha = mu - 1.)"
-  [^double k ^double alpha ^double x]
-  (println "k:" k "alpha:" alpha "x:" x)
-  (println "div:" (/ k x) "pow:" (fm/pow (/ k x) alpha)) ; DEBUG
-  (- 1 (fm/pow (/ k x) alpha)))
+  returns a value from a pareto distribution based on min-value (\"scale\")
+  parameter k and shape parameter alpha. However, rather than passing k,
+  this function expects k^alpha.  This allows calculating this constant
+  once so that it can be used repeatedly in a partial'ed application. (For
+  what I call a powerlaw distribution with parameter mu, mu = alpha + 1, or
+  alpha = mu - 1.)"
+  [^double k-to-alpha ^double alpha ^double x]
+  (fm/pow (/ (- 1 x)
+             k-to-alpha)
+          alpha))
 
-(defn old-pareto
+(defn uniform-to-pareto
   "Given a value x from a uniformly distributed random number generator,
   returns a value from a pareto distribution with min-value (\"scale\")
   parameter k and shape parameter alpha. (For what I call a powerlaw
   distribution with parameter mu, mu = alpha + 1, or alpha = mu - 1.)"
   [^double k ^double alpha ^double x]
-  (- 1 (/ (fm/pow k alpha)
-          (fm/pow x alpha))))
+  (uniform-to-pareto (fm/pow k alpha) alpha x))
+
 
 ;; TODO put this stuff into a protocol??
 ;; Note $\alpha + 1 = \mu = 2$ (i.e. (\alpha=1$) is the theoretical
@@ -1096,8 +1102,11 @@
               mrgrng (make-mrg32k3a seed)
               mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
               ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
-              ars5pows (mapv (partial pareto 1 2) (take-rand 10 ars5nums))] ; alpha = 1 means mu = 2
-          (prn (take 10 ars5pows)) ; check (FIXME WHY ARE THESE NEGATIVE?)
+              ;; sanity check:
+              tennums (take-rand 10 ars5nums)
+              ars5pows (mapv (partial uniform-to-pareto-precalc 1 1) tennums)] ; alpha = 1 means mu = 2
+          (prn (take 10 tennums)) ; sanity check
+          (prn (take 10 ars5pows)) ; sanity check
           (println "\nNeanderthal/MKL ARS5:")
           (time (crit/quick-bench (take-rand hundredK ars5pows))) ; 
           (println "MRG32k3a:")
