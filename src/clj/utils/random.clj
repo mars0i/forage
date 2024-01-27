@@ -1156,6 +1156,9 @@
           (println "\nNeanderthal/MKL ARS5 with Fluokitten fn and fmap!:")
           (time (crit/quick-bench (fc/fmap! (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x)) ; MBA: a little faster than fmap version
                                             (take-rand! hundredK ars5nums))))
+          ;(println "\nNeanderthal/MKL ARS5 with Fluokitten fmap! using sample method from MRG32k3ParetoSampler:")
+          ;(time (crit/quick-bench (fc/fmap! (fn [u] (. sample mrgpow u))
+          ;                                  (take-rand! hundredK ars5nums))))
           (println "\nNeanderthal/MKL ARS5 uniform random, fmap!-ing identity:")
           (time (crit/quick-bench (fc/fmap! identity (take-rand! hundredK ars5nums)))) ; MBA: actually a little slower than fmap!int the pareto fn with (fn ...)
           (println "\nNeanderthal/MKL ARS5 uniform random, fmap!-ing type-hinted identity:")
