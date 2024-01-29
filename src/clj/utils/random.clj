@@ -98,11 +98,20 @@
    :buf (nn/dv buflen)        ; Generate the random numbers later; see NeadnerthalRandonmNumbers1.md, Algorithm A.
    :nexti$ (atom buflen)}) ; Read index starts one past end of buffer; see NeadnerthalRandonmNumbers1.md, Algorithm A.
 
+(defrecord NeanRandNums [rng len buf nexti$])
+
+(defn make-nean-nums
+  [rng buflen]
+  (NeanRandNums. rng buflen (nn/dv buflen) (atom buflen)))
+
 ;; NOTE Neanderthal's copy! can't be used to copy from a vector to itself because
 ;; there's an explicit test for identity in the source code.  So this won't
 ;; work: (nc/copy! nv nv to-shift-start num-to-shift 0).  However, subvector
 ;; lets you provide side-effects on a vector via a window onto it.
 
+
+;; THIS SHOULD WORK BOTH ON A BARE MAP AND ON A NeanRandNums (which is better for defprotocol).
+;;
 ;; See NeadnerthalRandonmNumbers1.md, Algorithm A.
 ;; When number of randnums needed is > buflen, an option would be to
 ;; call this repeatedly until enough numbers have been generated.
@@ -125,17 +134,23 @@
       (reset! nexti$ (+ new-nexti n)) ; since now nexti + n is < len, this will not be > len
       (nc/subvector buf new-nexti n))))
 
+(defn nean-next-double
+  [nums]
+  (take-rand! 1 nums))
+
 (comment
   ;; Usage examples:
   (def nums (make-nums (nr/rng-state nn/native-double 101) 200)) ; nums is a Clojure map
+  (def nums (make-nean-nums (nr/rng-state nn/native-double 101) 200)) ; nums is a Clojure map
+  (class nums)
   (:buf nums)        ; uncomplicate.neanderthal.internal.host.buffer_block.RealBlockVector
   (take-rand! 4 nums) ; uncomplicate.neanderthal.internal.host.buffer_block.RealBlockVector
   (take 4 (take-rand! 4 nums))    ; clojure.lang.LazySeq
-  (map inc (take-rand! 4 nums))    ; clojure.lang.LazySeq
+  (map cc/inc (take-rand! 4 nums))    ; clojure.lang.LazySeq
   (for [x (take-rand! 4 nums)] x) ; clojure.lang.LazySeq
   (vec (take-rand! 4 nums)) ; fails
   (into [] (take-rand! 4 nums))  ; clojure.lang.PersistentVector
-  (mapv inc (take-rand! 4 nums)) ; clojure.lang.PersistentVector
+  (mapv cc/inc (take-rand! 4 nums)) ; clojure.lang.PersistentVector
   (cons 1.0 (take-rand! 4 nums))        ; clojure.lang.Cons
   (next (cons 1.0 (take-rand! 4 nums))) ; clojure.lang.Cons
   (rest (cons 1.0 (take-rand! 4 nums))) ; clojure.lang.LazySeq
@@ -970,6 +985,7 @@
             nil idxs))) ; re nil see fun fact above
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; BENCHMARKING DIFFERENT PRNGS
 (comment
@@ -1085,19 +1101,22 @@
   ;; is equal to the buf size.
   (time (let [seed (make-seed)
               mrgrng   (make-mrg32k3a seed)
-              ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)]
+              ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
+              ;num-to-take hundredK
+              num-to-take 1  ; Neanderthal wins, but not by a lot
+             ]
           (println "\nNeanderthal/MKL ARS5:")
-          (time (crit/quick-bench (take-rand! hundredK ars5nums))) ; MBA 37, 38, 43, 47 μs (microsecs)
-          (println "MRG32k3a doall repeatedly:")
-          (time (crit/quick-bench (doall (repeatedly hundredK #(next-double mrgrng))))) ; MBA 11, 12 ms (millisecs)
-          (println "MRG32k3a vec repeatedly:")
-          (time (crit/quick-bench (vec (repeatedly hundredK #(next-double mrgrng))))) ; MBA 12, 14, 15 ms
-          (println "MRG32k3a into [] repeatedly:")
-          (time (crit/quick-bench (into [] (repeatedly hundredK #(next-double mrgrng))))) ; MB 17, 18, 21 ms
-          (println "MRG32k3a mapv:")
-          (time (crit/quick-bench (mapv (fn [_] (next-double mrgrng)) (repeat hundredK nil)))) ; 3.2, 3.3 ms  <- Interesting, but not as good as Neanderthal
-          (println "MRG32k3a doall map:")
-          (time (crit/quick-bench (doall (map (fn [_] (next-double mrgrng)) (repeat hundredK nil)))))  ; 13 ms
+          (time (crit/quick-bench (take-rand! num-to-take ars5nums))) ; MBA 37, 38, 43, 47 μs (microsecs)
+          (println "\nMRG32k3a doall repeatedly:")
+          (time (crit/quick-bench (doall (repeatedly num-to-take #(next-double mrgrng))))) ; MBA 11, 12 ms (millisecs)
+          (println "\nMRG32k3a vec repeatedly:")
+          (time (crit/quick-bench (vec (repeatedly num-to-take #(next-double mrgrng))))) ; MBA 12, 14, 15 ms
+          (println "\nMRG32k3a into [] repeatedly:")
+          (time (crit/quick-bench (into [] (repeatedly num-to-take #(next-double mrgrng))))) ; MB 17, 18, 21 ms
+          (println "\nMRG32k3a mapv:")
+          (time (crit/quick-bench (mapv (fn [_] (next-double mrgrng)) (repeat num-to-take nil)))) ; 3.2, 3.3 ms  <- Interesting, but not as good as Neanderthal
+          (println "\nMRG32k3a doall map:")
+          (time (crit/quick-bench (doall (map (fn [_] (next-double mrgrng)) (repeat num-to-take nil)))))  ; 13 ms
   ))
   ;; REMARKS:
   ;; Neanderthal/ARS5 clearly wins by a lot in this sort of comparison.
@@ -1153,7 +1172,8 @@
               ; -8211545260616558233
               mrgrng (make-mrg32k3a seed)
               mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
-              ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
+              ;ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
+              ars5nums (make-nean-nums (nr/rng-state nn/native-double seed) hundredK)
               powerlaw-fn (make-unif-to-powerlaw 1 2)]
           (println "seed:" seed)
           (println "\nNeanderthal/MKL ARS5 with make-unif-to-powerlaw and Fluokitten fmap:")
@@ -1280,14 +1300,16 @@
   (require '[criterium.core :as crit])
   (require '[forage.core.walks :as w])
 
-  (def seed (make-seed))
-  (def rng19937 (make-well19937 seed))
-  (def rng1024  (make-well1024 seed))
-  (def rngmrg   (make-mrg32k3a seed))
+  (time (let [seed (make-seed) 
+              ;rng1024 (make-well1024 seed)
+              ;pow1024 (make-powerlaw rng1024 1 2)
+              mrgrng (make-mrg32k3a seed)
+              mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
+              ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
+              powerlaw-fn (make-unif-to-powerlaw 1 2)]
 
-  (def pow19937 (make-powerlaw rng19937 1 2))
-  (def pow1024 (make-powerlaw rng1024 1 2))
-  (def powmrg (make-mrg32k3a-powerlaw rngmrg 1 2))
+  ))
+ 
 
   (def stepfn19937 (w/step-vector-fn rng19937 pow19937 1 25000))
   (def stepfn1024 (w/step-vector-fn rng1024 pow1024 1 25000))
@@ -1316,13 +1338,5 @@
   ;; So the PRNG differences are getting washed out by the rest of the
   ;; computation.  (But I think MRG32k3a is still better than the WELL 
   ;; generators.)
-
-  (def twentyK 20000)
-  (def thirtyK 30000)
-  (def fortyK 40000)
-  (def fiftyK 50000)
-  (def ninetyK 90000)
-  (def hundredK 100000)
-  (def million 1000000)
 
 )
