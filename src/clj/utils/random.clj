@@ -104,6 +104,7 @@
   [rng buflen]
   (NeanRandNums. rng buflen (nn/dv buflen) (atom buflen)))
 
+
 ;; NOTE Neanderthal's copy! can't be used to copy from a vector to itself because
 ;; there's an explicit test for identity in the source code.  So this won't
 ;; work: (nc/copy! nv nv to-shift-start num-to-shift 0).  However, subvector
@@ -133,10 +134,6 @@
                           0))] ; now the unused numbers from end are at front
       (reset! nexti$ (+ new-nexti n)) ; since now nexti + n is < len, this will not be > len
       (nc/subvector buf new-nexti n))))
-
-(defn nean-next-double
-  [nums]
-  (take-rand! 1 nums))
 
 (comment
   ;; Usage examples:
@@ -564,9 +561,11 @@
   distributed random number generator, returns a value from a powerlaw
   distribution with min-value (\"scale\") parameter k and shape parameter m
   (or from a Pareto distribution with alpha = mu - 1)."
-  [^double k ^double mu]
-  (let [alpha-reciprocal (/ (dec mu))]
-    (fn [^double u] (/ k (fm/pow (- 1 u) alpha-reciprocal)))))
+  ([^double k ^double mu]
+   (let [alpha-reciprocal (/ (dec mu))]
+     (fn [^double u] (/ k (fm/pow (- 1 u) alpha-reciprocal)))))
+  ([^double k ^double mu ^double max]
+   "How to implement truncated powerlaw?"))
 
 
 ;; TODO put this stuff into a protocol??
@@ -721,62 +720,16 @@
   (read-to-rng [this filename]
     (set-state this (read-mrg32k3a-state filename)))
 
-  NeanderRNG
+  NeanRandNums ; USING next-double WITH NEANDERTHAL RANDOM NUMBER GENERATION IS SLOW
   (next-double
-    ([this]
-     (let [prev-index$ (:prev-index$ this)
-           buf (:buf this)] ; (prn @prev-index$) ; DEBUG
-       (when (= @prev-index$ (:size-1 this)) ; (println "reloading") ; DEBUG
-         (reset! prev-index$ -1)
-         (nr/rand-uniform! (:rng this) buf)) ; (prn buf) ; DEBUG
-       (buf (swap! prev-index$ cc/inc))))
+    ([this] (take-rand! 1 this))
     ([this ^double low ^double high]
-     (loop [^double x (next-double this)]
+     (loop [x (take-rand! 1 this)]
        (if (and (<= x high) (>= x low))
          x
-         (recur (next-double this))))))
-  (write-from-rng [this filename]
-    "write-from-rng unimplemented for NeanderRNG\n")
-  (read-to-rng [this filename]
-    "read-from-rng unimplemented for NeanderRNG\n")
-
-  NeanderRNGtype
-  (next-double
-    ([this]
-     (let [prev-index$ (.prev-index$ this)
-           buf (.buf this)] ; (prn @prev-index$) ; DEBUG
-       (when (= @prev-index$ (.size-1 this)) ; (println "reloading") ; DEBUG
-         (reset! prev-index$ -1)
-         (nr/rand-uniform! (.rng this) buf)) ; (prn buf) ; DEBUG
-       (buf (swap! prev-index$ cc/inc))))
-    ([this ^double low ^double high]
-     (loop [^double x (next-double this)]
-       (if (and (<= x high) (>= x low))
-         x
-         (recur (next-double this))))))
-  (write-from-rng [this filename]
-    "write-from-rng unimplemented for NeanderRNG\n")
-  (read-to-rng [this filename]
-    "read-from-rng unimplemented for NeanderRNG\n")
-
-  NeanderRNGmut
-  (next-double
-    ([this]
-     (let [buf (.buf this)] ; (prn index) ; DEBUG
-       (when (= (get-index this) (.size-1 this)) ; (println "reloading") ; DEBUG
-         (set-index this -1)
-         (nr/rand-uniform! (.rng this) buf)) ; refill vector of random numbers
-       (set-index this (inc (get-index this)))
-       (buf (get-index this))))
-    ([this ^double low ^double high]
-     (loop [^double x (next-double this)]
-       (if (and (<= x high) (>= x low))
-         x
-         (recur (next-double this))))))
-  (write-from-rng [this filename]
-    "write-from-rng unimplemented for NeanderRNG\n")
-  (read-to-rng [this filename]
-    "read-from-rng unimplemented for NeanderRNG\n")
+         (recur (take-rand! 1 this))))))
+  (write-from-rng [this filename] "write-from-rng not yet implemented for NeanRandNums\n")
+  (read-to-rng    [this filename] "read-from-rng not yet implemented for NeanRandNums\n")
 
 )
 
@@ -824,6 +777,10 @@
 (defn next-doubles "Returns a lazy infinite sequence of random doubles from distribution dist, which may be a PRNG, in which case it's a uniform distribution."
   ([dist] (repeatedly (next-double-fn dist)))
   ([dist low high] (repeatedly (next-double-fn dist low high))))
+
+(defn unif-to-radian
+  [^double u]
+  (* 2 Math/PI u))
 
 (defn next-radian
   "Given a PRNG rng, return a uniformly distributed number between 0
@@ -1053,44 +1010,24 @@
   ;(def ra (double-array 1000000))
   ;(time (millionize! (make-mrg32k3a 42) ra)) ; ohh... this is really slow.
 
-  (def million 1000000)
-  (def million-and-one 1000001)
-  (def nvec1M (nn/dv million))
-
-  (time (let [seed (make-seed)
-              rngMRG   (make-mrg32k3a seed)
-              rngARS5raw  (nr/rng-state nn/native-double seed)  ; two copies of the same PRNG
-              rngARS5prot (make-neander-ars5 million-and-one seed) ; i.e. with the same seed, but one uses the protocol interface
-              rngARS5type (make-neander-ars5-type million-and-one seed) ; same as preceding but deftype not defrecord
-              rngARS5mut (make-neander-ars5-mut million-and-one seed)] ; same as preceding but mutable deftype
-      (println "MRG32k3a:")
-      (time (crit/quick-bench (millionize rngMRG))) ; MBP quick-bench 6 ms, 6 ms, 7 ms, 10 ms.  Note that's milliseconds.
-      (println "\nNeanderthal/MKL ARS5 raw:")
-      (time (crit/quick-bench (nr/rand-uniform! rngARS5raw nvec1M))) ; MBP quick-bench 277 μs, 314 μs, 305 μs, 309 μs. Microseconds.
-      (println "\nNeanderthal/MKL ARS5 with protocol with defrecord:")
-      (time (crit/quick-bench (millionize rngARS5prot))) ; MBP quick-bench 39 ms, 38 ms 40 ms. Wow. That's about 5X slower than rngMRG.
-      (println "\nNeanderthal/MKL ARS5 with protocol with deftype:")
-      (time (crit/quick-bench (millionize rngARS5type))) ; same as defrecord
-      ;; This one is failing:
-      ;(println "\nNeanderthal/MKL ARS5 with protocol with mutable deftype:")
-      ;(time (crit/quick-bench (millionize rngARS5mut))) ; humongously slow: 5 *seconds* on MBA
-   ))
-  ;; A microsecond is 1/1000 of a millisecond, so the ratio is 6000/277 = 21.66, i.e. raw Neanderthal is 20X faster.
-  ;; SO WHAT THIS SHOWS IS THAT:
-  ;; (a) Neanderthal's ARS5 can fill a large Neanderthal vector much, much
-  ;; faster than you can pull the same number of randnums from MRG32k3a
-  ;; using next-double, but
-  ;; (b) Doing the same iteration of next-double from such a Neanderthal
-  ;; vector is *much* slower than doing it with MRG32k3a.
-  ;;
-  ;; BUT WHAT IF WE DON't PULL RANDNUMS ONE BY ONE USING next-double?
-
   (def twentyK 20000)
   (def thirtyK 30000)
   (def fortyK 40000)
   (def fiftyK 50000)
   (def hundredK 100000)
   (def million 1000000)
+
+  ;; USING next-double WITH NEANDERTHAL RANDOM NUMBER GENERATION IS A BAD IDEA:
+  (time (let [seed (make-seed)
+              rngMRG   (make-mrg32k3a seed)
+              ars5nums (make-nean-nums (nr/rng-state nn/native-double seed) million)]
+          (println "MRG32k3a:")
+          (time (crit/quick-bench (next-double rngMRG)))
+          (println "\nNeanderthal/MKL ARS5:")
+          (time (crit/quick-bench (next-double ars5nums)))
+  ))
+  ;; The MRG32k3a version is 10X faster than the Neanderthal ARS5 version,
+  ;; even though it batch-generates random numbers.
 
   ;(def nvec1M (nn/dv million))
   ;(def nvec100K (nn/dv hundredK))
@@ -1167,13 +1104,12 @@
   ;; WHAT IS THE EFFECT OF DERIVING POWER-LAW NUMBERS FROM ARS5 IN A SIMPLISTIC MANNER?
   (require '[criterium.core :as crit])
   (def hundredK 100000)
-  (time (let [seed (make-seed) 
-              ;-3019835925298985143
-              ; -8211545260616558233
+  (time (let [seed -7852306354657902447 ; (make-seed) 
               mrgrng (make-mrg32k3a seed)
               mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
-              ;ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
-              ars5nums (make-nean-nums (nr/rng-state nn/native-double seed) hundredK)
+              ;; AFAICS these are equally fast, as I'd have guessed:
+              ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
+              ;ars5nums (make-nean-nums (nr/rng-state nn/native-double seed) hundredK)
               powerlaw-fn (make-unif-to-powerlaw 1 2)]
           (println "seed:" seed)
           (println "\nNeanderthal/MKL ARS5 with make-unif-to-powerlaw and Fluokitten fmap:")
