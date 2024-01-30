@@ -34,11 +34,12 @@
             [uncomplicate.neanderthal
              [core :as nc]
              [native :as nn]
-             [random :as nr]]
+             [random :as nran]
+             [real :as nreal]]
             [uncomplicate.fluokitten.core :as fc]))
 
-;(set! *warn-on-reflection* true)
-;(set! *unchecked-math* :warn-on-boxed)
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
 ;; I started using a newer Apache Commons version, 1.4 and 1.5, because it
@@ -91,6 +92,7 @@
 
 ;; STRUCTURE AND FNS FOR EXTRACTING RANDOM NUMBERS USING NEANDERTHAL
 ;; An option is to not store the buflen since I can get it from Neanderthal easily using: (buf)
+#_
 (defn make-nums
   [rng buflen]
   {:rng rng
@@ -130,15 +132,15 @@
                       nexti ; we can just pull the next n numbers from buffer
                       (do (nc/copy! (nc/subvector buf nexti dist-to-end) ; copy last rand numbers
                                     (nc/subvector buf 0 dist-to-end))    ; to the front
-                          (nr/rand-uniform! (:rng nums) (nc/subvector buf dist-to-end nexti)) ; replace nums copied [dist-to-end is now idx of end of copied nums, nexti is len of rest of buf]
+                          (nran/rand-uniform! (:rng nums) (nc/subvector buf dist-to-end nexti)) ; replace nums copied [dist-to-end is now idx of end of copied nums, nexti is len of rest of buf]
                           0))] ; now the unused numbers from end are at front
       (reset! nexti$ (+ new-nexti n)) ; since now nexti + n is < len, this will not be > len
       (nc/subvector buf new-nexti n))))
 
 (comment
   ;; Usage examples:
-  (def nums (make-nums (nr/rng-state nn/native-double 101) 200)) ; nums is a Clojure map
-  (def nums (make-nean-nums (nr/rng-state nn/native-double 101) 200)) ; nums is a Clojure map
+  (def nums (make-nums (nran/rng-state nn/native-double 101) 200)) ; nums is a Clojure map
+  (def nums (make-nean-nums (nran/rng-state nn/native-double 101) 200)) ; nums is a NeanRandNums
   (class nums)
   (:buf nums)        ; uncomplicate.neanderthal.internal.host.buffer_block.RealBlockVector
   (take-rand! 4 nums) ; uncomplicate.neanderthal.internal.host.buffer_block.RealBlockVector
@@ -153,9 +155,19 @@
   (rest (cons 1.0 (take-rand! 4 nums))) ; clojure.lang.LazySeq
   (conj (take-rand! 4 nums) 1.0) ; fails
 
+  ;; How to access elements?
+  (def nums (make-nean-nums (nran/rng-state nn/native-double 101) 200))
+  (def fournums (take-rand! 4 nums))
+  (nth fournums 0) ; fails
+  (aget fournums 0) ; fails
+  (first fournums) ; succeeds
+  (second fournums) ; succeeds
+  (class (nc/entry fournums 0))    ; succeeds, boxed
+  (class (nreal/entry fournums 0)) ; succeeds, supposed to be unboxed
+
   ;; Fluokitten's fmap vs fmap! :
 
-  (def nums (make-nums (nr/rng-state nn/native-double 22) 11))
+  (def nums (make-nums (nran/rng-state nn/native-double 22) 11))
 
   (into [] (:buf nums)) ; all zeros
   (def fiveunif1 (take-rand! 5 nums))
@@ -350,8 +362,8 @@
   ([^long bufsize] (make-neander-ars5 bufsize (make-seed)))
   ([^long bufsize seed] (let [i$ (atom -1)
                               buf (nn/dv bufsize)
-                              rng (nr/rng-state nn/native-double seed)]
-                          (nr/rand-uniform! rng buf)
+                              rng (nran/rng-state nn/native-double seed)]
+                          (nran/rand-uniform! rng buf)
                           (->NeanderRNG (dec bufsize) buf rng i$))))
 
 ;; Let's try it with deftype instead of defrecord
@@ -360,8 +372,8 @@
   ([^long bufsize] (make-neander-ars5-type bufsize (make-seed)))
   ([^long bufsize seed] (let [i$ (atom -1)
                               buf (nn/dv bufsize)
-                              rng (nr/rng-state nn/native-double seed)]
-                          (nr/rand-uniform! rng buf)
+                              rng (nran/rng-state nn/native-double seed)]
+                          (nran/rand-uniform! rng buf)
                           (->NeanderRNGtype (dec bufsize) buf rng i$))))
 
 (defprotocol IndexSetter
@@ -378,8 +390,8 @@
 (defn make-neander-ars5-mut
   ([^long bufsize] (make-neander-ars5-mut bufsize (make-seed)))
   ([^long bufsize seed] (let [buf (nn/dv bufsize)
-                              rng (nr/rng-state nn/native-double seed)]
-                          (nr/rand-uniform! rng buf)
+                              rng (nran/rng-state nn/native-double seed)]
+                          (nran/rand-uniform! rng buf)
                           (->NeanderRNGmut (dec bufsize) buf rng -1))))
 
 
@@ -412,7 +424,7 @@
 (defn write-apache-state
   "Write state from a single Apache Commons PRNG to a file.  State should
   be an org.apache.commons.rng.core.RandomProviderDefaultState ."
-  [filename state]
+  [filename ^RandomProviderDefaultState state]
   (let [byte-stream (ByteArrayOutputStream.)]
     (.writeObject (ObjectOutputStream. byte-stream) (.getState state))
     (with-open [w (FileOutputStream. filename)]
@@ -722,12 +734,12 @@
 
   NeanRandNums ; USING next-double WITH NEANDERTHAL RANDOM NUMBER GENERATION IS SLOW
   (next-double
-    ([this] (take-rand! 1 this))
+    ([this] (nreal/entry (take-rand! 1 this) 0))
     ([this ^double low ^double high]
-     (loop [x (take-rand! 1 this)]
+     (loop [x (nreal/entry (take-rand! 1 this) 0)]
        (if (and (<= x high) (>= x low))
          x
-         (recur (take-rand! 1 this))))))
+         (recur (nreal/entry (take-rand! 1 this) 0))))))
   (write-from-rng [this filename] "write-from-rng not yet implemented for NeanRandNums\n")
   (read-to-rng    [this filename] "read-from-rng not yet implemented for NeanRandNums\n")
 
@@ -990,11 +1002,11 @@
   (def nvec1 (nn/dv 1))
   (time (let [seed (make-seed)
               rngMRG   (make-mrg32k3a seed)
-              rngARS5  (nr/rng-state nn/native-double seed)]
+              rngARS5  (nran/rng-state nn/native-double seed)]
       (println "MRG32k3a:")
       (time (crit/quick-bench (next-double rngMRG))) ; MPB quick-bench 8 ns, 10 ns
       (println "Neanderthal/MKL ARS5:")
-      (time (crit/quick-bench (nr/rand-uniform! rngARS5 nvec1))))) ; MPB quick-bench 111 ns, 108 ns
+      (time (crit/quick-bench (nran/rand-uniform! rngARS5 nvec1))))) ; MPB quick-bench 111 ns, 108 ns
 
   ;; Now let's TRY IT WITH A MILLION NUMBERS AT ONCE.  Note Neanderthal will fill
   ;; a Neanderthal vector, while the MRG32k3a numbers below will be thrown away immediately.
@@ -1020,7 +1032,7 @@
   ;; USING next-double WITH NEANDERTHAL RANDOM NUMBER GENERATION IS A BAD IDEA:
   (time (let [seed (make-seed)
               rngMRG   (make-mrg32k3a seed)
-              ars5nums (make-nean-nums (nr/rng-state nn/native-double seed) million)]
+              ars5nums (make-nean-nums (nran/rng-state nn/native-double seed) million)]
           (println "MRG32k3a:")
           (time (crit/quick-bench (next-double rngMRG)))
           (println "\nNeanderthal/MKL ARS5:")
@@ -1038,7 +1050,7 @@
   ;; is equal to the buf size.
   (time (let [seed (make-seed)
               mrgrng   (make-mrg32k3a seed)
-              ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
+              ars5nums (make-nums (nran/rng-state nn/native-double seed) hundredK)
               ;num-to-take hundredK
               num-to-take 1  ; Neanderthal wins, but not by a lot
              ]
@@ -1066,8 +1078,8 @@
   ;; But taking 20K repeatedly from a 50K buffer causes copying as well
   ;; as refilling. (See definition of take-rand!.)
   (time (let [seed (make-seed)
-              nums50K (make-nums (nr/rng-state nn/native-double seed) fiftyK)
-              nums100K (make-nums (nr/rng-state nn/native-double seed) hundredK)]
+              nums50K (make-nums (nran/rng-state nn/native-double seed) fiftyK)
+              nums100K (make-nums (nran/rng-state nn/native-double seed) hundredK)]
 
           (time (crit/quick-bench (take-rand! twentyK nums50K)))  ; 11, 12 μs
           (time (crit/quick-bench (take-rand! twentyK nums100K))) ; 7.5, 8 μs
@@ -1087,8 +1099,8 @@
   ;; Maybe because the amount of copying was more similar.
 
   (time (let [seed (make-seed)
-              nums100K (make-nums (nr/rng-state nn/native-double seed) hundredK)
-              nums1M (make-nums (nr/rng-state nn/native-double seed) million)]
+              nums100K (make-nums (nran/rng-state nn/native-double seed) hundredK)
+              nums1M (make-nums (nran/rng-state nn/native-double seed) million)]
 
           (time (crit/quick-bench (take-rand! hundredK nums100K))) ; MBA 40, 43 μs; MBP 31 μs 
           (time (crit/quick-bench (take-rand! hundredK nums1M)))   ; MBA 49, 50, 53 μs; MBP 31 μs 
@@ -1108,8 +1120,8 @@
               mrgrng (make-mrg32k3a seed)
               mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
               ;; AFAICS these are equally fast, as I'd have guessed:
-              ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
-              ;ars5nums (make-nean-nums (nr/rng-state nn/native-double seed) hundredK)
+              ars5nums (make-nums (nran/rng-state nn/native-double seed) hundredK)
+              ;ars5nums (make-nean-nums (nran/rng-state nn/native-double seed) hundredK)
               powerlaw-fn (make-unif-to-powerlaw 1 2)]
           (println "seed:" seed)
           (println "\nNeanderthal/MKL ARS5 with make-unif-to-powerlaw and Fluokitten fmap:")
@@ -1241,7 +1253,7 @@
               ;pow1024 (make-powerlaw rng1024 1 2)
               mrgrng (make-mrg32k3a seed)
               mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
-              ars5nums (make-nums (nr/rng-state nn/native-double seed) hundredK)
+              ars5nums (make-nums (nran/rng-state nn/native-double seed) hundredK)
               powerlaw-fn (make-unif-to-powerlaw 1 2)]
 
   ))
