@@ -5,10 +5,12 @@
               [utils.random :as r]
               [clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
               [fastmath.core :as fm]
-              ;[uncomplicate.neanderthal
-              ; [core :as nc]
-              ; [native :as nn]
-              ; [random :as nr]]
+              [uncomplicate.neanderthal
+               [real :as nreal]
+               ; [core :as nc]
+               ; [native :as nn]
+               ; [random :as nr]
+              ]
               [uncomplicate.fluokitten.core :as fc]))
 
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
@@ -90,10 +92,22 @@
   where the first is a random radian, and the second is a random length
   distributed as specified by powerlaw-fn."
   [nean-nums powerlaw-fn n]
-  (fc/fmap! (fn [^double u1 ^double u2]
-              [(r/unif-to-radian u1) (powerlaw-fn u2)])
-            (r/take-rand! n nean-nums)
-            (r/take-rand! n nean-nums)))
+  (map (fn [^double u1 ^double u2] [(r/unif-to-radian u1) (powerlaw-fn u2)])
+           (r/take-rand! n nean-nums)
+           (r/take-rand! n nean-nums)))
+  ;; nc/fmap and fmap! can't be used here without converting the input
+  ;; vectors,because they want to return the same type, i.e. a neanderthal vector.
+  ;; Might be possible to do something with matrices
+
+(comment
+  (require '[uncomplicate.neanderthal.random :as nran])
+  (require '[uncomplicate.neanderthal.native :as nn])
+  (def nums (r/make-nean-nums (nran/rng-state nn/native-double 12345) 200)) ; nums is a NeanRandNums
+  (def unif-to-levy (r/make-unif-to-powerlaw 1 2))
+  (nean-make-n-levy-vecs nums unif-to-levy 5)
+  (clojure.repl/pst)
+
+)
 
 ;; NOTE SEE test/forage/walks.clj for experiments and test of 
 ;; incremental-composite-vecs that were formerly below and above this
