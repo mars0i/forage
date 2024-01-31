@@ -36,10 +36,10 @@
              [native :as nn]
              [random :as nran]
              [real :as nreal]]
-            [uncomplicate.fluokitten.core :as fc]))
+            [uncomplicate.fluokitten.core :as ktn]))
 
-(set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
+;(set! *warn-on-reflection* true)
+;(set! *unchecked-math* :warn-on-boxed)
 (fm/use-primitive-operators)
 
 ;; I started using a newer Apache Commons version, 1.4 and 1.5, because it
@@ -92,7 +92,6 @@
 
 ;; STRUCTURE AND FNS FOR EXTRACTING RANDOM NUMBERS USING NEANDERTHAL
 ;; An option is to not store the buflen since I can get it from Neanderthal easily using: (buf)
-#_
 (defn make-nums
   [rng buflen]
   {:rng rng
@@ -173,13 +172,13 @@
   (def fiveunif1 (take-rand! 5 nums))
   (into [] (:buf nums)) ; now all random, with first five 
   (into [] fiveunif1)   ; also in fiveunif1
-  (def fivepareto1 (fc/fmap (partial uniform-to-pareto-precalc 1 1) fiveunif1))
+  (def fivepareto1 (ktn/fmap (partial uniform-to-pareto-precalc 1 1) fiveunif1))
   (into [] fivepareto1) ; fiveunif1 and (:buf nums) are unchanged: fmap is purely functional
 
   (def fiveunif2 (take-rand! 5 nums)) ; gets next five numbers from (:buf nums)
   (into [] fiveunif2)
   (into [] (:buf nums)) ; buf is unchanged at this point
-  (def fivepareto2 (fc/fmap! (partial uniform-to-pareto-precalc 1 1) fiveunif2))
+  (def fivepareto2 (ktn/fmap! (partial uniform-to-pareto-precalc 1 1) fiveunif2))
   (into [] fivepareto2) 
   (into [] fiveunif2)   ; now has those Pareto-distributed numbers as well, because fmap! modifies (:buf nums)
   (into [] (:buf nums)) ; numbers 5 through 9 are now the Pareto-distributed numbers in fivepareto2
@@ -187,7 +186,7 @@
   (def fiveunif3 (take-rand! 5 nums)) ; This takes the last (uniformly distributed) number in (:buf nums)
   (into [] fiveunif3)
   (into [] (:buf nums))  ; and refills the buffer with uniformly distributed numbers to get the other four
-  (def fivepareto3 (fc/fmap! (partial uniform-to-pareto-precalc 1 1) fiveunif3))
+  (def fivepareto3 (ktn/fmap! (partial uniform-to-pareto-precalc 1 1) fiveunif3))
   (into [] fivepareto3) ; contains Pareto-distributed numbers
   (into [] fiveunif3)   ; contains same Pareto-distributed numbers
   (into [] (:buf nums)) ; now the first five in (:buf nums) are Pareto-distributed
@@ -1116,51 +1115,68 @@
   ;; WHAT IS THE EFFECT OF DERIVING POWER-LAW NUMBERS FROM ARS5 IN A SIMPLISTIC MANNER?
   (require '[criterium.core :as crit])
   (def hundredK 100000)
-  (time (let [seed -7852306354657902447 ; (make-seed) 
+  (time (let [seed (make-seed) 
               mrgrng (make-mrg32k3a seed)
               mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
               ;; AFAICS these are equally fast, as I'd have guessed:
-              ars5nums (make-nums (nran/rng-state nn/native-double seed) hundredK)
-              ;ars5nums (make-nean-nums (nran/rng-state nn/native-double seed) hundredK)
-              powerlaw-fn (make-unif-to-powerlaw 1 2)]
+              ;ars5nums (make-nums (nran/rng-state nn/native-double seed) hundredK)
+              ars5nums (make-nean-nums (nran/rng-state nn/native-double seed) hundredK)
+              powerlaw-fn (make-unif-to-powerlaw 1 2)
+              partialed-pareto-fn (partial uniform-to-pareto-precalc 1 1)
+              curried-pareto-fn (ktn/curry uniform-to-pareto-precalc)]
           (println "seed:" seed)
+
+          (println "MRG32k3a with MRG32K3aParetoSampler:")
+          (time (crit/quick-bench (doall (repeatedly hundredK #(next-double mrgpow)))))
+
+          (println "\nNeanderthal/MKL ARS5 with partial and Clojure map:")
+          (time (crit/quick-bench (mapv partialed-pareto-fn (take-rand! hundredK ars5nums))))
+
+          (println "\nNeanderthal/MKL ARS5 with fn and Clojure map:")
+          (time (crit/quick-bench (mapv (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x))
+                                        (take-rand! hundredK ars5nums))))
+
           (println "\nNeanderthal/MKL ARS5 with make-unif-to-powerlaw and Fluokitten fmap:")
-          (time (crit/quick-bench (fc/fmap powerlaw-fn (take-rand! hundredK ars5nums))))
+          (time (crit/quick-bench (ktn/fmap powerlaw-fn (take-rand! hundredK ars5nums))))
+
           (println "\nNeanderthal/MKL ARS5 with make-unif-to-powerlaw and Fluokitten fmap!:")
-          (time (crit/quick-bench (fc/fmap! powerlaw-fn (take-rand! hundredK ars5nums))))
+          (time (crit/quick-bench (ktn/fmap! powerlaw-fn (take-rand! hundredK ars5nums))))
+
           (println "\nNeanderthal/MKL ARS5 with partial and Fluokitten fmap:")
-          (time (crit/quick-bench (fc/fmap (partial uniform-to-pareto-precalc 1 1) ; MBA: about 4X faster than Clojure map
-                                           (take-rand! hundredK ars5nums))))
+          (time (crit/quick-bench (ktn/fmap partialed-pareto-fn (take-rand! hundredK ars5nums))))
+
           (println "\nNeanderthal/MKL ARS5 with partial and Fluokitten fmap!:") 
-          (time (crit/quick-bench (fc/fmap! (partial uniform-to-pareto-precalc 1 1) ; MBA: fmap! is a little faster than fmap version
-                                            (take-rand! hundredK ars5nums))))
+          (time (crit/quick-bench (ktn/fmap! partialed-pareto-fn (take-rand! hundredK ars5nums))))
+
+          (println "\nNeanderthal/MKL ARS5 with Fluokitten curry and fmap:")
+          (time (crit/quick-bench (ktn/fmap (curried-pareto-fn 1 1) (take-rand! hundredK ars5nums))))
+
+          (println "\nNeanderthal/MKL ARS5 with Fluokitten curry and fmap!:") 
+          (time (crit/quick-bench (ktn/fmap! (curried-pareto-fn 1 1) (take-rand! hundredK ars5nums))))
+
           (println "\nNeanderthal/MKL ARS5 with fn and Fluokitten fmap:")
-          (time (crit/quick-bench (fc/fmap (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x)) ; MBA: a little faster than both partial versions
+          (time (crit/quick-bench (ktn/fmap (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x)) 
                                            (take-rand! hundredK ars5nums))))
+
           (println "\nNeanderthal/MKL ARS5 with fn and Fluokitten fmap!:")
-          (time (crit/quick-bench (fc/fmap! (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x)) ; MBA: a little faster than fmap version
+          (time (crit/quick-bench (ktn/fmap! (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x))
                                             (take-rand! hundredK ars5nums))))
-          ;(println "\nNeanderthal/MKL ARS5 with Fluokitten fmap! using sample method from MRG32k3aParetoSampler:")
-          ;(time (crit/quick-bench (fc/fmap! (fn [u] (.sample mrgpow u))
-          ;                                  (take-rand! hundredK ars5nums))))
-          ;(println "\nNeanderthal/MKL ARS5 with Fluokitten fmap! using sample method from MRG32k3aParetoSampler, type hints:")
-          ;(time (crit/quick-bench (fc/fmap! (fn ^double [^double u] (.sample mrgpow u))
-          ;                                  (take-rand! hundredK ars5nums))))
+
+          (println "\nNeanderthal/MKL ARS5 with Fluokitten fmap! using sample method from MRG32k3aParetoSampler:")
+          (time (crit/quick-bench (ktn/fmap! (fn [u] (.sample mrgpow u)) (take-rand! hundredK ars5nums))))
+
+          (println "\nNeanderthal/MKL ARS5 with Fluokitten fmap! using sample method from MRG32k3aParetoSampler, type hints:")
+          (time (crit/quick-bench (ktn/fmap! (fn ^double [^double u] (.sample mrgpow u)) (take-rand! hundredK ars5nums))))
+
           ;(println "\nNeanderthal/MKL ARS5 uniform random, fmap!-ing identity:")
-          ;(time (crit/quick-bench (fc/fmap! identity (take-rand! hundredK ars5nums)))) ; MBA: actually a little slower than fmap!int the pareto fn with (fn ...)
+          ;(time (crit/quick-bench (ktn/fmap! identity (take-rand! hundredK ars5nums))))
+
           ;(println "\nNeanderthal/MKL ARS5 uniform random, fmap!-ing type-hinted identity:")
-          ;(time (crit/quick-bench (fc/fmap! (fn ^double [^double x] x)                 ; MBA: A little faster han clojure's identity  
-          ;                                  (take-rand! hundredK ars5nums))))
+          ;(time (crit/quick-bench (ktn/fmap! (fn ^double [^double x] x) (take-rand! hundredK ars5nums))))
+
           ;(println "\nNeanderthal/MKL ARS5 uniform random--no mapping:")
-          ;(time (crit/quick-bench (take-rand! hundredK ars5nums))) ; MBA: much, much faster than anything above: 47 μs rather than e.g. 2.3 ms for fmap! identity
-          ;(println "MRG32k3a with MRG32K3aParetoSampler:")
-          ;(time (crit/quick-bench (doall (repeatedly hundredK #(next-double mrgpow)))))
-          ;(println "\nNeanderthal/MKL ARS5 with partial and Clojure map:")
-          ;(time (crit/quick-bench (mapv (partial uniform-to-pareto-precalc 1 1) ; MBP: 1/2 as fast as MRG32k3a version; MBA: slightly faster
-          ;                              (take-rand! hundredK ars5nums))))
-          ;(println "\nNeanderthal/MKL ARS5 with fn and Clojure map:")
-          ;(time (crit/quick-bench (mapv (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x)) ; maybe slightly faster than partial
-          ;                              (take-rand! hundredK ars5nums))))
+          ;(time (crit/quick-bench (take-rand! hundredK ars5nums)))
+
   ))
   ;; Note all runs use my uniform-to-pareto-precalc function unless noted.
   ;; 
@@ -1173,6 +1189,7 @@
   ;; what adds most of the additional time.  (So it's not that my pareto
   ;; conversion is slow.)
   ;;
+  
   ;; On MBP, with quick-bench the profile is somewhat different:
   ;;
   ;; 11 ms        MRG32k3a with MRG32K3aParetoSampler
