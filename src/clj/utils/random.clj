@@ -1114,8 +1114,8 @@
 
   ;; WHAT IS THE EFFECT OF DERIVING POWER-LAW NUMBERS FROM ARS5 IN A SIMPLISTIC MANNER?
   (require '[criterium.core :as crit])
-  (def hundredK 100000)
   (time (let [seed (make-seed) 
+              hundredK 100000
               mrgrng (make-mrg32k3a seed)
               mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
               ;; AFAICS these are equally fast, as I'd have guessed:
