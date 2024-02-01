@@ -7,11 +7,11 @@
               [fastmath.core :as fm]
               [uncomplicate.neanderthal
                [real :as nreal]
-               ; [core :as nc]
-               ; [native :as nn]
+               [core :as nc]
+               [native :as nn]
                ; [random :as nr]
               ]
-              [uncomplicate.fluokitten.core :as fc]))
+              [uncomplicate.fluokitten.core :as ktn]))
 
 ;; (Code s/b independent of MASON and plot libs (e.g. Hanami, Vega-Lite).)
 
@@ -100,12 +100,51 @@
   ;; Might be possible to do something with matrices
 
 (comment
+  ;; Test that it works:
   (require '[uncomplicate.neanderthal.random :as nran])
   (require '[uncomplicate.neanderthal.native :as nn])
   (def nums (r/make-nean-nums (nran/rng-state nn/native-double 12345) 200)) ; nums is a NeanRandNums
-  (def unif-to-levy (r/make-unif-to-powerlaw 1 2))
-  (nean-make-n-levy-vecs nums unif-to-levy 5)
-  (clojure.repl/pst)
+  (class nums)
+  (def unif-to-levy0 (r/make-unif-to-powerlaw 1 2))
+  (def unif-to-levy1 (partial r/uniform-to-pareto-precalc 1 1))
+  (def unif-to-levy2 ((ktn/curry r/uniform-to-pareto-precalc) 1 1))
+  (nean-make-n-levy-vecs nums unif-to-levy2 5)
+  (class (nean-make-n-levy-vecs nums unif-to-levy2 5))
+
+  ;; Experiments
+  (nn/dge 2 3 (range 6))
+  (nn/dge 3 2 (range 6))
+  (map identity (nn/dge 2 3 (range 6))) ;; lazy seq of 3 lazy pairs
+  (ktn/fmap identity (nn/dge 2 3 (range 6))) ; same 2x3 mat
+  (ktn/fmap vector (nn/dge 2 3 (range 6))) ; error
+  (ktn/fmap vec (nn/dge 2 3 (range 6))) ; error
+  (into vec (nn/dge 2 3 (range 6))) ; error
+  (into [] (nn/dge 2 3 (range 6))) ; Clojure vector of lazy pairs
+
+  ;; Benchmarking
+  (require '[criterium.core :as crit])
+  (time (let [seed (r/make-seed) 
+              hundredK 100000
+              mrgrng (r/make-mrg32k3a seed)
+              mrgpow (r/make-mrg32k3a-powerlaw mrgrng 1 2)
+              ars5nums (r/make-nean-nums (nran/rng-state nn/native-double seed) hundredK)
+              powerlaw-fn (r/make-unif-to-powerlaw 1 2)
+              ;partialed-pareto-fn (partial uniform-to-pareto-precalc 1 1)
+             ]
+          (println "\nMRG:\n")
+          (crit/quick-bench (doall (take hundredK (make-levy-vecs mrgrng mrgpow 1 hundredK))))
+          ;; WITH MY ORIGINAL VERSION OF nean-make-n-levy-vecs, THESE ARE SIGNIFICANTLY SLOWER THAN THE ONE JUST ABOVE:
+          (println "\nNeandertal, map top-level doall:\n")
+          (crit/quick-bench (doall (nean-make-n-levy-vecs ars5nums powerlaw-fn hundredK))) ; FIXME: I need to be able to unable to specfic max length in powerlaw-fn
+          (println "\nNeandertal, map top-level and inner doalls:\n")
+          (crit/quick-bench (doall (map doall (nean-make-n-levy-vecs ars5nums powerlaw-fn hundredK)))) ; see above
+          (println "\nNeandertal, fmap top-level doall:\n")
+          (crit/quick-bench (doall (ktn/fmap doall (nean-make-n-levy-vecs ars5nums powerlaw-fn hundredK)))) ; see above
+          (println "\nNeandertal, vec and map vec:\n")
+          (crit/quick-bench (vec (map vec (nean-make-n-levy-vecs ars5nums powerlaw-fn hundredK)))) ; see above
+          (println "\nNeandertal, vec and fmap vec:\n")
+          (crit/quick-bench (vec (ktn/fmap vec (nean-make-n-levy-vecs ars5nums powerlaw-fn hundredK)))) ; see above
+  ))
 
 )
 
