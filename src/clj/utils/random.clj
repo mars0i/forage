@@ -1115,7 +1115,7 @@
   ;; WHAT IS THE EFFECT OF DERIVING POWER-LAW NUMBERS FROM ARS5 IN A SIMPLISTIC MANNER?
   (require '[criterium.core :as crit])
   (time (let [seed (make-seed) 
-              seed -2487152234454198998
+              ;seed -2487152234454198998
               hundredK 100000
               mrgrng (make-mrg32k3a seed)
               mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
