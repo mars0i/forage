@@ -6,8 +6,8 @@
               [clojure.core :as cc] ; for cc/<, cc/> (in find-in-seg), and cc/+ (with reduce).
               [fastmath.core :as fm]
               [uncomplicate.neanderthal
-               [real :as nreal]
-               [core :as nc]
+               ;[real :as nreal]
+               ;[core :as nc]
                [native :as nn]
                ; [random :as nr]
               ]
