@@ -1115,6 +1115,7 @@
   ;; WHAT IS THE EFFECT OF DERIVING POWER-LAW NUMBERS FROM ARS5 IN A SIMPLISTIC MANNER?
   (require '[criterium.core :as crit])
   (time (let [seed (make-seed) 
+              seed -2487152234454198998
               hundredK 100000
               mrgrng (make-mrg32k3a seed)
               mrgpow (make-mrg32k3a-powerlaw mrgrng 1 2)
@@ -1126,21 +1127,32 @@
               curried-pareto-fn (ktn/curry uniform-to-pareto-precalc)]
           (println "seed:" seed)
 
-          (println "MRG32k3a with MRG32K3aParetoSampler:")
-          (time (crit/quick-bench (doall (repeatedly hundredK #(next-double mrgpow)))))
+          ;; Slow:
+          ;(println "MRG32k3a with MRG32K3aParetoSampler:")
+          ;(time (crit/quick-bench (doall (repeatedly hundredK #(next-double mrgpow)))))
 
-          (println "\nNeanderthal/MKL ARS5 with partial and Clojure map:")
-          (time (crit/quick-bench (mapv partialed-pareto-fn (take-rand! hundredK ars5nums))))
+          ;; Slow:
+          ;(println "\nNeanderthal/MKL ARS5 with partial and Clojure map:")
+          ;(time (crit/quick-bench (mapv partialed-pareto-fn (take-rand! hundredK ars5nums))))
 
-          (println "\nNeanderthal/MKL ARS5 with fn and Clojure map:")
-          (time (crit/quick-bench (mapv (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x))
-                                        (take-rand! hundredK ars5nums))))
+          ;; Slow:
+          ;(println "\nNeanderthal/MKL ARS5 with fn and Clojure map:")
+          ;(time (crit/quick-bench (mapv (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x))
+          ;                              (take-rand! hundredK ars5nums))))
 
           (println "\nNeanderthal/MKL ARS5 with make-unif-to-powerlaw and Fluokitten fmap:")
           (time (crit/quick-bench (ktn/fmap powerlaw-fn (take-rand! hundredK ars5nums))))
 
           (println "\nNeanderthal/MKL ARS5 with make-unif-to-powerlaw and Fluokitten fmap!:")
           (time (crit/quick-bench (ktn/fmap! powerlaw-fn (take-rand! hundredK ars5nums))))
+
+          (println "\nNeanderthal/MKL ARS5 with fn and Fluokitten fmap:")
+          (time (crit/quick-bench (ktn/fmap (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x)) 
+                                           (take-rand! hundredK ars5nums))))
+
+          (println "\nNeanderthal/MKL ARS5 with fn and Fluokitten fmap!:")
+          (time (crit/quick-bench (ktn/fmap! (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x))
+                                            (take-rand! hundredK ars5nums))))
 
           (println "\nNeanderthal/MKL ARS5 with partial and Fluokitten fmap:")
           (time (crit/quick-bench (ktn/fmap partialed-pareto-fn (take-rand! hundredK ars5nums))))
@@ -1154,26 +1166,23 @@
           (println "\nNeanderthal/MKL ARS5 with Fluokitten curry and fmap!:") 
           (time (crit/quick-bench (ktn/fmap! (curried-pareto-fn 1 1) (take-rand! hundredK ars5nums))))
 
-          (println "\nNeanderthal/MKL ARS5 with fn and Fluokitten fmap:")
-          (time (crit/quick-bench (ktn/fmap (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x)) 
-                                           (take-rand! hundredK ars5nums))))
+          ;; Slow:
+          ;(println "\nNeanderthal/MKL ARS5 with Fluokitten fmap! using sample method from MRG32k3aParetoSampler:")
+          ;(time (crit/quick-bench (ktn/fmap! (fn [u] (.sample mrgpow u)) (take-rand! hundredK ars5nums))))
 
-          (println "\nNeanderthal/MKL ARS5 with fn and Fluokitten fmap!:")
-          (time (crit/quick-bench (ktn/fmap! (fn ^double [^double x] (uniform-to-pareto-precalc 1 1 x))
-                                            (take-rand! hundredK ars5nums))))
+          ;; Slow:
+          ;(println "\nNeanderthal/MKL ARS5 with Fluokitten fmap! using sample method from MRG32k3aParetoSampler, type hints:")
+          ;(time (crit/quick-bench (ktn/fmap! (fn ^double [^double u] (.sample mrgpow u)) (take-rand! hundredK ars5nums))))
 
-          (println "\nNeanderthal/MKL ARS5 with Fluokitten fmap! using sample method from MRG32k3aParetoSampler:")
-          (time (crit/quick-bench (ktn/fmap! (fn [u] (.sample mrgpow u)) (take-rand! hundredK ars5nums))))
-
-          (println "\nNeanderthal/MKL ARS5 with Fluokitten fmap! using sample method from MRG32k3aParetoSampler, type hints:")
-          (time (crit/quick-bench (ktn/fmap! (fn ^double [^double u] (.sample mrgpow u)) (take-rand! hundredK ars5nums))))
-
+          ;; Irrelevant:
           ;(println "\nNeanderthal/MKL ARS5 uniform random, fmap!-ing identity:")
           ;(time (crit/quick-bench (ktn/fmap! identity (take-rand! hundredK ars5nums))))
 
+          ;; Irrelevant:
           ;(println "\nNeanderthal/MKL ARS5 uniform random, fmap!-ing type-hinted identity:")
           ;(time (crit/quick-bench (ktn/fmap! (fn ^double [^double x] x) (take-rand! hundredK ars5nums))))
 
+          ;; Irrelevant:
           ;(println "\nNeanderthal/MKL ARS5 uniform random--no mapping:")
           ;(time (crit/quick-bench (take-rand! hundredK ars5nums)))
 
