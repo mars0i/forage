@@ -1,0 +1,5 @@
+#!/bin/sh
+set -x
+cd ~/forage
+exec clojure -M:nrepl-server "$@"
+

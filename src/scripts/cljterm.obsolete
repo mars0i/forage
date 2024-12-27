@@ -1,0 +1,4 @@
+#!/bin/sh
+# opens repl in forage dir in another iterm tab
+src/scripts/itermNewTab "cd `pwd`" 'exec clojure -M:nrepl-server' "$@"
+

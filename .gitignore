@@ -23,14 +23,3 @@ profiles.clj
 .*.swp
 .clerk
 gui_vars_table.html
-repl
-production
-profiling 
-icedrepl
-iproduction
-ismallproduction
-iprofiling
-smallproduction
-smallproductionterm
-productionterm
-replterm

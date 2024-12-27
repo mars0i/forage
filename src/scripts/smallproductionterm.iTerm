@@ -1,3 +1,3 @@
 #!/bin/bash
 # opens repl in forage dir in another iterm tab
-open -a Terminal src/scripts/smallproductionWithCD
+open -a iTerm src/scripts/smallproductionWithCD
